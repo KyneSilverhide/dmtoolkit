@@ -1,0 +1,250 @@
+# CLAUDE.md — Contexte projet pour Claude Code
+
+Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient tout le contexte nécessaire pour travailler efficacement sur ce dépôt.
+
+---
+
+## Résumé du projet
+
+**Critical Fail** est une application web de gestion de sessions de jeu de rôle D&D 5e (en français), destinée au Maître du Jeu (MJ). Elle permet :
+
+- La gestion en temps réel des joueurs (PV, CA, conditions, concentration, initiative)
+- L'affichage sur un écran TV dédié (vue spectateur)
+- L'envoi de messages et jets de dés aux joueurs
+- Des systèmes de vote, d'horloge de doom, d'échelle de tension
+- Un système de marchand interactif avec panier et négociation de prix
+- Une battlemap interactive avec brouillard de guerre et tokens de joueurs
+- La recherche de sorts D&D 5e (477 sorts FR depuis `aidedd_spells.json`)
+
+---
+
+## Architecture du monorepo
+
+```
+/
+├── frontend/          # Vue 3 + Vite + Pinia (port 5173 en dev)
+│   ├── src/
+│   │   ├── views/     # HomeView, LoginView, AdminView, TvView, PlayerInboxView, PlayerJoinView
+│   │   ├── components/admin/  # Composants admin (MapManager, etc.)
+│   │   ├── stores/    # Pinia stores (auth.js, session.js)
+│   │   ├── router/    # Vue Router (toutes les vues importées statiquement)
+│   │   └── socket.js  # Singleton Socket.IO client
+├── backend/           # Node.js + Express + Socket.IO (port 3000)
+│   ├── src/
+│   │   ├── index.js       # Point d'entrée Express + Socket.IO
+│   │   ├── socket.js      # Tous les handlers Socket.IO
+│   │   ├── migrations.js  # Migrations SQL (PostgreSQL) — exécutées au démarrage
+│   │   ├── db.js          # Pool PostgreSQL (pg)
+│   │   ├── middleware/auth.js  # Vérification JWT
+│   │   └── routes/        # auth, sessions, uploads, spells
+│   └── aidedd_spells.json # 477 sorts D&D 5e en français
+├── docker-compose.yml     # Postgres 16 + backend + frontend
+└── docker-compose.prod.yml
+```
+
+---
+
+## Commandes de validation
+
+```bash
+# Frontend — tests unitaires (Vitest) + build Vite
+cd frontend && npm test && npm run build
+
+# Backend — vérification syntaxique Node.js (pas de tests automatisés)
+cd backend && node --check src/index.js src/socket.js src/routes/spells.js src/routes/sessions.js src/migrations.js
+
+# Dev local (sans Docker)
+cd backend && npm run dev   # node --watch src/index.js
+cd frontend && npm run dev  # vite dev server
+```
+
+---
+
+## Stack technique
+
+| Couche | Technologie | Version |
+|---|---|---|
+| Frontend framework | Vue 3 (`<script setup>`) | ^3.5 |
+| Frontend build | Vite | ^8.0 |
+| Frontend state | Pinia | via `stores/` |
+| Frontend routing | Vue Router 4 | ^4.4 |
+| Frontend tests | Vitest | ^4.1 |
+| Backend runtime | Node.js | 20 (alpine) |
+| Backend framework | Express | ^4.19 |
+| Temps réel | Socket.IO | ^4.8 |
+| Base de données | PostgreSQL | 16 |
+| Authentification | JWT (jsonwebtoken) | ^9.0 |
+| Hachage | bcrypt | ^5.1 |
+| Upload fichiers | multer | ^2.1 |
+| QR Code | qrcode | ^1.5 |
+
+---
+
+## Authentification
+
+- **Backend** : JWT signé avec `process.env.JWT_SECRET`. Le token est envoyé dans le header `Authorization: Bearer <token>`.
+- **Admin par défaut** : créé au démarrage si absent (`username=admin`, mot de passe dans l'env).
+- **Socket.IO** : le token JWT est passé via `socket.handshake.auth.token`. Le middleware socket vérifie le token et positionne `socket.admin` si valide. Les joueurs n'ont pas de token, ils s'authentifient uniquement via leur nom dans la session.
+- **Frontend** : `getSocket(token)` crée un singleton Socket.IO — le token n'est appliqué qu'à la première création. Utiliser `resetSocket()` avant de créer un nouveau socket avec un token différent (ex. : déconnexion, kick).
+
+---
+
+## Base de données — règles importantes
+
+- **Ne jamais modifier le schéma directement.** Toujours ajouter des `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...` à la fin du fichier `backend/src/migrations.js`. Les migrations sont exécutées au démarrage via `runMigrations()`.
+- La DB est PostgreSQL 16. Les requêtes utilisent le driver `pg` (pool de connexions dans `db.js`).
+- Tables principales : `admins`, `sessions`, `players`, `messages`, `dice_results`, `votes`, `vote_responses`, `session_events`, `merchants`, `merchant_items`, `purchase_requests`, `session_images`.
+- Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/vote/image/map/merchant), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`.
+- Colonnes clés de `players` : `ac`, `max_hp`, `current_hp`, `initiative`, `conditions` (JSON array), `is_concentrating`, `dnd_class`, `avatar_url`, `socket_id`.
+- Les joueurs sont supprimés de la DB à la déconnexion socket (`disconnect`/`leave-session`).
+
+---
+
+## Architecture Socket.IO
+
+### Rooms (namespaces de salle)
+- `session:<sessionId>` — tous les joueurs d'une session
+- `admin:<sessionId>` — l'admin de la session
+- `tv:<sessionId>` — le(s) écran(s) TV de la session
+
+### Événements entrants (client → serveur)
+
+#### Joueurs
+| Événement | Description |
+|---|---|
+| `join-session` | Rejoindre une session (code, playerName, ac, hp, dndClass, avatarUrl) |
+| `leave-session` | Quitter la session |
+| `update-hp` | Mettre à jour les PV |
+| `update-conditions` | Mettre à jour les conditions |
+| `update-concentration` | Basculer la concentration |
+| `update-initiative` | Mettre à jour l'initiative |
+| `submit-vote` | Voter pour une option |
+| `request-purchase` | Demander l'achat d'un objet (legacy) |
+| `request-batch-purchase` | Demander l'achat d'un panier d'objets |
+| `respond-counter-offer` | Accepter/refuser une contre-offre |
+
+#### Admin (nécessite `socket.admin`)
+| Événement | Description |
+|---|---|
+| `admin-join` | Rejoindre la room admin + recevoir le snapshot |
+| `set-tv-mode` | Changer le mode TV |
+| `start-doom-clock` | Démarrer l'horloge de doom |
+| `stop-doom-clock` | Arrêter l'horloge de doom |
+| `create-tension-scale` | Créer une échelle de tension |
+| `increment-tension-scale` | Avancer l'échelle de tension |
+| `end-tension-scale` | Terminer l'échelle de tension |
+| `create-vote` | Créer un vote |
+| `close-vote` | Fermer un vote |
+| `show-image` | Afficher une image sur le TV |
+| `show-map` | Afficher une battlemap sur le TV |
+| `map-set-fog` | Activer/désactiver le brouillard |
+| `map-viewport-update` | Mettre à jour la vue de la map |
+| `map-fog-clear` | Révéler des zones (ajout de strokes) |
+| `map-fog-reset` | Réinitialiser le brouillard |
+| `map-token-move` | Déplacer un token de joueur |
+| `map-token-remove` | Retirer un token de joueur |
+| `send-message` | Envoyer un message à un ou tous les joueurs |
+| `send-dice-result` | Envoyer un résultat de jet de dé |
+| `create-merchant` | Créer un marchand |
+| `show-merchant` | Afficher le marchand sur le TV |
+| `close-merchant` | Fermer le marchand |
+| `respond-purchase` | Répondre à une demande d'achat (legacy) |
+| `respond-batch-purchase` | Répondre à un panier d'achat |
+| `kick-player` | Expulser un joueur |
+
+### Événements sortants (serveur → client)
+
+| Événement | Cible | Description |
+|---|---|---|
+| `session-joined` | joueur | Confirmation de connexion à la session |
+| `players-snapshot` | admin | Liste initiale des joueurs |
+| `admin-state` | admin | État complet de la session (TV mode, doom clock, etc.) |
+| `tv-snapshot` | TV | État complet pour l'écran TV |
+| `player-joined` | admin + TV | Un joueur a rejoint |
+| `player-left` | admin + TV | Un joueur a quitté/été expulsé |
+| `hp-updated` | admin + TV | Mise à jour des PV |
+| `hp-update-confirmed` | joueur | Confirmation mise à jour PV |
+| `conditions-updated` | admin + TV | Mise à jour des conditions |
+| `concentration-updated` | admin + TV | Mise à jour de la concentration |
+| `concentration-warning` | joueur | Alerte jet de sauvegarde de concentration |
+| `initiative-updated` | admin + TV | Mise à jour de l'initiative |
+| `initiative-confirmed` | joueur | Confirmation mise à jour initiative |
+| `tv-mode-changed` | TV + admin | Changement de mode TV |
+| `doom-clock-started` | TV + admin | Démarrage de l'horloge doom |
+| `doom-clock-stopped` | TV + admin | Arrêt de l'horloge doom |
+| `tension-scale-updated` | TV + admin | Mise à jour de l'échelle de tension |
+| `tension-scale-ended` | TV + admin | Fin de l'échelle de tension |
+| `vote-started` | TV + session + admin | Vote démarré |
+| `vote-updated` | TV + admin | Mise à jour des résultats du vote |
+| `vote-closed` | TV + session + admin | Vote fermé |
+| `vote-submitted` | joueur | Confirmation de vote |
+| `vote-error` | joueur | Erreur de vote |
+| `map-state` | TV + admin | État complet de la battlemap |
+| `map-fog-updated` | TV + admin | Activation/désactivation du brouillard |
+| `map-viewport-changed` | TV | Mise à jour de la vue |
+| `map-fog-patch` | TV + admin | Nouvelles strokes de révélation |
+| `map-fog-reset` | TV + admin | Réinitialisation du brouillard |
+| `map-token-moved` | TV + admin | Token déplacé |
+| `map-token-removed` | TV + admin | Token retiré |
+| `new-message` | joueur(s) | Nouveau message du MJ |
+| `dice-result` | joueur(s) | Résultat de jet de dé |
+| `session-event` | admin | Événement de session (log) |
+| `merchant-created` | admin | Marchand créé |
+| `merchant-shown` | session | Marchand affiché aux joueurs |
+| `merchant-closed` | session | Marchand fermé |
+| `merchant-updated` | admin | Données marchand mises à jour |
+| `merchant-items-updated` | TV + session | Mise à jour des stocks |
+| `purchase-request` | admin | Demande d'achat reçue |
+| `purchase-requested` | joueur | Confirmation de la demande |
+| `purchase-error` | joueur | Erreur d'achat |
+| `purchase-counter-offer` | joueur | Contre-offre de l'admin |
+| `counter-offer-result` | joueur | Résultat de la contre-offre |
+| `counter-offer-response` | admin | Réponse du joueur à la contre-offre |
+| `purchase-responded` | admin | Confirmation réponse admin |
+| `batch-accepted` | joueur | Panier accepté |
+| `batch-rejected` | joueur | Panier refusé |
+| `kicked` | joueur | Joueur expulsé |
+| `error` | émetteur | Erreur générique |
+| `tv-control-error` | admin | Erreur de contrôle TV |
+| `send-error` | admin | Erreur d'envoi de message |
+
+---
+
+## Conventions de code
+
+### Frontend
+- Vue 3 avec `<script setup>` et Composition API — pas d'Options API
+- Pinia pour le state management global (`stores/auth.js`, `stores/session.js`)
+- Vue Router 4 — toutes les vues sont importées **statiquement** dans `router/index.js` (pas de lazy-loading), ce qui inclut leur CSS globalement dans le bundle
+- Socket.IO via le singleton `getSocket(token)` — **ne jamais créer un `io()` directement**, toujours utiliser `getSocket()` et `resetSocket()` de `frontend/src/socket.js`
+- L'URL du backend vient de `import.meta.env.VITE_BACKEND_URL` (fallback `http://localhost:3000`)
+
+### Backend
+- CommonJS (`require`/`module.exports`), pas d'ESM
+- Pas de framework ORM — requêtes SQL directes via le pool `pg`
+- Toutes les modifications de schéma DB passent par `migrations.js` (jamais de DDL manuel)
+- Les erreurs dans les handlers socket sont catchées silencieusement avec `console.error(err)` — pattern à respecter
+- Validation des entrées via `parseInt`, `Math.max/min`, et constantes de limites définies en haut de `socket.js`
+
+---
+
+## Variables d'environnement
+
+| Variable | Où | Description |
+|---|---|---|
+| `DATABASE_URL` | backend | URL PostgreSQL |
+| `JWT_SECRET` | backend | Clé secrète JWT (obligatoire en prod) |
+| `PORT` | backend | Port Express (défaut 3000) |
+| `FRONTEND_URL` | backend | URL du frontend pour CORS et QR codes |
+| `VITE_BACKEND_URL` | frontend (build) | URL du backend pour le client Socket.IO et fetch |
+
+---
+
+## Ce qu'il ne faut pas faire
+
+- ❌ Ne pas modifier le schéma DB autrement qu'en ajoutant des `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` à la fin de `migrations.js`
+- ❌ Ne pas créer un nouveau `io()` dans le frontend — utiliser `getSocket()` / `resetSocket()`
+- ❌ Ne pas ajouter de lazy-loading dans `router/index.js` sans comprendre l'impact sur le CSS global
+- ❌ Ne pas utiliser d'ESM (`import`/`export`) dans le backend (CommonJS uniquement)
+- ❌ Ne pas supprimer de colonnes DB existantes (les données en prod seraient perdues)
+- ❌ Ne pas hardcoder l'URL du backend dans le frontend (toujours utiliser `VITE_BACKEND_URL`)

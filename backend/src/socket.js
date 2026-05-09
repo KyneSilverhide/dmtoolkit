@@ -15,14 +15,29 @@ const MAP_SCALE_MIN = 0.1
 const MAP_SCALE_MAX = 10
 const MAP_FOG_STROKES_MAX = 500
 
+/**
+ * Sanitizes a player name: trims whitespace and collapses multiple spaces.
+ * @param {string} name
+ * @returns {string}
+ */
 function sanitizePlayerName(name) {
   return String(name || '').trim().replace(/\s+/g, ' ')
 }
 
+/**
+ * Normalizes a player name to lowercase for deduplication checks.
+ * @param {string} name
+ * @returns {string}
+ */
 function normalizePlayerName(name) {
   return sanitizePlayerName(name).toLowerCase()
 }
 
+/**
+ * Fetches a merchant and its items from the database.
+ * @param {number} merchantId
+ * @returns {Promise<{id, name, description, items: Array}|null>}
+ */
 async function getMerchantData(merchantId) {
   const mr = await pool.query('SELECT * FROM merchants WHERE id = $1', [merchantId])
   const merchant = mr.rows[0]
@@ -34,6 +49,12 @@ async function getMerchantData(merchantId) {
   return { ...merchant, items: items.rows }
 }
 
+/**
+ * Serializes the doom clock state from a session row.
+ * Returns null if there is no active doom clock or if it has already expired.
+ * @param {object} session - A row from the sessions table
+ * @returns {{title: string, endAt: string}|null}
+ */
 function serializeDoomClock(session) {
   if (!session?.doom_clock_end_at) return null
   const endAt = new Date(session.doom_clock_end_at)
@@ -44,6 +65,12 @@ function serializeDoomClock(session) {
   }
 }
 
+/**
+ * Serializes the tension scale state from a session row.
+ * Returns null if no tension scale is active (no title or invalid steps).
+ * @param {object} session - A row from the sessions table
+ * @returns {{title, steps, level, direction, vibrationEnabled}|null}
+ */
 function serializeTensionScale(session) {
   const steps = parseInt(session?.tension_steps) || 0
   if (!session?.tension_title || steps <= 0) return null
@@ -57,6 +84,13 @@ function serializeTensionScale(session) {
   }
 }
 
+/**
+ * Serializes the battlemap state from a session row.
+ * Safely parses JSON columns (map_viewport, map_fog_strokes, map_tokens) with fallbacks.
+ * Returns null if there is no active map URL.
+ * @param {object} session - A row from the sessions table
+ * @returns {{mapUrl, fogEnabled, viewport: {xn, yn, scale}, fogStrokes: Array, mapTokens: object}|null}
+ */
 function serializeMapState(session) {
   if (!session?.current_map_url) return null
   let viewport = { xn: 0, yn: 0, scale: 1 }
@@ -89,6 +123,14 @@ function serializeMapState(session) {
   }
 }
 
+/**
+ * Returns the currently active vote for a session with live result counts.
+ * Returns null if there is no active vote or if the vote cannot be found.
+ * Used to send vote state to TV and admin on snapshot events.
+ * @param {number} sessionId
+ * @param {number|null} voteId
+ * @returns {Promise<{id, question, options, isAnonymous, results, totalPlayers, totalVotes, voterNames}|null>}
+ */
 async function getActiveVote(sessionId, voteId) {
   if (!voteId) return null
   const voteInfo = await pool.query('SELECT * FROM votes WHERE id = $1 AND status = $2', [voteId, 'active'])
@@ -110,6 +152,14 @@ async function getActiveVote(sessionId, voteId) {
   }
 }
 
+/**
+ * Returns vote state for a given vote, optionally filtering for active votes only.
+ * Includes result counts per option, total players in the session, and voter names.
+ * @param {number} sessionId
+ * @param {number|null} voteId
+ * @param {boolean} activeOnly - If true, only returns the vote if its status is 'active'
+ * @returns {Promise<{id, question, options, isAnonymous, results, totalPlayers, totalVotes, voterNames, status}|null>}
+ */
 async function getVoteState(sessionId, voteId, activeOnly = true) {
   if (!voteId) return null
   const voteInfo = activeOnly
@@ -134,6 +184,17 @@ async function getVoteState(sessionId, voteId, activeOnly = true) {
   }
 }
 
+/**
+ * Registers all Socket.IO event handlers.
+ * Middleware authenticates admin sockets via JWT from socket.handshake.auth.token.
+ *
+ * Socket rooms:
+ *   - `session:<sessionId>` — all players in a session
+ *   - `admin:<sessionId>`   — the MJ/DM managing the session
+ *   - `tv:<sessionId>`      — TV display screen(s)
+ *
+ * @param {import('socket.io').Server} io
+ */
 function setupSocket(io) {
   io.use((socket, next) => {
     const token = socket.handshake.auth.token
@@ -145,6 +206,11 @@ function setupSocket(io) {
     next()
   })
 
+  /**
+   * Re-fetches the current vote for a session and broadcasts updated results
+   * to admin and TV. Automatically closes the vote if all players have voted.
+   * @param {number} sessionId
+   */
   async function refreshVoteForSession(sessionId) {
     const sessionRes = await pool.query('SELECT current_vote_id FROM sessions WHERE id = $1', [sessionId])
     const voteId = sessionRes.rows[0]?.current_vote_id
@@ -163,6 +229,12 @@ function setupSocket(io) {
     }
   }
 
+  /**
+   * Removes a player from the session on disconnect or voluntary leave.
+   * Deletes associated vote responses, purchase requests, and the player record.
+   * Notifies admin and TV, refreshes the active vote count, and logs the event.
+   * @param {import('socket.io').Socket} socket
+   */
   async function removePlayer(socket) {
     if (!socket.playerId || !socket.sessionId) return
     try {
