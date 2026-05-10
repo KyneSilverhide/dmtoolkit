@@ -1220,7 +1220,8 @@ function setupSocket(io) {
       } catch (err) { console.error(err) }
     })
 
-    // ── Admin: kick player ───────────────────────────────────────────────────    socket.on('kick-player', async ({ playerId }) => {
+    // ── Admin: kick player ───────────────────────────────────────────────────
+    socket.on('kick-player', async ({ playerId }) => {
       if (!socket.admin) return
       try {
         const pr = await pool.query(

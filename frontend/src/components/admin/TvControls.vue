@@ -331,7 +331,9 @@ onUnmounted(() => {
   text-align: center;
   padding: 0.3rem 0;
 }
-.round-display strong { font-size: 1.5rem; }
+.round-display strong {
+  font-size: 1.5rem;
+}
 .form-row { display: flex; gap: 0.45rem; }
 .form-row.split > * { flex: 1; }
 .form-input {
