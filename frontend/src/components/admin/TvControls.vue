@@ -17,6 +17,15 @@ const tensionDirection = ref('ascending')
 const tensionVibration = ref(false)
 let clockTickInterval = null
 
+// ── Combat round ──────────────────────────────────────────────────────────
+const combatRound = ref(0)
+
+// ── Free timer ────────────────────────────────────────────────────────────
+const timerLabel = ref('Minuteur')
+const timerMinutes = ref(5)
+const timerSeconds = ref(0)
+const activeTimer = ref(null)
+
 function setMode(mode) {
   const socket = getSocket()
   socket.emit('set-tv-mode', { sessionId: sessionStore.activeSession.id, mode })
@@ -59,6 +68,35 @@ function endTensionScale() {
   socket.emit('end-tension-scale', { sessionId: sessionStore.activeSession.id })
 }
 
+// ── Round counter functions ───────────────────────────────────────────────
+function adjustRound(delta) {
+  const socket = getSocket()
+  const newRound = Math.max(0, combatRound.value + delta)
+  socket.emit('set-combat-round', { sessionId: sessionStore.activeSession.id, round: newRound })
+}
+
+function resetRound() {
+  const socket = getSocket()
+  socket.emit('set-combat-round', { sessionId: sessionStore.activeSession.id, round: 0 })
+}
+
+// ── Free timer functions ──────────────────────────────────────────────────
+function startTimer() {
+  const socket = getSocket()
+  const durationSeconds = (Math.max(0, parseInt(timerMinutes.value) || 0) * 60) + (Math.max(0, parseInt(timerSeconds.value) || 0))
+  if (durationSeconds <= 0) return
+  socket.emit('start-timer', {
+    sessionId: sessionStore.activeSession.id,
+    label: timerLabel.value,
+    durationSeconds,
+  })
+}
+
+function stopTimer() {
+  const socket = getSocket()
+  socket.emit('stop-timer', { sessionId: sessionStore.activeSession.id })
+}
+
 const doomRemaining = computed(() => {
   if (!activeDoomClock.value?.endAt) return 0
   return Math.max(0, Math.floor((new Date(activeDoomClock.value.endAt).getTime() - now.value) / 1000))
@@ -67,6 +105,17 @@ const doomRemaining = computed(() => {
 const doomRemainingLabel = computed(() => {
   const mins = Math.floor(doomRemaining.value / 60)
   const secs = doomRemaining.value % 60
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+})
+
+const timerRemaining = computed(() => {
+  if (!activeTimer.value?.endAt) return 0
+  return Math.max(0, Math.floor((new Date(activeTimer.value.endAt).getTime() - now.value) / 1000))
+})
+
+const timerRemainingLabel = computed(() => {
+  const mins = Math.floor(timerRemaining.value / 60)
+  const secs = timerRemaining.value % 60
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
 })
 
@@ -89,6 +138,8 @@ function handleAdminState(data) {
   tvMode.value = data.tvMode || 'lobby'
   activeDoomClock.value = data.doomClock || null
   activeTensionScale.value = data.tensionScale || null
+  combatRound.value = data.combatRound || 0
+  activeTimer.value = data.timer || null
   if (data.tensionScale) {
     tensionDirection.value = data.tensionScale.direction || 'ascending'
     tensionVibration.value = !!data.tensionScale.vibrationEnabled
@@ -118,6 +169,18 @@ function handleTvControlError({ message }) {
   window.setTimeout(() => { controlError.value = '' }, 3000)
 }
 
+function handleRoundUpdated({ round }) {
+  combatRound.value = round
+}
+
+function handleTimerUpdated(data) {
+  activeTimer.value = data
+}
+
+function handleTimerStopped() {
+  activeTimer.value = null
+}
+
 onMounted(() => {
   clockTickInterval = window.setInterval(() => { now.value = Date.now() }, 1000)
   const socket = getSocket()
@@ -127,6 +190,9 @@ onMounted(() => {
   socket.on('tension-scale-updated', handleTensionScaleUpdated)
   socket.on('tension-scale-ended', handleTensionScaleEnded)
   socket.on('tv-control-error', handleTvControlError)
+  socket.on('round-updated', handleRoundUpdated)
+  socket.on('timer-updated', handleTimerUpdated)
+  socket.on('timer-stopped', handleTimerStopped)
 })
 
 onUnmounted(() => {
@@ -138,11 +204,24 @@ onUnmounted(() => {
   socket.off('tension-scale-updated', handleTensionScaleUpdated)
   socket.off('tension-scale-ended', handleTensionScaleEnded)
   socket.off('tv-control-error', handleTvControlError)
+  socket.off('round-updated', handleRoundUpdated)
+  socket.off('timer-updated', handleTimerUpdated)
+  socket.off('timer-stopped', handleTimerStopped)
 })
 </script>
 
 <template>
   <div class="tv-controls">
+    <section class="control-section">
+      <h2 class="section-title">⚔️ Rounds de combat</h2>
+      <div class="round-display">Round <strong>{{ combatRound }}</strong></div>
+      <div class="inline-actions">
+        <button class="action-btn" @click="adjustRound(-1)" :disabled="combatRound <= 0">−1</button>
+        <button class="action-btn" @click="adjustRound(1)">+1</button>
+        <button class="action-btn danger-btn" @click="resetRound">Réinitialiser</button>
+      </div>
+    </section>
+
     <section class="control-section">
       <h2 class="section-title">⏱️ Doom Clock</h2>
       <div class="form-row">
@@ -158,6 +237,24 @@ onUnmounted(() => {
       </div>
       <p v-if="activeDoomClock" class="status-line">
         {{ activeDoomClock.title }} — {{ doomRemainingLabel }}
+      </p>
+    </section>
+
+    <section class="control-section">
+      <h2 class="section-title">⏲️ Minuteur libre</h2>
+      <div class="form-row">
+        <input v-model="timerLabel" class="form-input" type="text" placeholder="Libellé du minuteur" />
+      </div>
+      <div class="form-row split">
+        <input v-model.number="timerMinutes" class="form-input" type="number" min="0" max="1440" placeholder="Minutes" />
+        <input v-model.number="timerSeconds" class="form-input" type="number" min="0" max="59" placeholder="Secondes" />
+      </div>
+      <div class="inline-actions">
+        <button class="action-btn" @click="startTimer">Démarrer</button>
+        <button class="action-btn danger-btn" :disabled="!activeTimer" @click="stopTimer">Arrêter</button>
+      </div>
+      <p v-if="activeTimer" class="status-line">
+        {{ activeTimer.label }} — {{ timerRemainingLabel }}
       </p>
     </section>
 
@@ -227,6 +324,16 @@ onUnmounted(() => {
   padding: 0.15rem 0.5rem;
 }
 .mode-buttons, .inline-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+.round-display {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  color: var(--color-gold-bright);
+  text-align: center;
+  padding: 0.3rem 0;
+}
+.round-display strong {
+  font-size: 1.5rem;
+}
 .form-row { display: flex; gap: 0.45rem; }
 .form-row.split > * { flex: 1; }
 .form-input {

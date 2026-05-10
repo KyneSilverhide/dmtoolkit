@@ -158,6 +158,10 @@ ALTER TABLE sessions ADD COLUMN IF NOT EXISTS map_tokens TEXT;
 
 ALTER TABLE session_images ADD COLUMN IF NOT EXISTS original_name VARCHAR(500);
 ALTER TABLE session_images ADD COLUMN IF NOT EXISTS type VARCHAR(20) DEFAULT 'image';
+
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS combat_round INTEGER DEFAULT 0;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timer_label VARCHAR(200);
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timer_end_at TIMESTAMP;
 `
 
 async function runMigrations() {

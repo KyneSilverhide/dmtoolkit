@@ -106,6 +106,14 @@ function applyJoinedState(data) {
   maxHp.value = data.player.max_hp
   pendingHp.value = data.player.current_hp
   initiativeValue.value = data.player.initiative
+  isConcentrating.value = !!data.player.is_concentrating
+  try {
+    const rawConds = data.player.conditions
+    const parsed = typeof rawConds === 'string' ? JSON.parse(rawConds) : rawConds
+    activeConditions.value = Array.isArray(parsed) ? parsed : []
+  } catch {
+    activeConditions.value = []
+  }
   rememberCurrentPlayer(data.session.code)
 }
 
