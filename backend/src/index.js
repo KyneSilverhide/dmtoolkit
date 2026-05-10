@@ -27,6 +27,8 @@ const io = new Server(server, {
     methods: ['GET', 'POST'],
     credentials: true,
   },
+  pingTimeout: 120000,
+  pingInterval: 25000,
 })
 
 app.use(cors({ origin: FRONTEND_URL, credentials: true }))

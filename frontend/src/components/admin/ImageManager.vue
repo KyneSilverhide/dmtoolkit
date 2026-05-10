@@ -141,7 +141,7 @@ onMounted(loadImages)
         </div>
         <p class="img-name">{{ img.original_name || img.url.split('/').pop() }}</p>
         <button class="show-btn" @click.stop="selectedImageUrl = img.url; showImageOnTv(img.url)" title="Afficher sur la TV">
-          🗺️ Carte TV
+          📺 Afficher TV
         </button>
       </div>
     </div>

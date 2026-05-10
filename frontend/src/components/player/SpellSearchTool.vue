@@ -162,7 +162,7 @@ onUnmounted(() => {
 }
 .search-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .no-results { margin: 0; color: var(--color-text-dim); font-size: 0.85rem; }
-.spell-list { display: flex; flex-direction: column; gap: 0.6rem; max-height: 45dvh; overflow-y: auto; }
+.spell-list { display: flex; flex-direction: column; gap: 0.6rem; }
 .spell-card {
   border: 1px solid var(--color-border);
   border-radius: 10px;
@@ -173,6 +173,6 @@ onUnmounted(() => {
 .spell-name { margin: 0; font-size: 0.95rem; font-family: var(--font-heading); color: var(--color-parchment); }
 .spell-level { font-size: 0.62rem; color: var(--color-gold-dark); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 0.08em; }
 .spell-school, .spell-meta, .spell-desc { margin: 0.15rem 0 0; color: var(--color-text-dim); font-size: 0.76rem; }
-.spell-desc { white-space: pre-line; line-height: 1.45; max-height: 120px; overflow-y: auto; padding-right: 0.25rem; }
+.spell-desc { white-space: pre-line; line-height: 1.45; padding-right: 0.25rem; }
 .spell-link { display: inline-block; margin-top: 0.35rem; font-size: 0.65rem; color: var(--color-gold-dark); text-decoration: none; font-family: var(--font-heading); }
 </style>
