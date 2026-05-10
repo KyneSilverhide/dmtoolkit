@@ -78,6 +78,17 @@ function resolvedText() {
       <p class="dice-result-text">{{ message.resultText }}</p>
     </div>
 
+    <div v-else-if="message.type === 'gold'" class="gold-card">
+      <div class="card-header">
+        <span class="from-name">{{ message.fromName || 'MJ' }}</span>
+        <span class="card-time">{{ formatTime(message.sentAt) }}</span>
+      </div>
+      <div class="gold-content">
+        <span class="gold-icon">💰</span>
+        <span class="gold-text">{{ message.content }}</span>
+      </div>
+    </div>
+
     <div v-else-if="message.type === 'image'" class="image-card">
       <div class="card-header">
         <span class="from-name">{{ message.fromName || 'MJ' }}</span>
@@ -122,6 +133,31 @@ function resolvedText() {
 .dice-card {
   border-left: 3px solid var(--color-gold-dark);
   background: var(--player-panel-highlight-bg, var(--gradient-panel-soft));
+}
+
+.gold-card {
+  padding: 1rem 1.25rem;
+  border-left: 3px solid #d4af37;
+  background: var(--player-panel-highlight-bg, var(--gradient-panel-soft));
+}
+
+.gold-content {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.gold-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.gold-text {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  color: #d4af37;
+  letter-spacing: 0.06em;
 }
 
 .dice-header {
