@@ -19,6 +19,8 @@ import { applyTheme, getThemePreference, setThemePreference } from '../utils/the
 
 const router = useRouter()
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+// __APP_VERSION__ is injected at build time by Vite from frontend/package.json
+const appVersion = __APP_VERSION__
 const activeTab = ref('players')
 const isSessionPanelCollapsed = ref(false)
 const tvMode = ref('lobby')
@@ -250,7 +252,10 @@ onUnmounted(() => {
           <button class="logout-btn" @click="logout">Déconnexion</button>
         </div>
       </div>
-      <p class="admin-name" v-if="authStore.admin">{{ authStore.admin.username }}</p>
+      <p class="admin-name" v-if="authStore.admin">
+        {{ authStore.admin.username }}
+        <span class="app-version">v{{ appVersion }}</span>
+      </p>
 
       <section class="session-header-panel">
         <div class="session-header-top">
@@ -433,6 +438,13 @@ onUnmounted(() => {
   color: var(--color-text-dim);
   text-transform: uppercase;
   margin-bottom: 1rem;
+}
+
+.app-version {
+  margin-left: 0.5rem;
+  opacity: 0.5;
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
 }
 
 .logout-btn {
