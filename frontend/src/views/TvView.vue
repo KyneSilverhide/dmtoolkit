@@ -10,6 +10,7 @@ const TENSION_COLOR_HIGH_RATIO = 0.66
 const TENSION_SHAKE_MEDIUM_RATIO = 0.4
 const TENSION_SHAKE_HARD_RATIO = 0.75
 const TEMP_HP_COLOR = 'var(--tv-info-text)'
+const TIMER_DANGER_THRESHOLD_SECONDS = 10
 
 const route = useRoute()
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
@@ -29,6 +30,12 @@ const now = ref(Date.now())
 let clockTickInterval = null
 const theme = ref(getThemePreference('tv', 'dark'))
 const isLightTheme = computed(() => theme.value === 'light')
+
+// ── Combat round ────────────────────────────────────────────────────────────
+const combatRound = ref(0)
+
+// ── Free timer ──────────────────────────────────────────────────────────────
+const activeTimer = ref(null)
 
 // ── Map state ──────────────────────────────────────────────────────────────
 const currentMapUrl = ref(null)
@@ -263,6 +270,28 @@ const doomRemainingLabel = computed(() => {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
 })
 
+const timerRemaining = computed(() => {
+  if (!activeTimer.value?.endAt) return 0
+  return Math.max(0, Math.floor((new Date(activeTimer.value.endAt).getTime() - now.value) / 1000))
+})
+
+const timerRemainingLabel = computed(() => {
+  const mins = Math.floor(timerRemaining.value / 60)
+  const secs = timerRemaining.value % 60
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+})
+
+// Sort players by initiative descending (null/undefined last) for combat mode
+const sortedPlayers = computed(() => {
+  return [...players.value].sort((a, b) => {
+    const ai = a.initiative
+    const bi = b.initiative
+    if (ai === null || ai === undefined) return 1
+    if (bi === null || bi === undefined) return -1
+    return bi - ai
+  })
+})
+
 const tensionProgress = computed(() => {
   if (!activeTensionScale.value?.steps) return 0
   const direction = activeTensionScale.value.direction || 'ascending'
@@ -307,6 +336,8 @@ onMounted(() => {
     activeMerchant.value = data.activeMerchant || null
     activeDoomClock.value = data.doomClock || null
     activeTensionScale.value = data.tensionScale || null
+    combatRound.value = data.combatRound || 0
+    activeTimer.value = data.timer || null
     data.players.forEach(pl => { previousHp.value[pl.id] = pl.current_hp })
     if (data.mapState) applyMapState(data.mapState)
   })
@@ -412,6 +443,18 @@ onMounted(() => {
     activeTensionScale.value = null
   })
 
+  socket.on('round-updated', ({ round }) => {
+    combatRound.value = round
+  })
+
+  socket.on('timer-updated', (timer) => {
+    activeTimer.value = timer
+  })
+
+  socket.on('timer-stopped', () => {
+    activeTimer.value = null
+  })
+
   // ── Map events ─────────────────────────────────────────────────────────
   socket.on('map-state', applyMapState)
 
@@ -477,6 +520,17 @@ onUnmounted(() => {
 
     <!-- Main TV display -->
     <template v-else>
+      <!-- Doom clock overlay: shown on top of any mode other than doom full-screen -->
+      <div v-if="activeDoomClock && tvMode !== 'doom'" class="doom-overlay" :class="{ danger: doomRemaining <= DOOM_DANGER_THRESHOLD_SECONDS }">
+        <span class="doom-overlay-title">{{ activeDoomClock.title }}</span>
+        <span class="doom-overlay-timer">{{ doomRemainingLabel }}</span>
+      </div>
+
+      <!-- Free timer overlay -->
+      <div v-if="activeTimer && timerRemaining > 0" class="timer-overlay" :class="{ danger: timerRemaining <= TIMER_DANGER_THRESHOLD_SECONDS }">
+        <span class="timer-overlay-label">{{ activeTimer.label }}</span>
+        <span class="timer-overlay-time">{{ timerRemainingLabel }}</span>
+      </div>
       <!-- Lobby mode: session title + QR code + session code -->
       <div v-if="tvMode === 'lobby'" class="lobby-display">
         <header class="tv-header">
@@ -496,9 +550,13 @@ onUnmounted(() => {
           <p class="empty-text">En attente des aventuriers…</p>
         </div>
 
-        <main v-else class="party-grid">
+        <template v-else>
+          <div class="combat-header">
+            <div class="combat-round-badge">⚔️ Round {{ combatRound }}</div>
+          </div>
+          <main class="party-grid">
           <div
-            v-for="player in players"
+            v-for="player in sortedPlayers"
             :key="player.id"
             class="player-card"
             :class="{
@@ -575,6 +633,7 @@ onUnmounted(() => {
             </Transition>
           </div>
         </main>
+        </template>
       </template>
 
       <!-- Vote mode -->
@@ -857,6 +916,101 @@ onUnmounted(() => {
 }
 .empty-icon { font-size: 4rem; opacity: 0.4; }
 .empty-text { font-family: var(--font-heading); font-size: 1.5rem; color: var(--color-text-dim); letter-spacing: 0.2em; }
+
+/* ── Overlays (doom clock + free timer) ───────────────────────────────── */
+.doom-overlay {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid var(--tv-danger-border);
+  border-radius: 12px;
+  padding: 0.5rem 0.85rem;
+  backdrop-filter: blur(4px);
+}
+.doom-overlay.danger {
+  animation: overlayPulse 1s ease-in-out infinite;
+  border-color: var(--tv-danger-text);
+}
+.doom-overlay-title {
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--tv-danger-text);
+  opacity: 0.85;
+}
+.doom-overlay-timer {
+  font-family: var(--font-title);
+  font-size: 1.6rem;
+  color: var(--tv-danger-text);
+  line-height: 1;
+  letter-spacing: 0.05em;
+}
+
+.timer-overlay {
+  position: fixed;
+  top: 1rem;
+  right: 4rem;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid var(--tv-info-border);
+  border-radius: 12px;
+  padding: 0.5rem 0.85rem;
+  backdrop-filter: blur(4px);
+}
+.timer-overlay.danger {
+  border-color: var(--tv-warning-border);
+  animation: overlayPulse 1s ease-in-out infinite;
+}
+.timer-overlay-label {
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--tv-info-text);
+  opacity: 0.85;
+}
+.timer-overlay-time {
+  font-family: var(--font-title);
+  font-size: 1.6rem;
+  color: var(--tv-info-text);
+  line-height: 1;
+  letter-spacing: 0.05em;
+}
+
+@keyframes overlayPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+/* ── Combat header (round badge) ─────────────────────────────────────── */
+.combat-header {
+  display: flex;
+  justify-content: center;
+  padding: 0.6rem 0 0.2rem;
+}
+.combat-round-badge {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-gold-bright);
+  background: var(--tv-gold-bg);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 999px;
+  padding: 0.3rem 1.2rem;
+  text-shadow: var(--text-shadow-accent);
+}
 
 /* ── Party Grid ──────────────────────────────────────────────────────── */
 .party-grid {

@@ -7,6 +7,9 @@ const INITIATIVE_MAX = 99
 
 const MIN_DOOM_DURATION_SECONDS = 5
 const MAX_DOOM_DURATION_SECONDS = 24 * 60 * 60
+const MIN_TIMER_DURATION_SECONDS = 5
+const MAX_TIMER_DURATION_SECONDS = 24 * 60 * 60
+const MAX_COMBAT_ROUND = 9999
 const MIN_TENSION_STEPS = 2
 const MAX_TENSION_STEPS = 20
 const MAX_TITLE_LENGTH = 200
@@ -185,7 +188,22 @@ async function getVoteState(sessionId, voteId, activeOnly = true) {
 }
 
 /**
- * Registers all Socket.IO event handlers.
+ * Serializes the free timer state from a session row.
+ * Returns null if there is no active timer or if it has already expired.
+ * @param {object} session - A row from the sessions table
+ * @returns {{label: string, endAt: string}|null}
+ */
+function serializeTimer(session) {
+  if (!session?.timer_end_at) return null
+  const endAt = new Date(session.timer_end_at)
+  if (Number.isNaN(endAt.getTime()) || endAt.getTime() <= Date.now()) return null
+  return {
+    label: session.timer_label || 'Minuteur',
+    endAt: endAt.toISOString(),
+  }
+}
+
+/**
  * Middleware authenticates admin sockets via JWT from socket.handshake.auth.token.
  *
  * Socket rooms:
@@ -334,7 +352,7 @@ function setupSocket(io) {
 
         socket.emit('session-joined', {
           session: { id: session.id, name: session.name, code: session.code },
-          player: { id: player.id, player_name: player.player_name, ac: player.ac, max_hp: player.max_hp, current_hp: player.current_hp, dnd_class: player.dnd_class, avatar_url: player.avatar_url, initiative: player.initiative },
+          player: { id: player.id, player_name: player.player_name, ac: player.ac, max_hp: player.max_hp, current_hp: player.current_hp, dnd_class: player.dnd_class, avatar_url: player.avatar_url, initiative: player.initiative, conditions: player.conditions, is_concentrating: player.is_concentrating },
           activeMerchant: (session.current_merchant_id && session.tv_mode === 'merchant')
             ? await getMerchantData(session.current_merchant_id)
             : null,
@@ -466,6 +484,8 @@ function setupSocket(io) {
             ? await getMerchantData(session.current_merchant_id)
             : null,
           mapState: serializeMapState(session),
+          combatRound: session.combat_round || 0,
+          timer: serializeTimer(session),
         })
       } catch (err) { console.error(err) }
     })
@@ -504,6 +524,8 @@ function setupSocket(io) {
             ? await getMerchantData(session.current_merchant_id)
             : null,
           mapState: serializeMapState(session),
+          combatRound: session.combat_round || 0,
+          timer: serializeTimer(session),
         })
       } catch (err) { console.error(err) }
     })
@@ -1152,8 +1174,53 @@ function setupSocket(io) {
       } catch (err) { console.error(err) }
     })
 
-    // ── Admin: kick player ───────────────────────────────────────────────────
-    socket.on('kick-player', async ({ playerId }) => {
+    // ── Admin: set combat round ──────────────────────────────────────────────
+    socket.on('set-combat-round', async ({ sessionId, round }) => {
+      if (!socket.admin) return
+      try {
+        const safeRound = Math.max(0, Math.min(MAX_COMBAT_ROUND, parseInt(round) || 0))
+        await pool.query(
+          'UPDATE sessions SET combat_round = $1 WHERE id = $2 AND created_by = $3',
+          [safeRound, sessionId, socket.admin.id]
+        )
+        io.to(`tv:${sessionId}`).emit('round-updated', { round: safeRound })
+        io.to(`admin:${sessionId}`).emit('round-updated', { round: safeRound })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: start free timer ──────────────────────────────────────────────
+    socket.on('start-timer', async ({ sessionId, label, durationSeconds }) => {
+      if (!socket.admin) return
+      try {
+        const parsedDuration = parseInt(durationSeconds, 10)
+        if (Number.isNaN(parsedDuration)) return
+        const safeDuration = Math.max(MIN_TIMER_DURATION_SECONDS, Math.min(MAX_TIMER_DURATION_SECONDS, parsedDuration))
+        const endAt = new Date(Date.now() + safeDuration * 1000)
+        const safeLabel = (label || 'Minuteur').trim().slice(0, MAX_TITLE_LENGTH) || 'Minuteur'
+        await pool.query(
+          'UPDATE sessions SET timer_label = $1, timer_end_at = $2 WHERE id = $3 AND created_by = $4',
+          [safeLabel, endAt, sessionId, socket.admin.id]
+        )
+        const payload = { label: safeLabel, endAt: endAt.toISOString() }
+        io.to(`tv:${sessionId}`).emit('timer-updated', payload)
+        io.to(`admin:${sessionId}`).emit('timer-updated', payload)
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: stop free timer ───────────────────────────────────────────────
+    socket.on('stop-timer', async ({ sessionId }) => {
+      if (!socket.admin) return
+      try {
+        await pool.query(
+          'UPDATE sessions SET timer_label = NULL, timer_end_at = NULL WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        io.to(`tv:${sessionId}`).emit('timer-stopped')
+        io.to(`admin:${sessionId}`).emit('timer-stopped')
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: kick player ───────────────────────────────────────────────────    socket.on('kick-player', async ({ playerId }) => {
       if (!socket.admin) return
       try {
         const pr = await pool.query(
