@@ -21,12 +21,19 @@ app.set('trust proxy', 1)
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
 
+// Mobile browsers suspend WebSocket connections when the tab is in background.
+// A generous pingTimeout (2 min) prevents the server from dropping sleeping phones.
+const SOCKET_PING_TIMEOUT_MS = 120000
+const SOCKET_PING_INTERVAL_MS = 25000
+
 const io = new Server(server, {
   cors: {
     origin: FRONTEND_URL,
     methods: ['GET', 'POST'],
     credentials: true,
   },
+  pingTimeout: SOCKET_PING_TIMEOUT_MS,
+  pingInterval: SOCKET_PING_INTERVAL_MS,
 })
 
 app.use(cors({ origin: FRONTEND_URL, credentials: true }))

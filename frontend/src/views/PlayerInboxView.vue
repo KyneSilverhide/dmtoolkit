@@ -537,6 +537,52 @@ function handleBeforeUnload() {
   }
 }
 
+// ── Socket reconnection ──────────────────────────────────────────────────
+// Tracks whether the player has successfully joined a session at least once.
+// Used to distinguish initial connection from auto-reconnection after mobile sleep.
+let hasJoinedSession = false
+
+async function handleSocketReconnect() {
+  if (!hasJoinedSession) return
+  if (!sessionStore.activeSession || !playerInfo.value) return
+  const socket = getSocket()
+
+  const onJoined = (data) => {
+    clearTimeout(reconnectTimeout)
+    socket.off('error', onError)
+    applyJoinedState(data)
+  }
+  const onError = () => {
+    clearTimeout(reconnectTimeout)
+    socket.off('session-joined', onJoined)
+  }
+
+  socket.once('session-joined', onJoined)
+  socket.once('error', onError)
+
+  // Safety timeout: clean up listeners if the server never responds
+  const reconnectTimeout = setTimeout(() => {
+    socket.off('session-joined', onJoined)
+    socket.off('error', onError)
+  }, 10000)
+
+  try {
+    socket.emit('join-session', {
+      code: sessionStore.activeSession.code,
+      playerName: playerInfo.value.name,
+      ac: playerInfo.value.ac,
+      hp: currentHp.value,
+      dndClass: playerInfo.value.dndClass || null,
+      avatarUrl: playerInfo.value.avatarUrl || null,
+    })
+  } catch (err) {
+    clearTimeout(reconnectTimeout)
+    socket.off('session-joined', onJoined)
+    socket.off('error', onError)
+    console.error('Reconnect emit failed:', err)
+  }
+}
+
 onMounted(async () => {
   const routeCode = String(route.params.code || '').trim()
 
@@ -554,8 +600,10 @@ onMounted(async () => {
     router.replace(`/view/${activeCode}`)
   }
 
+  hasJoinedSession = true
   notificationPermission.value = readNotificationPermission()
   const socket = getSocket()
+  socket.on('connect', handleSocketReconnect)
   socket.on('new-message', handleNewMessage)
   socket.on('dice-result', handleDiceResult)
   socket.on('hp-update-confirmed', handleHpConfirmed)
@@ -579,9 +627,11 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  hasJoinedSession = false
   const socket = getSocket()
   if (socket) {
     if (sessionStore.activeSession) socket.emit('leave-session')
+    socket.off('connect', handleSocketReconnect)
     socket.off('new-message', handleNewMessage)
     socket.off('dice-result', handleDiceResult)
     socket.off('hp-update-confirmed', handleHpConfirmed)
@@ -1035,16 +1085,25 @@ onUnmounted(() => {
 /* ── Header ──────────────────────────────────────────────────────────── */
 .inbox-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
   background: var(--player-header-bg);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
-.header-left { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
-.header-right { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+.header-left { display: flex; align-items: center; gap: 0.6rem; min-width: 0; flex: 1; }
+.header-right { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; flex-wrap: wrap; }
+
+@media (max-width: 480px) {
+  .inbox-header { padding: 0.5rem 0.75rem; gap: 0.35rem; }
+  .header-left { flex: 1 1 100%; }
+  .header-right { flex: 1 1 100%; justify-content: flex-end; }
+  .notify-btn, .theme-toggle-btn, .leave-btn { font-size: 0.6rem; padding: 0.28rem 0.5rem; }
+  .ac-chip { font-size: 0.7rem; }
+}
 
 .notify-btn,
 .theme-toggle-btn {
@@ -1634,10 +1693,12 @@ onUnmounted(() => {
 }
 
 /* ── Modals ──────────────────────────────────────────────────────────── */
+/* Note: modals use <Teleport to="body"> so CSS custom properties defined on
+   .inbox-wrapper are not inherited. All --player-* vars need explicit fallbacks. */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: var(--player-modal-overlay);
+  background: var(--player-modal-overlay, var(--surface-overlay));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1645,7 +1706,7 @@ onUnmounted(() => {
   padding: 1rem;
 }
 .modal-box {
-  background: var(--player-panel-highlight-bg);
+  background: var(--player-panel-highlight-bg, var(--gradient-panel-soft));
   border: 1px solid var(--color-gold-dark);
   border-radius: 16px;
   padding: 2rem 1.5rem;
@@ -1683,21 +1744,21 @@ onUnmounted(() => {
 }
 .dc-badge {
   display: inline-block;
-  background: var(--player-info-bg);
-  border: 1px solid var(--player-info-border);
+  background: var(--player-info-bg, var(--color-info-soft));
+  border: 1px solid var(--player-info-border, var(--color-info-border));
   border-radius: 20px;
   padding: 0.2rem 0.7rem;
   font-family: var(--font-heading);
   font-size: 1rem;
   font-weight: 700;
-  color: var(--player-info-text);
+  color: var(--player-info-text, var(--color-info-bright));
   letter-spacing: 0.05em;
 }
 .modal-close-btn {
   padding: 0.7rem 2rem;
   border-radius: 10px;
   border: 1px solid var(--color-gold-dark);
-  background: var(--player-gold-bg);
+  background: var(--player-gold-bg, var(--surface-gold-soft));
   color: var(--color-gold);
   font-family: var(--font-heading);
   font-size: 0.85rem;
@@ -1707,24 +1768,24 @@ onUnmounted(() => {
   transition: all 0.2s;
   margin-top: 0.5rem;
 }
-.modal-close-btn:hover { background: var(--player-gold-bg-strong); }
+.modal-close-btn:hover { background: var(--player-gold-bg-strong, var(--surface-gold-soft-strong)); }
 
 /* Concentration modal specifics */
-.concentration-modal { border-color: var(--player-info-border); }
-.concentration-modal .modal-title { color: var(--player-info-text); }
+.concentration-modal { border-color: var(--player-info-border, var(--color-info-border)); }
+.concentration-modal .modal-title { color: var(--player-info-text, var(--color-info-bright)); }
 
 /* Purchase result modal */
-.purchase-modal.accepted { border-color: var(--player-success-border); }
-.purchase-modal.accepted .modal-title { color: var(--player-success-text); }
-.purchase-modal.rejected { border-color: var(--player-danger-border); }
-.purchase-modal.rejected .modal-title { color: var(--player-danger-text); }
+.purchase-modal.accepted { border-color: var(--player-success-border, var(--color-success-border)); }
+.purchase-modal.accepted .modal-title { color: var(--player-success-text, var(--color-success)); }
+.purchase-modal.rejected { border-color: var(--player-danger-border, var(--color-danger-border)); }
+.purchase-modal.rejected .modal-title { color: var(--player-danger-text, var(--color-danger)); }
 
 .purchase-modal-items {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  background: var(--player-control-bg);
+  background: var(--player-control-bg, var(--surface-raised));
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
