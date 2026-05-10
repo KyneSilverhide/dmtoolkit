@@ -546,15 +546,41 @@ async function handleSocketReconnect() {
   if (!hasJoinedSession) return
   if (!sessionStore.activeSession || !playerInfo.value) return
   const socket = getSocket()
-  socket.once('session-joined', applyJoinedState)
-  socket.emit('join-session', {
-    code: sessionStore.activeSession.code,
-    playerName: playerInfo.value.name,
-    ac: playerInfo.value.ac,
-    hp: currentHp.value,
-    dndClass: playerInfo.value.dndClass || null,
-    avatarUrl: playerInfo.value.avatarUrl || null,
-  })
+
+  const onJoined = (data) => {
+    clearTimeout(reconnectTimeout)
+    socket.off('error', onError)
+    applyJoinedState(data)
+  }
+  const onError = () => {
+    clearTimeout(reconnectTimeout)
+    socket.off('session-joined', onJoined)
+  }
+
+  socket.once('session-joined', onJoined)
+  socket.once('error', onError)
+
+  // Safety timeout: clean up listeners if the server never responds
+  const reconnectTimeout = setTimeout(() => {
+    socket.off('session-joined', onJoined)
+    socket.off('error', onError)
+  }, 10000)
+
+  try {
+    socket.emit('join-session', {
+      code: sessionStore.activeSession.code,
+      playerName: playerInfo.value.name,
+      ac: playerInfo.value.ac,
+      hp: currentHp.value,
+      dndClass: playerInfo.value.dndClass || null,
+      avatarUrl: playerInfo.value.avatarUrl || null,
+    })
+  } catch (err) {
+    clearTimeout(reconnectTimeout)
+    socket.off('session-joined', onJoined)
+    socket.off('error', onError)
+    console.error('Reconnect emit failed:', err)
+  }
 }
 
 onMounted(async () => {
