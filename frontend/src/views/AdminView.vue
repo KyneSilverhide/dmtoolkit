@@ -15,6 +15,7 @@ import ImageManager from '../components/admin/ImageManager.vue'
 import MerchantManager from '../components/admin/MerchantManager.vue'
 import SearchTool from '../components/admin/SearchTool.vue'
 import MapManager from '../components/admin/MapManager.vue'
+import GoldDividerTool from '../components/admin/GoldDividerTool.vue'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 
 const router = useRouter()
@@ -34,6 +35,21 @@ const hasActiveDoom = ref(false)
 const hasActiveTension = ref(false)
 const hasActiveMap = ref(false)
 
+const playerRollToasts = ref([])
+let playerRollToastId = 0
+
+function pushPlayerRollToast(payload) {
+  const id = ++playerRollToastId
+  playerRollToasts.value = [...playerRollToasts.value, { id, ...payload }]
+  setTimeout(() => {
+    playerRollToasts.value = playerRollToasts.value.filter(t => t.id !== id)
+  }, 6000)
+}
+
+function dismissPlayerRollToast(id) {
+  playerRollToasts.value = playerRollToasts.value.filter(t => t.id !== id)
+}
+
 
 const tabs = [
   { key: 'players', label: 'Joueurs', icon: '🧙' },
@@ -45,6 +61,7 @@ const tabs = [
   { key: 'images', label: 'Images', icon: '🖼️' },
   { key: 'map', label: 'Carte', icon: '🗺️' },
   { key: 'merchants', label: 'Marchands', icon: '🏪' },
+  { key: 'tresor', label: 'Trésor', icon: '💰' },
   { key: 'search', label: 'Recherche', icon: '🔍' },
 ]
 
@@ -202,6 +219,10 @@ onMounted(() => {
     hasActiveTension.value = false
     if (tvMode.value === 'tension') tvMode.value = 'lobby'
   })
+
+  socket.on('player-roll-result', (payload) => {
+    pushPlayerRollToast(payload)
+  })
 })
 
 watch(
@@ -237,6 +258,7 @@ onUnmounted(() => {
   socket.off('tension-scale-updated')
   socket.off('tension-scale-ended')
   socket.off('map-state')
+  socket.off('player-roll-result')
 })
 </script>
 
@@ -323,6 +345,9 @@ onUnmounted(() => {
           <MerchantManager v-if="sessionStore.activeSession" />
           <p v-else class="no-session-msg">Aucune session active. Créez ou sélectionnez une session.</p>
         </div>
+        <div v-show="activeTab === 'tresor'">
+          <GoldDividerTool />
+        </div>
         <div v-show="activeTab === 'search'">
           <SearchTool />
         </div>
@@ -354,6 +379,31 @@ onUnmounted(() => {
         <p v-else class="no-session-msg">Sélectionnez une session pour piloter l'écran TV.</p>
       </aside>
     </main>
+
+    <!-- ── Player roll toasts ──────────────────────────────────────────────── -->
+    <TransitionGroup name="roll-toast" tag="div" class="player-roll-toasts">
+      <div
+        v-for="toast in playerRollToasts"
+        :key="toast.id"
+        class="player-roll-toast"
+        :class="{ hidden: toast.hidden }"
+        @click="dismissPlayerRollToast(toast.id)"
+      >
+        <span class="prt-icon">🎲</span>
+        <div class="prt-body">
+          <span class="prt-name">{{ toast.playerName }}</span>
+          <span class="prt-label">
+            {{ toast.diceCount }}d{{ toast.diceType }}
+            <template v-if="toast.modifier !== 0">{{ toast.modifier > 0 ? '+' : '' }}{{ toast.modifier }}</template>
+            <span v-if="toast.rollType !== 'normal'" class="prt-type">
+              {{ toast.rollType === 'advantage' ? ' (avantage)' : ' (désavantage)' }}
+            </span>
+          </span>
+          <span v-if="toast.hidden" class="prt-result hidden-result">🙈 Jet caché — {{ toast.total }}</span>
+          <span v-else class="prt-result">= {{ toast.total }}</span>
+        </div>
+      </div>
+    </TransitionGroup>
   </div>
 </template>
 
@@ -716,5 +766,85 @@ onUnmounted(() => {
 .tv-mode-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+/* ── Player roll toasts ─────────────────────────────────────────────── */
+.player-roll-toasts {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 900;
+  pointer-events: none;
+}
+
+.player-roll-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--color-gold-dark);
+  background: var(--admin-panel-highlight-bg);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.player-roll-toast.hidden {
+  border-color: var(--admin-info-border);
+}
+
+.roll-toast-enter-active, .roll-toast-leave-active {
+  transition: opacity 0.3s, transform 0.3s;
+}
+.roll-toast-enter-from, .roll-toast-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.prt-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.prt-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.prt-name {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-gold-dark);
+}
+
+.prt-label {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  color: var(--color-text-dim);
+}
+
+.prt-type {
+  font-style: italic;
+}
+
+.prt-result {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  color: var(--color-gold-bright);
+}
+
+.prt-result.hidden-result {
+  color: var(--admin-info-text);
+  font-size: 0.85rem;
 }
 </style>

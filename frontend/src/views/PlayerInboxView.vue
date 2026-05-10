@@ -6,6 +6,7 @@ import { sessionStore } from '../stores/session.js'
 import MessageCard from '../components/player/MessageCard.vue'
 import SpellSearchTool from '../components/player/SpellSearchTool.vue'
 import PlayerNotesTool from '../components/player/PlayerNotesTool.vue'
+import PlayerDiceTool from '../components/player/PlayerDiceTool.vue'
 import { getLastKnownPlayer, saveLastKnownPlayer, removeLastKnownPlayer } from '../utils/playerSessionMemory.js'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 
@@ -22,7 +23,7 @@ const TEMP_HP_COLOR = 'var(--player-info-text)'
 const MAX_HP_LIMIT = 9999
 
 // ── Active tab ───────────────────────────────────────────────────────────
-// Tabs: 'combat' | 'outils' | 'boutique' | 'vote' | 'messages'
+// Tabs: 'combat' | 'dés' | 'notes' | 'sorts' | 'boutique' | 'vote' | 'messages'
 const activeTab = ref('combat')
 let hasRequestedNotificationPermission = false
 const rejoinError = ref('')
@@ -483,8 +484,7 @@ const handleMerchantClosed = () => {
   activeMerchant.value = null
   cart.value = {}
   cartSending.value = false
-  if (activeTab.value === 'boutique') activeTab.value = 'combat'
-}
+  if (activeTab.value === 'boutique') activeTab.value = 'combat'}
 const handleMerchantItemsUpdated = (data) => {
   activeMerchant.value = data
 }
@@ -623,6 +623,7 @@ onMounted(async () => {
   socket.on('counter-offer-result', handleCounterOfferResult)
   socket.on('purchase-error', handlePurchaseError)
   socket.on('kicked', handleKicked)
+  socket.on('player-roll-hidden-sent', () => {})
   window.addEventListener('beforeunload', handleBeforeUnload)
 })
 
@@ -651,6 +652,7 @@ onUnmounted(() => {
     socket.off('counter-offer-result', handleCounterOfferResult)
     socket.off('purchase-error', handlePurchaseError)
     socket.off('kicked', handleKicked)
+    socket.off('player-roll-hidden-sent')
   }
   window.removeEventListener('beforeunload', handleBeforeUnload)
   if (attentionAudioContext) {
@@ -862,12 +864,24 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- ── OUTILS tab (Notes + Sorts) ───────────────────────────────── -->
-      <div v-show="activeTab === 'outils'" class="tab-panel">
+      <!-- ── DÉS tab (Lancer de dés joueur) ──────────────────────────────── -->
+      <div v-show="activeTab === 'dés'" class="tab-panel">
         <div class="panel">
-          <p class="panel-label">📝 Notes</p>
+          <p class="panel-label">🎲 Lancer de Dés</p>
+          <PlayerDiceTool />
+        </div>
+      </div>
+
+      <!-- ── NOTES tab ─────────────────────────────────────────────────── -->
+      <div v-show="activeTab === 'notes'" class="tab-panel">
+        <div class="panel">
+          <p class="panel-label">📝 Notes &amp; Dessin</p>
           <PlayerNotesTool />
         </div>
+      </div>
+
+      <!-- ── SORTS tab ─────────────────────────────────────────────────── -->
+      <div v-show="activeTab === 'sorts'" class="tab-panel">
         <div class="panel">
           <p class="panel-label">🔍 Recherche de sorts</p>
           <SpellSearchTool />
@@ -1004,11 +1018,27 @@ onUnmounted(() => {
       </button>
       <button
         class="tab-item"
-        :class="{ active: activeTab === 'outils' }"
-        @click="switchTab('outils')"
+        :class="{ active: activeTab === 'dés' }"
+        @click="switchTab('dés')"
       >
-        <span class="tab-icon">🛠️</span>
-        <span class="tab-label">Outils</span>
+        <span class="tab-icon">🎲</span>
+        <span class="tab-label">Dés</span>
+      </button>
+      <button
+        class="tab-item"
+        :class="{ active: activeTab === 'notes' }"
+        @click="switchTab('notes')"
+      >
+        <span class="tab-icon">📝</span>
+        <span class="tab-label">Notes</span>
+      </button>
+      <button
+        class="tab-item"
+        :class="{ active: activeTab === 'sorts' }"
+        @click="switchTab('sorts')"
+      >
+        <span class="tab-icon">🔍</span>
+        <span class="tab-label">Sorts</span>
       </button>
       <button
         class="tab-item"
@@ -1665,6 +1695,12 @@ onUnmounted(() => {
   100% { transform: rotate(8deg) scale(1.2); }
 }
 .tab-label { font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+
+@media (max-width: 420px) {
+  .tab-label { display: none; }
+  .tab-item { padding: 0.7rem 0.2rem; }
+  .tab-icon { font-size: 1.35rem; }
+}
 .tab-badge {
   position: absolute;
   top: 4px; right: calc(50% - 18px);

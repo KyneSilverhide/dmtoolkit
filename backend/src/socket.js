@@ -912,6 +912,96 @@ function setupSocket(io) {
       } catch (err) { console.error(err) }
     })
 
+    // ── Player: roll dice ───────────────────────────────────────────────────
+    socket.on('player-roll', async ({ diceType, diceCount, modifier, rollType, hidden, rolls, total }) => {
+      if (!socket.playerId || !socket.sessionId) return
+      try {
+        const pr = await pool.query('SELECT player_name FROM players WHERE id = $1', [socket.playerId])
+        const playerName = pr.rows[0]?.player_name || 'Inconnu'
+
+        const sides = Math.max(2, parseInt(diceType) || 20)
+        const count = Math.max(1, Math.min(20, parseInt(diceCount) || 1))
+        const mod = Math.max(-99, Math.min(99, parseInt(modifier) || 0))
+        const type = ['normal', 'advantage', 'disadvantage'].includes(rollType) ? rollType : 'normal'
+
+        let finalRolls, finalTotal
+
+        if (hidden) {
+          const rollSet = () => Array.from({ length: count }, () => Math.floor(Math.random() * sides) + 1)
+          if (type === 'advantage') {
+            const s1 = rollSet()
+            const s2 = rollSet()
+            finalRolls = s1.reduce((a, b) => a + b, 0) >= s2.reduce((a, b) => a + b, 0) ? s1 : s2
+          } else if (type === 'disadvantage') {
+            const s1 = rollSet()
+            const s2 = rollSet()
+            finalRolls = s1.reduce((a, b) => a + b, 0) <= s2.reduce((a, b) => a + b, 0) ? s1 : s2
+          } else {
+            finalRolls = rollSet()
+          }
+          finalTotal = finalRolls.reduce((a, b) => a + b, 0) + mod
+        } else {
+          finalRolls = Array.isArray(rolls) ? rolls.slice(0, 20).map(r => parseInt(r) || 0) : []
+          finalTotal = parseInt(total) || 0
+        }
+
+        const payload = {
+          playerName,
+          diceType: sides,
+          diceCount: count,
+          modifier: mod,
+          rollType: type,
+          hidden,
+          rolls: finalRolls,
+          total: finalTotal,
+        }
+
+        io.to(`admin:${socket.sessionId}`).emit('player-roll-result', payload)
+
+        if (!hidden) {
+          socket.emit('player-roll-confirmed', payload)
+        } else {
+          socket.emit('player-roll-hidden-sent')
+        }
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: send gold split to players ───────────────────────────────────
+    socket.on('send-gold-split', async ({ sessionId, shares }) => {
+      if (!socket.admin) return
+      try {
+        if (!Array.isArray(shares) || shares.length === 0) return
+        const sessionRes = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        if (!sessionRes.rows[0]) return
+
+        for (const share of shares) {
+          const { playerId, pp = 0, po = 0, pe = 0, pa = 0, pc = 0 } = share
+          if (!playerId) continue
+          const parts = []
+          if (pp > 0) parts.push(`${pp} PP`)
+          if (po > 0) parts.push(`${po} PO`)
+          if (pe > 0) parts.push(`${pe} PE`)
+          if (pa > 0) parts.push(`${pa} PA`)
+          if (pc > 0) parts.push(`${pc} PC`)
+          const content = parts.length > 0
+            ? parts.join(', ')
+            : 'Rien (le trésor ne se divise pas équitablement pour vous)'
+          const pr = await pool.query('SELECT socket_id FROM players WHERE id = $1 AND session_id = $2', [playerId, sessionId])
+          if (pr.rows[0]?.socket_id) {
+            io.to(pr.rows[0].socket_id).emit('new-message', {
+              fromName: socket.admin.username,
+              type: 'gold',
+              content,
+              sentAt: new Date(),
+            })
+          }
+        }
+      } catch (err) { console.error(err) }
+    })
+
     socket.on('disconnect', async () => { await removePlayer(socket) })
 
     // ── Admin: create merchant ──────────────────────────────────────────────
