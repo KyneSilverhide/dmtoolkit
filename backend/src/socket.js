@@ -942,7 +942,14 @@ function setupSocket(io) {
           finalTotal = finalRolls.reduce((a, b) => a + b, 0) + mod
         } else {
           finalRolls = Array.isArray(rolls) ? rolls.slice(0, 20).map(r => parseInt(r) || 0) : []
-          finalTotal = parseInt(total) || 0
+          // Validate each roll is within expected bounds
+          if (!finalRolls.every(r => r >= 1 && r <= sides)) {
+            socket.emit('error', { message: 'Valeurs de dés invalides.' })
+            return
+          }
+          const expectedTotal = finalRolls.reduce((a, b) => a + b, 0) + mod
+          // Validate the total matches the declared rolls + modifier
+          finalTotal = expectedTotal
         }
 
         const payload = {

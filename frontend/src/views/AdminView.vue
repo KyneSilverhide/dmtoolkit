@@ -221,7 +221,13 @@ onMounted(() => {
   })
 
   socket.on('player-roll-result', (payload) => {
-    pushPlayerRollToast(payload)
+    try {
+      if (payload && typeof payload === 'object') {
+        pushPlayerRollToast(payload)
+      }
+    } catch (err) {
+      console.error('player-roll-result handler error:', err)
+    }
   })
 })
 

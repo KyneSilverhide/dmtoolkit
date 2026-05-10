@@ -623,7 +623,6 @@ onMounted(async () => {
   socket.on('counter-offer-result', handleCounterOfferResult)
   socket.on('purchase-error', handlePurchaseError)
   socket.on('kicked', handleKicked)
-  socket.on('player-roll-hidden-sent', () => {})
   window.addEventListener('beforeunload', handleBeforeUnload)
 })
 
@@ -652,7 +651,6 @@ onUnmounted(() => {
     socket.off('counter-offer-result', handleCounterOfferResult)
     socket.off('purchase-error', handlePurchaseError)
     socket.off('kicked', handleKicked)
-    socket.off('player-roll-hidden-sent')
   }
   window.removeEventListener('beforeunload', handleBeforeUnload)
   if (attentionAudioContext) {

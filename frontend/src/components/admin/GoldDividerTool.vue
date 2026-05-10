@@ -1,8 +1,10 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { sessionStore } from '../../stores/session.js'
 import { authStore } from '../../stores/auth.js'
 import { getSocket } from '../../socket.js'
+
+const MAX_COIN_AMOUNT = 99999
 
 const COINS = [
   { key: 'pp', label: 'PP', name: 'Platine', color: '#e5e4e2' },
@@ -105,8 +107,7 @@ function reset() {
                 type="number"
                 class="coin-input"
                 min="0"
-                max="99999"
-                placeholder="0"
+                :max="MAX_COIN_AMOUNT"                placeholder="0"
               />
               <button class="step-btn" @click="amounts[coin.key] = (Number(amounts[coin.key]) || 0) + 1">+</button>
             </div>

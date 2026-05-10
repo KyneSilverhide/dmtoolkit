@@ -5,6 +5,7 @@ import { getSocket } from '../../socket.js'
 const DICE_TYPES = [4, 6, 8, 10, 12, 20, 100]
 const MAX_COUNT = 20
 const MAX_MODIFIER = 99
+const ANIMATION_STEPS = 12
 
 const selectedDie = ref(20)
 const diceCount = ref(1)
@@ -58,7 +59,7 @@ async function roll() {
 
   // Animate total count-up
   animatedTotal.value = 1
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < ANIMATION_STEPS; i++) {
     animatedTotal.value = Math.floor(Math.random() * (selectedDie.value * diceCount.value)) + 1
     await new Promise(r => setTimeout(r, 40 + i * 4))
   }
