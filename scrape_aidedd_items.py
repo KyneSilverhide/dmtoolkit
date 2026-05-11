@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from urllib.parse import quote
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 LIST_URL = "https://www.aidedd.org/dnd-filters/objets-magiques.php"
 DETAIL_BASE_URL = "https://www.aidedd.org/dnd/om.php?vf={slug}"
@@ -23,6 +23,78 @@ ALLOWED_HTML_TAGS = frozenset({
 
 def clean_text(value: str) -> str:
     return re.sub(r"\s+", " ", (value or "")).strip()
+
+
+def links_to_em(node: Tag) -> None:
+    """Replace <a> tags with <em> so spell/item name links keep italic emphasis.
+    Mutates the node in-place."""
+    for a in list(node.find_all("a")):
+        em = Tag(name="em")
+        for child in list(a.children):
+            em.append(child.extract())
+        a.replace_with(em)
+
+
+def convert_row_divs_to_tables(node: Tag) -> None:
+    """
+    Detect AideDD's CSS-table pattern: consecutive sibling <div> elements
+    each containing exactly N >= 2 direct <p> children (and no other tags).
+    Converts them to a proper HTML <table> (first row → <thead>, rest → <tbody>).
+    Runs repeatedly until no more conversions are possible.
+    Mutates the node in-place.
+    """
+    changed = True
+    while changed:
+        changed = False
+        candidates = list(node.find_all(True)) + [node]
+        for parent in candidates:
+            tag_children = [c for c in parent.children if isinstance(c, Tag)]
+            i = 0
+            while i < len(tag_children):
+                child = tag_children[i]
+                if child.name != "div":
+                    i += 1
+                    continue
+                ps = [c for c in child.children if isinstance(c, Tag) and c.name == "p"]
+                others = [c for c in child.children if isinstance(c, Tag) and c.name != "p"]
+                if len(ps) < 2 or others:
+                    i += 1
+                    continue
+                ncols = len(ps)
+                rows = [child]
+                j = i + 1
+                while j < len(tag_children):
+                    sib = tag_children[j]
+                    if sib.name != "div":
+                        break
+                    sib_ps = [c for c in sib.children if isinstance(c, Tag) and c.name == "p"]
+                    sib_oth = [c for c in sib.children if isinstance(c, Tag) and c.name != "p"]
+                    if len(sib_ps) != ncols or sib_oth:
+                        break
+                    rows.append(sib)
+                    j += 1
+                if len(rows) >= 2:
+                    tbl = Tag(name="table")
+                    thead = Tag(name="thead")
+                    tbody = Tag(name="tbody")
+                    tbl.append(thead)
+                    tbl.append(tbody)
+                    for ri, rd in enumerate(rows):
+                        tr = Tag(name="tr")
+                        rdps = [c for c in rd.children if isinstance(c, Tag) and c.name == "p"]
+                        for p in rdps:
+                            cell = Tag(name="th" if ri == 0 else "td")
+                            for ch in list(p.children):
+                                cell.append(ch.extract())
+                            tr.append(cell)
+                        (thead if ri == 0 else tbody).append(tr)
+                    rows[0].replace_with(tbl)
+                    for rd in rows[1:]:
+                        rd.decompose()
+                    changed = True
+                    break
+            if changed:
+                break
 
 
 def slugify_name(name: str) -> str:
@@ -139,15 +211,20 @@ def fetch_detail(session: requests.Session, name: str, timeout: float):
         # --- Rich HTML (preserves tables, bold, lists, etc.) ---
         rich_local = BeautifulSoup(str(desc_node), "html.parser")
         content_div = rich_local.find("div", class_="description") or rich_local
-        # Remove disallowed tags one pass at a time until none remain.
-        # Using a loop ensures tags exposed by unwrap() are also processed.
+        # 1. Convert <a> links to <em> to preserve spell/item name emphasis
+        #    and avoid fragmenting surrounding text into isolated paragraphs.
+        links_to_em(content_div)
+        # 2. Detect AideDD's CSS pseudo-tables (row <div>s each with N <p> cells)
+        #    and convert them to proper <table> elements before stripping divs.
+        convert_row_divs_to_tables(content_div)
+        # 3. Remove disallowed tags (unwrap keeps their text content).
         while True:
             disallowed = [t for t in content_div.find_all(True) if t.name not in ALLOWED_HTML_TAGS]
             if not disallowed:
                 break
             for tag in disallowed:
                 tag.unwrap()
-        # Strip all attributes from the remaining (allowed) tags
+        # 4. Strip all attributes from the remaining (allowed) tags
         for tag in content_div.find_all(True):
             tag.attrs = {}
         description_html = "".join(str(c) for c in content_div.children).strip()
