@@ -11,6 +11,19 @@ const searchCache = new Map()
 const MIN_AUTO_SEARCH_LENGTH = 3
 let autoSearchTimer = null
 
+function descriptionHtml(item) {
+  if (item.description_html) return item.description_html
+  if (!item.description) return ''
+  // Escape plain text so it is safe to insert as HTML
+  const escaped = item.description
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>')
+  return `<p>${escaped}</p>`
+}
+
 const RARITY_COLORS = {
   'commun': 'var(--color-text-dim)',
   'peu commun': '#1eff00',
@@ -104,7 +117,11 @@ onUnmounted(() => {
             :style="{ color: rarityColor(item.rarity) }"
           > • {{ item.rarity }}</span>
         </p>
-        <p v-if="item.description" class="item-desc">{{ item.description }}</p>
+        <div
+          v-if="item.description_html || item.description"
+          class="item-desc"
+          v-html="descriptionHtml(item)"
+        />
         <a :href="item.detail_url" target="_blank" class="item-link">Voir sur AideDD ↗</a>
       </article>
     </div>
@@ -158,6 +175,43 @@ onUnmounted(() => {
 .item-meta { margin: 0.15rem 0 0; font-size: 0.76rem; }
 .item-type { color: var(--color-gold-dark); font-family: var(--font-heading); }
 .item-rarity { font-family: var(--font-heading); }
-.item-desc { margin: 0.15rem 0 0; color: var(--color-text-dim); font-size: 0.76rem; white-space: pre-line; line-height: 1.45; }
+.item-desc {
+  margin: 0.15rem 0 0;
+  color: var(--color-text-dim);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+.item-desc :deep(p) { margin: 0.3rem 0; }
+.item-desc :deep(p:first-child) { margin-top: 0; }
+.item-desc :deep(br) { display: block; content: ''; margin-top: 0.2rem; }
+.item-desc :deep(strong),
+.item-desc :deep(b) { color: var(--color-parchment); font-weight: 600; }
+.item-desc :deep(em),
+.item-desc :deep(i) { font-style: italic; }
+.item-desc :deep(ul),
+.item-desc :deep(ol) { margin: 0.3rem 0; padding-left: 1.2rem; }
+.item-desc :deep(li) { margin: 0.1rem 0; }
+.item-desc :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5rem 0;
+  font-size: 0.73rem;
+}
+.item-desc :deep(th),
+.item-desc :deep(td) {
+  border: 1px solid var(--color-border);
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+.item-desc :deep(th) {
+  background: var(--surface-raised, rgba(255,255,255,0.05));
+  color: var(--color-gold-dark);
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+.item-desc :deep(tbody tr:hover) {
+  background: rgba(255, 255, 255, 0.03);
+}
 .item-link { display: inline-block; margin-top: 0.35rem; font-size: 0.65rem; color: var(--color-gold-dark); text-decoration: none; font-family: var(--font-heading); }
 </style>
