@@ -149,6 +149,72 @@ def extract_list_rows(html: str):
             unique[key] = item
     return list(unique.values())
 
+def table_to_text(table_tag) -> str:
+    """Convertit un <table> HTML en texte formaté avec pipes."""
+    rows = table_tag.find_all("tr")
+    lines = []
+    for row in rows:
+        cells = [clean_text(cell.get_text(" ", strip=True)) for cell in row.find_all(["th", "td"])]
+        if cells:
+            lines.append(" | ".join(cells))
+    return "\n".join(lines)
+
+
+def description_to_text(desc_node) -> str:
+    """Convertit le div.description en texte propre, tableaux inclus."""
+    if not desc_node:
+        return ""
+
+    parts = []
+    for child in desc_node.children:
+        if isinstance(child, str):
+            text = re.sub(r"\s+", " ", child).strip()
+            if text:
+                parts.append(text)
+        elif child.name == "br":
+            # Saut de ligne — ignorer les br isolés, ils seront gérés par la jointure
+            pass
+        elif child.name == "table":
+            parts.append(table_to_text(child))
+        elif child.name in ("p", "div", "span", "em", "strong", "b", "i", "u"):
+            # Vérifier s'il contient un tableau imbriqué
+            inner_table = child.find("table")
+            if inner_table:
+                # Texte avant le tableau
+                raw = child.get_text(" ", strip=True)
+                parts.append(re.sub(r"\s+", " ", raw).strip())
+            else:
+                text = re.sub(r"\s+", " ", child.get_text(" ", strip=True)).strip()
+                if text:
+                    parts.append(text)
+        elif child.name in ("ul", "ol"):
+            for li in child.find_all("li"):
+                text = re.sub(r"\s+", " ", li.get_text(" ", strip=True)).strip()
+                if text:
+                    parts.append(f"• {text}")
+        else:
+            text = re.sub(r"\s+", " ", child.get_text(" ", strip=True)).strip()
+            if text:
+                parts.append(text)
+
+    # Joindre les parties, aplatir les lignes vides multiples
+    result = "\n\n".join(p for p in parts if p)
+    result = re.sub(r"\n{3,}", "\n\n", result)
+    return result.strip()
+
+
+def description_to_html(desc_node) -> str:
+    """Retourne le HTML nettoyé du div.description (sans le div lui-même)."""
+    if not desc_node:
+        return ""
+    # Supprimer les <br> isolés en début/fin
+    for br in desc_node.find_all("br"):
+        # Remplacer br par \n dans le HTML
+        br.replace_with("\n")
+    inner = desc_node.decode_contents()
+    # Nettoyer les lignes vides multiples
+    inner = re.sub(r"\n{3,}", "\n\n", inner)
+    return inner.strip()
 
 def fetch_detail(session: requests.Session, name: str, timeout: float):
     slug = slugify_name(name)
@@ -196,39 +262,8 @@ def fetch_detail(session: requests.Session, name: str, timeout: float):
 
     # Description
     desc_node = col1.select_one("div.description") if col1 else soup.select_one("div.description")
-    description = ""
-    description_html = ""
-    if desc_node:
-        # --- Plain text (keep for backward-compat / search indexing) ---
-        plain_local = BeautifulSoup(str(desc_node), "html.parser")
-        for br in plain_local.select("br"):
-            br.replace_with("\n")
-        raw = plain_local.get_text("\n", strip=True)
-        lines = [re.sub(r"\s+", " ", ln).strip() for ln in raw.splitlines()]
-        lines = [ln for ln in lines if ln]
-        description = "\n\n".join(lines)
-
-        # --- Rich HTML (preserves tables, bold, lists, etc.) ---
-        rich_local = BeautifulSoup(str(desc_node), "html.parser")
-        content_div = rich_local.find("div", class_="description") or rich_local
-        # 1. Convert <a> links to <em> to preserve spell/item name emphasis
-        #    and avoid fragmenting surrounding text into isolated paragraphs.
-        links_to_em(content_div)
-        # 2. Detect AideDD's CSS pseudo-tables (row <div>s each with N <p> cells)
-        #    and convert them to proper <table> elements before stripping divs.
-        convert_row_divs_to_tables(content_div)
-        # 3. Remove disallowed tags (unwrap keeps their text content).
-        while True:
-            disallowed = [t for t in content_div.find_all(True) if t.name not in ALLOWED_HTML_TAGS]
-            if not disallowed:
-                break
-            for tag in disallowed:
-                tag.unwrap()
-        # 4. Strip all attributes from the remaining (allowed) tags
-        for tag in content_div.find_all(True):
-            tag.attrs = {}
-        description_html = "".join(str(c) for c in content_div.children).strip()
-        description_html = re.sub(r"\n{3,}", "\n\n", description_html)
+    description = description_to_text(desc_node)
+    description_html = description_to_html(BeautifulSoup(str(desc_node), "html.parser").select_one("div.description") if desc_node else None)
 
     # Source
     source_node = col1.select_one("div.source") if col1 else soup.select_one("div.source")
