@@ -302,7 +302,7 @@ onUnmounted(() => {
         </div>
       </section>
 
-      <nav class="admin-nav">
+      <nav v-if="sessionStore.activeSession" class="admin-nav">
         <button
           v-for="tab in tabs"
           :key="tab.key"
@@ -318,9 +318,9 @@ onUnmounted(() => {
 
     <main class="admin-main-grid">
       <section class="admin-main">
+        <template v-if="sessionStore.activeSession">
         <div v-show="activeTab === 'players'">
-          <PlayerList v-if="sessionStore.activeSession" />
-          <p v-else class="no-session-msg">Aucune session active. Choisissez une session dans l'entête.</p>
+          <PlayerList />
         </div>
         <div v-show="activeTab === 'message'">
           <MessageTool />
@@ -332,24 +332,19 @@ onUnmounted(() => {
           <SessionJournal />
         </div>
         <div v-show="activeTab === 'tension'">
-          <TvControls v-if="sessionStore.activeSession" />
-          <p v-else class="no-session-msg">Aucune session active. Choisissez une session dans l'entête.</p>
+          <TvControls />
         </div>
         <div v-show="activeTab === 'vote'">
-          <VoteManager v-if="sessionStore.activeSession" />
-          <p v-else class="no-session-msg">Aucune session active. Créez ou sélectionnez une session.</p>
+          <VoteManager />
         </div>
         <div v-show="activeTab === 'images'">
-          <ImageManager v-if="sessionStore.activeSession" />
-          <p v-else class="no-session-msg">Aucune session active. Créez ou sélectionnez une session.</p>
+          <ImageManager />
         </div>
         <div v-show="activeTab === 'map'">
-          <MapManager v-if="sessionStore.activeSession" />
-          <p v-else class="no-session-msg">Aucune session active. Créez ou sélectionnez une session.</p>
+          <MapManager />
         </div>
         <div v-show="activeTab === 'merchants'">
-          <MerchantManager v-if="sessionStore.activeSession" />
-          <p v-else class="no-session-msg">Aucune session active. Créez ou sélectionnez une session.</p>
+          <MerchantManager />
         </div>
         <div v-show="activeTab === 'tresor'">
           <GoldDividerTool />
@@ -357,6 +352,8 @@ onUnmounted(() => {
         <div v-show="activeTab === 'search'">
           <SearchTool />
         </div>
+        </template>
+        <p v-else class="no-session-msg">Sélectionnez ou créez une session pour accéder aux outils.</p>
       </section>
 
       <aside class="tv-sidebar">

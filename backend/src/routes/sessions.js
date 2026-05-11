@@ -120,6 +120,26 @@ router.patch('/:id/close', authenticateToken, async (req, res) => {
   }
 })
 
+router.patch('/:id/reopen', authenticateToken, async (req, res) => {
+  try {
+    const check = await pool.query(
+      'SELECT id, status FROM sessions WHERE id = $1 AND created_by = $2',
+      [req.params.id, req.admin.id]
+    )
+    if (!check.rows[0]) return res.status(404).json({ error: 'Session not found.' })
+    if (check.rows[0].status === 'active') return res.status(400).json({ error: 'Session is already active.' })
+
+    const result = await pool.query(
+      "UPDATE sessions SET status = 'active' WHERE id = $1 RETURNING *",
+      [req.params.id]
+    )
+    res.json(result.rows[0])
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
 router.delete('/:id', authenticateToken, async (req, res) => {
   const sessionId = Number(req.params.id)
   if (!Number.isInteger(sessionId) || sessionId <= 0) {
