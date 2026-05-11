@@ -106,6 +106,23 @@ async function loadSessions() {
   } catch {}
 }
 
+async function reopenSession(id) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/sessions/${id}/reopen`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      error.value = data.error || 'Erreur lors de la réouverture.'
+      return
+    }
+    await loadSessions()
+  } catch {
+    error.value = 'Erreur réseau lors de la réouverture.'
+  }
+}
+
 async function closeSession(id) {
   try {
     await fetch(`${BACKEND_URL}/api/sessions/${id}/close`, {
@@ -226,6 +243,7 @@ onMounted(loadSessions)
           </div>
           <div class="session-actions-right">
             <span class="session-status" :class="s.status">{{ s.status }}</span>
+            <button v-if="s.status === 'closed'" class="reopen-mini-btn" @click.stop="reopenSession(s.id)" title="Réouvrir">↩️</button>
             <button class="delete-mini-btn" @click.stop="deleteSession(s.id)">🗑️</button>
           </div>
         </div>
@@ -519,6 +537,18 @@ onMounted(loadSessions)
   transition: opacity 0.2s;
 }
 .delete-btn:hover { opacity: 0.8; }
+
+.reopen-mini-btn {
+  border: 1px solid var(--admin-success-border, var(--color-success-border));
+  border-radius: 6px;
+  background: transparent;
+  color: var(--admin-success-text, var(--color-success));
+  font-size: 0.85rem;
+  padding: 0.25rem 0.4rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.reopen-mini-btn:hover { background: var(--admin-success-bg, var(--color-success-soft)); }
 
 .delete-mini-btn {
   border: 1px solid var(--admin-danger-border, var(--color-danger-border));
