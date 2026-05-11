@@ -7,6 +7,7 @@ import { getSocket } from '../../socket.js'
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
 const images = ref([])
+const selectedImageUrl = ref(null)
 const uploading = ref(false)
 const uploadError = ref('')
 const uploadProgress = ref(0)   // 0–100

@@ -982,10 +982,17 @@ onUnmounted(() => {
 }
 .timer-overlay-time {
   font-family: var(--font-title);
-  font-size: 1.6rem;
+  font-size: 3rem;
   color: var(--tv-info-text);
   line-height: 1;
   letter-spacing: 0.05em;
+}
+
+/* In light theme the overlays always have a dark (black) background, so force
+   light text colors to ensure readability regardless of theme. */
+:root[data-theme='light'] .timer-overlay-label,
+:root[data-theme='light'] .timer-overlay-time {
+  color: #9ed3ff;
 }
 
 @keyframes overlayPulse {
@@ -1454,6 +1461,11 @@ onUnmounted(() => {
   border-color: var(--tension-color);
   background: color-mix(in oklab, var(--tension-color) 25%, black);
   box-shadow: 0 0 16px color-mix(in oklab, var(--tension-color) 50%, transparent);
+}
+/* In light theme the active step background is always dark (mixed with black),
+   so force a light text color for readable contrast. */
+:root[data-theme='light'] .tension-step.active {
+  color: #f0e6c8;
 }
 .tension-core {
   position: relative;
