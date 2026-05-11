@@ -76,6 +76,18 @@ function shortComponent(composantes) {
 }
 
 // ── Magic items helpers ───────────────────────────────────────────────────
+function itemDescriptionHtml(item) {
+  if (item.description_html) return item.description_html
+  if (!item.description) return ''
+  const escaped = item.description
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>')
+  return `<p>${escaped}</p>`
+}
+
 const RARITY_COLORS = {
   'commun': 'var(--color-text-dim)',
   'peu commun': '#1eff00',
@@ -250,7 +262,7 @@ onUnmounted(() => {
             >{{ item.rarity }}</span>
           </div>
         </div>
-        <div v-if="item.description" class="spell-desc">{{ item.description }}</div>
+        <div v-if="item.description_html || item.description" class="item-desc" v-html="itemDescriptionHtml(item)" />
         <div v-if="item.source" class="item-source">📚 {{ item.source }}</div>
         <a :href="item.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
       </div>
@@ -511,6 +523,49 @@ onUnmounted(() => {
   max-height: 200px;
   overflow-y: auto;
   padding-right: 0.25rem;
+}
+
+/* Rich HTML description for magic items */
+.item-desc {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--color-text-dim);
+  line-height: 1.55;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+.item-desc :deep(p) { margin: 0.3rem 0; }
+.item-desc :deep(p:first-child) { margin-top: 0; }
+.item-desc :deep(br) { display: block; content: ''; margin-top: 0.2rem; }
+.item-desc :deep(strong),
+.item-desc :deep(b) { color: var(--color-parchment); font-weight: 600; }
+.item-desc :deep(em),
+.item-desc :deep(i) { font-style: italic; color: var(--color-gold-dark); }
+.item-desc :deep(ul),
+.item-desc :deep(ol) { margin: 0.3rem 0; padding-left: 1.2rem; }
+.item-desc :deep(li) { margin: 0.1rem 0; }
+.item-desc :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5rem 0;
+  font-size: 0.75rem;
+}
+.item-desc :deep(th),
+.item-desc :deep(td) {
+  border: 1px solid var(--color-border);
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+.item-desc :deep(th) {
+  background: var(--surface-raised, rgba(255,255,255,0.05));
+  color: var(--color-gold-dark);
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+.item-desc :deep(tbody tr:hover) {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .item-source {
