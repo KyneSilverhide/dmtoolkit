@@ -25,8 +25,9 @@ def clean_text(value: str) -> str:
     return re.sub(r"\s+", " ", (value or "")).strip()
 
 
-def links_to_em(node) -> None:
-    """Replace <a> tags with <em> so spell/item name links keep italic emphasis."""
+def links_to_em(node: Tag) -> None:
+    """Replace <a> tags with <em> so spell/item name links keep italic emphasis.
+    Mutates the node in-place."""
     for a in list(node.find_all("a")):
         em = Tag(name="em")
         for child in list(a.children):
@@ -34,12 +35,13 @@ def links_to_em(node) -> None:
         a.replace_with(em)
 
 
-def convert_row_divs_to_tables(node) -> None:
+def convert_row_divs_to_tables(node: Tag) -> None:
     """
     Detect AideDD's CSS-table pattern: consecutive sibling <div> elements
     each containing exactly N >= 2 direct <p> children (and no other tags).
     Converts them to a proper HTML <table> (first row → <thead>, rest → <tbody>).
     Runs repeatedly until no more conversions are possible.
+    Mutates the node in-place.
     """
     changed = True
     while changed:
