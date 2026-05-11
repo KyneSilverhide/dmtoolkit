@@ -14,6 +14,13 @@ LIST_URL = "https://www.aidedd.org/dnd-filters/objets-magiques.php"
 DETAIL_BASE_URL = "https://www.aidedd.org/dnd/om.php?vf={slug}"
 
 
+ALLOWED_HTML_TAGS = frozenset({
+    "table", "thead", "tbody", "tr", "th", "td",
+    "br", "strong", "b", "em", "i",
+    "ul", "ol", "li", "p",
+})
+
+
 def clean_text(value: str) -> str:
     return re.sub(r"\s+", " ", (value or "")).strip()
 
@@ -118,14 +125,28 @@ def fetch_detail(session: requests.Session, name: str, timeout: float):
     # Description
     desc_node = col1.select_one("div.description") if col1 else soup.select_one("div.description")
     description = ""
+    description_html = ""
     if desc_node:
-        local = BeautifulSoup(str(desc_node), "html.parser")
-        for br in local.select("br"):
+        # --- Plain text (keep for backward-compat / search indexing) ---
+        plain_local = BeautifulSoup(str(desc_node), "html.parser")
+        for br in plain_local.select("br"):
             br.replace_with("\n")
-        raw = local.get_text("\n", strip=True)
+        raw = plain_local.get_text("\n", strip=True)
         lines = [re.sub(r"\s+", " ", ln).strip() for ln in raw.splitlines()]
         lines = [ln for ln in lines if ln]
         description = "\n\n".join(lines)
+
+        # --- Rich HTML (preserves tables, bold, lists, etc.) ---
+        rich_local = BeautifulSoup(str(desc_node), "html.parser")
+        content_div = rich_local.find("div", class_="description") or rich_local
+        # Strip all attributes on allowed tags; unwrap disallowed tags
+        for tag in list(content_div.find_all(True)):
+            if tag.name in ALLOWED_HTML_TAGS:
+                tag.attrs = {}
+            else:
+                tag.unwrap()
+        description_html = "".join(str(c) for c in content_div.children).strip()
+        description_html = re.sub(r"\n{3,}", "\n\n", description_html)
 
     # Source
     source_node = col1.select_one("div.source") if col1 else soup.select_one("div.source")
@@ -151,6 +172,7 @@ def fetch_detail(session: requests.Session, name: str, timeout: float):
         "requires_attunement": requires_attunement,
         "attunement_detail": attunement_detail,
         "description": description,
+        "description_html": description_html,
         "source": source,
     }
 
