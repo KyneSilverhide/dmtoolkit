@@ -72,7 +72,7 @@ async function seedAdmin() {
           'INSERT INTO admins (username, password_hash) VALUES ($1, $2)',
           [adminUsername, hash]
       )
-      console.log(`Default admin created: ${adminUsername} / [password from env]`)
+      console.log('Default admin account created')
     }
   } catch (err) {
     console.error('Error seeding admin:', err)
