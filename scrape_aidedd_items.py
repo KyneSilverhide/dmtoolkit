@@ -139,12 +139,17 @@ def fetch_detail(session: requests.Session, name: str, timeout: float):
         # --- Rich HTML (preserves tables, bold, lists, etc.) ---
         rich_local = BeautifulSoup(str(desc_node), "html.parser")
         content_div = rich_local.find("div", class_="description") or rich_local
-        # Strip all attributes on allowed tags; unwrap disallowed tags
-        for tag in list(content_div.find_all(True)):
-            if tag.name in ALLOWED_HTML_TAGS:
-                tag.attrs = {}
-            else:
+        # Remove disallowed tags one pass at a time until none remain.
+        # Using a loop ensures tags exposed by unwrap() are also processed.
+        while True:
+            disallowed = [t for t in content_div.find_all(True) if t.name not in ALLOWED_HTML_TAGS]
+            if not disallowed:
+                break
+            for tag in disallowed:
                 tag.unwrap()
+        # Strip all attributes from the remaining (allowed) tags
+        for tag in content_div.find_all(True):
+            tag.attrs = {}
         description_html = "".join(str(c) for c in content_div.children).strip()
         description_html = re.sub(r"\n{3,}", "\n\n", description_html)
 

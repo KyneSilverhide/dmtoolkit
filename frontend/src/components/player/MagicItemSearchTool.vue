@@ -11,6 +11,19 @@ const searchCache = new Map()
 const MIN_AUTO_SEARCH_LENGTH = 3
 let autoSearchTimer = null
 
+function descriptionHtml(item) {
+  if (item.description_html) return item.description_html
+  if (!item.description) return ''
+  // Escape plain text so it is safe to insert as HTML
+  const escaped = item.description
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>')
+  return `<p>${escaped}</p>`
+}
+
 const RARITY_COLORS = {
   'commun': 'var(--color-text-dim)',
   'peu commun': '#1eff00',
@@ -107,7 +120,7 @@ onUnmounted(() => {
         <div
           v-if="item.description_html || item.description"
           class="item-desc"
-          v-html="item.description_html || item.description"
+          v-html="descriptionHtml(item)"
         />
         <a :href="item.detail_url" target="_blank" class="item-link">Voir sur AideDD ↗</a>
       </article>
