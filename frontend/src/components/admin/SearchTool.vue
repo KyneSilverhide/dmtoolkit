@@ -4,15 +4,28 @@ import { authStore } from '../../stores/auth.js'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
+// ── Sub-tab ──────────────────────────────────────────────────────────────
+const activeSubTab = ref('spells') // 'spells' | 'items'
+
+// ── Shared state (reset on tab switch) ───────────────────────────────────
 const query = ref('')
 const results = ref([])
 const loading = ref(false)
 const searched = ref(false)
-const searchCache = new Map()
+const spellCache = new Map()
+const itemCache = new Map()
 const MIN_AUTO_SEARCH_LENGTH = 3
 let autoSearchTimer = null
 
-// Parse school + level from "niveau 3 - nécomancie (rituel)" → { level: 3, school: 'Nécromancie', ritual: true }
+function switchSubTab(tab) {
+  activeSubTab.value = tab
+  query.value = ''
+  results.value = []
+  searched.value = false
+  loading.value = false
+}
+
+// ── Spells helpers ────────────────────────────────────────────────────────
 function parseEcole(ecole) {
   if (!ecole) return { level: null, school: '', ritual: false }
   const rituel = ecole.toLowerCase().includes('rituel')
@@ -62,24 +75,48 @@ function shortComponent(composantes) {
   return m ? m[1] : composantes
 }
 
+// ── Magic items helpers ───────────────────────────────────────────────────
+const RARITY_COLORS = {
+  'commun': 'var(--color-text-dim)',
+  'peu commun': '#1eff00',
+  'rare': '#0070dd',
+  'très rare': '#a335ee',
+  'légendaire': '#ff8000',
+  'artéfact': '#e6cc80',
+}
+
+function rarityColor(rarity) {
+  if (!rarity) return 'var(--color-text-dim)'
+  const key = rarity.toLowerCase()
+  for (const [k, v] of Object.entries(RARITY_COLORS)) {
+    if (key.includes(k)) return v
+  }
+  return 'var(--color-text-dim)'
+}
+
+// ── Search ────────────────────────────────────────────────────────────────
 async function search() {
   const q = query.value.trim()
   if (!q) return
-  if (searchCache.has(q)) {
-    results.value = searchCache.get(q)
+  const cache = activeSubTab.value === 'spells' ? spellCache : itemCache
+  if (cache.has(q)) {
+    results.value = cache.get(q)
     searched.value = true
     return
   }
   loading.value = true
   searched.value = false
   try {
-    const res = await fetch(`${BACKEND_URL}/api/spells/search?q=${encodeURIComponent(q)}`, {
+    const endpoint = activeSubTab.value === 'spells'
+      ? `/api/spells/search?q=${encodeURIComponent(q)}`
+      : `/api/magic-items/search?q=${encodeURIComponent(q)}`
+    const res = await fetch(`${BACKEND_URL}${endpoint}`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     if (res.ok) {
       const data = await res.json()
       results.value = data
-      searchCache.set(q, data)
+      cache.set(q, data)
     }
   } catch (err) {
     console.error(err)
@@ -110,13 +147,27 @@ onUnmounted(() => {
 
 <template>
   <div class="search-tool">
-    <h2 class="section-title">🔍 Recherche de Sorts</h2>
+    <h2 class="section-title">🔍 Recherche</h2>
+
+    <!-- Sub-tabs -->
+    <div class="sub-tabs">
+      <button
+        class="sub-tab"
+        :class="{ active: activeSubTab === 'spells' }"
+        @click="switchSubTab('spells')"
+      >✨ Sorts</button>
+      <button
+        class="sub-tab"
+        :class="{ active: activeSubTab === 'items' }"
+        @click="switchSubTab('items')"
+      >💎 Objets magiques</button>
+    </div>
 
     <div class="search-bar">
       <input
         v-model="query"
         class="search-input"
-        placeholder="Nom du sort, école, description…"
+        :placeholder="activeSubTab === 'spells' ? 'Nom du sort, école, description…' : 'Nom, type, rareté, description…'"
         @keydown.enter="search"
       />
       <button class="search-btn" :disabled="loading || !query.trim()" @click="search">
@@ -132,17 +183,19 @@ onUnmounted(() => {
 
     <div v-else-if="searched && results.length === 0" class="no-results">
       <p class="no-results-icon">📭</p>
-      <p class="no-results-text">Aucun sort trouvé pour « {{ query }} »</p>
+      <p class="no-results-text">
+        Aucun {{ activeSubTab === 'spells' ? 'sort' : 'objet magique' }} trouvé pour « {{ query }} »
+      </p>
     </div>
 
     <div v-else-if="results.length > 0" class="results-info">
-      {{ results.length }} sort(s) trouvé(s)
+      {{ results.length }} {{ activeSubTab === 'spells' ? 'sort(s)' : 'objet(s) magique(s)' }} trouvé(s)
       <span v-if="results.length === 50"> (premiers 50 résultats)</span>
     </div>
 
-    <div class="results-grid">
+    <!-- Spells results -->
+    <div v-if="activeSubTab === 'spells'" class="results-grid">
       <div v-for="spell in results" :key="spell.slug" class="spell-card">
-        <!-- Card header -->
         <div class="spell-header">
           <div class="spell-title-row">
             <h3 class="spell-name">{{ spell.name }}</h3>
@@ -158,8 +211,6 @@ onUnmounted(() => {
             </span>
           </div>
         </div>
-
-        <!-- Attributes grid -->
         <div class="spell-attrs">
           <div v-if="spell.attributes?.temps_incantation" class="attr-item">
             <span class="attr-icon">⏱️</span>
@@ -178,13 +229,30 @@ onUnmounted(() => {
             <span class="attr-val">{{ shortComponent(spell.attributes.composantes) }}</span>
           </div>
         </div>
-
-        <!-- Description -->
-        <div v-if="spell.description" class="spell-desc">
-          {{ spell.description }}
-        </div>
-
+        <div v-if="spell.description" class="spell-desc">{{ spell.description }}</div>
         <a :href="spell.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
+      </div>
+    </div>
+
+    <!-- Magic items results -->
+    <div v-if="activeSubTab === 'items'" class="results-grid">
+      <div v-for="item in results" :key="item.slug" class="spell-card">
+        <div class="spell-header">
+          <div class="spell-title-row">
+            <h3 class="spell-name">{{ item.name }}</h3>
+            <span v-if="item.requires_attunement" class="ritual-badge">Harmonisation</span>
+          </div>
+          <div class="spell-meta-row">
+            <span class="item-type-badge">{{ item.item_type }}</span>
+            <span
+              class="rarity-badge"
+              :style="{ '--rarity-color': rarityColor(item.rarity) }"
+            >{{ item.rarity }}</span>
+          </div>
+        </div>
+        <div v-if="item.description" class="spell-desc">{{ item.description }}</div>
+        <div v-if="item.source" class="item-source">📚 {{ item.source }}</div>
+        <a :href="item.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
       </div>
     </div>
   </div>
@@ -204,6 +272,30 @@ onUnmounted(() => {
   text-transform: uppercase;
   color: var(--color-gold-dark);
   margin: 0;
+}
+
+/* Sub-tabs */
+.sub-tabs {
+  display: flex;
+  gap: 0.4rem;
+}
+.sub-tab {
+  padding: 0.4rem 0.85rem;
+  background: var(--surface-ghost);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sub-tab:hover { border-color: var(--color-gold-dark); color: var(--color-gold-dark); }
+.sub-tab.active {
+  background: var(--surface-gold-soft);
+  border-color: var(--color-gold-dark);
+  color: var(--color-gold-bright);
 }
 
 .search-bar {
@@ -282,7 +374,7 @@ onUnmounted(() => {
   gap: 1rem;
 }
 
-/* Spell card */
+/* Spell / item card */
 .spell-card {
   background: var(--gradient-panel-soft);
   border: 1px solid var(--color-border);
@@ -358,6 +450,31 @@ onUnmounted(() => {
   padding: 0.1rem 0.5rem;
 }
 
+.item-type-badge {
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-gold-dark);
+  background: var(--surface-gold-soft);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 20px;
+  padding: 0.1rem 0.5rem;
+}
+
+.rarity-badge {
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 20px;
+  padding: 0.1rem 0.5rem;
+  color: var(--rarity-color);
+  border-color: color-mix(in oklab, var(--rarity-color) 50%, transparent);
+  background: color-mix(in oklab, var(--rarity-color) 14%, transparent);
+}
+
 /* Attributes */
 .spell-attrs {
   display: grid;
@@ -394,6 +511,14 @@ onUnmounted(() => {
   max-height: 200px;
   overflow-y: auto;
   padding-right: 0.25rem;
+}
+
+.item-source {
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--color-text-dim);
+  opacity: 0.7;
 }
 
 /* Link */

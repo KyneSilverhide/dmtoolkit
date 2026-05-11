@@ -5,6 +5,7 @@ import { getSocket, resetSocket } from '../socket.js'
 import { sessionStore } from '../stores/session.js'
 import MessageCard from '../components/player/MessageCard.vue'
 import SpellSearchTool from '../components/player/SpellSearchTool.vue'
+import MagicItemSearchTool from '../components/player/MagicItemSearchTool.vue'
 import PlayerNotesTool from '../components/player/PlayerNotesTool.vue'
 import PlayerDiceTool from '../components/player/PlayerDiceTool.vue'
 import { getLastKnownPlayer, saveLastKnownPlayer, removeLastKnownPlayer } from '../utils/playerSessionMemory.js'
@@ -23,7 +24,7 @@ const TEMP_HP_COLOR = 'var(--player-info-text)'
 const MAX_HP_LIMIT = 9999
 
 // ── Active tab ───────────────────────────────────────────────────────────
-// Tabs: 'combat' | 'dés' | 'notes' | 'sorts' | 'boutique' | 'vote' | 'messages'
+// Tabs: 'combat' | 'dés' | 'notes' | 'sorts' | 'objets' | 'boutique' | 'vote' | 'messages'
 const activeTab = ref('combat')
 let hasRequestedNotificationPermission = false
 const rejoinError = ref('')
@@ -886,6 +887,14 @@ onUnmounted(() => {
         </div>
       </div>
 
+      <!-- ── OBJETS tab ────────────────────────────────────────────────── -->
+      <div v-show="activeTab === 'objets'" class="tab-panel">
+        <div class="panel">
+          <p class="panel-label">💎 Objets magiques</p>
+          <MagicItemSearchTool />
+        </div>
+      </div>
+
       <!-- ── BOUTIQUE tab ─────────────────────────────────────────────── -->
       <div v-show="activeTab === 'boutique'" class="tab-panel">
         <div v-if="!activeMerchant" class="panel empty-panel">
@@ -1037,6 +1046,14 @@ onUnmounted(() => {
       >
         <span class="tab-icon">🔍</span>
         <span class="tab-label">Sorts</span>
+      </button>
+      <button
+        class="tab-item"
+        :class="{ active: activeTab === 'objets' }"
+        @click="switchTab('objets')"
+      >
+        <span class="tab-icon">💎</span>
+        <span class="tab-label">Objets</span>
       </button>
       <button
         class="tab-item"
