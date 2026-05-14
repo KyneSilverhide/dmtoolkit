@@ -248,3 +248,30 @@ cd frontend && npm run dev  # vite dev server
 - ❌ Ne pas utiliser d'ESM (`import`/`export`) dans le backend (CommonJS uniquement)
 - ❌ Ne pas supprimer de colonnes DB existantes (les données en prod seraient perdues)
 - ❌ Ne pas hardcoder l'URL du backend dans le frontend (toujours utiliser `VITE_BACKEND_URL`)
+
+---
+
+## Maintenance de la documentation
+
+### Quand mettre à jour ce fichier (CLAUDE.md)
+
+Mettre à jour CLAUDE.md **dans le même commit** que tout changement touchant :
+
+| Ce qui change | Section à mettre à jour |
+|---|---|
+| Nouveau fichier dans `backend/src/` ou nouvelle route | Architecture du monorepo |
+| Nouvel événement Socket.IO (entrant ou sortant) | Architecture Socket.IO |
+| Nouvelle table ou colonne DB | Base de données — règles importantes |
+| Nouvelle variable d'environnement | Variables d'environnement |
+| Nouveau composant Vue majeur dans `components/admin/` | Architecture du monorepo |
+| Changement de version d'une dépendance clé | Stack technique |
+| Nouvelle règle ou piège découvert | Ce qu'il ne faut pas faire |
+
+### Quand mettre à jour README.md
+
+README.md est orienté utilisateur (installation, fonctionnalités). Mettre à jour si :
+- Une nouvelle variable d'environnement est ajoutée
+- Une commande de lancement ou de validation change
+- Une fonctionnalité majeure est ajoutée ou supprimée
+
+Le hook Stop `.claude/hooks/check-docs.ps1` avertit automatiquement si des fichiers source changent sans mise à jour de la documentation.
