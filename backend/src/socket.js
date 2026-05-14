@@ -1317,6 +1317,76 @@ function setupSocket(io) {
       } catch (err) { console.error(err) }
     })
 
+    // ── Admin: Obsidian sync — bulk initiative update by player name ─────────
+    socket.on('obsidian-sync-initiatives', async ({ sessionId, updates }) => {
+      if (!socket.admin) return
+      if (!Array.isArray(updates) || updates.length === 0) return
+      try {
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        if (!sessionCheck.rows[0]) return
+
+        for (const { playerName, initiative } of updates) {
+          if (typeof playerName !== 'string' || playerName.trim() === '') continue
+          const parsed = parseInt(initiative, 10)
+          const value = Number.isFinite(parsed)
+            ? Math.max(INITIATIVE_MIN, Math.min(INITIATIVE_MAX, parsed))
+            : null
+          const res = await pool.query(
+            `UPDATE players SET initiative = $1
+             WHERE session_id = $2 AND LOWER(player_name) = LOWER($3)
+             RETURNING id, initiative`,
+            [value, sessionId, playerName.trim()]
+          )
+          if (res.rows[0]) {
+            const event = { playerId: res.rows[0].id, initiative: res.rows[0].initiative }
+            io.to(`admin:${sessionId}`).emit('initiative-updated', event)
+            io.to(`tv:${sessionId}`).emit('initiative-updated', event)
+          }
+        }
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: update HP by player name (for Obsidian sync) ─────────────────
+    socket.on('admin-update-hp', async ({ sessionId, playerName, currentHp }) => {
+      if (!socket.admin) return
+      if (typeof playerName !== 'string' || playerName.trim() === '') return
+      try {
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        if (!sessionCheck.rows[0]) return
+
+        const parsed = parseInt(currentHp, 10)
+        if (!Number.isFinite(parsed)) return
+
+        const res = await pool.query(
+          `UPDATE players SET current_hp = GREATEST(0, LEAST($1, max_hp))
+           WHERE session_id = $2 AND LOWER(player_name) = LOWER($3)
+           RETURNING id, current_hp, max_hp, player_name`,
+          [parsed, sessionId, playerName.trim()]
+        )
+        const player = res.rows[0]
+        if (!player) return
+
+        const event = { playerId: player.id, currentHp: player.current_hp }
+        io.to(`admin:${sessionId}`).emit('hp-updated', event)
+        io.to(`tv:${sessionId}`).emit('hp-updated', event)
+
+        if (player.current_hp === 0) {
+          await pool.query(
+            'INSERT INTO session_events (session_id, event_type, description, player_name) VALUES ($1, $2, $3, $4)',
+            [sessionId, 'death', `${player.player_name} est tombé à 0 PV`, player.player_name]
+          )
+          const deathEvent = { eventType: 'death', description: `${player.player_name} est tombé à 0 PV`, playerName: player.player_name, createdAt: new Date() }
+          io.to(`admin:${sessionId}`).emit('session-event', deathEvent)
+        }
+      } catch (err) { console.error(err) }
+    })
+
     // ── Admin: kick player ───────────────────────────────────────────────────
     socket.on('kick-player', async ({ playerId }) => {
       if (!socket.admin) return
