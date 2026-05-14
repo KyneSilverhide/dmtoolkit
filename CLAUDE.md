@@ -36,7 +36,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │   ├── migrations.js  # Migrations SQL (PostgreSQL) — exécutées au démarrage
 │   │   ├── db.js          # Pool PostgreSQL (pg)
 │   │   ├── middleware/auth.js  # Vérification JWT
-│   │   └── routes/        # auth, sessions, uploads, spells
+│   │   └── routes/        # auth, sessions, uploads, spells (+ GET /api/sessions/:id/players pour sync Obsidian)
 │   └── aidedd_spells.json # 477 sorts D&D 5e en français
 ├── docker-compose.yml     # Postgres 16 + backend + frontend
 └── docker-compose.prod.yml
@@ -151,6 +151,8 @@ cd frontend && npm run dev  # vite dev server
 | `respond-purchase` | Répondre à une demande d'achat (legacy) |
 | `respond-batch-purchase` | Répondre à un panier d'achat |
 | `kick-player` | Expulser un joueur |
+| `obsidian-sync-initiatives` | Sync depuis Obsidian Initiative Tracker — met à jour les initiatives en masse par nom de joueur (`{ sessionId, updates: [{playerName, initiative}] }`) |
+| `admin-update-hp` | Met à jour les PV d'un joueur par nom (pour sync Obsidian) — `{ sessionId, playerName, currentHp }` |
 
 ### Événements sortants (serveur → client)
 
