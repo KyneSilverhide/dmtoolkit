@@ -162,6 +162,24 @@ ALTER TABLE session_images ADD COLUMN IF NOT EXISTS type VARCHAR(20) DEFAULT 'im
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS combat_round INTEGER DEFAULT 0;
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timer_label VARCHAR(200);
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timer_end_at TIMESTAMP;
+
+DO $$
+DECLARE
+  r RECORD;
+  new_code VARCHAR(10);
+  attempts INT;
+BEGIN
+  FOR r IN SELECT id FROM sessions WHERE length(code) <> 4 OR code !~ '^[0-9]{4}$' LOOP
+    attempts := 0;
+    LOOP
+      new_code := lpad((1000 + floor(random() * 9000))::int::text, 4, '0');
+      EXIT WHEN NOT EXISTS (SELECT 1 FROM sessions WHERE code = new_code AND id <> r.id);
+      attempts := attempts + 1;
+      IF attempts > 200 THEN RAISE EXCEPTION 'Cannot generate unique 4-digit code'; END IF;
+    END LOOP;
+    UPDATE sessions SET code = new_code WHERE id = r.id;
+  END LOOP;
+END $$;
 `
 
 async function runMigrations() {

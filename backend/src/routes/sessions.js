@@ -10,8 +10,8 @@ const router = express.Router()
 const crypto = require('crypto')
 
 async function generateUniqueCode(pool) {
-  for (let i = 0; i < 10; i++) {
-    const code = (10000000 + crypto.randomInt(90000000)).toString()
+  for (let i = 0; i < 20; i++) {
+    const code = (1000 + crypto.randomInt(9000)).toString()
     const exists = await pool.query('SELECT id FROM sessions WHERE code = $1', [code])
     if (!exists.rows[0]) return code
   }
@@ -69,6 +69,22 @@ router.get('/:id/qrcode', authenticateToken, async (req, res) => {
     const qrCodeDataUrl = await QRCode.toDataURL(joinUrl)
 
     res.json({ qrCodeDataUrl, joinUrl })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
+router.patch('/:id/rename', authenticateToken, async (req, res) => {
+  const { name } = req.body
+  if (!name?.trim()) return res.status(400).json({ error: 'Name required.' })
+  try {
+    const result = await pool.query(
+      'UPDATE sessions SET name = $1 WHERE id = $2 AND created_by = $3 RETURNING *',
+      [name.trim(), req.params.id, req.admin.id]
+    )
+    if (!result.rows[0]) return res.status(404).json({ error: 'Session not found.' })
+    res.json(result.rows[0])
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Server error.' })

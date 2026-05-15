@@ -14,6 +14,41 @@ const joinUrl = ref('')
 const tvUrl = ref('')
 const tvCopied = ref(false)
 
+const renamingId = ref(null)
+const renameValue = ref('')
+const renameLoading = ref(false)
+
+function startRename(session) {
+  renamingId.value = session.id
+  renameValue.value = session.name
+}
+
+function cancelRename() {
+  renamingId.value = null
+  renameValue.value = ''
+}
+
+async function saveRename(id) {
+  if (!renameValue.value.trim()) return
+  renameLoading.value = true
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/sessions/${id}/rename`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authStore.token}` },
+      body: JSON.stringify({ name: renameValue.value.trim() }),
+    })
+    const data = await res.json()
+    if (!res.ok) { error.value = data.error || 'Erreur lors du renommage.'; return }
+    if (sessionStore.activeSession?.id === id) sessionStore.setActiveSession(data)
+    await loadSessions()
+    cancelRename()
+  } catch {
+    error.value = 'Erreur réseau lors du renommage.'
+  } finally {
+    renameLoading.value = false
+  }
+}
+
 async function loadSessionQrCode(sessionId) {
   const cached = sessionStore.getQrCode(sessionId)
   if (cached) {
@@ -194,7 +229,29 @@ onMounted(loadSessions)
     <section v-if="sessionStore.activeSession" class="active-session">
       <h2 class="section-title">✦ Session Active</h2>
       <div class="session-card active">
-        <p class="session-name">{{ sessionStore.activeSession.name }}</p>
+        <div class="session-name-row">
+          <template v-if="renamingId === sessionStore.activeSession.id">
+            <input
+              v-model="renameValue"
+              class="rename-input"
+              @keyup.enter="saveRename(sessionStore.activeSession.id)"
+              @keyup.escape="cancelRename"
+              autofocus
+            />
+            <button class="rename-save-btn" :disabled="renameLoading" @click="saveRename(sessionStore.activeSession.id)">
+              <AppIcon icon="lucide:check" size="0.85em" />
+            </button>
+            <button class="rename-cancel-btn" @click="cancelRename">
+              <AppIcon icon="lucide:x" size="0.85em" />
+            </button>
+          </template>
+          <template v-else>
+            <p class="session-name">{{ sessionStore.activeSession.name }}</p>
+            <button class="rename-icon-btn" @click="startRename(sessionStore.activeSession)" title="Renommer">
+              <AppIcon icon="lucide:pencil" size="0.8em" />
+            </button>
+          </template>
+        </div>
         <div class="big-code">{{ sessionStore.activeSession.code }}</div>
         <p class="join-url">
           <a :href="joinUrl" target="_blank">{{ joinUrl }}</a>
@@ -238,14 +295,31 @@ onMounted(loadSessions)
         @click="s.status === 'active' && selectSession(s)"
       >
         <div class="session-card-inner">
-          <div>
-            <p class="session-name">{{ s.name }}</p>
+          <div class="session-info">
+            <template v-if="renamingId === s.id">
+              <input
+                v-model="renameValue"
+                class="rename-input"
+                @keyup.enter="saveRename(s.id)"
+                @keyup.escape="cancelRename"
+                @click.stop
+                autofocus
+              />
+            </template>
+            <p v-else class="session-name">{{ s.name }}</p>
             <p class="session-code">{{ s.code }}</p>
           </div>
           <div class="session-actions-right">
-            <span class="session-status" :class="s.status">{{ s.status }}</span>
-            <button v-if="s.status === 'closed'" class="reopen-mini-btn" @click.stop="reopenSession(s.id)" title="Réouvrir"><AppIcon icon="lucide:undo-2" size="0.85em" /></button>
-            <button class="delete-mini-btn" @click.stop="deleteSession(s.id)"><AppIcon icon="lucide:trash-2" size="0.85em" /></button>
+            <template v-if="renamingId === s.id">
+              <button class="rename-save-btn" :disabled="renameLoading" @click.stop="saveRename(s.id)"><AppIcon icon="lucide:check" size="0.85em" /></button>
+              <button class="rename-cancel-btn" @click.stop="cancelRename"><AppIcon icon="lucide:x" size="0.85em" /></button>
+            </template>
+            <template v-else>
+              <span class="session-status" :class="s.status">{{ s.status }}</span>
+              <button class="rename-icon-btn" @click.stop="startRename(s)" title="Renommer"><AppIcon icon="lucide:pencil" size="0.8em" /></button>
+              <button v-if="s.status === 'closed'" class="reopen-mini-btn" @click.stop="reopenSession(s.id)" title="Réouvrir"><AppIcon icon="lucide:undo-2" size="0.85em" /></button>
+              <button class="delete-mini-btn" @click.stop="deleteSession(s.id)"><AppIcon icon="lucide:trash-2" size="0.85em" /></button>
+            </template>
           </div>
         </div>
       </div>
@@ -516,10 +590,70 @@ onMounted(loadSessions)
   color: var(--color-text-dim);
 }
 
+.session-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.session-info { flex: 1; min-width: 0; }
+
+.rename-input {
+  flex: 1;
+  background: var(--color-surface);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  color: var(--color-parchment);
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  outline: none;
+  min-width: 0;
+  width: 100%;
+}
+
+.rename-icon-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.rename-icon-btn:hover { color: var(--color-gold-dark); }
+
+.rename-save-btn {
+  border: 1px solid var(--color-success-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-success);
+  padding: 0.25rem 0.4rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.rename-save-btn:hover:not(:disabled) { background: var(--color-success-soft); }
+.rename-save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.rename-cancel-btn {
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-dim);
+  padding: 0.25rem 0.4rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.rename-cancel-btn:hover { background: var(--surface-ghost); }
+
 .session-actions-right {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .delete-btn {
