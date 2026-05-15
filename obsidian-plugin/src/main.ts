@@ -65,7 +65,7 @@ export default class CriticalFailSync extends Plugin {
   }
 
   private onITHpChange = (name: string, hp: number) => {
-    this.pushHpToFC(name, hp)
+    this.pushHpToCF(name, hp)
   }
 
   async onload() {
@@ -145,20 +145,17 @@ export default class CriticalFailSync extends Plugin {
 
     // CF → IT: player left
     this.socket.on('player-left', ({ playerId }: { playerId: number }) => {
-      // We need the player name — find it in the current encounter
-      const encounter = this.itApi?.getEncounter()
-      if (!encounter) return
-      // We can't match by id here since IT doesn't store CF ids.
-      // This edge case is acceptable — the user can manually remove the creature.
+      const name = this.playerIdToName.get(playerId)
+      if (name) {
+        this.itApi?.removeCreature(name)
+        this.playerIdToName.delete(playerId)
+      }
     })
 
     // CF → IT: HP updated
-    this.socket.on('hp-updated', ({ playerId, currentHp }: { playerId: number; currentHp: number }) => {
-      const encounter = this.itApi?.getEncounter()
-      if (!encounter) return
-      // Find creature by matching we stored the mapping
+    this.socket.on('hp-updated', ({ playerId, newHp }: { playerId: number; newHp: number }) => {
       const name = this.playerIdToName.get(playerId)
-      if (name) this.itApi?.updateCreature(name, { hp: currentHp })
+      if (name) this.itApi?.updateCreature(name, { hp: newHp })
     })
 
     // CF → IT: initiative updated
@@ -247,7 +244,7 @@ export default class CriticalFailSync extends Plugin {
     })
   }
 
-  private pushHpToFC(playerName: string, hp: number) {
+  private pushHpToCF(playerName: string, hp: number) {
     if (!this.socket?.connected || !this.settings.sessionId) return
     this.socket.emit('admin-update-hp', {
       sessionId: this.settings.sessionId,

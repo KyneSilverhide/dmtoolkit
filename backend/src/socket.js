@@ -1328,23 +1328,35 @@ function setupSocket(io) {
         )
         if (!sessionCheck.rows[0]) return
 
-        for (const { playerName, initiative } of updates) {
-          if (typeof playerName !== 'string' || playerName.trim() === '') continue
-          const parsed = parseInt(initiative, 10)
-          const value = Number.isFinite(parsed)
-            ? Math.max(INITIATIVE_MIN, Math.min(INITIATIVE_MAX, parsed))
-            : null
-          const res = await pool.query(
-            `UPDATE players SET initiative = $1
-             WHERE session_id = $2 AND LOWER(player_name) = LOWER($3)
-             RETURNING id, initiative`,
-            [value, sessionId, playerName.trim()]
-          )
-          if (res.rows[0]) {
-            const event = { playerId: res.rows[0].id, initiative: res.rows[0].initiative }
-            io.to(`admin:${sessionId}`).emit('initiative-updated', event)
-            io.to(`tv:${sessionId}`).emit('initiative-updated', event)
+        const client = await pool.connect()
+        const updatedPlayers = []
+        try {
+          await client.query('BEGIN')
+          for (const { playerName, initiative } of updates) {
+            if (typeof playerName !== 'string' || playerName.trim() === '') continue
+            const parsed = parseInt(initiative, 10)
+            const value = Number.isFinite(parsed)
+              ? Math.max(INITIATIVE_MIN, Math.min(INITIATIVE_MAX, parsed))
+              : null
+            const res = await client.query(
+              `UPDATE players SET initiative = $1
+               WHERE session_id = $2 AND LOWER(player_name) = LOWER($3)
+               RETURNING id, initiative`,
+              [value, sessionId, playerName.trim()]
+            )
+            if (res.rows[0]) updatedPlayers.push(res.rows[0])
           }
+          await client.query('COMMIT')
+        } catch (dbErr) {
+          await client.query('ROLLBACK')
+          throw dbErr
+        } finally {
+          client.release()
+        }
+        for (const p of updatedPlayers) {
+          const event = { playerId: p.id, initiative: p.initiative }
+          io.to(`admin:${sessionId}`).emit('initiative-updated', event)
+          io.to(`tv:${sessionId}`).emit('initiative-updated', event)
         }
       } catch (err) { console.error(err) }
     })
@@ -1372,7 +1384,7 @@ function setupSocket(io) {
         const player = res.rows[0]
         if (!player) return
 
-        const event = { playerId: player.id, currentHp: player.current_hp }
+        const event = { playerId: player.id, newHp: player.current_hp }
         io.to(`admin:${sessionId}`).emit('hp-updated', event)
         io.to(`tv:${sessionId}`).emit('hp-updated', event)
 
