@@ -213,6 +213,11 @@ function serializeTimer(session) {
  *
  * @param {import('socket.io').Server} io
  */
+function formatVoteCloseDesc(voteUpdate) {
+  const resultParts = voteUpdate.options.map((opt, i) => `${opt} (${voteUpdate.results[i]})`)
+  return `Vote terminé : "${voteUpdate.question}" — ${resultParts.join(', ')}`
+}
+
 function setupSocket(io) {
   io.use((socket, next) => {
     const token = socket.handshake.auth.token
@@ -777,6 +782,12 @@ function setupSocket(io) {
             io.to(`tv:${socket.sessionId}`).emit('vote-closed', voteUpdate)
             io.to(`session:${socket.sessionId}`).emit('vote-closed', voteUpdate)
             io.to(`admin:${socket.sessionId}`).emit('vote-closed', voteUpdate)
+            const autoCloseDesc = formatVoteCloseDesc(voteUpdate)
+            await pool.query(
+              'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
+              [socket.sessionId, 'vote_closed', autoCloseDesc]
+            )
+            io.to(`admin:${socket.sessionId}`).emit('session-event', { eventType: 'vote_closed', description: autoCloseDesc, createdAt: new Date() })
           }
         }
       } catch (err) { console.error(err) }
@@ -795,9 +806,7 @@ function setupSocket(io) {
         io.to(`tv:${sessionId}`).emit('vote-closed', voteUpdate)
         io.to(`session:${sessionId}`).emit('vote-closed', voteUpdate)
         io.to(`admin:${sessionId}`).emit('vote-closed', voteUpdate)
-        const winnerIdx = voteUpdate.results.indexOf(Math.max(...voteUpdate.results))
-        const winnerOption = voteUpdate.options[winnerIdx]
-        const voteCloseDesc = `Vote terminé : "${voteUpdate.question}" — "${winnerOption}"`
+        const voteCloseDesc = formatVoteCloseDesc(voteUpdate)
         await pool.query(
           'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
           [sessionId, 'vote_closed', voteCloseDesc]
