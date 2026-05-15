@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import LoginView from '../views/LoginView.vue'
 import AdminView from '../views/AdminView.vue'
 import PlayerJoinView from '../views/PlayerJoinView.vue'
 import PlayerInboxView from '../views/PlayerInboxView.vue'
@@ -9,7 +8,7 @@ import { authStore } from '../stores/auth.js'
 
 const routes = [
   { path: '/', component: HomeView },
-  { path: '/login', component: LoginView },
+  { path: '/login', redirect: '/' },
   {
     path: '/admin',
     component: AdminView,
