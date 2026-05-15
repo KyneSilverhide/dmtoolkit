@@ -76,11 +76,11 @@ function shortComponent(composantes) {
   return m ? m[1] : composantes
 }
 
-// ── Magic items helpers ───────────────────────────────────────────────────
-function itemDescriptionHtml(item) {
-  if (item.description_html) return item.description_html
-  if (!item.description) return ''
-  const escaped = item.description
+// ── Description HTML helpers ──────────────────────────────────────────────
+function toHtml(entry) {
+  if (entry.description_html) return entry.description_html
+  if (!entry.description) return ''
+  const escaped = entry.description
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -170,7 +170,7 @@ onUnmounted(() => {
         @click="switchSubTab('spells')"
       ><AppIcon icon="lucide:sparkles" size="0.85em" /> Sorts</button>
       <button class="sub-tab" :class="{ active: activeSubTab === 'items' }" @click="switchSubTab('items')"
-      ><AppIcon icon="lucide:gem" size="0.85em" /> Objets magiques</button>
+      ><AppIcon icon="lucide:gem" size="0.85em" /> Objets & Objets magiques</button>
     </div>
 
     <div class="search-bar">
@@ -239,7 +239,7 @@ onUnmounted(() => {
             <span class="attr-val">{{ shortComponent(spell.attributes.composantes) }}</span>
           </div>
         </div>
-        <div v-if="spell.description" class="spell-desc">{{ spell.description }}</div>
+        <div v-if="spell.description_html || spell.description" class="spell-desc" v-html="toHtml(spell)" />
         <a :href="spell.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
       </div>
     </div>
@@ -260,7 +260,7 @@ onUnmounted(() => {
             >{{ item.rarity }}</span>
           </div>
         </div>
-        <div v-if="item.description_html || item.description" class="item-desc" v-html="itemDescriptionHtml(item)" />
+        <div v-if="item.description_html || item.description" class="item-desc" v-html="toHtml(item)" />
         <div v-if="item.source" class="item-source"><AppIcon icon="lucide:library" size="0.8em" /> {{ item.source }}</div>
         <a :href="item.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
       </div>
@@ -511,19 +511,8 @@ onUnmounted(() => {
   word-break: break-word;
 }
 
-/* Description */
-.spell-desc {
-  font-family: var(--font-body);
-  font-size: 0.8rem;
-  color: var(--color-text-dim);
-  line-height: 1.55;
-  white-space: pre-line;
-  max-height: 200px;
-  overflow-y: auto;
-  padding-right: 0.25rem;
-}
-
-/* Rich HTML description for magic items */
+/* Description sorts + objets magiques (HTML riche) */
+.spell-desc,
 .item-desc {
   font-family: var(--font-body);
   font-size: 0.8rem;
@@ -533,36 +522,36 @@ onUnmounted(() => {
   overflow-y: auto;
   padding-right: 0.25rem;
 }
-.item-desc :deep(p) { margin: 0.3rem 0; }
-.item-desc :deep(p:first-child) { margin-top: 0; }
-.item-desc :deep(br) { display: block; content: ''; margin-top: 0.2rem; }
-.item-desc :deep(strong),
-.item-desc :deep(b) { color: var(--color-parchment); font-weight: 600; }
-.item-desc :deep(em),
-.item-desc :deep(i) { font-style: italic; color: var(--color-gold-dark); }
-.item-desc :deep(ul),
-.item-desc :deep(ol) { margin: 0.3rem 0; padding-left: 1.2rem; }
-.item-desc :deep(li) { margin: 0.1rem 0; }
-.item-desc :deep(table) {
+.spell-desc :deep(p), .item-desc :deep(p) { margin: 0.3rem 0; }
+.spell-desc :deep(p:first-child), .item-desc :deep(p:first-child) { margin-top: 0; }
+.spell-desc :deep(br), .item-desc :deep(br) { display: block; content: ''; margin-top: 0.2rem; }
+.spell-desc :deep(strong), .spell-desc :deep(b),
+.item-desc :deep(strong), .item-desc :deep(b) { color: var(--color-parchment); font-weight: 600; }
+.spell-desc :deep(em), .spell-desc :deep(i),
+.item-desc :deep(em), .item-desc :deep(i) { font-style: italic; color: var(--color-gold-dark); }
+.spell-desc :deep(ul), .spell-desc :deep(ol),
+.item-desc :deep(ul), .item-desc :deep(ol) { margin: 0.3rem 0; padding-left: 1.2rem; }
+.spell-desc :deep(li), .item-desc :deep(li) { margin: 0.1rem 0; }
+.spell-desc :deep(table), .item-desc :deep(table) {
   border-collapse: collapse;
   width: 100%;
   margin: 0.5rem 0;
   font-size: 0.75rem;
 }
-.item-desc :deep(th),
-.item-desc :deep(td) {
+.spell-desc :deep(th), .spell-desc :deep(td),
+.item-desc :deep(th), .item-desc :deep(td) {
   border: 1px solid var(--color-border);
   padding: 0.25rem 0.5rem;
   text-align: left;
   vertical-align: top;
 }
-.item-desc :deep(th) {
+.spell-desc :deep(th), .item-desc :deep(th) {
   background: var(--surface-raised, rgba(255,255,255,0.05));
   color: var(--color-gold-dark);
   font-family: var(--font-heading);
   font-weight: 600;
 }
-.item-desc :deep(tbody tr:hover) {
+.spell-desc :deep(tbody tr:hover), .item-desc :deep(tbody tr:hover) {
   background: rgba(255, 255, 255, 0.03);
 }
 

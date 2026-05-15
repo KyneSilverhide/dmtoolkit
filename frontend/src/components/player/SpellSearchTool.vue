@@ -2,6 +2,20 @@
 import { computed, ref, watch, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
 
+function descriptionHtml(spell) {
+  if (spell.description_html) {
+    return spell.description_html
+  }
+  if (!spell.description) return ''
+  const escaped = spell.description
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>')
+  return `<p>${escaped}</p>`
+}
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
 const query = ref('')
@@ -132,7 +146,11 @@ onUnmounted(() => {
         <p v-if="spell.attributes?.composantes" class="spell-meta">
           <AppIcon icon="lucide:flask-conical" size="0.8em" /> {{ shortComponent(spell.attributes.composantes) }}
         </p>
-        <p v-if="spell.description" class="spell-desc">{{ spell.description }}</p>
+        <div
+          v-if="spell.description_html || spell.description"
+          class="spell-desc"
+          v-html="descriptionHtml(spell)"
+        />
         <a :href="spell.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
       </article>
     </div>
@@ -173,7 +191,44 @@ onUnmounted(() => {
 .spell-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
 .spell-name { margin: 0; font-size: 0.95rem; font-family: var(--font-heading); color: var(--color-parchment); }
 .spell-level { font-size: 0.62rem; color: var(--color-gold-dark); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 0.08em; }
-.spell-school, .spell-meta, .spell-desc { margin: 0.15rem 0 0; color: var(--color-text-dim); font-size: 0.76rem; }
-.spell-desc { white-space: pre-line; line-height: 1.45; padding-right: 0.25rem; }
+.spell-school, .spell-meta { margin: 0.15rem 0 0; color: var(--color-text-dim); font-size: 0.76rem; }
+.spell-desc {
+  margin: 0.15rem 0 0;
+  color: var(--color-text-dim);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+.spell-desc :deep(p) { margin: 0.3rem 0; }
+.spell-desc :deep(p:first-child) { margin-top: 0; }
+.spell-desc :deep(br) { display: block; content: ''; margin-top: 0.2rem; }
+.spell-desc :deep(strong),
+.spell-desc :deep(b) { color: var(--color-parchment); font-weight: 600; }
+.spell-desc :deep(em),
+.spell-desc :deep(i) { font-style: italic; }
+.spell-desc :deep(ul),
+.spell-desc :deep(ol) { margin: 0.3rem 0; padding-left: 1.2rem; }
+.spell-desc :deep(li) { margin: 0.1rem 0; }
+.spell-desc :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5rem 0;
+  font-size: 0.73rem;
+}
+.spell-desc :deep(th),
+.spell-desc :deep(td) {
+  border: 1px solid var(--color-border);
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+.spell-desc :deep(th) {
+  background: var(--surface-raised, rgba(255,255,255,0.05));
+  color: var(--color-gold-dark);
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+.spell-desc :deep(tbody tr:hover) {
+  background: rgba(255, 255, 255, 0.03);
+}
 .spell-link { display: inline-block; margin-top: 0.35rem; font-size: 0.65rem; color: var(--color-gold-dark); text-decoration: none; font-family: var(--font-heading); }
 </style>

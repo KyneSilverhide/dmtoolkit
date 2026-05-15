@@ -3,7 +3,10 @@
     "allow": [
       "Bash(node --check src/routes/magic-items.js)",
       "PowerShell(node --check \"C:\\\\Users\\\\aurel\\\\IdeaProjects\\\\critical-fail\\\\backend\\\\src\\\\routes\\\\magic-items.js\"; Write-Host \"Exit: $LASTEXITCODE\")",
-      "PowerShell(node --check \"C:\\\\Users\\\\aurel\\\\IdeaProjects\\\\critical-fail\\\\backend\\\\src\\\\routes\\\\spells.js\"; Write-Host \"Exit: $LASTEXITCODE\")"
+      "PowerShell(node --check \"C:\\\\Users\\\\aurel\\\\IdeaProjects\\\\critical-fail\\\\backend\\\\src\\\\routes\\\\spells.js\"; Write-Host \"Exit: $LASTEXITCODE\")",
+      "Bash(curl -s \"http://localhost:3000/api/spells/public/search?q=benediction\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); s=d[0] if d else {}; print\\('name:', s.get\\('name'\\)\\); print\\('has description_html:', bool\\(s.get\\('description_html'\\)\\)\\); print\\('html preview:', \\(s.get\\('description_html'\\) or ''\\)[:200]\\)\")",
+      "PowerShell($r = Invoke-RestMethod \"http://localhost:3000/api/spells/public/search?q=benediction\"; $s = $r[0]; Write-Host \"name: $\\($s.name\\)\"; $hasHtml = $s.description_html -ne $null -and $s.description_html -ne ''; Write-Host \"has description_html: $hasHtml\"; Write-Host \"html preview: $\\($s.description_html.Substring\\(0, [Math]::Min\\(200, $s.description_html.Length\\)\\)\\)\")"
     ]
   }
 }

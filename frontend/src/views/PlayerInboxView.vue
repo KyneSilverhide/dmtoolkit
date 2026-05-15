@@ -952,7 +952,7 @@ onUnmounted(() => {
       <!-- ── OBJETS tab ────────────────────────────────────────────────── -->
       <div v-show="activeTab === 'objets'" class="tab-panel">
         <div class="panel">
-          <p class="panel-label"><AppIcon icon="lucide:gem" size="0.85rem" color="var(--color-info-bright)" /> Objets magiques</p>
+          <p class="panel-label"><AppIcon icon="lucide:gem" size="0.85rem" color="var(--color-info-bright)" /> Objets & Objets magiques</p>
           <MagicItemSearchTool />
         </div>
       </div>
