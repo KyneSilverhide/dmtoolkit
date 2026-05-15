@@ -56,9 +56,15 @@ export function setThemePreference(scope, theme) {
   if (!safeScope || !VALID_THEMES.has(theme)) return
   const all = readAll()
   all[safeScope] = theme
+  all['_last'] = theme
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(all))
   } catch {
     // localStorage may be full or unavailable
   }
+}
+
+export function getLastUsedTheme(fallback = 'dark') {
+  const all = readAll()
+  return normalizeTheme(all['_last'], normalizeTheme(fallback))
 }

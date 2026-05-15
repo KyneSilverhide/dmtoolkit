@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { getThemePreference, setThemePreference, applyTheme } from './themePreferences.js'
+import { getThemePreference, setThemePreference, applyTheme, getLastUsedTheme } from './themePreferences.js'
 
 const localStorageMock = (() => {
   let store = {}
@@ -50,5 +50,26 @@ describe('themePreferences', () => {
     expect(document.documentElement.style.colorScheme).toBe('light')
     const meta = document.querySelector('meta[name="theme-color"]')
     expect(meta?.getAttribute('content')).toBe('#f5f1e8')
+  })
+
+  describe('getLastUsedTheme', () => {
+    it('returns fallback when no theme has been set', () => {
+      expect(getLastUsedTheme()).toBe('dark')
+      expect(getLastUsedTheme('light')).toBe('light')
+    })
+
+    it('returns the most recently set theme across scopes', () => {
+      setThemePreference('admin', 'light')
+      expect(getLastUsedTheme()).toBe('light')
+      setThemePreference('player', 'dark')
+      expect(getLastUsedTheme()).toBe('dark')
+    })
+
+    it('reflects last setThemePreference call regardless of scope', () => {
+      setThemePreference('admin', 'dark')
+      setThemePreference('player', 'light')
+      setThemePreference('admin', 'dark')
+      expect(getLastUsedTheme()).toBe('dark')
+    })
   })
 })
