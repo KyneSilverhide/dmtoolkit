@@ -10,7 +10,13 @@
       "PowerShell(node --check \"C:\\\\Users\\\\aurel\\\\IdeaProjects\\\\critical-fail\\\\backend\\\\src\\\\routes\\\\sessions.js\"; Write-Host \"Exit: $LASTEXITCODE\")",
       "Bash(Find C:\\\\Users\\\\aurel\\\\IdeaProjects\\\\critical-fail\\\\backend\\\\src *)",
       "Bash(node --check src/socket.js)",
-      "Bash(node --check src/routes/sessions.js)"
+      "Bash(node --check src/routes/sessions.js)",
+      "WebFetch(domain:api.iconify.design)",
+      "WebFetch(domain:iconify.design)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:unpkg.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:cdn.jsdelivr.net)"
     ]
   }
 }
