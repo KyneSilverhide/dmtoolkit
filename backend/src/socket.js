@@ -312,7 +312,7 @@ function setupSocket(io) {
     console.log('Socket connected:', socket.id)
 
     // ── Player: join ────────────────────────────────────────────────────────
-    socket.on('join-session', async ({ code, playerName, ac, hp, dndClass, avatarUrl }) => {
+    socket.on('join-session', async ({ code, playerName, ac, hp, maxHp, dndClass, avatarUrl }) => {
       try {
         const cleanName = sanitizePlayerName(playerName)
         if (!cleanName) {
@@ -325,6 +325,9 @@ function setupSocket(io) {
         if (!session) { socket.emit('error', { message: 'Session introuvable ou fermée.' }); return }
         const acVal = Math.max(1, parseInt(ac) || 10)
         const hpVal = Math.max(1, parseInt(hp) || 20)
+        // maxHp is optional: if provided, use it as max_hp for new players.
+        // This prevents the bug where refreshing with 35/50 HP creates a player with max_hp=35.
+        const maxHpVal = maxHp ? Math.max(1, parseInt(maxHp) || hpVal) : hpVal
         const classVal = dndClass || null
         const avatarVal = avatarUrl || null
 
@@ -357,8 +360,8 @@ function setupSocket(io) {
         } else {
           const playerResult = await pool.query(
             `INSERT INTO players (session_id, player_name, socket_id, ac, max_hp, current_hp, dnd_class, avatar_url)
-             VALUES ($1, $2, $3, $4, $5, $5, $6, $7) RETURNING *`,
-            [session.id, cleanName, socket.id, acVal, hpVal, classVal, avatarVal]
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+            [session.id, cleanName, socket.id, acVal, maxHpVal, hpVal, classVal, avatarVal]
           )
           player = playerResult.rows[0]
         }
@@ -436,6 +439,24 @@ function setupSocket(io) {
           const sessionEvent = { eventType, description, playerName, value: delta, createdAt: new Date() }
           io.to(`admin:${socket.sessionId}`).emit('session-event', sessionEvent)
         }
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Player: update max HP ────────────────────────────────────────────────
+    socket.on('update-max-hp', async ({ newMaxHp }) => {
+      if (!socket.playerId || !socket.sessionId) return
+      try {
+        const maxHpVal = Math.max(1, Math.min(9999, parseInt(newMaxHp) || 1))
+        const updated = await pool.query(
+          'UPDATE players SET max_hp = $1 WHERE id = $2 RETURNING *',
+          [maxHpVal, socket.playerId]
+        )
+        const player = updated.rows[0]
+        if (!player) return
+        socket.emit('max-hp-update-confirmed', { newMaxHp: player.max_hp })
+        const event = { playerId: socket.playerId, newHp: player.current_hp, newMaxHp: player.max_hp }
+        io.to(`admin:${socket.sessionId}`).emit('hp-updated', event)
+        io.to(`tv:${socket.sessionId}`).emit('hp-updated', event)
       } catch (err) { console.error(err) }
     })
 

@@ -30,9 +30,13 @@ export const sessionStore = reactive({
     this.players = this.players.filter(p => String(p.id) !== String(playerId))
   },
 
-  updatePlayerHp(playerId, newHp) {
+  updatePlayerHp(playerId, newHp, newMaxHp) {
     const idx = this.players.findIndex(p => String(p.id) === String(playerId))
-    if (idx !== -1) this.players[idx] = { ...this.players[idx], current_hp: newHp }
+    if (idx !== -1) {
+      const update = { current_hp: newHp }
+      if (newMaxHp !== undefined) update.max_hp = newMaxHp
+      this.players[idx] = { ...this.players[idx], ...update }
+    }
   },
 
   updatePlayerConditions(playerId, conditions) {

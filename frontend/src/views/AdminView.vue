@@ -174,8 +174,8 @@ onMounted(() => {
     sessionStore.setPlayers(players)
   })
 
-  socket.on('hp-updated', ({ playerId, newHp }) => {
-    sessionStore.updatePlayerHp(playerId, newHp)
+  socket.on('hp-updated', ({ playerId, newHp, newMaxHp }) => {
+    sessionStore.updatePlayerHp(playerId, newHp, newMaxHp)
   })
 
   socket.on('conditions-updated', ({ playerId, conditions }) => {

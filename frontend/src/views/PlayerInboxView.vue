@@ -84,6 +84,7 @@ function rememberCurrentPlayer(sessionCode = currentSessionCode()) {
     name: playerInfo.value.name,
     ac: playerInfo.value.ac,
     hp: currentHp.value,
+    maxHp: maxHp.value,
     dndClass: playerInfo.value.dndClass,
     avatarUrl: playerInfo.value.avatarUrl,
   })
@@ -152,6 +153,7 @@ async function rejoinFromKnownPlayer(sessionCode) {
       playerName: knownPlayer.name,
       ac: knownPlayer.ac,
       hp: knownPlayer.hp,
+      maxHp: knownPlayer.maxHp,
       dndClass: knownPlayer.dndClass || null,
       avatarUrl: knownPlayer.avatarUrl || null,
     })
@@ -218,6 +220,37 @@ const maxHp = ref(playerInfo.value?.maxHp ?? 20)
 const pendingHp = ref(currentHp.value)
 const hpSending = ref(false)
 const hpSent = ref(false)
+
+// ── Max HP editing ────────────────────────────────────────────────────────
+const editingMaxHp = ref(false)
+const pendingMaxHp = ref(maxHp.value)
+const maxHpSending = ref(false)
+const maxHpSent = ref(false)
+
+function openMaxHpEdit() {
+  pendingMaxHp.value = maxHp.value
+  editingMaxHp.value = true
+}
+function cancelMaxHpEdit() {
+  editingMaxHp.value = false
+}
+function sendMaxHpUpdate() {
+  const socket = getSocket()
+  const val = Math.max(1, Math.min(9999, parseInt(pendingMaxHp.value) || 1))
+  maxHpSending.value = true
+  socket.emit('update-max-hp', { newMaxHp: val })
+}
+const handleMaxHpConfirmed = (data) => {
+  maxHp.value = data.newMaxHp
+  if (sessionStore.playerInfo) sessionStore.playerInfo.maxHp = data.newMaxHp
+  // If current HP > new max HP, clamp pending HP too
+  if (pendingHp.value > data.newMaxHp) pendingHp.value = data.newMaxHp
+  editingMaxHp.value = false
+  maxHpSending.value = false
+  maxHpSent.value = true
+  setTimeout(() => { maxHpSent.value = false }, 2000)
+  rememberCurrentPlayer()
+}
 
 // ── Initiative ─────────────────────────────────────────────────────────────
 const initialInitiative = parseInt(playerInfo.value?.initiative, 10)
@@ -532,16 +565,19 @@ function handleKicked() {
 }
 
 function handleBeforeUnload() {
-  const socket = getSocket()
-  if (socket && sessionStore.activeSession) {
-    socket.emit('leave-session')
-  }
+  // On page refresh or tab close, mark as refreshing so onUnmounted does NOT
+  // emit leave-session (which would delete the player from DB). Instead, we let
+  // the socket disconnect event clear socket_id and keep the player in session.
+  isRefreshing = true
 }
 
 // ── Socket reconnection ──────────────────────────────────────────────────
 // Tracks whether the player has successfully joined a session at least once.
 // Used to distinguish initial connection from auto-reconnection after mobile sleep.
 let hasJoinedSession = false
+// Set to true on beforeunload (page refresh / tab close) so onUnmounted skips
+// leave-session and lets the socket disconnect handle state cleanup.
+let isRefreshing = false
 
 async function handleSocketReconnect() {
   if (!hasJoinedSession) return
@@ -573,6 +609,7 @@ async function handleSocketReconnect() {
       playerName: playerInfo.value.name,
       ac: playerInfo.value.ac,
       hp: currentHp.value,
+      maxHp: maxHp.value,
       dndClass: playerInfo.value.dndClass || null,
       avatarUrl: playerInfo.value.avatarUrl || null,
     })
@@ -608,6 +645,7 @@ onMounted(async () => {
   socket.on('new-message', handleNewMessage)
   socket.on('dice-result', handleDiceResult)
   socket.on('hp-update-confirmed', handleHpConfirmed)
+  socket.on('max-hp-update-confirmed', handleMaxHpConfirmed)
   socket.on('concentration-confirmed', handleConcentrationConfirmed)
   socket.on('initiative-confirmed', handleInitiativeConfirmed)
   socket.on('concentration-warning', handleConcentrationWarning)
@@ -631,11 +669,14 @@ onUnmounted(() => {
   hasJoinedSession = false
   const socket = getSocket()
   if (socket) {
-    if (sessionStore.activeSession) socket.emit('leave-session')
+    // Only emit leave-session on intentional SPA navigation, NOT on page refresh/close.
+    // isRefreshing is set in handleBeforeUnload (fires only on real page unload).
+    if (!isRefreshing && sessionStore.activeSession) socket.emit('leave-session')
     socket.off('connect', handleSocketReconnect)
     socket.off('new-message', handleNewMessage)
     socket.off('dice-result', handleDiceResult)
     socket.off('hp-update-confirmed', handleHpConfirmed)
+    socket.off('max-hp-update-confirmed', handleMaxHpConfirmed)
     socket.off('concentration-confirmed', handleConcentrationConfirmed)
     socket.off('initiative-confirmed', handleInitiativeConfirmed)
     socket.off('concentration-warning', handleConcentrationWarning)
@@ -754,14 +795,37 @@ onUnmounted(() => {
 
       <!-- ── COMBAT tab (Statut + Conditions) ───────────────────────────── -->
       <div v-show="activeTab === 'combat'" class="tab-panel">
-        <!-- HP Panel -->
-        <div class="panel hp-panel">
-          <div class="panel-header">
-            <span class="panel-label">❤️ Points de Vie</span>
-            <span class="hp-fraction">{{ confirmedDisplayedHp }} / {{ maxHp }}</span>
-            <span v-if="confirmedTemporaryHp > 0" class="hp-temp">+{{ confirmedTemporaryHp }} TEMP</span>
-          </div>
-          <div class="hp-bar-track">
+          <!-- HP Panel -->
+          <div class="panel hp-panel">
+            <div class="panel-header">
+              <span class="panel-label">❤️ Points de Vie</span>
+              <span class="hp-fraction">{{ confirmedDisplayedHp }} / {{ maxHp }}</span>
+              <span v-if="confirmedTemporaryHp > 0" class="hp-temp">+{{ confirmedTemporaryHp }} TEMP</span>
+            </div>
+            <!-- Max HP edit inline -->
+            <div v-if="editingMaxHp" class="max-hp-edit-row">
+              <label class="max-hp-edit-label">PV max :</label>
+              <input
+                v-model.number="pendingMaxHp"
+                type="number"
+                class="max-hp-edit-input"
+                min="1"
+                max="9999"
+                @keyup.enter="sendMaxHpUpdate"
+                @keyup.escape="cancelMaxHpEdit"
+              />
+              <button class="max-hp-confirm-btn" :disabled="maxHpSending" @click="sendMaxHpUpdate">
+                {{ maxHpSending ? '…' : '✓' }}
+              </button>
+              <button class="max-hp-cancel-btn" @click="cancelMaxHpEdit">✕</button>
+            </div>
+            <div v-else class="max-hp-display-row">
+              <span class="max-hp-hint">Max : {{ maxHp }}</span>
+              <button class="max-hp-edit-btn" :class="{ sent: maxHpSent }" @click="openMaxHpEdit">
+                {{ maxHpSent ? '✓' : '✏️' }}
+              </button>
+            </div>
+            <div class="hp-bar-track">
             <div class="hp-bar-fill" :style="{ width: hpPercent + '%', background: hpBarColor }" />
           </div>
           <div class="hp-controls">
@@ -1388,6 +1452,73 @@ onUnmounted(() => {
 .hp-send-btn:hover:not(:disabled) { background: var(--player-gold-bg-strong); }
 .hp-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .hp-send-btn.sent { border-color: var(--player-success-border); background: var(--player-success-bg); color: var(--player-success-text); }
+
+/* ── Max HP Edit ─────────────────────────────────────────────────────── */
+.max-hp-display-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+.max-hp-hint {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+}
+.max-hp-edit-btn {
+  background: none;
+  border: none;
+  padding: 0 0.2rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  line-height: 1;
+}
+.max-hp-edit-btn:hover { opacity: 1; }
+.max-hp-edit-btn.sent { opacity: 1; color: var(--player-success-text); }
+.max-hp-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.25rem;
+}
+.max-hp-edit-label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+  white-space: nowrap;
+}
+.max-hp-edit-input {
+  width: 70px;
+  height: 32px;
+  text-align: center;
+  background: var(--player-control-bg);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 6px;
+  color: var(--color-parchment);
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+}
+.max-hp-confirm-btn, .max-hp-cancel-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: var(--player-control-bg);
+  color: var(--color-parchment);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.max-hp-confirm-btn { border-color: var(--player-success-border); color: var(--player-success-text); }
+.max-hp-confirm-btn:hover:not(:disabled) { background: var(--player-success-bg); }
+.max-hp-cancel-btn:hover { border-color: var(--color-danger); color: var(--color-danger); }
+.max-hp-confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── Initiative ──────────────────────────────────────────────────────── */
 .initiative-panel { display: flex; flex-direction: column; gap: 0.5rem; }

@@ -377,12 +377,14 @@ onMounted(() => {
     delete hpAnimations.value[playerId]
   })
 
-  socket.on('hp-updated', ({ playerId, newHp }) => {
+  socket.on('hp-updated', ({ playerId, newHp, newMaxHp }) => {
     const idx = players.value.findIndex(p => String(p.id) === String(playerId))
     if (idx !== -1) {
       const oldHp = previousHp.value[players.value[idx].id] ?? players.value[idx].current_hp
       const delta = newHp - oldHp
-      players.value[idx] = { ...players.value[idx], current_hp: newHp }
+      const update = { current_hp: newHp }
+      if (newMaxHp !== undefined) update.max_hp = newMaxHp
+      players.value[idx] = { ...players.value[idx], ...update }
       previousHp.value[players.value[idx].id] = newHp
 
       const id = players.value[idx].id

@@ -132,6 +132,7 @@ async function joinSession() {
         name: data.player.player_name,
         ac: data.player.ac,
         hp: data.player.current_hp,
+        maxHp: data.player.max_hp,
         dndClass: data.player.dnd_class,
         avatarUrl: data.player.avatar_url,
       })
