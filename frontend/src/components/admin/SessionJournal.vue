@@ -11,15 +11,56 @@ const events = ref([])
 const summary = ref('')
 const loadingSummary = ref(false)
 const hasSession = computed(() => !!sessionStore.activeSession)
+const reversedEvents = computed(() => events.value.slice().reverse())
 
 const EVENT_ICONS = {
-  join:   { icon: 'lucide:log-in',     color: 'var(--color-success)' },
-  leave:  { icon: 'lucide:log-out',    color: 'var(--color-text-dim)' },
-  damage: { icon: 'game-icons:sword-wound', color: 'var(--color-danger)' },
-  heal:   { icon: 'game-icons:health-increase', color: 'var(--color-success)' },
-  death:  { icon: 'game-icons:skull',  color: 'var(--color-text-dim)' },
+  join:              { icon: 'lucide:log-in',                 color: 'var(--color-gold-dark)' },
+  leave:             { icon: 'lucide:log-out',                color: 'var(--color-text-dim)' },
+  damage:            { icon: 'game-icons:sword-wound',        color: 'var(--color-danger)' },
+  heal:              { icon: 'game-icons:health-increase',    color: 'var(--color-success)' },
+  death:             { icon: 'game-icons:skull',              color: '#aaa' },
+  critical_hit:      { icon: 'game-icons:star-struck',        color: 'var(--color-gold-bright)' },
+  critical_miss:     { icon: 'game-icons:broken-bone',        color: 'var(--color-warning)' },
+  vote_started:      { icon: 'lucide:vote',                   color: 'var(--color-info)' },
+  vote_closed:       { icon: 'lucide:check-circle',           color: 'var(--color-info)' },
+  purchase_accepted: { icon: 'lucide:shopping-bag',           color: 'var(--color-success)' },
+  purchase_rejected: { icon: 'lucide:x-circle',              color: 'var(--color-danger)' },
+  doom_clock_started:{ icon: 'game-icons:hourglass',          color: 'var(--color-danger)' },
+  doom_clock_stopped:{ icon: 'lucide:stop-circle',            color: 'var(--color-text-dim)' },
+  tension_started:   { icon: 'lucide:activity',               color: 'var(--color-warning)' },
+  tension_updated:   { icon: 'lucide:trending-up',            color: 'var(--color-warning)' },
+  tension_ended:     { icon: 'lucide:flag',                   color: 'var(--color-text-dim)' },
+  combat_round:      { icon: 'game-icons:crossed-swords',     color: 'var(--color-text-dim)' },
 }
 const DEFAULT_EVENT_ICON = { icon: 'lucide:bookmark', color: 'var(--color-text-dim)' }
+
+const DOT_COLORS = {
+  join:              'var(--color-gold-dark)',
+  leave:             'var(--color-text-dim)',
+  damage:            'var(--color-danger)',
+  heal:              'var(--color-success)',
+  death:             '#555',
+  critical_hit:      'var(--color-gold-bright)',
+  critical_miss:     'var(--color-warning)',
+  vote_started:      'var(--color-info)',
+  vote_closed:       'var(--color-info)',
+  purchase_accepted: 'var(--color-success)',
+  purchase_rejected: 'var(--color-danger)',
+  doom_clock_started:'var(--color-danger)',
+  doom_clock_stopped:'var(--color-text-dim)',
+  tension_started:   'var(--color-warning)',
+  tension_updated:   'var(--color-warning)',
+  tension_ended:     'var(--color-text-dim)',
+  combat_round:      'var(--color-text-dim)',
+}
+
+function getIcon(evt) {
+  return EVENT_ICONS[evt.eventType || evt.event_type] || DEFAULT_EVENT_ICON
+}
+
+function getDotColor(evt) {
+  return DOT_COLORS[evt.eventType || evt.event_type] || 'var(--color-border)'
+}
 
 function formatTime(dateStr) {
   if (!dateStr) return ''
@@ -42,7 +83,6 @@ async function generateSummary() {
     const data = await res.json()
     if (data.summary) {
       summary.value = data.summary
-      // Merge full event list from server
       events.value = data.events.map(e => ({ ...e, eventType: e.event_type, createdAt: e.created_at }))
     }
   } catch {
@@ -74,7 +114,8 @@ onUnmounted(() => {
     <template v-else>
       <div class="journal-actions">
         <button class="summary-btn" @click="generateSummary" :disabled="loadingSummary">
-          {{ loadingSummary ? 'Génération…' : '' }}<AppIcon v-if="!loadingSummary" icon="lucide:file-text" size="0.85em" /> {{ loadingSummary ? '' : 'Générer le résumé' }}
+          <AppIcon v-if="!loadingSummary" icon="lucide:file-text" size="0.85em" />
+          {{ loadingSummary ? 'Génération…' : 'Générer le résumé' }}
         </button>
       </div>
 
@@ -87,22 +128,26 @@ onUnmounted(() => {
         <p class="empty-text">Aucun événement enregistré.</p>
       </div>
 
-      <div v-else class="events-list">
+      <div v-else class="timeline">
         <div
-          v-for="(evt, idx) in events"
+          v-for="(evt, idx) in reversedEvents"
           :key="idx"
-          class="event-item"
-          :class="evt.eventType || evt.event_type"
+          class="timeline-item"
         >
-          <span class="event-icon">
+          <div
+            class="timeline-dot"
+            :style="{ borderColor: getDotColor(evt) }"
+          >
             <AppIcon
-              :icon="(EVENT_ICONS[evt.eventType || evt.event_type] || DEFAULT_EVENT_ICON).icon"
-              :color="(EVENT_ICONS[evt.eventType || evt.event_type] || DEFAULT_EVENT_ICON).color"
-              size="1em"
+              :icon="getIcon(evt).icon"
+              :color="getIcon(evt).color"
+              size="0.6rem"
             />
-          </span>
-          <span class="event-desc">{{ evt.description }}</span>
-          <span class="event-time">{{ formatTime(evt.createdAt || evt.created_at) }}</span>
+          </div>
+          <div class="timeline-content">
+            <span class="tl-desc">{{ evt.description }}</span>
+            <span class="tl-time">{{ formatTime(evt.createdAt || evt.created_at) }}</span>
+          </div>
         </div>
       </div>
     </template>
@@ -137,6 +182,9 @@ onUnmounted(() => {
 }
 
 .summary-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.5rem 1rem;
   background: var(--gradient-info-action);
   border: 1px solid var(--color-info-border);
@@ -150,10 +198,7 @@ onUnmounted(() => {
   transition: all 0.2s;
 }
 
-.summary-btn:hover:not(:disabled) {
-  background: var(--gradient-info-action-hover);
-}
-
+.summary-btn:hover:not(:disabled) { background: var(--gradient-info-action-hover); }
 .summary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .summary-box {
@@ -188,36 +233,66 @@ onUnmounted(() => {
   color: var(--color-text-dim);
 }
 
-.events-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  max-height: 400px;
-  overflow-y: auto;
+/* ── Timeline ── */
+.timeline {
+  position: relative;
+  padding-left: 1.8rem;
 }
 
-.event-item {
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0.6rem;
+  top: 0.55rem;
+  bottom: 0.55rem;
+  width: 2px;
+  background: var(--color-border);
+  border-radius: 2px;
+}
+
+.timeline-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -1.8rem;
+  top: 0.1rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  background: var(--surface-ghost);
-  border-left: 3px solid var(--color-border);
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.2s;
+}
+
+.timeline-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.tl-desc {
   font-family: var(--font-body);
   font-size: 0.85rem;
   color: var(--color-parchment);
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
 }
 
-.event-item.damage { border-left-color: var(--color-danger); }
-.event-item.death { border-left-color: var(--color-text-dim); background: var(--surface-track); }
-.event-item.heal { border-left-color: var(--color-success); }
-.event-item.join { border-left-color: var(--color-gold-dark); }
-.event-item.leave { border-left-color: var(--color-warning); }
-
-.event-icon { font-size: 1rem; flex-shrink: 0; }
-.event-desc { flex: 1; }
-.event-time {
+.tl-time {
   font-family: var(--font-heading);
   font-size: 0.65rem;
   color: var(--color-border);

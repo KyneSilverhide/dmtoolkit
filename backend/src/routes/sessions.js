@@ -270,8 +270,13 @@ router.get('/:id/journal', authenticateToken, async (req, res) => {
     const damages = rows.filter(e => e.event_type === 'damage')
     const heals = rows.filter(e => e.event_type === 'heal')
     const deaths = rows.filter(e => e.event_type === 'death')
+    const critHits = rows.filter(e => e.event_type === 'critical_hit')
+    const critMisses = rows.filter(e => e.event_type === 'critical_miss')
+    const votesStarted = rows.filter(e => e.event_type === 'vote_started')
+    const purchasesAccepted = rows.filter(e => e.event_type === 'purchase_accepted')
     const totalDamage = damages.reduce((sum, e) => sum + Math.abs(e.value || 0), 0)
     const totalHeal = heals.reduce((sum, e) => sum + Math.abs(e.value || 0), 0)
+    const totalGoldSpent = purchasesAccepted.reduce((sum, e) => sum + Math.abs(e.value || 0), 0)
 
     const sessionStart = sessionCheck.rows[0].created_at
     const lastEvent = rows.length ? rows[rows.length - 1].created_at : new Date()
@@ -285,6 +290,10 @@ router.get('/:id/journal', authenticateToken, async (req, res) => {
       `💚 Soins totaux : ${totalHeal} PV`,
       `💀 Morts : ${deaths.length}`,
       deaths.length ? `   ${deaths.map(d => d.player_name).join(', ')}` : '',
+      critHits.length ? `⚔️ Critiques réussis : ${critHits.length}` : '',
+      critMisses.length ? `💔 Critiques ratés : ${critMisses.length}` : '',
+      votesStarted.length ? `🗳️ Votes : ${votesStarted.length}` : '',
+      purchasesAccepted.length ? `🛒 Achats : ${purchasesAccepted.length} (${totalGoldSpent} po dépensés)` : '',
     ].filter(Boolean).join('\n')
 
     res.json({ events: rows, summary })
