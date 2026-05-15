@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { sessionStore } from '../../stores/session.js'
 import { authStore } from '../../stores/auth.js'
 import { getSocket } from '../../socket.js'
+import AppIcon from '../AppIcon.vue'
 
 const MAX_COIN_AMOUNT = 99999
 
@@ -72,7 +73,7 @@ function sendSplit() {
     sessionId: sessionStore.activeSession.id,
     shares: shares.value,
   })
-  sendFeedback.value = `✅ Parts envoyées à ${numPlayers.value} joueur(s) !`
+  sendFeedback.value = `Parts envoyées à ${numPlayers.value} joueur(s) !`
   setTimeout(() => { sendFeedback.value = '' }, 3000)
 }
 
@@ -87,9 +88,8 @@ function reset() {
     <p v-else-if="!hasPlayers" class="no-session-hint">Aucun joueur connecté dans la session.</p>
 
     <template v-else>
-      <!-- Coin inputs -->
       <div class="section">
-        <p class="section-label">💰 Trésor à diviser</p>
+        <p class="section-label"><AppIcon icon="game-icons:coins" size="0.85rem" color="var(--color-gold-bright)" /> Trésor à diviser</p>
         <div class="coin-inputs">
           <div
             v-for="coin in COINS"
@@ -116,24 +116,18 @@ function reset() {
         <button class="reset-btn" @click="reset">Remettre à zéro</button>
       </div>
 
-      <!-- Division preview -->
       <div v-if="hasAnyCoin" class="section">
-        <p class="section-label">⚖️ Division entre {{ numPlayers }} joueur(s)</p>
+        <p class="section-label"><AppIcon icon="lucide:scale" size="0.85rem" /> Division entre {{ numPlayers }} joueur(s)</p>
 
         <div class="players-table">
-          <div
-            v-for="share in shares"
-            :key="share.playerId"
-            class="player-row"
-          >
-            <span class="player-name">⚔️ {{ share.playerName }}</span>
+          <div v-for="share in shares" :key="share.playerId" class="player-row">
+            <span class="player-name"><AppIcon icon="game-icons:crossed-swords" size="0.8rem" color="var(--color-gold-bright)" /> {{ share.playerName }}</span>
             <span class="player-share">{{ formatShare(share) }}</span>
           </div>
         </div>
 
-        <!-- Remainders -->
         <div class="remainders">
-          <p class="section-label" style="margin-top: 0.5rem">🪙 Restes (non divisibles)</p>
+          <p class="section-label" style="margin-top: 0.5rem"><AppIcon icon="game-icons:coins" size="0.85rem" /> Restes (non divisibles)</p>
           <div class="remainder-chips">
             <template v-for="coin in COINS" :key="coin.key">
               <span
@@ -152,16 +146,13 @@ function reset() {
         </div>
       </div>
 
-      <!-- Send button -->
       <div class="send-section">
-        <button
-          class="send-btn"
-          :disabled="!hasAnyCoin || !anyNonZeroShare()"
-          @click="sendSplit"
-        >
-          📡 Envoyer les parts aux joueurs
+        <button class="send-btn" :disabled="!hasAnyCoin || !anyNonZeroShare()" @click="sendSplit">
+          <AppIcon icon="lucide:send" size="0.9em" /> Envoyer les parts aux joueurs
         </button>
-        <p v-if="sendFeedback" class="send-feedback">{{ sendFeedback }}</p>
+        <p v-if="sendFeedback" class="send-feedback">
+          <AppIcon icon="lucide:check-circle" size="0.9em" /> {{ sendFeedback }}
+        </p>
         <p v-if="hasAnyCoin && !anyNonZeroShare()" class="send-hint">
           Aucune pièce entière à distribuer.
         </p>

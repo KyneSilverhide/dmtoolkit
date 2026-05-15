@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { sessionStore } from '../../stores/session.js'
 import { getSocket } from '../../socket.js'
+import AppIcon from '../AppIcon.vue'
 
 const tvMode = ref('lobby')
 const activeDoomClock = ref(null)
@@ -213,7 +214,7 @@ onUnmounted(() => {
 <template>
   <div class="tv-controls">
     <section class="control-section">
-      <h2 class="section-title">⚔️ Rounds de combat</h2>
+      <h2 class="section-title"><AppIcon icon="game-icons:crossed-swords" size="0.9em" /> Rounds de combat</h2>
       <div class="round-display">Round <strong>{{ combatRound }}</strong></div>
       <div class="inline-actions">
         <button class="action-btn" @click="adjustRound(-1)" :disabled="combatRound <= 0">−1</button>
@@ -223,7 +224,7 @@ onUnmounted(() => {
     </section>
 
     <section class="control-section">
-      <h2 class="section-title">⏱️ Doom Clock</h2>
+      <h2 class="section-title"><AppIcon icon="lucide:timer" size="0.9em" /> Doom Clock</h2>
       <div class="form-row">
         <input v-model="doomTitle" class="form-input" type="text" placeholder="Titre du compte à rebours" />
       </div>
@@ -241,7 +242,7 @@ onUnmounted(() => {
     </section>
 
     <section class="control-section">
-      <h2 class="section-title">⏲️ Minuteur libre</h2>
+      <h2 class="section-title"><AppIcon icon="lucide:hourglass" size="0.9em" /> Minuteur libre</h2>
       <div class="form-row">
         <input v-model="timerLabel" class="form-input" type="text" placeholder="Libellé du minuteur" />
       </div>
@@ -259,7 +260,7 @@ onUnmounted(() => {
     </section>
 
     <section class="control-section">
-      <h2 class="section-title">📈 Échelle de tension</h2>
+      <h2 class="section-title"><AppIcon icon="lucide:trending-up" size="0.9em" /> Échelle de tension</h2>
       <div class="form-row">
         <input v-model="tensionTitle" class="form-input" type="text" placeholder="Titre de l'échelle" />
       </div>

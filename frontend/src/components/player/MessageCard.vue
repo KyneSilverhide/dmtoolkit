@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
+import AppIcon from '../AppIcon.vue'
 
 const props = defineProps({
   message: {
@@ -67,7 +68,7 @@ function resolvedText() {
   <div class="message-card" :class="message.kind">
     <div v-if="message.kind === 'dice'" class="dice-card">
       <div class="dice-header">
-        <span class="dice-icon">🎲</span>
+        <span class="dice-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="1.3rem" color="var(--color-gold-bright)" /></span>
         <span class="dice-type">{{ message.combatType }}</span>
         <span class="dice-time">{{ formatTime(message.createdAt) }}</span>
       </div>
@@ -84,7 +85,7 @@ function resolvedText() {
         <span class="card-time">{{ formatTime(message.sentAt) }}</span>
       </div>
       <div class="gold-content">
-        <span class="gold-icon">💰</span>
+        <span class="gold-icon"><AppIcon icon="game-icons:coins" size="1.6rem" color="#d4af37" /></span>
         <span class="gold-text">{{ message.content }}</span>
       </div>
     </div>

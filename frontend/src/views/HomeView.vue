@@ -1,5 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router'
+import AppIcon from '../components/AppIcon.vue'
 
 const router = useRouter()
 </script>
@@ -14,12 +15,12 @@ const router = useRouter()
     <main class="home-main">
       <div class="home-buttons">
         <button class="home-btn mj-btn" @click="router.push('/login')">
-          <span class="btn-icon">🎲</span>
+          <span class="btn-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="2rem" /></span>
           <span class="btn-label">Je suis MJ</span>
           <span class="btn-sub">Accéder à l'administration</span>
         </button>
         <button class="home-btn player-btn" @click="router.push('/join')">
-          <span class="btn-icon">⚔️</span>
+          <span class="btn-icon"><AppIcon icon="game-icons:crossed-swords" size="2rem" /></span>
           <span class="btn-label">Je suis Joueur</span>
           <span class="btn-sub">Rejoindre une session</span>
         </button>

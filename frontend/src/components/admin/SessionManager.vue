@@ -2,6 +2,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { authStore } from '../../stores/auth.js'
 import { sessionStore } from '../../stores/session.js'
+import AppIcon from '../AppIcon.vue'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
@@ -206,13 +207,13 @@ onMounted(loadSessions)
         <!-- TV Screen link -->
         <div class="tv-section">
           <div class="tv-header">
-            <span class="tv-label">📺 Écran TV</span>
+            <span class="tv-label"><AppIcon icon="lucide:monitor" size="0.85em" /> Écran TV</span>
             <a :href="tvUrl" target="_blank" class="tv-open-btn">Ouvrir →</a>
           </div>
           <div class="tv-url-row">
             <span class="tv-url">{{ tvUrl }}</span>
             <button class="tv-copy-btn" @click="copyTvUrl">
-              {{ tvCopied ? '✓ Copié' : '📋 Copier' }}
+              {{ tvCopied ? '✓ Copié' : '' }}<AppIcon v-if="!tvCopied" icon="lucide:clipboard" size="0.85em" /> {{ tvCopied ? '' : 'Copier' }}
             </button>
           </div>
           <p class="tv-hint">Ouvrez ce lien sur votre TV ou second écran.</p>
@@ -222,7 +223,7 @@ onMounted(loadSessions)
           Fermer la session
         </button>
         <button class="delete-btn" @click="deleteSession(sessionStore.activeSession.id)">
-          🗑️ Supprimer définitivement
+          <AppIcon icon="lucide:trash-2" size="0.85em" /> Supprimer définitivement
         </button>
       </div>
     </section>
@@ -243,8 +244,8 @@ onMounted(loadSessions)
           </div>
           <div class="session-actions-right">
             <span class="session-status" :class="s.status">{{ s.status }}</span>
-            <button v-if="s.status === 'closed'" class="reopen-mini-btn" @click.stop="reopenSession(s.id)" title="Réouvrir">↩️</button>
-            <button class="delete-mini-btn" @click.stop="deleteSession(s.id)">🗑️</button>
+            <button v-if="s.status === 'closed'" class="reopen-mini-btn" @click.stop="reopenSession(s.id)" title="Réouvrir"><AppIcon icon="lucide:undo-2" size="0.85em" /></button>
+            <button class="delete-mini-btn" @click.stop="deleteSession(s.id)"><AppIcon icon="lucide:trash-2" size="0.85em" /></button>
           </div>
         </div>
       </div>

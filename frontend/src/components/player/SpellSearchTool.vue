@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch, onUnmounted } from 'vue'
+import AppIcon from '../AppIcon.vue'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
@@ -101,7 +102,7 @@ onUnmounted(() => {
         @keydown.enter="search"
       />
       <button class="search-btn" :disabled="loading || !query.trim()" @click="search">
-        {{ loading ? '…' : '🔍 Chercher' }}
+        <AppIcon v-if="!loading" icon="lucide:search" size="0.85em" /> {{ loading ? '…' : 'Chercher' }}
       </button>
     </div>
 
@@ -120,16 +121,16 @@ onUnmounted(() => {
           <span v-if="spell.parsedEcole.ritual"> • Rituel</span>
         </p>
         <p v-if="spell.attributes?.temps_incantation" class="spell-meta">
-          ⏱️ {{ spell.attributes.temps_incantation.replace(/^Temps d'incantation\s*:\s*/i, '') }}
+          <AppIcon icon="lucide:timer" size="0.8em" /> {{ spell.attributes.temps_incantation.replace(/^Temps d'incantation\s*:\s*/i, '') }}
         </p>
         <p v-if="spell.attributes?.portee" class="spell-meta">
-          🎯 {{ spell.attributes.portee.replace(/^Portée\s*:\s*/i, '') }}
+          <AppIcon icon="lucide:crosshair" size="0.8em" /> {{ spell.attributes.portee.replace(/^Portée\s*:\s*/i, '') }}
         </p>
         <p v-if="spell.attributes?.duree" class="spell-meta">
-          ⌛ {{ spell.attributes.duree.replace(/^Durée\s*:\s*/i, '') }}
+          <AppIcon icon="lucide:hourglass" size="0.8em" /> {{ spell.attributes.duree.replace(/^Durée\s*:\s*/i, '') }}
         </p>
         <p v-if="spell.attributes?.composantes" class="spell-meta">
-          🧪 {{ shortComponent(spell.attributes.composantes) }}
+          <AppIcon icon="lucide:flask-conical" size="0.8em" /> {{ shortComponent(spell.attributes.composantes) }}
         </p>
         <p v-if="spell.description" class="spell-desc">{{ spell.description }}</p>
         <a :href="spell.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>

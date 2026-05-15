@@ -3,6 +3,8 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { authStore } from '../../stores/auth.js'
 import { sessionStore } from '../../stores/session.js'
 import { getSocket } from '../../socket.js'
+import AppIcon from '../AppIcon.vue'
+import MERCHANT_PRESETS from '../../assets/merchantPresets.js'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
@@ -11,8 +13,7 @@ const merchants = ref([])
 const pendingRequests = ref([]) // normalized batch groups
 const loading = ref(false)
 const view = ref('list') // 'list' | 'create'
-
-// Create form
+const presetPanelOpen = ref(false)// Create form
 const newName = ref('')
 const newDesc = ref('')
 const newItems = ref([])
@@ -22,27 +23,85 @@ const creating = ref(false)
 const respondingRequest = ref(null)
 const respondAction = ref('accept')
 
-const DND_PRESETS = [
-  { name: 'Potion de soins', description: 'Récupère 2d4+2 PV', price: 50, stock: 5, category: 'Potions' },
-  { name: 'Potion de soins supérieurs', description: 'Récupère 4d4+4 PV', price: 100, stock: 3, category: 'Potions' },
-  { name: 'Potion de soins importants', description: 'Récupère 8d4+8 PV', price: 300, stock: 2, category: 'Potions' },
-  { name: 'Antidote', description: 'Contre les poisons', price: 50, stock: 3, category: 'Potions' },
-  { name: 'Eau bénite', description: 'Efficace contre les morts-vivants', price: 25, stock: 5, category: 'Potions' },
-  { name: 'Torche', description: 'Éclaire dans un rayon de 6m pendant 1h', price: 1, stock: -1, category: 'Équipement' },
-  { name: 'Rations de voyage (x1 jour)', description: 'Nourriture pour un jour', price: 5, stock: -1, category: 'Équipement' },
-  { name: 'Corde de chanvre (15m)', description: 'Résistance 1000 lbs', price: 10, stock: 5, category: 'Équipement' },
-  { name: 'Sac à dos', description: 'Capacité 30 lbs / 1 pied cube', price: 20, stock: 3, category: 'Équipement' },
-  { name: 'Huile de lampe', description: 'Alimente une lampe pendant 6h', price: 1, stock: -1, category: 'Équipement' },
-  { name: 'Flèches (x20)', description: 'Munitions pour arc', price: 10, stock: 5, category: 'Armes' },
-  { name: 'Dague', description: 'Dégâts : 1d4 perforant', price: 20, stock: 3, category: 'Armes' },
-  { name: 'Épée courte', description: 'Dégâts : 1d6 perforant', price: 100, stock: 2, category: 'Armes' },
-  { name: 'Épée longue', description: 'Dégâts : 1d8 tranchant', price: 150, stock: 2, category: 'Armes' },
-  { name: 'Armure de cuir', description: 'CA : 11 + mod. Dex', price: 100, stock: 2, category: 'Armures' },
-  { name: 'Cotte de mailles', description: 'CA : 16, Force min 13', price: 750, stock: 1, category: 'Armures' },
-  { name: 'Bouclier', description: 'CA : +2', price: 100, stock: 3, category: 'Armures' },
-  { name: "Parchemin d'identification", description: 'Identifie un objet magique', price: 200, stock: 2, category: 'Magie' },
-  { name: 'Parchemin de sorts (1er niv.)', description: 'Sort aléatoire de 1er niveau', price: 150, stock: 2, category: 'Magie' },
-]
+// ── Equipment search ─────────────────────────────────────────────────────
+const equipSearch = ref('')
+const equipResults = ref([])
+const equipLoading = ref(false)
+const equipSearchOpen = ref(false)
+const equipError = ref(false)
+let equipTimer = null
+
+async function runEquipSearch() {
+  const q = equipSearch.value.trim()
+  if (!q) { equipResults.value = []; return }
+  equipLoading.value = true
+  equipError.value = false
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/equipment/search?q=${encodeURIComponent(q)}`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    if (res.ok) {
+      equipResults.value = await res.json()
+    } else {
+      equipError.value = true
+      equipResults.value = []
+    }
+  } catch (err) {
+    console.error(err)
+    equipError.value = true
+    equipResults.value = []
+  } finally {
+    equipLoading.value = false
+  }
+}
+
+function onEquipInput() {
+  clearTimeout(equipTimer)
+  equipError.value = false
+  if (equipSearch.value.trim().length < 2) { equipResults.value = []; return }
+  equipTimer = setTimeout(runEquipSearch, 300)
+}
+
+function parsePrice(raw) {
+  if (!raw) return 0
+  // "1 500 po" → 1500, "5 pa" → 0 (rounded down to 0 gp), "1 pc" → 0
+  const m = String(raw).replace(/\s/g, '').match(/^([\d,\.]+)\s*(po|pa|pc)?/)
+  if (!m) return 0
+  const val = parseFloat(m[1].replace(',', '.'))
+  if (m[2] === 'pa') return Math.ceil(val / 10)  // silver → gold (rounded)
+  if (m[2] === 'pc') return 0
+  return Math.round(val)
+}
+
+/** Map item_type to a merchant category label */
+function equipCategory(itemType) {
+  if (!itemType) return 'Divers'
+  const t = itemType.toLowerCase()
+  if (t.includes('arme de guerre')) return 'Armes de guerre'
+  if (t.includes('arme simple')) return 'Armes simples'
+  if (t.includes('munition')) return 'Munitions'
+  if (t.includes('armure lourde')) return 'Armures lourdes'
+  if (t.includes('armure interm')) return 'Armures intermédiaires'
+  if (t.includes('armure l')) return 'Armures légères'
+  if (t.includes('bouclier')) return 'Armures'
+  if (t.includes('potion') || t.includes('poison')) return 'Potions'
+  if (t.includes('monture') || t.includes('véhicule')) return 'Montures'
+  if (t.includes('instrument')) return 'Instruments'
+  if (t.includes('outil')) return 'Outils'
+  return 'Équipement'
+}
+
+function addEquipItem(eq) {
+  newItems.value.push({
+    name: eq.name,
+    description: eq.description || '',
+    price: parsePrice(eq.list_data?.prix),
+    stock: -1,
+    category: equipCategory(eq.item_type),
+  })
+  equipSearch.value = ''
+  equipResults.value = []
+}
 
 // ── API ─────────────────────────────────────────────────────────────────
 async function loadMerchants() {
@@ -67,8 +126,9 @@ async function loadMerchants() {
 }
 
 // ── Create flow ─────────────────────────────────────────────────────────
-function usePresets() {
-  newItems.value = DND_PRESETS.map(p => ({ ...p }))
+function applyPreset(preset) {
+  newItems.value = preset.items.map(i => ({ ...i }))
+  presetPanelOpen.value = false
 }
 
 function addItem() {
@@ -101,6 +161,11 @@ function showOnTv(merchantId) {
 function closeMerchant() {
   const socket = getSocket()
   socket.emit('close-merchant', { sessionId: sessionStore.activeSession.id })
+}
+
+function deleteMerchant(merchantId) {
+  const socket = getSocket()
+  socket.emit('delete-merchant', { sessionId: sessionStore.activeSession.id, merchantId })
 }
 
 // ── Normalize request data into batch groups ─────────────────────────────
@@ -211,6 +276,10 @@ function handleMerchantUpdated(data) {
   if (idx !== -1) merchants.value[idx] = data
 }
 
+function handleMerchantDeleted({ merchantId }) {
+  merchants.value = merchants.value.filter(m => m.id !== merchantId)
+}
+
 function handlePurchaseRequest(data) {
   pendingRequests.value.push(normalizeRequest(data))
 }
@@ -232,6 +301,7 @@ onMounted(() => {
   const socket = getSocket()
   socket.on('merchant-created', handleMerchantCreated)
   socket.on('merchant-updated', handleMerchantUpdated)
+  socket.on('merchant-deleted', handleMerchantDeleted)
   socket.on('purchase-request', handlePurchaseRequest)
   socket.on('purchase-responded', handlePurchaseResponded)
   socket.on('counter-offer-response', handleCounterOfferResponse)
@@ -241,6 +311,7 @@ onUnmounted(() => {
   const socket = getSocket()
   socket.off('merchant-created', handleMerchantCreated)
   socket.off('merchant-updated', handleMerchantUpdated)
+  socket.off('merchant-deleted', handleMerchantDeleted)
   socket.off('purchase-request', handlePurchaseRequest)
   socket.off('purchase-responded', handlePurchaseResponded)
   socket.off('counter-offer-response', handleCounterOfferResponse)
@@ -250,7 +321,7 @@ onUnmounted(() => {
 <template>
   <div class="merchant-manager">
     <div class="manager-header">
-      <h2 class="section-title">🏪 Gestion des Marchands</h2>
+      <h2 class="section-title"><AppIcon icon="game-icons:shop" size="0.9em" color="var(--color-gold-bright)" /> Gestion des Marchands</h2>
       <div class="header-actions">
         <button
           class="tab-btn"
@@ -267,7 +338,7 @@ onUnmounted(() => {
 
     <!-- Pending purchase requests banner -->
     <div v-if="pendingRequests.length > 0" class="requests-banner">
-      <p class="requests-title">🛒 Demandes d'achat en attente ({{ pendingRequests.length }})</p>
+      <p class="requests-title"><AppIcon icon="lucide:shopping-cart" size="0.85em" /> Demandes d'achat en attente ({{ pendingRequests.length }})</p>
       <div v-for="req in pendingRequests" :key="req._key" class="request-row">
         <div class="request-info">
           <strong class="request-player">{{ req.player_name }}</strong> souhaite acheter :
@@ -285,6 +356,30 @@ onUnmounted(() => {
 
     <!-- Create merchant form -->
     <div v-if="view === 'create'" class="create-form">
+
+      <!-- Preset picker panel -->
+      <div class="preset-toggle-row">
+        <button class="preset-toggle-btn" @click="presetPanelOpen = !presetPanelOpen">
+          <AppIcon icon="game-icons:shop" size="0.85em" />
+          {{ presetPanelOpen ? 'Masquer les modèles' : '✦ Choisir un modèle de marchand' }}
+        </button>
+      </div>
+      <div v-if="presetPanelOpen" class="preset-panel">
+        <p class="preset-panel-hint">Cliquez sur un type pour pré-remplir le formulaire. Vous pourrez tout modifier ensuite.</p>
+        <div class="preset-grid">
+          <button
+            v-for="preset in MERCHANT_PRESETS"
+            :key="preset.id"
+            class="preset-card"
+            @click="applyPreset(preset)"
+          >
+            <AppIcon :icon="preset.icon" size="1.6em" color="var(--color-gold-bright)" />
+            <span class="preset-card-label">{{ preset.label }}</span>
+            <span class="preset-card-count">{{ preset.items.length }} articles</span>
+          </button>
+        </div>
+      </div>
+
       <div class="form-group">
         <label class="form-label">Nom du marchand</label>
         <input v-model="newName" class="form-input" placeholder="Ex: Brom le Forgeron" />
@@ -297,9 +392,40 @@ onUnmounted(() => {
       <div class="items-header">
         <span class="form-label">Articles</span>
         <div class="items-actions">
-          <button class="small-btn" @click="usePresets">📋 Objets D&D</button>
+          <button class="small-btn" @click="equipSearchOpen = !equipSearchOpen">
+            <AppIcon icon="lucide:search" size="0.85em" /> Rechercher un objet
+          </button>
           <button class="small-btn" @click="addItem">+ Ajouter</button>
         </div>
+      </div>
+
+      <!-- Equipment search panel -->
+      <div v-if="equipSearchOpen" class="equip-search-panel">
+        <div class="equip-search-row">
+          <input
+            v-model="equipSearch"
+            class="form-input equip-search-input"
+            placeholder="Chercher un objet D&D (ex: épée, potion, armure…)"
+            @input="onEquipInput"
+            @keydown.escape="equipSearchOpen = false"
+          />
+          <span v-if="equipLoading" class="equip-loading">…</span>
+        </div>
+        <ul v-if="equipResults.length > 0" class="equip-results">
+          <li
+            v-for="eq in equipResults"
+            :key="eq.slug"
+            class="equip-result-item"
+            @click="addEquipItem(eq)"
+          >
+            <span class="equip-result-name">{{ eq.name }}</span>
+            <span class="equip-result-type">{{ eq.item_type }}</span>
+            <span class="equip-result-price" v-if="eq.list_data?.prix">{{ eq.list_data.prix }}</span>
+          </li>
+        </ul>
+        <p v-else-if="equipError" class="equip-empty equip-err">⚠ Impossible de contacter le serveur.</p>
+        <p v-else-if="equipSearch.trim().length >= 2 && !equipLoading" class="equip-empty">Aucun résultat pour « {{ equipSearch.trim() }} ».</p>
+        <p v-else-if="equipSearch.trim().length > 0 && equipSearch.trim().length < 2" class="equip-empty">Tapez au moins 2 caractères.</p>
       </div>
 
       <div v-if="newItems.length === 0" class="no-items">
@@ -347,8 +473,11 @@ onUnmounted(() => {
             <p v-if="merchant.description" class="merchant-card-desc">{{ merchant.description }}</p>
           </div>
           <div class="merchant-actions">
-            <button class="show-tv-btn" @click="showOnTv(merchant.id)">📺 Sur TV</button>
+            <button class="show-tv-btn" @click="showOnTv(merchant.id)"><AppIcon icon="lucide:monitor" size="0.85em" /> Sur TV</button>
             <button class="close-merchant-btn" @click="closeMerchant" title="Clôturer le marchand pour les joueurs">✕ Fermer</button>
+            <button class="delete-merchant-btn" @click="deleteMerchant(merchant.id)" title="Supprimer définitivement ce marchand">
+              <AppIcon icon="lucide:trash-2" size="0.85em" />
+            </button>
           </div>
         </div>
         <div class="merchant-items-preview">
@@ -381,26 +510,18 @@ onUnmounted(() => {
         <div class="dialog-total">Total : <strong>{{ respondingRequest.total_price }} po</strong></div>
 
         <div class="respond-actions">
-          <button
-            class="respond-action-btn"
-            :class="{ active: respondAction === 'accept' }"
-            @click="respondAction = 'accept'"
-          >✅ Accepter</button>
-          <button
-            class="respond-action-btn reject"
-            :class="{ active: respondAction === 'reject' }"
-            @click="respondAction = 'reject'"
-          >❌ Refuser</button>
-          <button
-            class="respond-action-btn discount"
-            :class="{ active: respondAction === 'discount' }"
-            @click="respondAction = 'discount'"
-          >💚 Ristourne</button>
-          <button
-            class="respond-action-btn increase"
-            :class="{ active: respondAction === 'increase' }"
-            @click="respondAction = 'increase'"
-          >📈 Augmenter</button>
+          <button class="respond-action-btn" :class="{ active: respondAction === 'accept' }" @click="respondAction = 'accept'">
+            <AppIcon icon="lucide:check-circle" size="0.85em" color="var(--color-success)" /> Accepter
+          </button>
+          <button class="respond-action-btn reject" :class="{ active: respondAction === 'reject' }" @click="respondAction = 'reject'">
+            <AppIcon icon="lucide:x-circle" size="0.85em" color="var(--color-danger)" /> Refuser
+          </button>
+          <button class="respond-action-btn discount" :class="{ active: respondAction === 'discount' }" @click="respondAction = 'discount'">
+            <AppIcon icon="lucide:tag" size="0.85em" color="var(--color-success)" /> Ristourne
+          </button>
+          <button class="respond-action-btn increase" :class="{ active: respondAction === 'increase' }" @click="respondAction = 'increase'">
+            <AppIcon icon="lucide:trending-up" size="0.85em" color="var(--color-danger)" /> Augmenter
+          </button>
         </div>
 
         <div v-if="respondAction === 'discount' || respondAction === 'increase'" class="custom-price-row">
@@ -703,6 +824,23 @@ onUnmounted(() => {
 }
 .close-merchant-btn:hover { background: color-mix(in oklab, var(--color-danger-soft) 70%, var(--surface-highlight)); border-color: var(--color-danger); }
 
+.delete-merchant-btn {
+  padding: 0.35rem 0.55rem;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-dim);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.delete-merchant-btn:hover {
+  background: color-mix(in oklab, var(--color-danger-soft) 70%, var(--surface-highlight));
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
 .merchant-items-preview {
   display: flex;
   flex-direction: column;
@@ -872,4 +1010,167 @@ onUnmounted(() => {
 }
 .cancel-btn:hover { border-color: var(--color-danger-border); color: var(--color-danger); }
 .dialog-footer .action-btn { flex: 2; width: auto; }
+
+/* Preset picker */
+.preset-toggle-row {
+  display: flex;
+  justify-content: center;
+}
+.preset-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.2rem;
+  background: var(--surface-gold-soft);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 10px;
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  justify-content: center;
+}
+.preset-toggle-btn:hover {
+  background: var(--color-gold-dark);
+  color: var(--color-surface);
+}
+.preset-panel {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 12px;
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.preset-panel-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+  text-align: center;
+  margin: 0;
+}
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.5rem;
+}
+.preset-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.65rem 0.4rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.18s;
+  text-align: center;
+}
+.preset-card:hover {
+  border-color: var(--color-gold-dark);
+  background: var(--surface-gold-soft);
+  transform: translateY(-1px);
+}
+.preset-card-label {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-gold-bright);
+  line-height: 1.2;
+}
+.preset-card-name {
+  font-size: 0.68rem;
+  color: var(--color-text-dim);
+  font-style: italic;
+  line-height: 1.2;
+}
+.preset-card-count {
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  color: var(--color-text-dim);
+  background: var(--surface-ghost);
+  border-radius: 6px;
+  padding: 0.1rem 0.4rem;
+  margin-top: 0.1rem;
+}
+
+/* Equipment search */
+.equip-search-panel {  background: var(--color-surface-alt);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 10px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.equip-search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.equip-search-input { flex: 1; }
+.equip-loading {
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  color: var(--color-text-dim);
+}
+.equip-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.equip-result-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.equip-result-item:hover {
+  border-color: var(--color-gold-dark);
+  background: var(--surface-gold-soft);
+}
+.equip-result-name {
+  flex: 1;
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  color: var(--color-parchment);
+}
+.equip-result-type {
+  font-size: 0.68rem;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.equip-result-price {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  color: var(--color-gold-bright);
+  min-width: 52px;
+  text-align: right;
+}
+.equip-empty {
+  font-size: 0.78rem;
+  color: var(--color-text-dim);
+  text-align: center;
+  margin: 0;
+  padding: 0.4rem;
+}
+.equip-err { color: var(--color-danger); }
+
 </style>

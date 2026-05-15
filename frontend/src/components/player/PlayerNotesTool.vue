@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { sessionStore } from '../../stores/session.js'
+import AppIcon from '../AppIcon.vue'
 
 const notesText = ref('')
 const drawColor = ref('')
@@ -164,7 +165,7 @@ onUnmounted(() => {
 
     <div class="draw-toolbar">
       <label class="toolbar-item">
-        ✏️ Couleur
+        <AppIcon icon="lucide:pencil" size="0.85em" /> Couleur
         <input v-model="drawColor" type="color" class="color-input" />
       </label>
       <label class="toolbar-item">
@@ -172,9 +173,12 @@ onUnmounted(() => {
         <input v-model.number="drawLineWidth" type="range" min="1" max="8" />
       </label>
       <button class="tool-btn" @click="drawEnabled = !drawEnabled">
-        {{ drawEnabled ? '✋ Verrouiller dessin' : '✏️ Activer dessin' }}
+        <AppIcon :icon="drawEnabled ? 'lucide:lock' : 'lucide:pencil'" size="0.85em" />
+        {{ drawEnabled ? 'Verrouiller dessin' : 'Activer dessin' }}
       </button>
-      <button class="tool-btn danger" @click="clearAll">🧹 Effacer</button>
+      <button class="tool-btn danger" @click="clearAll">
+        <AppIcon icon="lucide:eraser" size="0.85em" /> Effacer
+      </button>
     </div>
 
     <canvas

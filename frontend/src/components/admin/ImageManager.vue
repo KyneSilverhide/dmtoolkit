@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import AppIcon from '../AppIcon.vue'
 import { authStore } from '../../stores/auth.js'
 import { sessionStore } from '../../stores/session.js'
 import { getSocket } from '../../socket.js'
@@ -103,11 +104,11 @@ onMounted(loadImages)
 
 <template>
   <div class="image-manager">
-    <h3 class="section-title">🖼️ Gestionnaire d'Images</h3>
+    <h3 class="section-title"><AppIcon icon="lucide:image" size="0.9em" /> Gestionnaire d'Images</h3>
 
     <div class="upload-area">
       <label class="upload-btn" :class="{ disabled: uploading }">
-        <span>{{ uploading ? `Envoi… ${uploadProgress}%` : '📁 Téléverser des images' }}</span>
+        <span>{{ uploading ? `Envoi… ${uploadProgress}%` : 'Téléverser des images' }}</span>
         <input
             type="file"
             accept="image/*"
@@ -142,7 +143,7 @@ onMounted(loadImages)
         </div>
         <p class="img-name">{{ img.original_name || img.url.split('/').pop() }}</p>
         <button class="show-btn" @click.stop="selectedImageUrl = img.url; showImageOnTv(img.url)" title="Afficher sur la TV">
-          📺 Afficher TV
+          <AppIcon icon="lucide:monitor" size="0.85em" /> Afficher TV
         </button>
       </div>
     </div>

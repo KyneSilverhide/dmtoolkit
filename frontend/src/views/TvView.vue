@@ -3,6 +3,8 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { io } from 'socket.io-client'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
+import AppIcon from '../components/AppIcon.vue'
+import { DND_CONDITIONS_MAP } from '../utils/conditions.js'
 
 const DOOM_DANGER_THRESHOLD_SECONDS = 10
 const TENSION_COLOR_MEDIUM_RATIO = 0.33
@@ -219,23 +221,7 @@ function avatarUrl(player) {
   return resolveMediaUrl(player.avatar_url)
 }
 
-const CONDITION_LABELS = {
-  blinded: { label: 'Aveuglé', icon: '👁️' },
-  charmed: { label: 'Charmé', icon: '💕' },
-  deafened: { label: 'Assourdi', icon: '🔇' },
-  exhaustion: { label: 'Épuisé', icon: '😴' },
-  frightened: { label: 'Effrayé', icon: '😱' },
-  grappled: { label: 'Agrippé', icon: '🤝' },
-  incapacitated: { label: 'Incapacité', icon: '🚫' },
-  invisible: { label: 'Invisible', icon: '👻' },
-  paralyzed: { label: 'Paralysé', icon: '⚡' },
-  petrified: { label: 'Pétrifié', icon: '🪨' },
-  poisoned: { label: 'Empoisonné', icon: '☠️' },
-  prone: { label: 'À terre', icon: '⬇️' },
-  restrained: { label: 'Entravé', icon: '⛓️' },
-  stunned: { label: 'Étourdi', icon: '💫' },
-  unconscious: { label: 'Inconscient', icon: '💤' },
-}
+const CONDITION_LABELS = DND_CONDITIONS_MAP
 
 function parseConditions(player) {
   try {
@@ -506,11 +492,12 @@ onUnmounted(() => {
 <template>
   <div class="tv-wrapper">
     <button class="tv-theme-toggle" @click="toggleTheme">
-      {{ isLightTheme ? '🌙 Sombre' : '☀️ Clair' }}
+      <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="1em" />
+      {{ isLightTheme ? 'Sombre' : 'Clair' }}
     </button>
     <!-- Error state -->
     <div v-if="connectionError" class="tv-error">
-      <p class="error-icon">⚠️</p>
+      <p class="error-icon"><AppIcon icon="lucide:alert-triangle" size="3rem" color="var(--color-warning)" /></p>
       <p class="error-text">{{ connectionError }}</p>
     </div>
 
@@ -548,13 +535,13 @@ onUnmounted(() => {
       <!-- Combat mode: party HP grid -->
       <template v-else-if="tvMode === 'combat'">
         <div v-if="players.length === 0" class="tv-empty">
-          <p class="empty-icon">🏰</p>
+          <p class="empty-icon"><AppIcon icon="game-icons:castle" size="2.5rem" color="var(--color-text-dim)" /></p>
           <p class="empty-text">En attente des aventuriers…</p>
         </div>
 
         <template v-else>
           <div class="combat-header">
-            <div class="combat-round-badge">⚔️ Round {{ combatRound }}</div>
+            <div class="combat-round-badge"><AppIcon icon="game-icons:crossed-swords" size="1em" /> Round {{ combatRound }}</div>
           </div>
           <main class="party-grid">
           <div
@@ -581,14 +568,16 @@ onUnmounted(() => {
                 <span v-if="player.dnd_class" class="class-badge">{{ player.dnd_class }}</span>
               </div>
 
-              <div class="initiative-badge">🎲 {{ player.initiative ?? '—' }}</div>
+              <div class="initiative-badge"><AppIcon icon="game-icons:dice-six-faces-five" size="1em" /> {{ player.initiative ?? '—' }}</div>
 
               <div class="ac-shield">
-                <span class="ac-icon">🛡️</span>
+                <span class="ac-icon"><AppIcon icon="game-icons:shield" size="1em" color="var(--color-gold-bright)" /></span>
                 <span class="ac-value">{{ player.ac ?? 10 }}</span>
               </div>
 
-              <span v-if="player.is_concentrating" class="concentration-badge" title="Concentration">🎯</span>
+              <span v-if="player.is_concentrating" class="concentration-badge" title="Concentration">
+                <AppIcon icon="game-icons:bulls-eye" size="1em" color="var(--tv-info-text, var(--color-info-bright))" />
+              </span>
             </div>
 
             <!-- HP Bar -->
@@ -618,7 +607,12 @@ onUnmounted(() => {
                 class="condition-badge"
                 :title="CONDITION_LABELS[cid]?.label || cid"
               >
-                {{ CONDITION_LABELS[cid]?.icon || '⚡' }} {{ CONDITION_LABELS[cid]?.label || cid }}
+                <AppIcon
+                  :icon="CONDITION_LABELS[cid]?.icon || 'game-icons:lightning-trio'"
+                  :color="CONDITION_LABELS[cid]?.color || 'currentColor'"
+                  size="1em"
+                />
+                {{ CONDITION_LABELS[cid]?.label || cid }}
               </span>
             </div>
 
@@ -733,11 +727,6 @@ onUnmounted(() => {
 
       <!-- Merchant mode -->
       <div v-else-if="tvMode === 'merchant' && activeMerchant" class="merchant-display">
-        <header class="merchant-header">
-          <div class="merchant-icon">🏪</div>
-          <h2 class="merchant-name">{{ activeMerchant.name }}</h2>
-          <p v-if="activeMerchant.description" class="merchant-desc">{{ activeMerchant.description }}</p>
-        </header>
         <div class="merchant-grid">
           <div
             v-for="item in activeMerchant.items"
@@ -1620,6 +1609,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  padding: 2rem;
+  box-sizing: border-box;
 }
 .merchant-header {
   text-align: center;

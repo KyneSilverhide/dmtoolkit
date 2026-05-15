@@ -30,16 +30,24 @@ function handleSearch(req, res) {
   const q = (req.query.q || '').trim().toLowerCase()
   if (!q) return res.json([])
 
-  const spells = getSpells()
-  const results = spells.filter(spell => {
-    if (spell.name.toLowerCase().includes(q)) return true
-    if (spell.description && spell.description.toLowerCase().includes(q)) return true
-    const ecole = spell.attributes?.ecole || ''
-    if (ecole.toLowerCase().includes(q)) return true
-    return false
-  })
+  const nameMatches = []
+  const otherMatches = []
 
-  return res.json(results.slice(0, 50))
+  for (const spell of getSpells()) {
+    if (spell.name.toLowerCase().includes(q)) {
+      nameMatches.push(spell)
+    } else if (
+      (spell.description && spell.description.toLowerCase().includes(q)) ||
+      (spell.attributes?.ecole || '').toLowerCase().includes(q)
+    ) {
+      otherMatches.push(spell)
+    }
+  }
+
+  nameMatches.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+  otherMatches.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+
+  return res.json([...nameMatches, ...otherMatches].slice(0, 50))
 }
 
 router.get('/search', authenticateToken, handleSearch)

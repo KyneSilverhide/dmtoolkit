@@ -6,6 +6,7 @@ import { getSocket } from '../../socket.js'
 import meleeTable from '../../assets/melee.json'
 import distanceTable from '../../assets/distance.json'
 import magiqueTable from '../../assets/magique.json'
+import AppIcon from '../AppIcon.vue'
 
 const combatType = ref('melee')
 const isRolling = ref(false)
@@ -24,9 +25,9 @@ const tables = {
 }
 
 const combatTypes = [
-  { key: 'melee', label: 'Mêlée', icon: '⚔️' },
-  { key: 'distance', label: 'Distance', icon: '🏹' },
-  { key: 'magique', label: 'Magique', icon: '🔮' },
+  { key: 'melee',    label: 'Mêlée',    icon: 'game-icons:crossed-swords' },
+  { key: 'distance', label: 'Distance', icon: 'game-icons:arrow-cluster' },
+  { key: 'magique',  label: 'Magique',  icon: 'game-icons:crystal-ball' },
 ]
 
 function selectType(type) {
@@ -134,7 +135,7 @@ onUnmounted(() => {
           @click="selectType(type.key)"
           :disabled="isRolling"
         >
-          <span class="type-icon">{{ type.icon }}</span>
+          <AppIcon :icon="type.icon" class="type-icon" />
           <span class="type-name">{{ type.label }}</span>
         </button>
       </div>
@@ -159,7 +160,7 @@ onUnmounted(() => {
         :disabled="isRolling"
         :class="{ rolling: isRolling }"
       >
-        <span class="roll-btn-icon">🎲</span>
+        <span class="roll-btn-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="1.2rem" /></span>
         <span class="roll-btn-text">{{ isRolling ? 'Lancement...' : 'Lancer les dés' }}</span>
       </button>
     </section>
@@ -175,14 +176,14 @@ onUnmounted(() => {
       <div v-if="showResult" class="send-section">
         <div class="recipient-row">
           <select v-model="selectedPlayerId" class="recipient-select" :disabled="!hasConnectedPlayers">
-            <option v-if="hasConnectedPlayers" value="all">📣 Tous les joueurs</option>
+            <option v-if="hasConnectedPlayers" value="all">Tous les joueurs</option>
             <option v-else value="" disabled>Aucun joueur connecté</option>
             <option v-for="p in sessionStore.players" :key="p.id" :value="p.id">
-              ⚔️ {{ p.player_name }}
+              {{ p.player_name }}
             </option>
           </select>
           <button class="send-btn" @click="sendToPlayers" :disabled="!sessionStore.activeSession || !hasConnectedPlayers">
-            📡 Envoyer
+            <AppIcon icon="lucide:send" size="0.9em" /> Envoyer
           </button>
         </div>
         <p v-if="sendFeedback" class="send-feedback">{{ sendFeedback }}</p>

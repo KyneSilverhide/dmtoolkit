@@ -10,6 +10,8 @@ import PlayerNotesTool from '../components/player/PlayerNotesTool.vue'
 import PlayerDiceTool from '../components/player/PlayerDiceTool.vue'
 import { getLastKnownPlayer, saveLastKnownPlayer, removeLastKnownPlayer } from '../utils/playerSessionMemory.js'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
+import AppIcon from '../components/AppIcon.vue'
+import { DND_CONDITIONS } from '../utils/conditions.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -51,11 +53,16 @@ function canUseSystemNotifications() {
   return window.isSecureContext || ['localhost', '127.0.0.1'].includes(window.location.hostname)
 }
 
-const notificationButtonLabel = computed(() => {
-  if (notificationPermission.value === 'granted') return '🔔 OK'
-  if (notificationPermission.value === 'denied') return '🔕 Bloquées'
-  if (notificationPermission.value === 'unsupported') return '🔕 Indispo'
-  return '🔔 Notifs'
+const notificationButtonIcon = computed(() => {
+  if (notificationPermission.value === 'denied' || notificationPermission.value === 'unsupported') return 'lucide:bell-off'
+  return 'lucide:bell'
+})
+
+const notificationButtonText = computed(() => {
+  if (notificationPermission.value === 'granted') return 'OK'
+  if (notificationPermission.value === 'denied') return 'Bloquées'
+  if (notificationPermission.value === 'unsupported') return 'Indispo'
+  return 'Notifs'
 })
 
 const notificationButtonClass = computed(() => {
@@ -294,23 +301,7 @@ function dismissConcentrationModal() {
 }
 
 // ── Conditions D&D 5e ────────────────────────────────────────────────────
-const DND_CONDITIONS = [
-  { id: 'blinded', label: 'Aveuglé', icon: '👁️' },
-  { id: 'charmed', label: 'Charmé', icon: '💕' },
-  { id: 'deafened', label: 'Assourdi', icon: '🔇' },
-  { id: 'exhaustion', label: 'Épuisé', icon: '😴' },
-  { id: 'frightened', label: 'Effrayé', icon: '😱' },
-  { id: 'grappled', label: 'Agrippé', icon: '🤝' },
-  { id: 'incapacitated', label: 'Incapacité', icon: '🚫' },
-  { id: 'invisible', label: 'Invisible', icon: '👻' },
-  { id: 'paralyzed', label: 'Paralysé', icon: '⚡' },
-  { id: 'petrified', label: 'Pétrifié', icon: '🪨' },
-  { id: 'poisoned', label: 'Empoisonné', icon: '☠️' },
-  { id: 'prone', label: 'À terre', icon: '⬇️' },
-  { id: 'restrained', label: 'Entravé', icon: '⛓️' },
-  { id: 'stunned', label: 'Étourdi', icon: '💫' },
-  { id: 'unconscious', label: 'Inconscient', icon: '💤' },
-]
+// DND_CONDITIONS imported from utils/conditions.js
 const activeConditions = ref([])
 
 function toggleCondition(conditionId) {
@@ -709,7 +700,7 @@ onUnmounted(() => {
     <Teleport to="body">
       <div v-if="concentrationModal" class="modal-overlay" @click.self="dismissConcentrationModal">
         <div class="modal-box concentration-modal">
-          <div class="modal-icon">🎯</div>
+          <div class="modal-icon"><AppIcon icon="game-icons:bulls-eye" size="3rem" color="var(--color-info-bright)" /></div>
           <h2 class="modal-title">Jet de Concentration !</h2>
           <p class="modal-body">
             Vous avez subi <strong>{{ concentrationModal.damage }} dégâts</strong>.
@@ -729,7 +720,11 @@ onUnmounted(() => {
       <div v-if="purchaseResultModal" class="modal-overlay" @click.self="dismissPurchaseModal">
         <div class="modal-box purchase-modal" :class="purchaseResultModal.type">
           <div class="modal-icon">
-            {{ purchaseResultModal.type === 'accepted' ? '✅' : purchaseResultModal.type === 'rejected' ? '❌' : '⚠️' }}
+            <AppIcon
+              :icon="purchaseResultModal.type === 'accepted' ? 'lucide:check-circle' : purchaseResultModal.type === 'rejected' ? 'lucide:x-circle' : 'lucide:alert-triangle'"
+              size="3rem"
+              :color="purchaseResultModal.type === 'accepted' ? 'var(--color-success)' : purchaseResultModal.type === 'rejected' ? 'var(--color-danger)' : 'var(--color-warning)'"
+            />
           </div>
           <h2 class="modal-title">
             {{ purchaseResultModal.type === 'accepted' ? 'Achat accepté !' : purchaseResultModal.type === 'rejected' ? 'Achat refusé' : 'Erreur' }}
@@ -760,7 +755,7 @@ onUnmounted(() => {
             :alt="playerInfo?.name"
             class="player-avatar"
           />
-          <span v-else class="player-icon">⚔️</span>
+          <span v-else class="player-icon"><AppIcon icon="game-icons:crossed-swords" size="1.2rem" color="var(--color-gold-bright)" /></span>
         </div>
         <div class="header-info">
           <p class="player-name">{{ playerInfo?.name || 'Aventurier' }}</p>
@@ -768,12 +763,13 @@ onUnmounted(() => {
         </div>
       </div>
       <div class="header-right">
-        <span class="ac-chip">🛡️ {{ playerInfo?.ac ?? 10 }}</span>
+        <span class="ac-chip"><AppIcon icon="game-icons:shield" size="0.85rem" /> {{ playerInfo?.ac ?? 10 }}</span>
         <button class="notify-btn" :class="notificationButtonClass" @click="handleNotificationButton">
-          {{ notificationButtonLabel }}
+          <AppIcon :icon="notificationButtonIcon" size="0.9em" /> {{ notificationButtonText }}
         </button>
         <button class="theme-toggle-btn" @click="toggleTheme">
-          {{ isLightTheme ? '🌙 Sombre' : '☀️ Clair' }}
+          <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.9em" />
+          {{ isLightTheme ? 'Sombre' : 'Clair' }}
         </button>
         <button class="leave-btn" @click="leaveSession">Quitter</button>
       </div>
@@ -798,7 +794,7 @@ onUnmounted(() => {
           <!-- HP Panel -->
           <div class="panel hp-panel">
             <div class="panel-header">
-              <span class="panel-label">❤️ Points de Vie</span>
+              <span class="panel-label"><AppIcon icon="game-icons:hearts" size="0.85rem" color="var(--color-danger)" /> Points de Vie</span>
               <span class="hp-fraction">{{ confirmedDisplayedHp }} / {{ maxHp }}</span>
               <span v-if="confirmedTemporaryHp > 0" class="hp-temp">+{{ confirmedTemporaryHp }} TEMP</span>
             </div>
@@ -822,7 +818,7 @@ onUnmounted(() => {
             <div v-else class="max-hp-display-row">
               <span class="max-hp-hint">Max : {{ maxHp }}</span>
               <button class="max-hp-edit-btn" :class="{ sent: maxHpSent }" @click="openMaxHpEdit">
-                {{ maxHpSent ? '✓' : '✏️' }}
+                {{ maxHpSent ? '✓' : '' }}<AppIcon v-if="!maxHpSent" icon="lucide:pencil" size="0.85rem" />
               </button>
             </div>
             <div class="hp-bar-track">
@@ -847,14 +843,15 @@ onUnmounted(() => {
             :disabled="hpSending || pendingHp === currentHp"
             @click="sendHpUpdate"
           >
-            {{ hpSent ? '✓ Mis à jour' : hpSending ? '…' : '📡 Mettre à jour' }}
+            <AppIcon v-if="!hpSent && !hpSending" icon="lucide:send" size="0.85em" />
+            {{ hpSent ? '✓ Mis à jour' : hpSending ? '…' : 'Mettre à jour' }}
           </button>
         </div>
 
         <!-- Initiative -->
         <div class="panel initiative-panel">
           <div class="panel-header">
-            <span class="panel-label">🎲 Initiative</span>
+            <span class="panel-label"><AppIcon icon="game-icons:dice-six-faces-five" size="0.85rem" /> Initiative</span>
           </div>
           <div class="initiative-controls">
             <input
@@ -865,14 +862,15 @@ onUnmounted(() => {
               :max="INITIATIVE_MAX"
               placeholder="Ex: 14"
             />
-            <button
-              class="initiative-send-btn"
-              :class="{ sent: initiativeSent }"
-              :disabled="initiativeSending"
-              @click="sendInitiativeUpdate"
-            >
-              {{ initiativeSent ? '✓ Envoyée' : initiativeSending ? '…' : '📡 Envoyer' }}
-            </button>
+              <button
+                class="initiative-send-btn"
+                :class="{ sent: initiativeSent }"
+                :disabled="initiativeSending"
+                @click="sendInitiativeUpdate"
+              >
+                <AppIcon v-if="!initiativeSent && !initiativeSending" icon="lucide:send" size="0.85em" />
+                {{ initiativeSent ? '✓ Envoyée' : initiativeSending ? '…' : 'Envoyer' }}
+              </button>
           </div>
         </div>
 
@@ -883,7 +881,7 @@ onUnmounted(() => {
             :class="{ active: isConcentrating }"
             @click="toggleConcentration"
           >
-            <span class="concentration-icon">🎯</span>
+            <span class="concentration-icon"><AppIcon icon="game-icons:bulls-eye" size="1.3rem" /></span>
             <div class="concentration-text">
               <span class="conc-label">Concentration</span>
               <span class="conc-state">{{ isConcentrating ? 'Active' : 'Inactive' }}</span>
@@ -894,11 +892,11 @@ onUnmounted(() => {
 
         <!-- Counter offers -->
         <div v-if="counterOffers.length > 0" class="panel counter-offers-panel">
-          <p class="panel-label">🔄 Contre-offres</p>
+          <p class="panel-label"><AppIcon icon="lucide:refresh-cw" size="0.85rem" /> Contre-offres</p>
           <div v-for="offer in counterOffers" :key="offer.requestId" class="counter-offer">
             <p class="offer-text">
-              <span v-if="offer.action === 'discount'">💚 Ristourne</span>
-              <span v-else>📈 Augmentation</span>
+              <span v-if="offer.action === 'discount'"><AppIcon icon="lucide:tag" size="0.9em" color="var(--player-success-text)" /> Ristourne</span>
+              <span v-else><AppIcon icon="lucide:trending-up" size="0.9em" color="var(--player-danger-text)" /> Augmentation</span>
               pour <strong>{{ offer.itemName }}</strong> :
               <strong class="offer-price">{{ offer.finalPrice }} po</strong>
             </p>
@@ -911,7 +909,7 @@ onUnmounted(() => {
 
         <!-- Conditions -->
         <div class="panel">
-          <p class="panel-label">⚡ États et Conditions</p>
+          <p class="panel-label"><AppIcon icon="game-icons:lightning-trio" size="0.85rem" color="var(--color-warning)" /> États et Conditions</p>
           <div class="conditions-grid">
             <button
               v-for="cond in DND_CONDITIONS"
@@ -920,7 +918,7 @@ onUnmounted(() => {
               :class="{ active: activeConditions.includes(cond.id) }"
               @click="toggleCondition(cond.id)"
             >
-              <span class="cond-icon">{{ cond.icon }}</span>
+              <span class="cond-icon"><AppIcon :icon="cond.icon" :color="activeConditions.includes(cond.id) ? (cond.color || 'var(--player-danger-text)') : 'currentColor'" size="1.1rem" /></span>
               <span class="cond-label">{{ cond.label }}</span>
             </button>
           </div>
@@ -930,7 +928,7 @@ onUnmounted(() => {
       <!-- ── DÉS tab (Lancer de dés joueur) ──────────────────────────────── -->
       <div v-show="activeTab === 'dés'" class="tab-panel">
         <div class="panel">
-          <p class="panel-label">🎲 Lancer de Dés</p>
+          <p class="panel-label"><AppIcon icon="game-icons:dice-six-faces-five" size="0.85rem" /> Lancer de Dés</p>
           <PlayerDiceTool />
         </div>
       </div>
@@ -938,7 +936,7 @@ onUnmounted(() => {
       <!-- ── NOTES tab ─────────────────────────────────────────────────── -->
       <div v-show="activeTab === 'notes'" class="tab-panel">
         <div class="panel">
-          <p class="panel-label">📝 Notes &amp; Dessin</p>
+          <p class="panel-label"><AppIcon icon="lucide:notebook-pen" size="0.85rem" /> Notes &amp; Dessin</p>
           <PlayerNotesTool />
         </div>
       </div>
@@ -946,7 +944,7 @@ onUnmounted(() => {
       <!-- ── SORTS tab ─────────────────────────────────────────────────── -->
       <div v-show="activeTab === 'sorts'" class="tab-panel">
         <div class="panel">
-          <p class="panel-label">🔍 Recherche de sorts</p>
+          <p class="panel-label"><AppIcon icon="lucide:search" size="0.85rem" /> Recherche de sorts</p>
           <SpellSearchTool />
         </div>
       </div>
@@ -954,7 +952,7 @@ onUnmounted(() => {
       <!-- ── OBJETS tab ────────────────────────────────────────────────── -->
       <div v-show="activeTab === 'objets'" class="tab-panel">
         <div class="panel">
-          <p class="panel-label">💎 Objets magiques</p>
+          <p class="panel-label"><AppIcon icon="lucide:gem" size="0.85rem" color="var(--color-info-bright)" /> Objets magiques</p>
           <MagicItemSearchTool />
         </div>
       </div>
@@ -962,14 +960,10 @@ onUnmounted(() => {
       <!-- ── BOUTIQUE tab ─────────────────────────────────────────────── -->
       <div v-show="activeTab === 'boutique'" class="tab-panel">
         <div v-if="!activeMerchant" class="panel empty-panel">
-          <p class="empty-icon">🏪</p>
+          <p class="empty-icon"><AppIcon icon="game-icons:shop" size="2.5rem" color="var(--color-text-dim)" /></p>
           <p class="empty-text">Aucun marchand ouvert pour l'instant.</p>
         </div>
         <template v-else>
-          <div class="panel merchant-header-panel">
-            <h2 class="merchant-name">🏪 {{ activeMerchant.name }}</h2>
-            <p v-if="activeMerchant.description" class="merchant-desc">{{ activeMerchant.description }}</p>
-          </div>
 
           <!-- Items grouped by category -->
           <div class="panel shop-panel">
@@ -1001,7 +995,7 @@ onUnmounted(() => {
           <!-- Cart summary + submit -->
           <div class="panel cart-panel" :class="{ 'cart-active': cartItemCount > 0 }">
             <div class="cart-summary">
-              <span class="cart-label">🛒 Panier : {{ cartItemCount }} article(s)</span>
+              <span class="cart-label"><AppIcon icon="lucide:shopping-cart" size="0.9em" /> Panier : {{ cartItemCount }} article(s)</span>
               <span class="cart-total">{{ cartTotal }} po</span>
             </div>
             <div class="cart-actions">
@@ -1010,7 +1004,8 @@ onUnmounted(() => {
                 :disabled="cartItemCount === 0 || cartSending"
                 @click="submitCart"
               >
-                {{ cartSending ? '…' : '📨 Envoyer la demande' }}
+                <AppIcon v-if="!cartSending" icon="lucide:send" size="0.85em" />
+                {{ cartSending ? '…' : 'Envoyer la demande' }}
               </button>
               <button
                 v-if="cartItemCount > 0"
@@ -1025,11 +1020,11 @@ onUnmounted(() => {
       <!-- ── VOTE tab ─────────────────────────────────────────────────── -->
       <div v-show="activeTab === 'vote'" class="tab-panel">
         <div v-if="!activeVote" class="panel empty-panel">
-          <p class="empty-icon">🗳️</p>
+          <p class="empty-icon"><AppIcon icon="lucide:check-square" size="2.5rem" color="var(--color-text-dim)" /></p>
           <p class="empty-text">Aucun vote en cours.</p>
         </div>
         <div v-else class="panel vote-panel">
-          <h3 class="vote-title">🗳️ {{ activeVote.question }}</h3>
+          <h3 class="vote-title"><AppIcon icon="lucide:check-square" size="1em" /> {{ activeVote.question }}</h3>
           <div v-if="myVote === null && !activeVote.isClosed" class="vote-options">
             <button
               v-for="(opt, i) in activeVote.options"
@@ -1053,7 +1048,7 @@ onUnmounted(() => {
       <!-- ── MESSAGES tab ─────────────────────────────────────────────── -->
       <div v-show="activeTab === 'messages'" class="tab-panel">
         <div v-if="messages.length === 0" class="panel empty-panel">
-          <p class="empty-icon">📜</p>
+          <p class="empty-icon"><AppIcon icon="lucide:inbox" size="2.5rem" color="var(--color-text-dim)" /></p>
           <p class="empty-text">En attente de messages…</p>
           <p class="empty-sub">Restez vigilant, aventurier.</p>
         </div>
@@ -1084,7 +1079,7 @@ onUnmounted(() => {
         :class="{ active: activeTab === 'combat' }"
         @click="switchTab('combat')"
       >
-        <span class="tab-icon">⚔️</span>
+        <span class="tab-icon"><AppIcon icon="game-icons:crossed-swords" size="1.3rem" /></span>
         <span class="tab-label">Combat</span>
       </button>
       <button
@@ -1092,7 +1087,7 @@ onUnmounted(() => {
         :class="{ active: activeTab === 'dés' }"
         @click="switchTab('dés')"
       >
-        <span class="tab-icon">🎲</span>
+        <span class="tab-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="1.3rem" /></span>
         <span class="tab-label">Dés</span>
       </button>
       <button
@@ -1100,7 +1095,7 @@ onUnmounted(() => {
         :class="{ active: activeTab === 'notes' }"
         @click="switchTab('notes')"
       >
-        <span class="tab-icon">📝</span>
+        <span class="tab-icon"><AppIcon icon="lucide:notebook-pen" size="1.3rem" /></span>
         <span class="tab-label">Notes</span>
       </button>
       <button
@@ -1108,7 +1103,7 @@ onUnmounted(() => {
         :class="{ active: activeTab === 'sorts' }"
         @click="switchTab('sorts')"
       >
-        <span class="tab-icon">🔍</span>
+        <span class="tab-icon"><AppIcon icon="lucide:search" size="1.3rem" /></span>
         <span class="tab-label">Sorts</span>
       </button>
       <button
@@ -1116,7 +1111,7 @@ onUnmounted(() => {
         :class="{ active: activeTab === 'objets' }"
         @click="switchTab('objets')"
       >
-        <span class="tab-icon">💎</span>
+        <span class="tab-icon"><AppIcon icon="lucide:gem" size="1.3rem" /></span>
         <span class="tab-label">Objets</span>
       </button>
       <button
@@ -1125,7 +1120,7 @@ onUnmounted(() => {
         :disabled="!activeMerchant"
         @click="switchTab('boutique')"
       >
-        <span class="tab-icon" :class="{ 'tab-icon-notify': activeMerchant && cartItemCount === 0 }">🏪</span>
+        <span class="tab-icon" :class="{ 'tab-icon-notify': activeMerchant && cartItemCount === 0 }"><AppIcon icon="game-icons:shop" size="1.3rem" /></span>
         <span class="tab-label">Boutique</span>
         <span v-if="cartItemCount > 0" class="tab-badge tab-badge-urgent">{{ cartItemCount }}</span>
         <span v-else-if="activeMerchant && activeTab !== 'boutique'" class="tab-badge tab-badge-pulse">!</span>
@@ -1135,7 +1130,7 @@ onUnmounted(() => {
         :class="{ active: activeTab === 'vote' }"
         @click="switchTab('vote'); hasNewVote = false"
       >
-        <span class="tab-icon" :class="{ 'tab-icon-notify': hasNewVote && activeTab !== 'vote' }">🗳️</span>
+        <span class="tab-icon" :class="{ 'tab-icon-notify': hasNewVote && activeTab !== 'vote' }"><AppIcon icon="lucide:check-square" size="1.3rem" /></span>
         <span class="tab-label">Vote</span>
         <span v-if="hasNewVote && activeTab !== 'vote'" class="tab-badge tab-badge-pulse">!</span>
       </button>
@@ -1144,7 +1139,7 @@ onUnmounted(() => {
         :class="{ active: activeTab === 'messages' }"
         @click="switchTab('messages')"
       >
-        <span class="tab-icon" :class="{ 'tab-icon-notify': unreadMessages > 0 }">📜</span>
+        <span class="tab-icon" :class="{ 'tab-icon-notify': unreadMessages > 0 }"><AppIcon icon="lucide:inbox" size="1.3rem" /></span>
         <span class="tab-label">Messages</span>
         <span v-if="unreadMessages > 0" class="tab-badge tab-badge-urgent">{{ unreadMessages }}</span>
       </button>

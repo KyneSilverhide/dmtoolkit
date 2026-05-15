@@ -5,6 +5,7 @@ import { getSocket } from '../socket.js'
 import { sessionStore } from '../stores/session.js'
 import { getProfile, saveProfile } from '../utils/playerProfiles.js'
 import { saveLastKnownPlayer } from '../utils/playerSessionMemory.js'
+import AppIcon from '../components/AppIcon.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -174,7 +175,7 @@ async function joinSession() {
 
         <div class="form-group">
           <label class="form-label">
-            <span class="stat-icon">🧙</span> Classe D&amp;D
+            <AppIcon icon="game-icons:wizard-staff" size="0.9rem" /> Classe D&amp;D
           </label>
           <select v-model="dndClass" class="form-input form-select">
             <option value="">— Choisir une classe —</option>
@@ -184,7 +185,7 @@ async function joinSession() {
 
         <div class="form-group">
           <label class="form-label">
-            <span class="stat-icon">🖼️</span> Avatar du personnage
+            <AppIcon icon="lucide:image" size="0.9rem" /> Avatar du personnage
           </label>
           <div class="avatar-upload-row">
             <div v-if="avatarPreview" class="avatar-preview-wrap">
@@ -195,7 +196,7 @@ async function joinSession() {
               />
             </div>
             <div v-else class="avatar-placeholder">
-              <span>👤</span>
+              <AppIcon icon="lucide:user" size="1.6rem" color="var(--color-border)" />
             </div>
             <label class="avatar-upload-btn">
               {{ avatarPreview ? 'Changer' : 'Choisir une image' }}
@@ -208,13 +209,13 @@ async function joinSession() {
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">
-              <span class="stat-icon">❤️</span> Points de Vie (HP)
+              <AppIcon icon="game-icons:hearts" size="0.9rem" color="var(--color-danger)" /> Points de Vie (HP)
             </label>
             <input v-model.number="hp" type="number" min="1" max="999" class="form-input stat-input" />
           </div>
           <div class="form-group">
             <label class="form-label">
-              <span class="stat-icon">🛡️</span> Classe d'Armure (CA)
+              <AppIcon icon="game-icons:shield" size="0.9rem" color="var(--color-gold-bright)" /> Armure (CA)
             </label>
             <input v-model.number="ac" type="number" min="1" max="30" class="form-input stat-input" />
           </div>
@@ -223,7 +224,8 @@ async function joinSession() {
         <p v-if="error" class="form-error">{{ error }}</p>
 
         <button type="submit" class="submit-btn" :disabled="loading">
-          {{ loading ? 'Connexion...' : '⚔️ Rejoindre la session' }}
+          <AppIcon v-if="!loading" icon="game-icons:crossed-swords" size="1em" />
+          {{ loading ? 'Connexion...' : 'Rejoindre la session' }}
         </button>
       </form>
     </main>
@@ -288,6 +290,7 @@ async function joinSession() {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
+  align-items: end;
 }
 
 .form-group {

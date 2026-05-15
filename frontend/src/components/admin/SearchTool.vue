@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, onUnmounted } from 'vue'
 import { authStore } from '../../stores/auth.js'
+import AppIcon from '../AppIcon.vue'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
@@ -159,7 +160,7 @@ onUnmounted(() => {
 
 <template>
   <div class="search-tool">
-    <h2 class="section-title">🔍 Recherche</h2>
+    <h2 class="section-title"><AppIcon icon="lucide:search" size="0.9em" /> Recherche</h2>
 
     <!-- Sub-tabs -->
     <div class="sub-tabs">
@@ -167,12 +168,9 @@ onUnmounted(() => {
         class="sub-tab"
         :class="{ active: activeSubTab === 'spells' }"
         @click="switchSubTab('spells')"
-      >✨ Sorts</button>
-      <button
-        class="sub-tab"
-        :class="{ active: activeSubTab === 'items' }"
-        @click="switchSubTab('items')"
-      >💎 Objets magiques</button>
+      ><AppIcon icon="lucide:sparkles" size="0.85em" /> Sorts</button>
+      <button class="sub-tab" :class="{ active: activeSubTab === 'items' }" @click="switchSubTab('items')"
+      ><AppIcon icon="lucide:gem" size="0.85em" /> Objets magiques</button>
     </div>
 
     <div class="search-bar">
@@ -183,7 +181,7 @@ onUnmounted(() => {
         @keydown.enter="search"
       />
       <button class="search-btn" :disabled="loading || !query.trim()" @click="search">
-        {{ loading ? '…' : '🔍 Chercher' }}
+        <AppIcon v-if="!loading" icon="lucide:search" size="0.85em" /> {{ loading ? '…' : 'Chercher' }}
       </button>
     </div>
 
@@ -194,7 +192,7 @@ onUnmounted(() => {
     </div>
 
     <div v-else-if="searched && results.length === 0" class="no-results">
-      <p class="no-results-icon">📭</p>
+      <p class="no-results-icon"><AppIcon icon="lucide:mail-x" size="2.5rem" color="var(--color-text-dim)" /></p>
       <p class="no-results-text">
         Aucun {{ activeSubTab === 'spells' ? 'sort' : 'objet magique' }} trouvé pour « {{ query }} »
       </p>
@@ -225,19 +223,19 @@ onUnmounted(() => {
         </div>
         <div class="spell-attrs">
           <div v-if="spell.attributes?.temps_incantation" class="attr-item">
-            <span class="attr-icon">⏱️</span>
+            <span class="attr-icon"><AppIcon icon="lucide:timer" size="0.85em" /></span>
             <span class="attr-val">{{ spell.attributes.temps_incantation.replace(/^Temps d'incantation\s*:\s*/i, '') }}</span>
           </div>
           <div v-if="spell.attributes?.portee" class="attr-item">
-            <span class="attr-icon">🎯</span>
+            <span class="attr-icon"><AppIcon icon="lucide:crosshair" size="0.85em" /></span>
             <span class="attr-val">{{ spell.attributes.portee.replace(/^Portée\s*:\s*/i, '') }}</span>
           </div>
           <div v-if="spell.attributes?.duree" class="attr-item">
-            <span class="attr-icon">⌛</span>
+            <span class="attr-icon"><AppIcon icon="lucide:hourglass" size="0.85em" /></span>
             <span class="attr-val">{{ spell.attributes.duree.replace(/^Durée\s*:\s*/i, '') }}</span>
           </div>
           <div v-if="spell.attributes?.composantes" class="attr-item">
-            <span class="attr-icon">🧪</span>
+            <span class="attr-icon"><AppIcon icon="lucide:flask-conical" size="0.85em" /></span>
             <span class="attr-val">{{ shortComponent(spell.attributes.composantes) }}</span>
           </div>
         </div>
@@ -263,7 +261,7 @@ onUnmounted(() => {
           </div>
         </div>
         <div v-if="item.description_html || item.description" class="item-desc" v-html="itemDescriptionHtml(item)" />
-        <div v-if="item.source" class="item-source">📚 {{ item.source }}</div>
+        <div v-if="item.source" class="item-source"><AppIcon icon="lucide:library" size="0.8em" /> {{ item.source }}</div>
         <a :href="item.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
       </div>
     </div>

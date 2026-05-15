@@ -16,11 +16,6 @@ interface CFPlayer {
 	avatar_url: string;
 }
 
-// Loose interface — we check each method at runtime because the IT API
-// shape varies across plugin versions and may live at plugin or plugin.api.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type InitiativeTrackerAPI = Record<string, any>;
-
 export default class CriticalFailSync extends Plugin {
 	settings!: CriticalFailSettings;
 	private socket: Socket | null = null;
@@ -28,16 +23,10 @@ export default class CriticalFailSync extends Plugin {
 	// plugin.tracker → updateCreatureByName
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private itPlugin: any = null;
+	/** id → player_name, used to map socket events to IT creature names */
 	private readonly playerIdToName = new Map<number, string>();
-
-	// Handlers kept as instance properties so they can be removed on unload
-	private readonly onITInitiativeChange = (name: string, initiative: number) => {
-		this.pushInitiativeToCF(name, initiative);
-	};
-
-	private readonly onITHpChange = (name: string, hp: number) => {
-		this.pushHpToCF(name, hp);
-	};
+	/** id → max_hp, tracked locally to avoid IT's additive max bug */
+	private readonly playerIdToMaxHp = new Map<number, number>();
 
 	async onload() {
 		await this.loadSettings();
@@ -107,39 +96,34 @@ export default class CriticalFailSync extends Plugin {
 			this.populateIT(players);
 		});
 
-		// CF → IT: player joined
+		// CF → IT: player joined (new or reconnect)
 		this.socket.on('player-joined', (player: CFPlayer) => {
 			this.upsertITCreature(player);
 		});
 
 		// CF → IT: player left
 		this.socket.on('player-left', ({ playerId }: { playerId: number }) => {
-			const name = this.playerIdToName.get(playerId);
-			if (name) {
-				this.removeITCreature(name);
-				this.playerIdToName.delete(playerId);
-			}
+			this.playerIdToName.delete(playerId);
+			this.playerIdToMaxHp.delete(playerId);
+			// removeCreature is not exposed in the current IT API — no-op.
 		});
 
-		// CF → IT: HP updated
+		// CF → IT: HP updated — fast path
 		this.socket.on('hp-updated', ({ playerId, newHp }: { playerId: number; newHp: number }) => {
 			const name = this.playerIdToName.get(playerId);
 			if (name) this.applyITUpdate(name, { hp: newHp });
 		});
 
-		// CF → IT: initiative updated
+		// CF → IT: initiative updated — fast path
 		this.socket.on('initiative-updated', ({ playerId, initiative }: { playerId: number; initiative: number | null }) => {
 			const name = this.playerIdToName.get(playerId);
 			if (name && initiative !== null) {
 				this.applyITUpdate(name, { initiative });
 			}
 		});
-
-		this.attachITListeners();
 	}
 
 	disconnect() {
-		this.detachITListeners();
 		if (this.socket) {
 			this.socket.disconnect();
 			this.socket = null;
@@ -155,6 +139,7 @@ export default class CriticalFailSync extends Plugin {
 		return plugins?.['initiative-tracker'] ?? null;
 	}
 
+	/** Initial load: clears caches, rebuilds encounter from scratch, shows Notice. */
 	private populateIT(players: CFPlayer[]) {
 		const it = this.getITPlugin();
 		if (!it) {
@@ -162,8 +147,10 @@ export default class CriticalFailSync extends Plugin {
 			return;
 		}
 		this.playerIdToName.clear();
+		this.playerIdToMaxHp.clear();
 		const creatures = players.map(p => {
 			this.playerIdToName.set(p.id, p.player_name);
+			this.playerIdToMaxHp.set(p.id, p.max_hp);
 			return {
 				name: p.player_name,
 				hp: p.current_hp,
@@ -174,13 +161,8 @@ export default class CriticalFailSync extends Plugin {
 			};
 		});
 		try {
-			// Start a fresh encounter then inject all players
-			if (typeof it.api?.newEncounter === 'function') {
-				it.api.newEncounter();
-			}
-			if (typeof it.api?.addCreatures === 'function') {
-				it.api.addCreatures(creatures);
-			}
+			if (typeof it.api?.newEncounter === 'function') it.api.newEncounter();
+			if (typeof it.api?.addCreatures === 'function') it.api.addCreatures(creatures);
 		} catch (err) {
 			console.error('[CF Sync] populateIT error:', err);
 		}
@@ -195,19 +177,20 @@ export default class CriticalFailSync extends Plugin {
 		this.playerIdToName.set(player.id, player.player_name);
 
 		if (alreadyTracked) {
-			// Player reconnected or stats were updated — update in place, no duplicate
+			// Player reconnected — update HP/AC/initiative in place.
+			// Never pass `max` to updateCreatureByName (IT treats it as additive).
+			// Max HP is only sent via addCreatures (initial join / manual sync).
+			this.playerIdToMaxHp.set(player.id, player.max_hp);
 			this.applyITUpdate(player.player_name, {
 				hp: player.current_hp,
-				max: player.max_hp,
 				ac: player.ac,
 				initiative: player.initiative ?? undefined,
 			});
 			return;
 		}
 
-		// Truly new player: add to IT.
-		// If a creature with the same name already exists in IT (e.g. after plugin reload),
-		// addCreatures may create a duplicate — the user can run a full re-sync to fix that.
+		// Truly new player: add to existing encounter.
+		this.playerIdToMaxHp.set(player.id, player.max_hp);
 		try {
 			if (typeof it.api?.addCreatures === 'function') {
 				it.api.addCreatures([{
@@ -224,13 +207,10 @@ export default class CriticalFailSync extends Plugin {
 		}
 	}
 
-	private removeITCreature(_name: string) {
-		// removeCreature is not exposed in the current IT API — no-op.
-	}
-
 	// Documented API: plugin.tracker.updateCreatureByName(name, update)
 	// See https://plugins.javalent.com/it/tracker/api
-	private applyITUpdate(name: string, data: { hp?: number; max?: number; ac?: number | string; initiative?: number }) {
+	// Note: `max` is intentionally excluded — IT treats it as additive (+N each call).
+	private applyITUpdate(name: string, data: { hp?: number; ac?: number | string; initiative?: number }) {
 		const it = this.getITPlugin();
 		if (!it) return;
 		try {
@@ -240,15 +220,6 @@ export default class CriticalFailSync extends Plugin {
 		} catch (err) {
 			console.warn('[CF Sync] applyITUpdate error:', err);
 		}
-	}
-
-	private attachITListeners() {
-		// IT does not expose an event API in the current version.
-		// IT → CF sync is therefore not available (CF is the source of truth).
-	}
-
-	private detachITListeners() {
-		// Nothing to detach.
 	}
 
 	// ── IT → CF pushes ──────────────────────────────────────────────────────────

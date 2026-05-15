@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { sessionStore } from '../../stores/session.js'
 import { authStore } from '../../stores/auth.js'
 import { getSocket } from '../../socket.js'
+import AppIcon from '../AppIcon.vue'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
@@ -152,9 +153,9 @@ async function sendMessage() {
         <label class="form-label">Voix</label>
         <div class="type-toggle">
           <button class="toggle-btn" :class="{ active: voiceStyle === 'normal' }" @click="voiceStyle = 'normal'">Normale</button>
-          <button class="toggle-btn voice-god" :class="{ active: voiceStyle === 'god' }" @click="voiceStyle = 'god'">⚡ Dieu</button>
-          <button class="toggle-btn voice-whisper" :class="{ active: voiceStyle === 'whisper' }" @click="voiceStyle = 'whisper'">🌫 Murmure</button>
-          <button class="toggle-btn voice-demon" :class="{ active: voiceStyle === 'demon' }" @click="voiceStyle = 'demon'">👿 Démon</button>
+          <button class="toggle-btn voice-god" :class="{ active: voiceStyle === 'god' }" @click="voiceStyle = 'god'"><AppIcon icon="lucide:zap" size="0.85em" /> Dieu</button>
+          <button class="toggle-btn voice-whisper" :class="{ active: voiceStyle === 'whisper' }" @click="voiceStyle = 'whisper'"><AppIcon icon="lucide:wind" size="0.85em" /> Murmure</button>
+          <button class="toggle-btn voice-demon" :class="{ active: voiceStyle === 'demon' }" @click="voiceStyle = 'demon'"><AppIcon icon="game-icons:imp" size="0.85em" /> Démon</button>
         </div>
       </div>
 
@@ -162,8 +163,8 @@ async function sendMessage() {
         <label class="form-label">Effet</label>
         <div class="type-toggle">
           <button class="toggle-btn" :class="{ active: textEffect === 'none' }" @click="textEffect = 'none'">Aucun</button>
-          <button class="toggle-btn" :class="{ active: textEffect === 'slow' }" @click="textEffect = 'slow'">🕰 Lent</button>
-          <button class="toggle-btn" :class="{ active: textEffect === 'glitch' }" @click="textEffect = 'glitch'">⚡ Glitch</button>
+          <button class="toggle-btn" :class="{ active: textEffect === 'slow' }" @click="textEffect = 'slow'"><AppIcon icon="lucide:hourglass" size="0.85em" /> Lent</button>
+          <button class="toggle-btn" :class="{ active: textEffect === 'glitch' }" @click="textEffect = 'glitch'"><AppIcon icon="lucide:activity" size="0.85em" /> Glitch</button>
           <button class="toggle-btn" :class="{ active: textEffect === 'typewriter' }" @click="textEffect = 'typewriter'">⌨ Frappe</button>
         </div>
       </div>
@@ -188,7 +189,7 @@ async function sendMessage() {
       </p>
 
       <button class="send-btn" @click="sendMessage" :disabled="!canSend">
-        {{ sending ? 'Envoi…' : '✉️ Envoyer' }}
+        {{ sending ? 'Envoi…' : '' }}<AppIcon v-if="!sending" icon="lucide:mail" size="0.9em" /> {{ sending ? '' : 'Envoyer' }}
       </button>
       <p v-if="!hasConnectedPlayers" class="feedback error">Aucun joueur connecté dans cette session.</p>
     </template>

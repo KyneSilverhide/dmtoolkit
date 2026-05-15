@@ -1,0 +1,2653 @@
+{
+  "source_list_url": "https://www.aidedd.org/regles/",
+  "generated_at": "2026-05-15T15:37:16.284447+00:00",
+  "count": 147,
+  "items": [
+    {
+      "name": "Gourdin",
+      "slug": "gourdin",
+      "slug_vo": "club",
+      "name_vo": "Club",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=gourdin",
+      "item_type": "Arme simple de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d4 contondant. Propriétés : légère.",
+      "description_html": "<p>Dégâts : 1d4 contondant. Propriétés : légère.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 pa",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Dague",
+      "slug": "dague",
+      "slug_vo": "dagger",
+      "name_vo": "Dagger",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=dague",
+      "item_type": "Arme simple de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d4 perforant. Propriétés : finesse, légère, lancer (portée 6/18 m).",
+      "description_html": "<p>Dégâts : 1d4 perforant. Propriétés : finesse, légère, lancer (portée 6/18 m).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 po",
+        "poids": "0,5 kg"
+      }
+    },
+    {
+      "name": "Gourdin lourd",
+      "slug": "gourdin-lourd",
+      "slug_vo": "greatclub",
+      "name_vo": "Greatclub",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=gourdin-lourd",
+      "item_type": "Arme simple de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d8 contondant. Propriétés : à deux mains.",
+      "description_html": "<p>Dégâts : 1d8 contondant. Propriétés : à deux mains.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 pa",
+        "poids": "5 kg"
+      }
+    },
+    {
+      "name": "Hachette",
+      "slug": "hachette",
+      "slug_vo": "handaxe",
+      "name_vo": "Handaxe",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=hachette",
+      "item_type": "Arme simple de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d6 tranchant. Propriétés : légère, lancer (portée 6/18 m).",
+      "description_html": "<p>Dégâts : 1d6 tranchant. Propriétés : légère, lancer (portée 6/18 m).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Javeline",
+      "slug": "javeline",
+      "slug_vo": "javelin",
+      "name_vo": "Javelin",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=javeline",
+      "item_type": "Arme simple de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d6 perforant. Propriétés : lancer (portée 9/36 m).",
+      "description_html": "<p>Dégâts : 1d6 perforant. Propriétés : lancer (portée 9/36 m).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 pa",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Marteau léger",
+      "slug": "marteau-leger",
+      "slug_vo": "light-hammer",
+      "name_vo": "Light Hammer",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=marteau-leger",
+      "item_type": "Arme simple de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d4 contondant. Propriétés : légère, lancer (portée 6/18 m).",
+      "description_html": "<p>Dégâts : 1d4 contondant. Propriétés : légère, lancer (portée 6/18 m).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Masse d'armes",
+      "slug": "masse-d-armes",
+      "slug_vo": "mace",
+      "name_vo": "Mace",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=masse-d-armes",
+      "item_type": "Arme simple de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d6 contondant.",
+      "description_html": "<p>Dégâts : 1d6 contondant.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 po",
+        "poids": "2 kg"
+      }
+    },
+    {
+      "name": "Bâton",
+      "slug": "baton",
+      "slug_vo": "quarterstaff",
+      "name_vo": "Quarterstaff",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=baton",
+      "item_type": "Arme simple de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d6 contondant. Propriétés : polyvalente (1d8).",
+      "description_html": "<p>Dégâts : 1d6 contondant. Propriétés : polyvalente (1d8).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 pa",
+        "poids": "2 kg"
+      }
+    },
+    {
+      "name": "Serpe",
+      "slug": "serpe",
+      "slug_vo": "sickle",
+      "name_vo": "Sickle",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=serpe",
+      "item_type": "Arme simple de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d4 tranchant. Propriétés : légère.",
+      "description_html": "<p>Dégâts : 1d4 tranchant. Propriétés : légère.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Lance",
+      "slug": "lance",
+      "slug_vo": "spear",
+      "name_vo": "Spear",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=lance",
+      "item_type": "Arme simple de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d6 perforant. Propriétés : lancer (portée 6/18 m), polyvalente (1d8).",
+      "description_html": "<p>Dégâts : 1d6 perforant. Propriétés : lancer (portée 6/18 m), polyvalente (1d8).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "1,5 kg"
+      }
+    },
+    {
+      "name": "Arbalète légère",
+      "slug": "arbalete-legere",
+      "slug_vo": "light-crossbow",
+      "name_vo": "Light Crossbow",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=arbalete-legere",
+      "item_type": "Arme simple à distance",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d8 perforant. Propriétés : munitions (portée 24/96 m), chargement, à deux mains.",
+      "description_html": "<p>Dégâts : 1d8 perforant. Propriétés : munitions (portée 24/96 m), chargement, à deux mains.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 po",
+        "poids": "2,5 kg"
+      }
+    },
+    {
+      "name": "Fléchette",
+      "slug": "flechette",
+      "slug_vo": "dart",
+      "name_vo": "Dart",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=flechette",
+      "item_type": "Arme simple à distance",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d4 perforant. Propriétés : finesse, lancer (portée 6/18 m).",
+      "description_html": "<p>Dégâts : 1d4 perforant. Propriétés : finesse, lancer (portée 6/18 m).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 pc",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Arc court",
+      "slug": "arc-court",
+      "slug_vo": "shortbow",
+      "name_vo": "Shortbow",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=arc-court",
+      "item_type": "Arme simple à distance",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d6 perforant. Propriétés : munitions (portée 24/96 m), à deux mains.",
+      "description_html": "<p>Dégâts : 1d6 perforant. Propriétés : munitions (portée 24/96 m), à deux mains.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Fronde",
+      "slug": "fronde",
+      "slug_vo": "sling",
+      "name_vo": "Sling",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=fronde",
+      "item_type": "Arme simple à distance",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d4 contondant. Propriétés : munitions (portée 9/36 m).",
+      "description_html": "<p>Dégâts : 1d4 contondant. Propriétés : munitions (portée 9/36 m).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 pa",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Hache d'armes",
+      "slug": "hache-d-armes",
+      "slug_vo": "battleaxe",
+      "name_vo": "Battleaxe",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=hache-d-armes",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d8 tranchant. Propriétés : polyvalente (1d10).",
+      "description_html": "<p>Dégâts : 1d8 tranchant. Propriétés : polyvalente (1d10).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "2 kg"
+      }
+    },
+    {
+      "name": "Fléau d'armes",
+      "slug": "fleau-d-armes",
+      "slug_vo": "flail",
+      "name_vo": "Flail",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=fleau-d-armes",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d8 contondant.",
+      "description_html": "<p>Dégâts : 1d8 contondant.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Voulge",
+      "slug": "voulge",
+      "slug_vo": "glaive",
+      "name_vo": "Glaive",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=voulge",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d10 tranchant. Propriétés : lourde, allonge, à deux mains.",
+      "description_html": "<p>Dégâts : 1d10 tranchant. Propriétés : lourde, allonge, à deux mains.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "20 po",
+        "poids": "3 kg"
+      }
+    },
+    {
+      "name": "Hache à deux mains",
+      "slug": "hache-a-deux-mains",
+      "slug_vo": "greataxe",
+      "name_vo": "Greataxe",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=hache-a-deux-mains",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d12 tranchant. Propriétés : lourde, à deux mains.",
+      "description_html": "<p>Dégâts : 1d12 tranchant. Propriétés : lourde, à deux mains.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "30 po",
+        "poids": "3,5 kg"
+      }
+    },
+    {
+      "name": "Espadon",
+      "slug": "espadon",
+      "slug_vo": "greatsword",
+      "name_vo": "Greatsword",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=espadon",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 2d6 tranchant. Propriétés : lourde, à deux mains.",
+      "description_html": "<p>Dégâts : 2d6 tranchant. Propriétés : lourde, à deux mains.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "50 po",
+        "poids": "3 kg"
+      }
+    },
+    {
+      "name": "Hallebarde",
+      "slug": "hallebarde",
+      "slug_vo": "halberd",
+      "name_vo": "Halberd",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=hallebarde",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d10 tranchant. Propriétés : lourde, allonge, à deux mains.",
+      "description_html": "<p>Dégâts : 1d10 tranchant. Propriétés : lourde, allonge, à deux mains.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "20 po",
+        "poids": "3 kg"
+      }
+    },
+    {
+      "name": "Lance de cavalerie",
+      "slug": "lance-de-cavalerie",
+      "slug_vo": "lance",
+      "name_vo": "Lance",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=lance-de-cavalerie",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d12 perforant. Propriétés : allonge. Désavantage si cible adjacente ou sans monture.",
+      "description_html": "<p>Dégâts : 1d12 perforant. Propriétés : allonge. Désavantage si cible adjacente ou sans monture.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "3 kg"
+      }
+    },
+    {
+      "name": "Épée longue",
+      "slug": "epee-longue",
+      "slug_vo": "longsword",
+      "name_vo": "Longsword",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=epee-longue",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d8 tranchant. Propriétés : polyvalente (1d10).",
+      "description_html": "<p>Dégâts : 1d8 tranchant. Propriétés : polyvalente (1d10).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "15 po",
+        "poids": "1,5 kg"
+      }
+    },
+    {
+      "name": "Maul",
+      "slug": "maul",
+      "slug_vo": "maul",
+      "name_vo": "Maul",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=maul",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 2d6 contondant. Propriétés : lourde, à deux mains.",
+      "description_html": "<p>Dégâts : 2d6 contondant. Propriétés : lourde, à deux mains.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "5 kg"
+      }
+    },
+    {
+      "name": "Morgenstern",
+      "slug": "morgenstern",
+      "slug_vo": "morningstar",
+      "name_vo": "Morningstar",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=morgenstern",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d8 perforant.",
+      "description_html": "<p>Dégâts : 1d8 perforant.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "15 po",
+        "poids": "2 kg"
+      }
+    },
+    {
+      "name": "Pique",
+      "slug": "pique",
+      "slug_vo": "pike",
+      "name_vo": "Pike",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=pique",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d10 perforant. Propriétés : lourde, allonge, à deux mains.",
+      "description_html": "<p>Dégâts : 1d10 perforant. Propriétés : lourde, allonge, à deux mains.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 po",
+        "poids": "9 kg"
+      }
+    },
+    {
+      "name": "Rapière",
+      "slug": "rapiere",
+      "slug_vo": "rapier",
+      "name_vo": "Rapier",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=rapiere",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d8 perforant. Propriétés : finesse.",
+      "description_html": "<p>Dégâts : 1d8 perforant. Propriétés : finesse.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Cimeterre",
+      "slug": "cimeterre",
+      "slug_vo": "scimitar",
+      "name_vo": "Scimitar",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=cimeterre",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d6 tranchant. Propriétés : finesse, légère.",
+      "description_html": "<p>Dégâts : 1d6 tranchant. Propriétés : finesse, légère.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 po",
+        "poids": "1,5 kg"
+      }
+    },
+    {
+      "name": "Épée courte",
+      "slug": "epee-courte",
+      "slug_vo": "shortsword",
+      "name_vo": "Shortsword",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=epee-courte",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d6 perforant. Propriétés : finesse, légère.",
+      "description_html": "<p>Dégâts : 1d6 perforant. Propriétés : finesse, légère.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Trident",
+      "slug": "trident",
+      "slug_vo": "trident",
+      "name_vo": "Trident",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=trident",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d6 perforant. Propriétés : lancer (portée 6/18 m), polyvalente (1d8).",
+      "description_html": "<p>Dégâts : 1d6 perforant. Propriétés : lancer (portée 6/18 m), polyvalente (1d8).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 po",
+        "poids": "2 kg"
+      }
+    },
+    {
+      "name": "Pic de guerre",
+      "slug": "pic-de-guerre",
+      "slug_vo": "war-pick",
+      "name_vo": "War Pick",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=pic-de-guerre",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d8 perforant.",
+      "description_html": "<p>Dégâts : 1d8 perforant.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Marteau de guerre",
+      "slug": "marteau-de-guerre",
+      "slug_vo": "warhammer",
+      "name_vo": "Warhammer",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=marteau-de-guerre",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d8 contondant. Propriétés : polyvalente (1d10).",
+      "description_html": "<p>Dégâts : 1d8 contondant. Propriétés : polyvalente (1d10).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "15 po",
+        "poids": "2 kg"
+      }
+    },
+    {
+      "name": "Fouet",
+      "slug": "fouet",
+      "slug_vo": "whip",
+      "name_vo": "Whip",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=fouet",
+      "item_type": "Arme de guerre de corps à corps",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d4 tranchant. Propriétés : finesse, allonge.",
+      "description_html": "<p>Dégâts : 1d4 tranchant. Propriétés : finesse, allonge.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 po",
+        "poids": "1,5 kg"
+      }
+    },
+    {
+      "name": "Sarbacane",
+      "slug": "sarbacane",
+      "slug_vo": "blowgun",
+      "name_vo": "Blowgun",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=sarbacane",
+      "item_type": "Arme de guerre à distance",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1 perforant. Propriétés : munitions (portée 7,5/30 m), chargement.",
+      "description_html": "<p>Dégâts : 1 perforant. Propriétés : munitions (portée 7,5/30 m), chargement.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "0,5 kg"
+      }
+    },
+    {
+      "name": "Arbalète de poing",
+      "slug": "arbalete-de-poing",
+      "slug_vo": "hand-crossbow",
+      "name_vo": "Hand Crossbow",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=arbalete-de-poing",
+      "item_type": "Arme de guerre à distance",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d6 perforant. Propriétés : légère, munitions (portée 9/36 m), chargement.",
+      "description_html": "<p>Dégâts : 1d6 perforant. Propriétés : légère, munitions (portée 9/36 m), chargement.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "75 po",
+        "poids": "1,5 kg"
+      }
+    },
+    {
+      "name": "Arbalète lourde",
+      "slug": "arbalete-lourde",
+      "slug_vo": "heavy-crossbow",
+      "name_vo": "Heavy Crossbow",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=arbalete-lourde",
+      "item_type": "Arme de guerre à distance",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d10 perforant. Propriétés : lourde, munitions (portée 30/120 m), chargement, à deux mains.",
+      "description_html": "<p>Dégâts : 1d10 perforant. Propriétés : lourde, munitions (portée 30/120 m), chargement, à deux mains.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "50 po",
+        "poids": "9 kg"
+      }
+    },
+    {
+      "name": "Arc long",
+      "slug": "arc-long",
+      "slug_vo": "longbow",
+      "name_vo": "Longbow",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=arc-long",
+      "item_type": "Arme de guerre à distance",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : 1d8 perforant. Propriétés : lourde, munitions (portée 45/180 m), à deux mains.",
+      "description_html": "<p>Dégâts : 1d8 perforant. Propriétés : lourde, munitions (portée 45/180 m), à deux mains.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "50 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Filet",
+      "slug": "filet",
+      "slug_vo": "net",
+      "name_vo": "Net",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=filet",
+      "item_type": "Arme de guerre à distance",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Dégâts : —. Propriétés : spécial, lancer (portée 1,5/4,5 m). Entrave la cible (DD 10 de Force pour se libérer).",
+      "description_html": "<p>Dégâts : —. Propriétés : spécial, lancer (portée 1,5/4,5 m). Entrave la cible (DD 10 de Force pour se libérer).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "1,5 kg"
+      }
+    },
+    {
+      "name": "Flèches (20)",
+      "slug": "fleches-20",
+      "slug_vo": "arrows-20",
+      "name_vo": "Arrows (20)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=fleches-20",
+      "item_type": "Munitions",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Munitions pour arcs. Récupérables après combat.",
+      "description_html": "<p>Munitions pour arcs. Récupérables après combat.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "0,5 kg"
+      }
+    },
+    {
+      "name": "Carreaux d'arbalète (20)",
+      "slug": "carreaux-d-arbalete-20",
+      "slug_vo": "crossbow-bolts-20",
+      "name_vo": "Crossbow Bolts (20)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=carreaux-d-arbalete-20",
+      "item_type": "Munitions",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Munitions pour arbalètes. Récupérables après combat.",
+      "description_html": "<p>Munitions pour arbalètes. Récupérables après combat.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "0,75 kg"
+      }
+    },
+    {
+      "name": "Dards de sarbacane (50)",
+      "slug": "dards-de-sarbacane-50",
+      "slug_vo": "blowgun-needles-50",
+      "name_vo": "Blowgun Needles (50)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=dards-de-sarbacane-50",
+      "item_type": "Munitions",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Munitions pour sarbacane.",
+      "description_html": "<p>Munitions pour sarbacane.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "0,5 kg"
+      }
+    },
+    {
+      "name": "Balles de fronde (20)",
+      "slug": "balles-de-fronde-20",
+      "slug_vo": "sling-bullets-20",
+      "name_vo": "Sling Bullets (20)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=balles-de-fronde-20",
+      "item_type": "Munitions",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Munitions pour fronde.",
+      "description_html": "<p>Munitions pour fronde.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "4 pc",
+        "poids": "0,75 kg"
+      }
+    },
+    {
+      "name": "Gambison",
+      "slug": "gambison",
+      "slug_vo": "padded-armor",
+      "name_vo": "Padded Armor",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=gambison",
+      "item_type": "Armure légère",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "CA : 11 + modificateur de Dextérité. Désavantage aux jets de Discrétion.",
+      "description_html": "<p>CA : 11 + modificateur de Dextérité. Désavantage aux jets de Discrétion.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 po",
+        "poids": "4 kg"
+      }
+    },
+    {
+      "name": "Armure de cuir",
+      "slug": "armure-de-cuir",
+      "slug_vo": "leather-armor",
+      "name_vo": "Leather Armor",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=armure-de-cuir",
+      "item_type": "Armure légère",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "CA : 11 + modificateur de Dextérité.",
+      "description_html": "<p>CA : 11 + modificateur de Dextérité.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "5 kg"
+      }
+    },
+    {
+      "name": "Armure de cuir clouté",
+      "slug": "armure-de-cuir-cloute",
+      "slug_vo": "studded-leather-armor",
+      "name_vo": "Studded Leather Armor",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=armure-de-cuir-cloute",
+      "item_type": "Armure légère",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "CA : 12 + modificateur de Dextérité.",
+      "description_html": "<p>CA : 12 + modificateur de Dextérité.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "45 po",
+        "poids": "6,5 kg"
+      }
+    },
+    {
+      "name": "Armure de peaux",
+      "slug": "armure-de-peaux",
+      "slug_vo": "hide-armor",
+      "name_vo": "Hide Armor",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=armure-de-peaux",
+      "item_type": "Armure intermédiaire",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "CA : 12 + modificateur de Dextérité (max +2).",
+      "description_html": "<p>CA : 12 + modificateur de Dextérité (max +2).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "6 kg"
+      }
+    },
+    {
+      "name": "Armure de crin",
+      "slug": "armure-de-crin",
+      "slug_vo": "chain-shirt",
+      "name_vo": "Chain Shirt",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=armure-de-crin",
+      "item_type": "Armure intermédiaire",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "CA : 13 + modificateur de Dextérité (max +2).",
+      "description_html": "<p>CA : 13 + modificateur de Dextérité (max +2).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "50 po",
+        "poids": "10 kg"
+      }
+    },
+    {
+      "name": "Armure d'écailles",
+      "slug": "armure-d-ecailles",
+      "slug_vo": "scale-mail",
+      "name_vo": "Scale Mail",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=armure-d-ecailles",
+      "item_type": "Armure intermédiaire",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "CA : 14 + modificateur de Dextérité (max +2). Désavantage aux jets de Discrétion.",
+      "description_html": "<p>CA : 14 + modificateur de Dextérité (max +2). Désavantage aux jets de Discrétion.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "50 po",
+        "poids": "22,5 kg"
+      }
+    },
+    {
+      "name": "Cuirasse",
+      "slug": "cuirasse",
+      "slug_vo": "breastplate",
+      "name_vo": "Breastplate",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=cuirasse",
+      "item_type": "Armure intermédiaire",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "CA : 14 + modificateur de Dextérité (max +2).",
+      "description_html": "<p>CA : 14 + modificateur de Dextérité (max +2).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "400 po",
+        "poids": "10 kg"
+      }
+    },
+    {
+      "name": "Demi-plates",
+      "slug": "demi-plates",
+      "slug_vo": "half-plate-armor",
+      "name_vo": "Half Plate Armor",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=demi-plates",
+      "item_type": "Armure intermédiaire",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "CA : 15 + modificateur de Dextérité (max +2). Désavantage aux jets de Discrétion.",
+      "description_html": "<p>CA : 15 + modificateur de Dextérité (max +2). Désavantage aux jets de Discrétion.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "750 po",
+        "poids": "20 kg"
+      }
+    },
+    {
+      "name": "Armure d'anneaux",
+      "slug": "armure-d-anneaux",
+      "slug_vo": "ring-mail",
+      "name_vo": "Ring Mail",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=armure-d-anneaux",
+      "item_type": "Armure lourde",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "CA : 14. Désavantage aux jets de Discrétion.",
+      "description_html": "<p>CA : 14. Désavantage aux jets de Discrétion.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "30 po",
+        "poids": "20 kg"
+      }
+    },
+    {
+      "name": "Cotte de mailles",
+      "slug": "cotte-de-mailles",
+      "slug_vo": "chain-mail",
+      "name_vo": "Chain Mail",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=cotte-de-mailles",
+      "item_type": "Armure lourde",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "CA : 16. Force minimum : 13. Désavantage aux jets de Discrétion.",
+      "description_html": "<p>CA : 16. Force minimum : 13. Désavantage aux jets de Discrétion.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "75 po",
+        "poids": "27,5 kg"
+      }
+    },
+    {
+      "name": "Cotte de plates",
+      "slug": "cotte-de-plates",
+      "slug_vo": "splint-armor",
+      "name_vo": "Splint Armor",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=cotte-de-plates",
+      "item_type": "Armure lourde",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "CA : 17. Force minimum : 15. Désavantage aux jets de Discrétion.",
+      "description_html": "<p>CA : 17. Force minimum : 15. Désavantage aux jets de Discrétion.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "200 po",
+        "poids": "30 kg"
+      }
+    },
+    {
+      "name": "Armure de plates",
+      "slug": "armure-de-plates",
+      "slug_vo": "plate-armor",
+      "name_vo": "Plate Armor",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=armure-de-plates",
+      "item_type": "Armure lourde",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "CA : 18. Force minimum : 15. Désavantage aux jets de Discrétion.",
+      "description_html": "<p>CA : 18. Force minimum : 15. Désavantage aux jets de Discrétion.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 500 po",
+        "poids": "32,5 kg"
+      }
+    },
+    {
+      "name": "Bouclier",
+      "slug": "bouclier",
+      "slug_vo": "shield",
+      "name_vo": "Shield",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=bouclier",
+      "item_type": "Bouclier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "CA : +2. Nécessite une maîtrise des boucliers.",
+      "description_html": "<p>CA : +2. Nécessite une maîtrise des boucliers.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "3 kg"
+      }
+    },
+    {
+      "name": "Potion de soins",
+      "slug": "potion-de-soins",
+      "slug_vo": "potion-of-healing",
+      "name_vo": "Potion of Healing",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=potion-de-soins",
+      "item_type": "Potion",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Récupère 2d4+2 points de vie lorsqu'elle est bue.",
+      "description_html": "<p>Récupère 2d4+2 points de vie lorsqu'elle est bue.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "50 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Potion de soins supérieurs",
+      "slug": "potion-de-soins-superieurs",
+      "slug_vo": "potion-of-greater-healing",
+      "name_vo": "Potion of Greater Healing",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=potion-de-soins-superieurs",
+      "item_type": "Potion",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Récupère 4d4+4 points de vie lorsqu'elle est bue.",
+      "description_html": "<p>Récupère 4d4+4 points de vie lorsqu'elle est bue.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "100 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Potion de soins importants",
+      "slug": "potion-de-soins-importants",
+      "slug_vo": "potion-of-superior-healing",
+      "name_vo": "Potion of Superior Healing",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=potion-de-soins-importants",
+      "item_type": "Potion",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Récupère 8d4+8 points de vie lorsqu'elle est bue.",
+      "description_html": "<p>Récupère 8d4+8 points de vie lorsqu'elle est bue.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "500 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Potion de soins suprêmes",
+      "slug": "potion-de-soins-supremes",
+      "slug_vo": "potion-of-supreme-healing",
+      "name_vo": "Potion of Supreme Healing",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=potion-de-soins-supremes",
+      "item_type": "Potion",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Récupère 10d4+20 points de vie lorsqu'elle est bue.",
+      "description_html": "<p>Récupère 10d4+20 points de vie lorsqu'elle est bue.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 000 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Antidote",
+      "slug": "antidote",
+      "slug_vo": "antitoxin",
+      "name_vo": "Antitoxin",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=antidote",
+      "item_type": "Potion",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "La créature qui la boit a l'avantage aux jets de sauvegarde contre le poison pendant 1 heure.",
+      "description_html": "<p>La créature qui la boit a l'avantage aux jets de sauvegarde contre le poison pendant 1 heure.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "50 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Eau bénite (flasque)",
+      "slug": "eau-benite-flasque",
+      "slug_vo": "holy-water-flask",
+      "name_vo": "Holy Water (Flask)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=eau-benite-flasque",
+      "item_type": "Potion",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Inflige 2d6 dégâts radiants à une créature morte-vivante ou fiélon touchée.",
+      "description_html": "<p>Inflige 2d6 dégâts radiants à une créature morte-vivante ou fiélon touchée.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 po",
+        "poids": "0,5 kg"
+      }
+    },
+    {
+      "name": "Huile (flasque)",
+      "slug": "huile-flasque",
+      "slug_vo": "oil-flask",
+      "name_vo": "Oil (Flask)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=huile-flasque",
+      "item_type": "Potion",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Peut être versée sur le sol (surface 1,5 m) ou aspergée sur une créature. Réussite d'attaque à distance (DD 8 + Dex). Cible ou surface couverte d'huile : si enflammée, 5 dégâts de feu par round pendant 2 rounds.",
+      "description_html": "<p>Peut être versée sur le sol (surface 1,5 m) ou aspergée sur une créature. Réussite d'attaque à distance (DD 8 + Dex). Cible ou surface couverte d'huile : si enflammée, 5 dégâts de feu par round pendant 2 rounds.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 pa",
+        "poids": "0,5 kg"
+      }
+    },
+    {
+      "name": "Poison de base (flacon)",
+      "slug": "poison-de-base-flacon",
+      "slug_vo": "basic-poison-vial",
+      "name_vo": "Basic Poison (Vial)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=poison-de-base-flacon",
+      "item_type": "Poison",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Peut être appliqué sur une arme ou munition (1 dose = 1 minute). Cible touchée : jet de sauvegarde de Constitution DD 10 ou état empoisonné pendant 1 heure.",
+      "description_html": "<p>Peut être appliqué sur une arme ou munition (1 dose = 1 minute). Cible touchée : jet de sauvegarde de Constitution DD 10 ou état empoisonné pendant 1 heure.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "100 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Sac à dos",
+      "slug": "sac-a-dos",
+      "slug_vo": "backpack",
+      "name_vo": "Backpack",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=sac-a-dos",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Capacité : 30 livres (≈ 13,5 kg) / 1 pied cube (≈ 28 litres).",
+      "description_html": "<p>Capacité : 30 livres (≈ 13,5 kg) / 1 pied cube (≈ 28 litres).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 po",
+        "poids": "2,5 kg"
+      }
+    },
+    {
+      "name": "Corde de chanvre (15 m)",
+      "slug": "corde-de-chanvre-15-m",
+      "slug_vo": "hempen-rope-50-ft",
+      "name_vo": "Hempen Rope (50 ft)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=corde-de-chanvre-15-m",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Résistance : 2 PV, CA 11. Peut supporter jusqu'à 750 livres (≈ 340 kg).",
+      "description_html": "<p>Résistance : 2 PV, CA 11. Peut supporter jusqu'à 750 livres (≈ 340 kg).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "5 kg"
+      }
+    },
+    {
+      "name": "Corde de soie (15 m)",
+      "slug": "corde-de-soie-15-m",
+      "slug_vo": "silk-rope-50-ft",
+      "name_vo": "Silk Rope (50 ft)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=corde-de-soie-15-m",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Résistance : 2 PV, CA 13. Plus légère que la corde de chanvre.",
+      "description_html": "<p>Résistance : 2 PV, CA 13. Plus légère que la corde de chanvre.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "2,5 kg"
+      }
+    },
+    {
+      "name": "Torche",
+      "slug": "torche",
+      "slug_vo": "torch",
+      "name_vo": "Torch",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=torche",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Éclaire sur 6 m (lumière vive) + 6 m (pénombre). Dure 1 heure. Inflige 1 dégât de feu si utilisée comme arme improvisée.",
+      "description_html": "<p>Éclaire sur 6 m (lumière vive) + 6 m (pénombre). Dure 1 heure. Inflige 1 dégât de feu si utilisée comme arme improvisée.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 pc",
+        "poids": "0,5 kg"
+      }
+    },
+    {
+      "name": "Lanterne à capote",
+      "slug": "lanterne-a-capote",
+      "slug_vo": "hooded-lantern",
+      "name_vo": "Hooded Lantern",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=lanterne-a-capote",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Éclaire sur 9 m (lumière vive) + 9 m (pénombre). Dure 6 heures par flasque d'huile. Capote rabattable : réduit à 1,5 m de pénombre seulement.",
+      "description_html": "<p>Éclaire sur 9 m (lumière vive) + 9 m (pénombre). Dure 6 heures par flasque d'huile. Capote rabattable : réduit à 1,5 m de pénombre seulement.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Lanterne sourde",
+      "slug": "lanterne-sourde",
+      "slug_vo": "bullseye-lantern",
+      "name_vo": "Bullseye Lantern",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=lanterne-sourde",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Projette un cône de lumière vive sur 18 m + 18 m de pénombre. Dure 6 heures par flasque d'huile.",
+      "description_html": "<p>Projette un cône de lumière vive sur 18 m + 18 m de pénombre. Dure 6 heures par flasque d'huile.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Rations (1 jour)",
+      "slug": "rations-1-jour",
+      "slug_vo": "rations-1-day",
+      "name_vo": "Rations (1 day)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=rations-1-jour",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Nourriture séchée et compacte pour une journée : viande séchée, biscuits durs, fromage.",
+      "description_html": "<p>Nourriture séchée et compacte pour une journée : viande séchée, biscuits durs, fromage.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 pa",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Trousse de soins",
+      "slug": "trousse-de-soins",
+      "slug_vo": "healer-s-kit",
+      "name_vo": "Healer's Kit",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=trousse-de-soins",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "10 utilisations. Action : stabilise une créature avec 0 PV sans jet de Médecine.",
+      "description_html": "<p>10 utilisations. Action : stabilise une créature avec 0 PV sans jet de Médecine.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 po",
+        "poids": "1,5 kg"
+      }
+    },
+    {
+      "name": "Grappin",
+      "slug": "grappin",
+      "slug_vo": "grappling-hook",
+      "name_vo": "Grappling Hook",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=grappin",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet l'escalade d'une surface avec une corde. Nécessite une action pour fixer.",
+      "description_html": "<p>Permet l'escalade d'une surface avec une corde. Nécessite une action pour fixer.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 po",
+        "poids": "2 kg"
+      }
+    },
+    {
+      "name": "Menottes",
+      "slug": "menottes",
+      "slug_vo": "manacles",
+      "name_vo": "Manacles",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=menottes",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Immobilise les poignets. Echapper : Force DD 20 ou Discrétion DD 17 avec une épingle à crocheter.",
+      "description_html": "<p>Immobilise les poignets. Echapper : Force DD 20 ou Discrétion DD 17 avec une épingle à crocheter.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 po",
+        "poids": "3 kg"
+      }
+    },
+    {
+      "name": "Miroir en acier",
+      "slug": "miroir-en-acier",
+      "slug_vo": "steel-mirror",
+      "name_vo": "Steel Mirror",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=miroir-en-acier",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Petit miroir poli permettant de regarder autour des coins ou de refléter la lumière.",
+      "description_html": "<p>Petit miroir poli permettant de regarder autour des coins ou de refléter la lumière.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 po",
+        "poids": "0,25 kg"
+      }
+    },
+    {
+      "name": "Tente (2 personnes)",
+      "slug": "tente-2-personnes",
+      "slug_vo": "tent-two-person",
+      "name_vo": "Tent, Two-Person",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=tente-2-personnes",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Abri simple pour deux personnes. Protège contre les intempéries.",
+      "description_html": "<p>Abri simple pour deux personnes. Protège contre les intempéries.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 po",
+        "poids": "10 kg"
+      }
+    },
+    {
+      "name": "Couverture",
+      "slug": "couverture",
+      "slug_vo": "blanket",
+      "name_vo": "Blanket",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=couverture",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Couverture de laine épaisse.",
+      "description_html": "<p>Couverture de laine épaisse.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 pa",
+        "poids": "1,5 kg"
+      }
+    },
+    {
+      "name": "Loupe",
+      "slug": "loupe",
+      "slug_vo": "magnifying-glass",
+      "name_vo": "Magnifying Glass",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=loupe",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet d'allumer un feu par beau temps. Avantage aux jets d'Arcane, d'Histoire ou de Nature pour examiner un objet de près.",
+      "description_html": "<p>Permet d'allumer un feu par beau temps. Avantage aux jets d'Arcane, d'Histoire ou de Nature pour examiner un objet de près.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "100 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Boîte à amadou",
+      "slug": "boite-a-amadou",
+      "slug_vo": "tinderbox",
+      "name_vo": "Tinderbox",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=boite-a-amadou",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Allume un feu en une action (ou action bonus si matériaux préparés). Contient silex, briquet et amadou.",
+      "description_html": "<p>Allume un feu en une action (ou action bonus si matériaux préparés). Contient silex, briquet et amadou.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 pa",
+        "poids": "0,5 kg"
+      }
+    },
+    {
+      "name": "Bougie",
+      "slug": "bougie",
+      "slug_vo": "candle",
+      "name_vo": "Candle",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=bougie",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Éclaire sur 1,5 m (lumière vive) + 1,5 m (pénombre). Dure 1 heure.",
+      "description_html": "<p>Éclaire sur 1,5 m (lumière vive) + 1,5 m (pénombre). Dure 1 heure.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 pc",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Sac de couchage",
+      "slug": "sac-de-couchage",
+      "slug_vo": "bedroll",
+      "name_vo": "Bedroll",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=sac-de-couchage",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de dormir confortablement à l'extérieur.",
+      "description_html": "<p>Permet de dormir confortablement à l'extérieur.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "3,5 kg"
+      }
+    },
+    {
+      "name": "Sacoche à composantes",
+      "slug": "sacoche-a-composantes",
+      "slug_vo": "component-pouch",
+      "name_vo": "Component Pouch",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=sacoche-a-composantes",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Contient toutes les composantes matérielles sans valeur nécessaires à l'incantation.",
+      "description_html": "<p>Contient toutes les composantes matérielles sans valeur nécessaires à l'incantation.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Focaliseur arcanique (cristal)",
+      "slug": "focaliseur-arcanique-cristal",
+      "slug_vo": "arcane-focus-crystal",
+      "name_vo": "Arcane Focus (Crystal)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=focaliseur-arcanique-cristal",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Focalisant arcanique permettant l'incantation sans composantes matérielles sans valeur.",
+      "description_html": "<p>Focalisant arcanique permettant l'incantation sans composantes matérielles sans valeur.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Symbole sacré (argent)",
+      "slug": "symbole-sacre-argent",
+      "slug_vo": "holy-symbol-silver",
+      "name_vo": "Holy Symbol (Silver)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=symbole-sacre-argent",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Focalisant divin pour clercs et paladins. En argent gravé.",
+      "description_html": "<p>Focalisant divin pour clercs et paladins. En argent gravé.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Symbole sacré (or)",
+      "slug": "symbole-sacre-or",
+      "slug_vo": "holy-symbol-gold",
+      "name_vo": "Holy Symbol (Gold)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=symbole-sacre-or",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Focalisant divin pour clercs et paladins. En or incrusté.",
+      "description_html": "<p>Focalisant divin pour clercs et paladins. En or incrusté.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Focaliseur druidique (totem)",
+      "slug": "focaliseur-druidique-totem",
+      "slug_vo": "druidic-focus-totem",
+      "name_vo": "Druidic Focus (Totem)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=focaliseur-druidique-totem",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Focalisant pour druides : totem représentant un animal ou une plante.",
+      "description_html": "<p>Focalisant pour druides : totem représentant un animal ou une plante.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Pince-monseigneur",
+      "slug": "pince-monseigneur",
+      "slug_vo": "crowbar",
+      "name_vo": "Crowbar",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=pince-monseigneur",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Avantage aux jets de Force pour ouvrir une porte ou un couvercle fermé.",
+      "description_html": "<p>Avantage aux jets de Force pour ouvrir une porte ou un couvercle fermé.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 po",
+        "poids": "2,5 kg"
+      }
+    },
+    {
+      "name": "Marteau",
+      "slug": "marteau",
+      "slug_vo": "hammer",
+      "name_vo": "Hammer",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=marteau",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet d'enfoncer des pitons. Peut servir d'arme improvisée (1d4 contondant).",
+      "description_html": "<p>Permet d'enfoncer des pitons. Peut servir d'arme improvisée (1d4 contondant).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "1,5 kg"
+      }
+    },
+    {
+      "name": "Pelle",
+      "slug": "pelle",
+      "slug_vo": "shovel",
+      "name_vo": "Shovel",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=pelle",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de creuser. Déblaye 0,5 m³ de terre par heure de travail.",
+      "description_html": "<p>Permet de creuser. Déblaye 0,5 m³ de terre par heure de travail.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 po",
+        "poids": "2,5 kg"
+      }
+    },
+    {
+      "name": "Pitons (10)",
+      "slug": "pitons-10",
+      "slug_vo": "pitons-10",
+      "name_vo": "Pitons (10)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=pitons-10",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Peuvent être enfoncés dans des fissures de roche ou de bois pour l'escalade.",
+      "description_html": "<p>Peuvent être enfoncés dans des fissures de roche ou de bois pour l'escalade.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 pa",
+        "poids": "1,25 kg"
+      }
+    },
+    {
+      "name": "Encre (flacon)",
+      "slug": "encre-flacon",
+      "slug_vo": "ink-1-ounce-bottle",
+      "name_vo": "Ink (1 ounce bottle)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=encre-flacon",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Flacon d'encre noire pour l'écriture.",
+      "description_html": "<p>Flacon d'encre noire pour l'écriture.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Plume d'écriture",
+      "slug": "plume-d-ecriture",
+      "slug_vo": "ink-pen",
+      "name_vo": "Ink Pen",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=plume-d-ecriture",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Plume taillée pour écrire avec de l'encre.",
+      "description_html": "<p>Plume taillée pour écrire avec de l'encre.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 pc",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Parchemin (feuille)",
+      "slug": "parchemin-feuille",
+      "slug_vo": "parchment-1-sheet",
+      "name_vo": "Parchment (1 sheet)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=parchemin-feuille",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Feuille de parchemin vierge.",
+      "description_html": "<p>Feuille de parchemin vierge.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 pa",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Papier (feuille)",
+      "slug": "papier-feuille",
+      "slug_vo": "paper-one-sheet",
+      "name_vo": "Paper (one sheet)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=papier-feuille",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Feuille de papier vierge.",
+      "description_html": "<p>Feuille de papier vierge.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 pa",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Vêtements communs",
+      "slug": "vetements-communs",
+      "slug_vo": "common-clothes",
+      "name_vo": "Common Clothes",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=vetements-communs",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Tenue simple : tunique, pantalon, chaussures.",
+      "description_html": "<p>Tenue simple : tunique, pantalon, chaussures.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 pa",
+        "poids": "1,5 kg"
+      }
+    },
+    {
+      "name": "Vêtements de voyageur",
+      "slug": "vetements-de-voyageur",
+      "slug_vo": "traveler-s-clothes",
+      "name_vo": "Traveler's Clothes",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=vetements-de-voyageur",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Tenue robuste pour la route : manteau, bottes solides.",
+      "description_html": "<p>Tenue robuste pour la route : manteau, bottes solides.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 po",
+        "poids": "2 kg"
+      }
+    },
+    {
+      "name": "Vêtements fins",
+      "slug": "vetements-fins",
+      "slug_vo": "fine-clothes",
+      "name_vo": "Fine Clothes",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=vetements-fins",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Tenue élégante pour se présenter en société.",
+      "description_html": "<p>Tenue élégante pour se présenter en société.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "15 po",
+        "poids": "3 kg"
+      }
+    },
+    {
+      "name": "Vêtements de cérémonie",
+      "slug": "vetements-de-ceremonie",
+      "slug_vo": "ceremonial-clothes",
+      "name_vo": "Ceremonial Clothes",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=vetements-de-ceremonie",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Tenue somptueuse pour grandes occasions.",
+      "description_html": "<p>Tenue somptueuse pour grandes occasions.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "115 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Carquois",
+      "slug": "carquois",
+      "slug_vo": "quiver",
+      "name_vo": "Quiver",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=carquois",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Contient jusqu'à 20 flèches.",
+      "description_html": "<p>Contient jusqu'à 20 flèches.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "0,5 kg"
+      }
+    },
+    {
+      "name": "Étui à carreaux",
+      "slug": "etui-a-carreaux",
+      "slug_vo": "crossbow-bolt-case",
+      "name_vo": "Crossbow Bolt Case",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=etui-a-carreaux",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Contient jusqu'à 20 carreaux d'arbalète.",
+      "description_html": "<p>Contient jusqu'à 20 carreaux d'arbalète.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "0,5 kg"
+      }
+    },
+    {
+      "name": "Acide (flasque)",
+      "slug": "acide-flasque",
+      "slug_vo": "acid-vial",
+      "name_vo": "Acid (Vial)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=acide-flasque",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Comme action, peut être aspergé sur une créature (1,5 m). Attaque à distance DD 8+Dex. En cas de succès : 2d6 dégâts d'acide.",
+      "description_html": "<p>Comme action, peut être aspergé sur une créature (1,5 m). Attaque à distance DD 8+Dex. En cas de succès : 2d6 dégâts d'acide.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Feu grégeois (flasque)",
+      "slug": "feu-gregeois-flasque",
+      "slug_vo": "alchemist-s-fire-flask",
+      "name_vo": "Alchemist's Fire (Flask)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=feu-gregeois-flasque",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Comme action, peut être lancé (1,5 m). Attaque à distance DD 8+Dex. En cas de succès : 1d4 feu par round. Action pour éteindre (DD 10 Dex).",
+      "description_html": "<p>Comme action, peut être lancé (1,5 m). Attaque à distance DD 8+Dex. En cas de succès : 1d4 feu par round. Action pour éteindre (DD 10 Dex).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "50 po",
+        "poids": "0,5 kg"
+      }
+    },
+    {
+      "name": "Billes (sac de 1 000)",
+      "slug": "billes-sac-de-1-000",
+      "slug_vo": "ball-bearings-bag-of-1-000",
+      "name_vo": "Ball Bearings (Bag of 1,000)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=billes-sac-de-1-000",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Peut être répandu sur 3 m × 3 m. Marcher dans la zone : jet de sauvegarde de Dex DD 10 ou tomber à terre.",
+      "description_html": "<p>Peut être répandu sur 3 m × 3 m. Marcher dans la zone : jet de sauvegarde de Dex DD 10 ou tomber à terre.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Caltropes (sac de 20)",
+      "slug": "caltropes-sac-de-20",
+      "slug_vo": "caltrops-bag-of-20",
+      "name_vo": "Caltrops (Bag of 20)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=caltropes-sac-de-20",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Peut être répandu (5 m²). Traverser la zone : jet de sauvegarde de Dex DD 15 ou 1 dégât perforant et vitesse réduite de 3 m jusqu'à guérison.",
+      "description_html": "<p>Peut être répandu (5 m²). Traverser la zone : jet de sauvegarde de Dex DD 15 ou 1 dégât perforant et vitesse réduite de 3 m jusqu'à guérison.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Chaîne (3 m)",
+      "slug": "chaine-3-m",
+      "slug_vo": "chain-10-ft",
+      "name_vo": "Chain (10 ft.)",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=chaine-3-m",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Résistance : 10 PV. Peut être brisée avec un jet de Force DD 20.",
+      "description_html": "<p>Résistance : 10 PV. Peut être brisée avec un jet de Force DD 20.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 po",
+        "poids": "5 kg"
+      }
+    },
+    {
+      "name": "Livre vierge",
+      "slug": "livre-vierge",
+      "slug_vo": "book",
+      "name_vo": "Book",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=livre-vierge",
+      "item_type": "Équipement d'aventurier",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Livre de 200 pages de parchemin vierge.",
+      "description_html": "<p>Livre de 200 pages de parchemin vierge.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 po",
+        "poids": "2,5 kg"
+      }
+    },
+    {
+      "name": "Boîte de peinture",
+      "slug": "boite-de-peinture",
+      "slug_vo": "painter-s-supplies",
+      "name_vo": "Painter's Supplies",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=boite-de-peinture",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Matériel de peintre : pinceaux, pigments, huiles.",
+      "description_html": "<p>Matériel de peintre : pinceaux, pigments, huiles.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "2,5 kg"
+      }
+    },
+    {
+      "name": "Matériel d'alchimiste",
+      "slug": "materiel-d-alchimiste",
+      "slug_vo": "alchemist-s-supplies",
+      "name_vo": "Alchemist's Supplies",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-d-alchimiste",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de créer des antidotes, des acides et d'autres substances alchimiques.",
+      "description_html": "<p>Permet de créer des antidotes, des acides et d'autres substances alchimiques.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "50 po",
+        "poids": "4 kg"
+      }
+    },
+    {
+      "name": "Matériel de brasseur",
+      "slug": "materiel-de-brasseur",
+      "slug_vo": "brewer-s-supplies",
+      "name_vo": "Brewer's Supplies",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-brasseur",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de brasser de la bière, de l'hydromel et autres boissons fermentées.",
+      "description_html": "<p>Permet de brasser de la bière, de l'hydromel et autres boissons fermentées.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "20 po",
+        "poids": "4,5 kg"
+      }
+    },
+    {
+      "name": "Matériel de calligraphe",
+      "slug": "materiel-de-calligraphe",
+      "slug_vo": "calligrapher-s-supplies",
+      "name_vo": "Calligrapher's Supplies",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-calligraphe",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de copier des textes avec une belle écriture.",
+      "description_html": "<p>Permet de copier des textes avec une belle écriture.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "2,5 kg"
+      }
+    },
+    {
+      "name": "Matériel de menuisier",
+      "slug": "materiel-de-menuisier",
+      "slug_vo": "carpenter-s-tools",
+      "name_vo": "Carpenter's Tools",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-menuisier",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de construire et réparer des structures en bois.",
+      "description_html": "<p>Permet de construire et réparer des structures en bois.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "8 po",
+        "poids": "3 kg"
+      }
+    },
+    {
+      "name": "Matériel de cartographe",
+      "slug": "materiel-de-cartographe",
+      "slug_vo": "cartographer-s-tools",
+      "name_vo": "Cartographer's Tools",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-cartographe",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de créer des cartes et de les lire avec précision.",
+      "description_html": "<p>Permet de créer des cartes et de les lire avec précision.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "15 po",
+        "poids": "3 kg"
+      }
+    },
+    {
+      "name": "Matériel de cordonnier",
+      "slug": "materiel-de-cordonnier",
+      "slug_vo": "cobbler-s-tools",
+      "name_vo": "Cobbler's Tools",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-cordonnier",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de fabriquer et réparer des chaussures.",
+      "description_html": "<p>Permet de fabriquer et réparer des chaussures.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 po",
+        "poids": "2,5 kg"
+      }
+    },
+    {
+      "name": "Matériel de cuisinier",
+      "slug": "materiel-de-cuisinier",
+      "slug_vo": "cook-s-utensils",
+      "name_vo": "Cook's Utensils",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-cuisinier",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de préparer des repas et d'identifier des ingrédients.",
+      "description_html": "<p>Permet de préparer des repas et d'identifier des ingrédients.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "4 kg"
+      }
+    },
+    {
+      "name": "Matériel de forgeron",
+      "slug": "materiel-de-forgeron",
+      "slug_vo": "smith-s-tools",
+      "name_vo": "Smith's Tools",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-forgeron",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de forger des armes, armures et objets métalliques.",
+      "description_html": "<p>Permet de forger des armes, armures et objets métalliques.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "20 po",
+        "poids": "4 kg"
+      }
+    },
+    {
+      "name": "Matériel de joaillier",
+      "slug": "materiel-de-joaillier",
+      "slug_vo": "jeweler-s-tools",
+      "name_vo": "Jeweler's Tools",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-joaillier",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de travailler les pierres précieuses et les métaux fins.",
+      "description_html": "<p>Permet de travailler les pierres précieuses et les métaux fins.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Matériel de maçon",
+      "slug": "materiel-de-macon",
+      "slug_vo": "mason-s-tools",
+      "name_vo": "Mason's Tools",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-macon",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de travailler la pierre.",
+      "description_html": "<p>Permet de travailler la pierre.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "4 kg"
+      }
+    },
+    {
+      "name": "Matériel de potier",
+      "slug": "materiel-de-potier",
+      "slug_vo": "potter-s-tools",
+      "name_vo": "Potter's Tools",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-potier",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de fabriquer de la céramique.",
+      "description_html": "<p>Permet de fabriquer de la céramique.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "1,5 kg"
+      }
+    },
+    {
+      "name": "Matériel de tanneur",
+      "slug": "materiel-de-tanneur",
+      "slug_vo": "leatherworker-s-tools",
+      "name_vo": "Leatherworker's Tools",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-tanneur",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de travailler le cuir.",
+      "description_html": "<p>Permet de travailler le cuir.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 po",
+        "poids": "2,5 kg"
+      }
+    },
+    {
+      "name": "Matériel de tisseur",
+      "slug": "materiel-de-tisseur",
+      "slug_vo": "weaver-s-tools",
+      "name_vo": "Weaver's Tools",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-tisseur",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de tisser du tissu.",
+      "description_html": "<p>Permet de tisser du tissu.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "2,5 kg"
+      }
+    },
+    {
+      "name": "Matériel de tonnelier",
+      "slug": "materiel-de-tonnelier",
+      "slug_vo": "woodcarver-s-tools",
+      "name_vo": "Woodcarver's Tools",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-tonnelier",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de tailler le bois.",
+      "description_html": "<p>Permet de tailler le bois.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "2,5 kg"
+      }
+    },
+    {
+      "name": "Matériel de déguisement",
+      "slug": "materiel-de-deguisement",
+      "slug_vo": "disguise-kit",
+      "name_vo": "Disguise Kit",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-deguisement",
+      "item_type": "Outil",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de créer des déguisements convaincants avec maquillage, perruques et costumes.",
+      "description_html": "<p>Permet de créer des déguisements convaincants avec maquillage, perruques et costumes.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 po",
+        "poids": "1.5 kg"
+      }
+    },
+    {
+      "name": "Matériel de faussaire",
+      "slug": "materiel-de-faussaire",
+      "slug_vo": "forgery-kit",
+      "name_vo": "Forgery Kit",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-faussaire",
+      "item_type": "Outil",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de créer des faux documents.",
+      "description_html": "<p>Permet de créer des faux documents.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "15 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Outils de voleur",
+      "slug": "outils-de-voleur",
+      "slug_vo": "thieves-tools",
+      "name_vo": "Thieves' Tools",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=outils-de-voleur",
+      "item_type": "Outil",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permettent de crocheter des serrures et désarmer des pièges. Inclus : pince-nez, miroir, ciseaux, lime et pincettes.",
+      "description_html": "<p>Permettent de crocheter des serrures et désarmer des pièges. Inclus : pince-nez, miroir, ciseaux, lime et pincettes.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 po",
+        "poids": "0,5 kg"
+      }
+    },
+    {
+      "name": "Matériel de navigation",
+      "slug": "materiel-de-navigation",
+      "slug_vo": "navigator-s-tools",
+      "name_vo": "Navigator's Tools",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-de-navigation",
+      "item_type": "Outil",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permettent de tracer une route maritime ou terrestre avec boussole, règle et cartes.",
+      "description_html": "<p>Permettent de tracer une route maritime ou terrestre avec boussole, règle et cartes.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Matériel d'empoisonneur",
+      "slug": "materiel-d-empoisonneur",
+      "slug_vo": "poisoner-s-kit",
+      "name_vo": "Poisoner's Kit",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=materiel-d-empoisonneur",
+      "item_type": "Outil",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permettent de créer des poisons et d'identifier des substances toxiques.",
+      "description_html": "<p>Permettent de créer des poisons et d'identifier des substances toxiques.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "50 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Dés à jouer",
+      "slug": "des-a-jouer",
+      "slug_vo": "dice-set",
+      "name_vo": "Dice Set",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=des-a-jouer",
+      "item_type": "Outil",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Jeu de dés pour les jeux d'argent.",
+      "description_html": "<p>Jeu de dés pour les jeux d'argent.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 pa",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Cartes à jouer",
+      "slug": "cartes-a-jouer",
+      "slug_vo": "playing-card-set",
+      "name_vo": "Playing Card Set",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=cartes-a-jouer",
+      "item_type": "Outil",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Jeu de cartes pour les jeux d'argent.",
+      "description_html": "<p>Jeu de cartes pour les jeux d'argent.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 pa",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Jeu de Dragonchets",
+      "slug": "jeu-de-dragonchets",
+      "slug_vo": "three-dragon-ante-set",
+      "name_vo": "Three-Dragon Ante Set",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=jeu-de-dragonchets",
+      "item_type": "Outil",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Jeu de cartes populaire dans les tavernes.",
+      "description_html": "<p>Jeu de cartes populaire dans les tavernes.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Cornemuse",
+      "slug": "cornemuse",
+      "slug_vo": "bagpipes",
+      "name_vo": "Bagpipes",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=cornemuse",
+      "item_type": "Instrument de musique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Instrument à vent complexe originaire des hauts plateaux.",
+      "description_html": "<p>Instrument à vent complexe originaire des hauts plateaux.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "30 po",
+        "poids": "3 kg"
+      }
+    },
+    {
+      "name": "Luth",
+      "slug": "luth",
+      "slug_vo": "lute",
+      "name_vo": "Lute",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=luth",
+      "item_type": "Instrument de musique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Instrument à cordes pincées à la sonorité douce.",
+      "description_html": "<p>Instrument à cordes pincées à la sonorité douce.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "35 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Flûte",
+      "slug": "flute",
+      "slug_vo": "flute",
+      "name_vo": "Flute",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=flute",
+      "item_type": "Instrument de musique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Instrument à vent simple.',",
+      "description_html": "<p>Instrument à vent simple.',</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 po",
+        "poids": "0,5 kg"
+      }
+    },
+    {
+      "name": "Tambour",
+      "slug": "tambour",
+      "slug_vo": "drum",
+      "name_vo": "Drum",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=tambour",
+      "item_type": "Instrument de musique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Instrument à percussion.",
+      "description_html": "<p>Instrument à percussion.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "6 po",
+        "poids": "1,5 kg"
+      }
+    },
+    {
+      "name": "Cor",
+      "slug": "cor",
+      "slug_vo": "horn",
+      "name_vo": "Horn",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=cor",
+      "item_type": "Instrument de musique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Instrument à vent grave, utilisé pour les signaux militaires.",
+      "description_html": "<p>Instrument à vent grave, utilisé pour les signaux militaires.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "3 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Viole",
+      "slug": "viole",
+      "slug_vo": "viol",
+      "name_vo": "Viol",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=viole",
+      "item_type": "Instrument de musique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Instrument à cordes frottées à l'archet, ancêtre du violon.",
+      "description_html": "<p>Instrument à cordes frottées à l'archet, ancêtre du violon.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "30 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Cheval de monte",
+      "slug": "cheval-de-monte",
+      "slug_vo": "riding-horse",
+      "name_vo": "Riding Horse",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=cheval-de-monte",
+      "item_type": "Monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Taille : Grande. Vitesse : 18 m. CA : 10. PV : 13. Force : 16. Charge : 240 kg.",
+      "description_html": "<p>Taille : Grande. Vitesse : 18 m. CA : 10. PV : 13. Force : 16. Charge : 240 kg.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "75 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Cheval de trait",
+      "slug": "cheval-de-trait",
+      "slug_vo": "draft-horse",
+      "name_vo": "Draft Horse",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=cheval-de-trait",
+      "item_type": "Monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Taille : Grande. Vitesse : 12 m. CA : 10. PV : 19. Force : 18. Charge : 295 kg.",
+      "description_html": "<p>Taille : Grande. Vitesse : 12 m. CA : 10. PV : 19. Force : 18. Charge : 295 kg.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "50 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Destrier",
+      "slug": "destrier",
+      "slug_vo": "warhorse",
+      "name_vo": "Warhorse",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=destrier",
+      "item_type": "Monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Taille : Grande. Vitesse : 18 m. CA : 11. PV : 19. Force : 18. Entraîné au combat.",
+      "description_html": "<p>Taille : Grande. Vitesse : 18 m. CA : 11. PV : 19. Force : 18. Entraîné au combat.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "400 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Mulet",
+      "slug": "mulet",
+      "slug_vo": "mule",
+      "name_vo": "Mule",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=mulet",
+      "item_type": "Monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Taille : Moyenne. Vitesse : 12 m. CA : 10. PV : 11. Force : 14. Charge : 210 kg. Terrain difficile.",
+      "description_html": "<p>Taille : Moyenne. Vitesse : 12 m. CA : 10. PV : 11. Force : 14. Charge : 210 kg. Terrain difficile.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "8 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Poney",
+      "slug": "poney",
+      "slug_vo": "pony",
+      "name_vo": "Pony",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=poney",
+      "item_type": "Monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Taille : Moyenne. Vitesse : 12 m. CA : 10. PV : 11. Force : 15.",
+      "description_html": "<p>Taille : Moyenne. Vitesse : 12 m. CA : 10. PV : 11. Force : 15.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "30 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Chameau",
+      "slug": "chameau",
+      "slug_vo": "camel",
+      "name_vo": "Camel",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=chameau",
+      "item_type": "Monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Taille : Grande. Vitesse : 15 m. CA : 9. PV : 15. Force : 16. Idéal pour le désert.",
+      "description_html": "<p>Taille : Grande. Vitesse : 15 m. CA : 9. PV : 15. Force : 16. Idéal pour le désert.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "50 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Selle de voyage",
+      "slug": "selle-de-voyage",
+      "slug_vo": "riding-saddle",
+      "name_vo": "Riding Saddle",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=selle-de-voyage",
+      "item_type": "Équipement de monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Selle standard pour monture. Avantage pour rester en selle.",
+      "description_html": "<p>Selle standard pour monture. Avantage pour rester en selle.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "12,5 kg"
+      }
+    },
+    {
+      "name": "Selle de guerre",
+      "slug": "selle-de-guerre",
+      "slug_vo": "military-saddle",
+      "name_vo": "Military Saddle",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=selle-de-guerre",
+      "item_type": "Équipement de monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Selle robuste pour le combat monté. Avantage pour rester en selle.",
+      "description_html": "<p>Selle robuste pour le combat monté. Avantage pour rester en selle.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "20 po",
+        "poids": "15 kg"
+      }
+    },
+    {
+      "name": "Sacoches de selle",
+      "slug": "sacoches-de-selle",
+      "slug_vo": "saddlebags",
+      "name_vo": "Saddlebags",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=sacoches-de-selle",
+      "item_type": "Équipement de monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Capacité : 2 × 15 kg (une de chaque côté).",
+      "description_html": "<p>Capacité : 2 × 15 kg (une de chaque côté).</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "4 po",
+        "poids": "4 kg"
+      }
+    },
+    {
+      "name": "Mors et bride",
+      "slug": "mors-et-bride",
+      "slug_vo": "bit-and-bridle",
+      "name_vo": "Bit and Bridle",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=mors-et-bride",
+      "item_type": "Équipement de monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Nécessaire pour diriger une monture.",
+      "description_html": "<p>Nécessaire pour diriger une monture.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 po",
+        "poids": "0,5 kg"
+      }
+    },
+    {
+      "name": "Chariot",
+      "slug": "chariot",
+      "slug_vo": "cart",
+      "name_vo": "Cart",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=chariot",
+      "item_type": "Véhicule terrestre",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Véhicule à deux roues tracté par une monture. Charge : 200 kg.",
+      "description_html": "<p>Véhicule à deux roues tracté par une monture. Charge : 200 kg.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "15 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Charrette",
+      "slug": "charrette",
+      "slug_vo": "wagon",
+      "name_vo": "Wagon",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=charrette",
+      "item_type": "Véhicule terrestre",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Véhicule à quatre roues tracté par deux montures. Charge : 400 kg.",
+      "description_html": "<p>Véhicule à quatre roues tracté par deux montures. Charge : 400 kg.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "35 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Barque",
+      "slug": "barque",
+      "slug_vo": "rowboat",
+      "name_vo": "Rowboat",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=barque",
+      "item_type": "Véhicule nautique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Petite embarcation à rames. Vitesse : 2,4 km/h. Capacité : 3 personnes.",
+      "description_html": "<p>Petite embarcation à rames. Vitesse : 2,4 km/h. Capacité : 3 personnes.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "50 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Voilier",
+      "slug": "voilier",
+      "slug_vo": "sailing-ship",
+      "name_vo": "Sailing Ship",
+      "detail_url": "https://www.aidedd.org/dnd/equipement.php?vf=voilier",
+      "item_type": "Véhicule nautique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Grand navire marchand. Vitesse : 4 km/h. Équipage : 20. Passagers : 20.",
+      "description_html": "<p>Grand navire marchand. Vitesse : 4 km/h. Équipage : 20. Passagers : 20.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 000 po",
+        "poids": "—"
+      }
+    }
+  ]
+}

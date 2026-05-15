@@ -1274,6 +1274,34 @@ function setupSocket(io) {
       } catch (err) { console.error(err) }
     })
 
+    // ── Admin: delete merchant ───────────────────────────────────────────────
+    socket.on('delete-merchant', async ({ sessionId, merchantId }) => {
+      if (!socket.admin) return
+      try {
+        // If this merchant is currently shown on TV, reset TV to lobby first
+        const sessionRes = await pool.query(
+          'SELECT current_merchant_id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        if (!sessionRes.rows[0]) return
+        const isCurrentlyShown = sessionRes.rows[0].current_merchant_id === merchantId
+        if (isCurrentlyShown) {
+          await pool.query(
+            "UPDATE sessions SET tv_mode = 'lobby', current_merchant_id = NULL WHERE id = $1",
+            [sessionId]
+          )
+          io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
+          io.to(`session:${sessionId}`).emit('merchant-closed')
+        }
+        // Delete merchant (merchant_items cascade via FK)
+        await pool.query(
+          'DELETE FROM merchants WHERE id = $1 AND session_id = $2',
+          [merchantId, sessionId]
+        )
+        io.to(`admin:${sessionId}`).emit('merchant-deleted', { merchantId })
+      } catch (err) { console.error(err) }
+    })
+
     // ── Player: respond to counter offer ────────────────────────────────────
     socket.on('respond-counter-offer', async ({ requestId, accept }) => {
       if (!socket.playerId || !socket.sessionId) return

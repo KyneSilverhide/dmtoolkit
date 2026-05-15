@@ -17,6 +17,7 @@ import SearchTool from '../components/admin/SearchTool.vue'
 import MapManager from '../components/admin/MapManager.vue'
 import GoldDividerTool from '../components/admin/GoldDividerTool.vue'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
+import AppIcon from '../components/AppIcon.vue'
 
 const router = useRouter()
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
@@ -52,17 +53,17 @@ function dismissPlayerRollToast(id) {
 
 
 const tabs = [
-  { key: 'players', label: 'Joueurs', icon: '🧙' },
-  { key: 'message', label: 'Message', icon: '✉️' },
-  { key: 'dice', label: 'Critical Fail', icon: '🎲' },
-  { key: 'journal', label: 'Journal', icon: '📜' },
-  { key: 'tension', label: 'Rythme', icon: '⏱️' },
-  { key: 'vote', label: 'Vote', icon: '🗳️' },
-  { key: 'images', label: 'Images', icon: '🖼️' },
-  { key: 'map', label: 'Carte', icon: '🗺️' },
-  { key: 'merchants', label: 'Marchands', icon: '🏪' },
-  { key: 'tresor', label: 'Trésor', icon: '💰' },
-  { key: 'search', label: 'Recherche', icon: '🔍' },
+  { key: 'players',   label: 'Joueurs',       icon: 'game-icons:wizard-staff' },
+  { key: 'message',   label: 'Message',        icon: 'lucide:mail' },
+  { key: 'dice',      label: 'Critical Fail',  icon: 'game-icons:dice-six-faces-five' },
+  { key: 'journal',   label: 'Journal',        icon: 'game-icons:scroll-unfurled' },
+  { key: 'tension',   label: 'Rythme',         icon: 'lucide:timer' },
+  { key: 'vote',      label: 'Vote',           icon: 'lucide:check-square' },
+  { key: 'images',    label: 'Images',         icon: 'lucide:image' },
+  { key: 'map',       label: 'Carte',          icon: 'lucide:map' },
+  { key: 'merchants', label: 'Marchands',      icon: 'game-icons:shop' },
+  { key: 'tresor',    label: 'Trésor',         icon: 'game-icons:coins' },
+  { key: 'search',    label: 'Recherche',      icon: 'lucide:search' },
 ]
 
 const tvModes = computed(() => ([
@@ -272,10 +273,11 @@ onUnmounted(() => {
   <div class="admin-wrapper">
     <header class="admin-header">
       <div class="header-top">
-        <h1 class="page-title">🎲 Tableau de Bord <span class="title-accent">MJ</span></h1>
+        <h1 class="page-title"><AppIcon icon="game-icons:dice-six-faces-five" size="1em" /> Tableau de Bord <span class="title-accent">MJ</span></h1>
         <div class="header-actions">
           <button class="theme-toggle-btn" @click="toggleTheme">
-            {{ isLightTheme ? '🌙 Sombre' : '☀️ Clair' }}
+            <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.9em" />
+            {{ isLightTheme ? 'Sombre' : 'Clair' }}
           </button>
           <button class="logout-btn" @click="logout">Déconnexion</button>
         </div>
@@ -287,7 +289,7 @@ onUnmounted(() => {
 
       <section class="session-header-panel">
         <div class="session-header-top">
-          <h2 class="session-header-title">📋 Sessions</h2>
+          <h2 class="session-header-title"><AppIcon icon="lucide:clipboard-list" size="1em" /> Sessions</h2>
           <button class="session-collapse-btn" @click="toggleSessionPanel">
             {{ isSessionPanelCollapsed ? 'Afficher' : 'Réduire' }}
           </button>
@@ -310,7 +312,7 @@ onUnmounted(() => {
           :class="{ active: activeTab === tab.key }"
           @click="activeTab = tab.key"
         >
-          <span>{{ tab.icon }}</span>
+          <AppIcon :icon="tab.icon" size="1em" />
           <span>{{ tab.label }}</span>
         </button>
       </nav>
@@ -357,7 +359,7 @@ onUnmounted(() => {
       </section>
 
       <aside class="tv-sidebar">
-        <h2 class="tv-sidebar-title">📺 Diffusion TV</h2>
+        <h2 class="tv-sidebar-title"><AppIcon icon="lucide:monitor" size="1em" /> Diffusion TV</h2>
         <p class="tv-sidebar-subtitle">
           Mode actuel: <span class="tv-mode-current">{{ activeTvModeLabel }}</span>
         </p>
@@ -392,7 +394,7 @@ onUnmounted(() => {
         :class="{ hidden: toast.hidden }"
         @click="dismissPlayerRollToast(toast.id)"
       >
-        <span class="prt-icon">🎲</span>
+        <span class="prt-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="1.5rem" /></span>
         <div class="prt-body">
           <span class="prt-name">{{ toast.playerName }}</span>
           <span class="prt-label">
@@ -402,7 +404,7 @@ onUnmounted(() => {
               {{ toast.rollType === 'advantage' ? ' (avantage)' : ' (désavantage)' }}
             </span>
           </span>
-          <span v-if="toast.hidden" class="prt-result hidden-result">🙈 Jet caché — {{ toast.total }}</span>
+          <span v-if="toast.hidden" class="prt-result hidden-result"><AppIcon icon="lucide:eye-off" size="0.85em" /> Jet caché — {{ toast.total }}</span>
           <span v-else class="prt-result">= {{ toast.total }}</span>
         </div>
       </div>

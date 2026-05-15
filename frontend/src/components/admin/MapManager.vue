@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { authStore } from '../../stores/auth.js'
 import { sessionStore } from '../../stores/session.js'
 import { getSocket } from '../../socket.js'
+import AppIcon from '../AppIcon.vue'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 const MAX_BRUSH_RADIUS = 100
@@ -759,12 +760,12 @@ watch(fogEnabled, () => render())
 
 <template>
   <div class="map-manager">
-    <h3 class="section-title">🗺️ Gestionnaire de Carte</h3>
+    <h3 class="section-title"><AppIcon icon="lucide:map" size="0.9em" /> Gestionnaire de Carte</h3>
 
     <!-- Upload -->
     <div class="upload-area">
       <label class="upload-btn" :class="{ disabled: uploading }">
-        <span>{{ uploading ? `Envoi… ${uploadProgress}%` : '📁 Téléverser des images' }}</span>
+        <span>{{ uploading ? `Envoi… ${uploadProgress}%` : 'Téléverser des images' }}</span>
         <input type="file" accept="image/*" multiple class="file-input" :disabled="uploading" @change="handleFileUpload" />
       </label>
       <div v-if="uploading" class="progress-track">
@@ -791,7 +792,7 @@ watch(fogEnabled, () => render())
           <button class="delete-btn" @click="deleteImage(img, $event)" title="Supprimer">✕</button>
         </div>
         <button class="show-btn" @click.stop="selectedImageUrl = img.url; loadMapImage(img.url); showMapOnTv()">
-          🗺️ Carte TV
+          <AppIcon icon="lucide:map" size="0.85em" /> Carte TV
         </button>
       </div>
     </div>
@@ -801,18 +802,19 @@ watch(fogEnabled, () => render())
 
       <!-- Brouillard de guerre -->
       <div class="control-section">
-        <h4 class="subsection-title">🌫️ Brouillard de guerre</h4>
+        <h4 class="subsection-title"><AppIcon icon="lucide:cloud" size="0.85em" /> Brouillard de guerre</h4>
         <div class="inline-actions">
           <button class="action-btn" :class="{ active: fogEnabled }" @click="toggleFog">
-            {{ fogEnabled ? '🌫️ Désactiver' : '☀️ Activer' }}
+            <AppIcon :icon="fogEnabled ? 'lucide:eye-off' : 'lucide:eye'" size="0.85em" />
+            {{ fogEnabled ? 'Désactiver' : 'Activer' }}
           </button>
           <button class="action-btn danger-btn" :disabled="!fogEnabled" @click="resetFog">
-            🔄 Réinitialiser
+            <AppIcon icon="lucide:refresh-cw" size="0.85em" /> Réinitialiser
           </button>
         </div>
         <template v-if="fogEnabled">
           <div class="brush-controls">
-            <p class="hint-text">🖌️ Clic gauche pour révéler la carte</p>
+            <p class="hint-text"><AppIcon icon="lucide:brush" size="0.85em" /> Clic gauche pour révéler la carte</p>
             <label class="brush-label">
               Rayon : {{ brushRadius }}px
               <input v-model.number="brushRadius" type="range" :min="MIN_BRUSH_RADIUS" :max="MAX_BRUSH_RADIUS" class="brush-slider" />
@@ -823,7 +825,7 @@ watch(fogEnabled, () => render())
 
       <!-- Jetons de joueurs -->
       <div class="control-section">
-        <h4 class="subsection-title">🧙 Jetons de joueurs</h4>
+        <h4 class="subsection-title"><AppIcon icon="game-icons:wizard-staff" size="0.85em" /> Jetons de joueurs</h4>
         <p v-if="sessionStore.players.length === 0" class="hint-text">Aucun joueur connecté.</p>
         <div v-else class="token-tray">
           <div
@@ -843,10 +845,10 @@ watch(fogEnabled, () => render())
             </div>
             <span class="chip-name">{{ player.player_name }}</span>
             <span v-if="mapTokens[String(player.id)]" class="chip-badge">✓</span>
-            <span v-else-if="pendingTokenPlayerId === String(player.id)" class="chip-badge pending-badge">📍</span>
+            <span v-else-if="pendingTokenPlayerId === String(player.id)" class="chip-badge pending-badge"><AppIcon icon="lucide:map-pin" size="0.75rem" /></span>
           </div>
         </div>
-        <!-- Dans la section 🧙 Jetons de joueurs, après le token-tray -->
+        <!-- Dans la section Jetons de joueurs, après le token-tray -->
 
         <div class="custom-token-form">
           <input
@@ -862,11 +864,11 @@ watch(fogEnabled, () => render())
               :disabled="!customTokenName.trim()"
               @click="addCustomToken"
           >
-            📍 Placer
+            <AppIcon icon="lucide:map-pin" size="0.85em" /> Placer
           </button>
         </div>
         <p v-if="pendingCustomToken" class="hint-text placement-hint">
-          📍 Cliquez sur la carte pour placer "{{ customTokenName }}"
+          <AppIcon icon="lucide:map-pin" size="0.85em" /> Cliquez sur la carte pour placer "{{ customTokenName }}"
         </p>
         <div v-if="Object.keys(mapTokens).some(k => k.startsWith('custom_'))" class="token-tray" style="margin-top:0.4rem">
           <template v-for="(tokenPos, pid) in mapTokens" :key="pid">
@@ -878,13 +880,13 @@ watch(fogEnabled, () => render())
           </template>
         </div>
         <p v-if="pendingTokenPlayerId" class="hint-text placement-hint">
-          📍 Cliquez sur la carte pour placer le jeton
+          <AppIcon icon="lucide:map-pin" size="0.85em" /> Cliquez sur la carte pour placer le jeton
         </p>
       </div>
 
       <!-- Viewport Controls -->
       <div class="control-section">
-        <h4 class="subsection-title">🔍 Viewport TV</h4>
+        <h4 class="subsection-title"><AppIcon icon="lucide:maximize-2" size="0.85em" /> Viewport TV</h4>
         <p class="viewport-info">
           x: {{ viewport.x.toFixed(0) }}, y: {{ viewport.y.toFixed(0) }}, zoom: {{ viewport.scale.toFixed(2) }}×
         </p>
@@ -897,9 +899,9 @@ watch(fogEnabled, () => render())
 
       <!-- Canvas -->
       <div class="control-section">
-        <h4 class="subsection-title">👁️ Vue TV en temps réel</h4>
+        <h4 class="subsection-title"><AppIcon icon="lucide:eye" size="0.85em" /> Vue TV en temps réel</h4>
         <p class="hint-text">
-          {{ pendingTokenPlayerId ? '📍 Cliquez sur la carte pour placer le jeton' : fogEnabled ? '🖌️ Clic gauche pour révéler · Molette pour zoomer · Molette centrale pour naviguer' : '↕ Clic molette pour naviguer · molette pour zoomer' }}
+          {{ pendingTokenPlayerId ? 'Cliquez sur la carte pour placer le jeton' : fogEnabled ? 'Clic gauche pour révéler · Molette pour zoomer · Molette centrale pour naviguer' : '↕ Clic molette pour naviguer · molette pour zoomer' }}
         </p>
         <div
           ref="canvasContainer"

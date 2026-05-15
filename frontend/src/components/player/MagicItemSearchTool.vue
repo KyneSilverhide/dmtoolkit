@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch, onUnmounted } from 'vue'
+import AppIcon from '../AppIcon.vue'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
@@ -96,19 +97,22 @@ onUnmounted(() => {
         @keydown.enter="search"
       />
       <button class="search-btn" :disabled="loading || !query.trim()" @click="search">
-        {{ loading ? '…' : '🔍 Chercher' }}
+        <AppIcon v-if="!loading" icon="lucide:search" size="0.85em" /> {{ loading ? '…' : 'Chercher' }}
       </button>
     </div>
 
     <p v-if="searched && results.length === 0 && !loading" class="no-results">
-      Aucun objet magique trouvé pour « {{ query }} »
+      Aucun objet trouvé pour « {{ query }} »
     </p>
 
     <div class="item-list">
       <article v-for="item in results" :key="item.slug" class="item-card">
         <div class="item-head">
           <h4 class="item-name">{{ item.name }}</h4>
-          <span v-if="item.requires_attunement" class="item-attunement">Harmonisation</span>
+          <div class="item-badges">
+            <span v-if="item.source_category === 'standard'" class="item-badge-standard">Standard</span>
+            <span v-if="item.requires_attunement" class="item-attunement">Harmonisation</span>
+          </div>
         </div>
         <p class="item-meta">
           <span class="item-type">{{ item.item_type }}</span>
@@ -161,6 +165,18 @@ onUnmounted(() => {
 }
 .item-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
 .item-name { margin: 0; font-size: 0.95rem; font-family: var(--font-heading); color: var(--color-parchment); }
+.item-badges { display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; }
+.item-badge-standard {
+  font-size: 0.6rem;
+  color: var(--color-gold-dark);
+  background: rgba(180, 140, 60, 0.12);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 20px;
+  padding: 0.1rem 0.45rem;
+  font-family: var(--font-heading);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
 .item-attunement {
   font-size: 0.6rem;
   color: var(--color-info-bright);

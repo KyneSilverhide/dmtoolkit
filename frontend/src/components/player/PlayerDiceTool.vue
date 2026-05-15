@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { getSocket } from '../../socket.js'
+import AppIcon from '../AppIcon.vue'
 
 const DICE_TYPES = [4, 6, 8, 10, 12, 20, 100]
 const MAX_COUNT = 20
@@ -176,13 +177,13 @@ const totalColor = computed(() => {
       <p class="section-label">Type de jet</p>
       <div class="roll-type-btns">
         <button class="roll-type-btn" :class="{ active: rollType === 'normal' }" @click="rollType = 'normal'">
-          🎲 Normal
+          <AppIcon icon="game-icons:dice-six-faces-five" size="1em" /> Normal
         </button>
         <button class="roll-type-btn advantage" :class="{ active: rollType === 'advantage' }" @click="rollType = 'advantage'">
-          ✨ Avantage
+          <AppIcon icon="lucide:sparkles" size="1em" /> Avantage
         </button>
         <button class="roll-type-btn disadvantage" :class="{ active: rollType === 'disadvantage' }" @click="rollType = 'disadvantage'">
-          💀 Désavantage
+          <AppIcon icon="game-icons:skull" size="1em" /> Désavantage
         </button>
       </div>
     </div>
@@ -203,17 +204,17 @@ const totalColor = computed(() => {
 
     <!-- Hidden sent feedback -->
     <div v-if="hiddenSent" class="hidden-sent">
-      🙈 Jet envoyé au MJ (résultat caché)
+      <AppIcon icon="lucide:eye-off" size="0.9em" /> Jet envoyé au MJ (résultat caché)
     </div>
 
     <!-- Action buttons -->
     <div class="action-btns">
       <button class="roll-btn normal" :class="{ rolling }" :disabled="rolling" @click="roll">
-        <span class="btn-icon" :class="{ spin: rolling }">🎲</span>
+        <span class="btn-icon" :class="{ spin: rolling }"><AppIcon icon="game-icons:dice-six-faces-five" size="1.2rem" /></span>
         {{ rolling ? 'Lancement…' : 'Lancer' }}
       </button>
       <button class="roll-btn hidden" :disabled="rolling" @click="rollHidden">
-        🙈 Jet caché
+        <AppIcon icon="lucide:eye-off" size="0.9em" /> Jet caché
       </button>
     </div>
   </div>

@@ -5,41 +5,53 @@ const { authenticateToken } = require('../middleware/auth')
 
 const router = express.Router()
 
-// Load magic items once at startup
-let itemsCache = null
+let allItemsCache = null
 
-function getMagicItems() {
-  if (itemsCache) return itemsCache
+function loadJson(filename) {
   try {
-    const filePath = path.join(__dirname, '../data/aidedd_magic_items.json')
-    const raw = fs.readFileSync(filePath, 'utf8')
-    const data = JSON.parse(raw)
-    itemsCache = (data.items || [])
+    const raw = fs.readFileSync(path.join(__dirname, '../data', filename), 'utf8')
+    return JSON.parse(raw).items || []
   } catch (err) {
-    console.error('Failed to load magic items JSON:', err)
-    itemsCache = []
+    console.error(`Failed to load ${filename}:`, err)
+    return []
   }
-  return itemsCache
 }
 
-// Pre-load on module import
-getMagicItems()
+function getAllItems() {
+  if (allItemsCache) return allItemsCache
+  const magic = loadJson('aidedd_magic_items.json').map(i => ({ ...i, source_category: 'magic' }))
+  const standard = loadJson('aidedd_standard_items.json').map(i => ({ ...i, source_category: 'standard' }))
+  allItemsCache = [...magic, ...standard]
+  return allItemsCache
+}
+
+getAllItems()
 
 function handleSearch(req, res) {
   const q = (req.query.q || '').trim().toLowerCase()
   if (!q) return res.json([])
 
-  const items = getMagicItems()
-  const results = items.filter(item => {
-    if (item.name && item.name.toLowerCase().includes(q)) return true
-    if (item.description && item.description.toLowerCase().includes(q)) return true
-    if (item.item_type && item.item_type.toLowerCase().includes(q)) return true
-    if (item.rarity && item.rarity.toLowerCase().includes(q)) return true
-    if (item.name_vo && item.name_vo.toLowerCase().includes(q)) return true
-    return false
-  })
+  const nameMatches = []
+  const otherMatches = []
 
-  return res.json(results.slice(0, 50))
+  for (const item of getAllItems()) {
+    const nameMatch = (item.name && item.name.toLowerCase().includes(q)) ||
+                      (item.name_vo && item.name_vo.toLowerCase().includes(q))
+    if (nameMatch) {
+      nameMatches.push(item)
+    } else if (
+      (item.description && item.description.toLowerCase().includes(q)) ||
+      (item.item_type && item.item_type.toLowerCase().includes(q)) ||
+      (item.rarity && item.rarity.toLowerCase().includes(q))
+    ) {
+      otherMatches.push(item)
+    }
+  }
+
+  nameMatches.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+  otherMatches.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+
+  return res.json([...nameMatches, ...otherMatches].slice(0, 80))
 }
 
 router.get('/search', authenticateToken, handleSearch)

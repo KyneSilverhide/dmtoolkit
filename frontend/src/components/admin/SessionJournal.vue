@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { sessionStore } from '../../stores/session.js'
 import { authStore } from '../../stores/auth.js'
 import { getSocket } from '../../socket.js'
+import AppIcon from '../AppIcon.vue'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
@@ -12,12 +13,13 @@ const loadingSummary = ref(false)
 const hasSession = computed(() => !!sessionStore.activeSession)
 
 const EVENT_ICONS = {
-  join: '🚪',
-  leave: '🏃',
-  damage: '💥',
-  heal: '💚',
-  death: '💀',
+  join:   { icon: 'lucide:log-in',     color: 'var(--color-success)' },
+  leave:  { icon: 'lucide:log-out',    color: 'var(--color-text-dim)' },
+  damage: { icon: 'game-icons:sword-wound', color: 'var(--color-danger)' },
+  heal:   { icon: 'game-icons:health-increase', color: 'var(--color-success)' },
+  death:  { icon: 'game-icons:skull',  color: 'var(--color-text-dim)' },
 }
+const DEFAULT_EVENT_ICON = { icon: 'lucide:bookmark', color: 'var(--color-text-dim)' }
 
 function formatTime(dateStr) {
   if (!dateStr) return ''
@@ -72,7 +74,7 @@ onUnmounted(() => {
     <template v-else>
       <div class="journal-actions">
         <button class="summary-btn" @click="generateSummary" :disabled="loadingSummary">
-          {{ loadingSummary ? 'Génération…' : '📄 Générer le résumé' }}
+          {{ loadingSummary ? 'Génération…' : '' }}<AppIcon v-if="!loadingSummary" icon="lucide:file-text" size="0.85em" /> {{ loadingSummary ? '' : 'Générer le résumé' }}
         </button>
       </div>
 
@@ -81,7 +83,7 @@ onUnmounted(() => {
       </div>
 
       <div v-if="events.length === 0" class="empty-journal">
-        <p class="empty-icon">📜</p>
+        <p class="empty-icon"><AppIcon icon="game-icons:scroll-unfurled" size="2.5rem" color="var(--color-text-dim)" /></p>
         <p class="empty-text">Aucun événement enregistré.</p>
       </div>
 
@@ -92,7 +94,13 @@ onUnmounted(() => {
           class="event-item"
           :class="evt.eventType || evt.event_type"
         >
-          <span class="event-icon">{{ EVENT_ICONS[evt.eventType || evt.event_type] || '📌' }}</span>
+          <span class="event-icon">
+            <AppIcon
+              :icon="(EVENT_ICONS[evt.eventType || evt.event_type] || DEFAULT_EVENT_ICON).icon"
+              :color="(EVENT_ICONS[evt.eventType || evt.event_type] || DEFAULT_EVENT_ICON).color"
+              size="1em"
+            />
+          </span>
           <span class="event-desc">{{ evt.description }}</span>
           <span class="event-time">{{ formatTime(evt.createdAt || evt.created_at) }}</span>
         </div>

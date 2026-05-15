@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { sessionStore } from '../../stores/session.js'
 import { getSocket } from '../../socket.js'
+import AppIcon from '../AppIcon.vue'
 
 const question = ref('')
 const options = ref(['', ''])
@@ -74,7 +75,7 @@ onUnmounted(() => {
 
 <template>
   <div class="vote-manager">
-    <h3 class="section-title">🗳️ Gestionnaire de Vote</h3>
+    <h3 class="section-title"><AppIcon icon="lucide:check-square" size="0.9em" /> Gestionnaire de Vote</h3>
 
     <!-- Active vote display -->
     <div v-if="activeVote" class="active-vote">
@@ -150,7 +151,7 @@ onUnmounted(() => {
         :disabled="!question.trim() || creating"
         @click="createVote"
       >
-        {{ creating ? '…' : '🗳️ Lancer le vote' }}
+        <AppIcon v-if="!creating" icon="lucide:check-square" size="0.85em" /> {{ creating ? '…' : 'Lancer le vote' }}
       </button>
     </div>
   </div>

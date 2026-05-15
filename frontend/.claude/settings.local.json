@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --check src/routes/magic-items.js)",
+      "PowerShell(node --check \"C:\\\\Users\\\\aurel\\\\IdeaProjects\\\\critical-fail\\\\backend\\\\src\\\\routes\\\\magic-items.js\"; Write-Host \"Exit: $LASTEXITCODE\")",
+      "PowerShell(node --check \"C:\\\\Users\\\\aurel\\\\IdeaProjects\\\\critical-fail\\\\backend\\\\src\\\\routes\\\\spells.js\"; Write-Host \"Exit: $LASTEXITCODE\")"
+    ]
+  }
+}

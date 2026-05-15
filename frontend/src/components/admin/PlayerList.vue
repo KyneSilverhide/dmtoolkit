@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import { sessionStore } from '../../stores/session.js'
 import { getSocket } from '../../socket.js'
+import AppIcon from '../AppIcon.vue'
+import { DND_CONDITIONS_MAP } from '../../utils/conditions.js'
 
 function hpPercent(player) {
   if (!player.max_hp) return 100
@@ -14,23 +16,7 @@ function hpColor(player) {
   return 'var(--admin-danger-text, var(--color-danger))'
 }
 
-const CONDITION_LABELS = {
-  blinded: { label: 'Aveuglé', icon: '👁️' },
-  charmed: { label: 'Charmé', icon: '💕' },
-  deafened: { label: 'Assourdi', icon: '🔇' },
-  exhaustion: { label: 'Épuisé', icon: '😴' },
-  frightened: { label: 'Effrayé', icon: '😱' },
-  grappled: { label: 'Agrippé', icon: '🤝' },
-  incapacitated: { label: 'Incapacité', icon: '🚫' },
-  invisible: { label: 'Invisible', icon: '👻' },
-  paralyzed: { label: 'Paralysé', icon: '⚡' },
-  petrified: { label: 'Pétrifié', icon: '🪨' },
-  poisoned: { label: 'Empoisonné', icon: '☠️' },
-  prone: { label: 'À terre', icon: '⬇️' },
-  restrained: { label: 'Entravé', icon: '⛓️' },
-  stunned: { label: 'Étourdi', icon: '💫' },
-  unconscious: { label: 'Inconscient', icon: '💤' },
-}
+const CONDITION_LABELS = DND_CONDITIONS_MAP
 
 function parseConditions(player) {
   try {
@@ -60,13 +46,13 @@ function kickPlayer(player) {
     <div v-else class="players">
       <div v-for="player in sessionStore.players" :key="player.id" class="player-item">
         <div class="player-row-top">
-          <span class="player-icon">⚔️</span>
+          <AppIcon icon="game-icons:crossed-swords" size="1rem" color="var(--color-gold-bright)" />
           <span class="player-name">{{ player.player_name }}</span>
-          <span v-if="player.is_concentrating" class="concentration-icon" title="Concentration">🎯</span>
-          <span class="initiative-badge">🎲 {{ player.initiative ?? '—' }}</span>
-          <span class="ac-badge">🛡️ {{ player.ac ?? '?' }}</span>
+          <AppIcon v-if="player.is_concentrating" icon="game-icons:bulls-eye" size="0.95rem" color="var(--color-info-bright)" title="Concentration" />
+          <span class="initiative-badge"><AppIcon icon="game-icons:dice-six-faces-five" size="0.85rem" /> {{ player.initiative ?? '—' }}</span>
+          <span class="ac-badge"><AppIcon icon="game-icons:shield" size="0.85rem" color="var(--color-gold-bright)" /> {{ player.ac ?? '?' }}</span>
           <span class="hp-text" :style="{ color: hpColor(player) }">
-            ❤️ {{ player.current_hp ?? '?' }}<span class="hp-max">/ {{ player.max_hp ?? '?' }}</span>
+            <AppIcon icon="game-icons:hearts" size="0.85rem" /> {{ player.current_hp ?? '?' }}<span class="hp-max">/ {{ player.max_hp ?? '?' }}</span>
           </span>
           <span class="player-badge">En ligne</span>
           <button class="kick-btn" @click="kickPlayer(player)" title="Expulser de la session">✕</button>
@@ -81,7 +67,14 @@ function kickPlayer(player) {
             v-for="cid in parseConditions(player)"
             :key="cid"
             class="condition-badge"
-          >{{ CONDITION_LABELS[cid]?.icon || '⚡' }} {{ CONDITION_LABELS[cid]?.label || cid }}</span>
+          >
+            <AppIcon
+              :icon="CONDITION_LABELS[cid]?.icon || 'game-icons:lightning-trio'"
+              :color="CONDITION_LABELS[cid]?.color || 'currentColor'"
+              size="0.85rem"
+            />
+            {{ CONDITION_LABELS[cid]?.label || cid }}
+          </span>
         </div>
       </div>
     </div>
