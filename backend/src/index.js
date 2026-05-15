@@ -22,6 +22,18 @@ app.set('trust proxy', 1)
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
 
+// Allowed origins: frontend + Obsidian desktop/mobile apps
+const ALLOWED_ORIGINS = [
+  FRONTEND_URL,
+  'app://obsidian.md',
+  'capacitor://obsidian.md',
+]
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true // same-origin / server-to-server
+  return ALLOWED_ORIGINS.includes(origin)
+}
+
 // Mobile browsers suspend WebSocket connections when the tab is in background.
 // A generous pingTimeout (2 min) prevents the server from dropping sleeping phones.
 const SOCKET_PING_TIMEOUT_MS = 120000
@@ -29,7 +41,7 @@ const SOCKET_PING_INTERVAL_MS = 25000
 
 const io = new Server(server, {
   cors: {
-    origin: FRONTEND_URL,
+    origin: (origin, cb) => cb(null, isAllowedOrigin(origin)),
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -37,7 +49,10 @@ const io = new Server(server, {
   pingInterval: SOCKET_PING_INTERVAL_MS,
 })
 
-app.use(cors({ origin: FRONTEND_URL, credentials: true }))
+app.use(cors({
+  origin: (origin, cb) => cb(null, isAllowedOrigin(origin)),
+  credentials: true,
+}))
 app.use(express.json())
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 

@@ -2,7 +2,7 @@
   "id": "critical-fail-sync",
   "name": "Critical Fail Sync",
   "version": "0.1.0",
-  "minAppVersion": "1.4.0",
+  "minAppVersion": "0.15.0",
   "description": "Synchronise l'Initiative Tracker avec l'écran admin Critical Fail (D&D 5e session manager).",
   "author": "KyneSilverhide",
   "authorUrl": "https://github.com/KyneSilverhide/critical-fail",
