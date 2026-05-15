@@ -16,35 +16,18 @@ interface CFPlayer {
 	avatar_url: string;
 }
 
-// Minimal interface for the Initiative Tracker plugin API.
-// Derived from javalent/initiative-tracker source.
-interface InitiativeTrackerAPI {
-	addCreature: (creature: {
-		name: string;
-		hp?: number;
-		ac?: number;
-		initiative?: number;
-		player?: boolean;
-	}) => void;
-	removeCreature: (name: string) => void;
-	updateCreature: (name: string, data: { hp?: number; initiative?: number }) => void;
-	getEncounter: () => {
-		creatures: Array<{
-			name: string;
-			hp: number;
-			maxHp: number;
-			initiative: number | null;
-			player: boolean;
-		}>;
-	} | null;
-	on: (event: string, cb: (...args: unknown[]) => void) => void;
-	off: (event: string, cb: (...args: unknown[]) => void) => void;
-}
+// Loose interface — we check each method at runtime because the IT API
+// shape varies across plugin versions and may live at plugin or plugin.api.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type InitiativeTrackerAPI = Record<string, any>;
 
 export default class CriticalFailSync extends Plugin {
 	settings!: CriticalFailSettings;
 	private socket: Socket | null = null;
-	private itApi: InitiativeTrackerAPI | null = null;
+	// plugin.api  → addCreatures / newEncounter
+	// plugin.tracker → updateCreatureByName
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	private itPlugin: any = null;
 	private readonly playerIdToName = new Map<number, string>();
 
 	// Handlers kept as instance properties so they can be removed on unload
@@ -133,7 +116,7 @@ export default class CriticalFailSync extends Plugin {
 		this.socket.on('player-left', ({ playerId }: { playerId: number }) => {
 			const name = this.playerIdToName.get(playerId);
 			if (name) {
-				this.itApi?.removeCreature(name);
+				this.removeITCreature(name);
 				this.playerIdToName.delete(playerId);
 			}
 		});
@@ -141,14 +124,14 @@ export default class CriticalFailSync extends Plugin {
 		// CF → IT: HP updated
 		this.socket.on('hp-updated', ({ playerId, newHp }: { playerId: number; newHp: number }) => {
 			const name = this.playerIdToName.get(playerId);
-			if (name) this.itApi?.updateCreature(name, { hp: newHp });
+			if (name) this.applyITUpdate(name, { hp: newHp });
 		});
 
 		// CF → IT: initiative updated
 		this.socket.on('initiative-updated', ({ playerId, initiative }: { playerId: number; initiative: number | null }) => {
 			const name = this.playerIdToName.get(playerId);
 			if (name && initiative !== null) {
-				this.itApi?.updateCreature(name, { initiative });
+				this.applyITUpdate(name, { initiative });
 			}
 		});
 
@@ -165,54 +148,107 @@ export default class CriticalFailSync extends Plugin {
 
 	// ── IT helpers ──────────────────────────────────────────────────────────────
 
-	private getITApi(): InitiativeTrackerAPI | null {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	private getITPlugin(): any {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const plugins = (this.app as any).plugins?.plugins;
-		return (plugins?.['initiative-tracker'] as InitiativeTrackerAPI) ?? null;
+		return plugins?.['initiative-tracker'] ?? null;
 	}
 
 	private populateIT(players: CFPlayer[]) {
-		this.itApi = this.getITApi();
-		if (!this.itApi) {
+		const it = this.getITPlugin();
+		if (!it) {
 			new Notice('Critical Fail Sync: Initiative Tracker introuvable. Installe et active le plugin.');
 			return;
 		}
 		this.playerIdToName.clear();
-		for (const p of players) {
+		const creatures = players.map(p => {
 			this.playerIdToName.set(p.id, p.player_name);
-			this.upsertITCreature(p);
+			return {
+				name: p.player_name,
+				hp: p.current_hp,
+				max: p.max_hp,
+				ac: p.ac,
+				initiative: p.initiative ?? undefined,
+				player: true,
+			};
+		});
+		try {
+			// Start a fresh encounter then inject all players
+			if (typeof it.api?.newEncounter === 'function') {
+				it.api.newEncounter();
+			}
+			if (typeof it.api?.addCreatures === 'function') {
+				it.api.addCreatures(creatures);
+			}
+		} catch (err) {
+			console.error('[CF Sync] populateIT error:', err);
 		}
 		new Notice(`Critical Fail Sync: ${players.length} joueur(s) importé(s) dans l'Initiative Tracker.`);
 	}
 
 	private upsertITCreature(player: CFPlayer) {
-		if (!this.itApi) this.itApi = this.getITApi();
-		if (!this.itApi) return;
+		const it = this.getITPlugin();
+		if (!it) return;
+
+		const alreadyTracked = this.playerIdToName.has(player.id);
 		this.playerIdToName.set(player.id, player.player_name);
-		try {
-			this.itApi.addCreature({
-				name: player.player_name,
+
+		if (alreadyTracked) {
+			// Player reconnected or stats were updated — update in place, no duplicate
+			this.applyITUpdate(player.player_name, {
 				hp: player.current_hp,
+				max: player.max_hp,
 				ac: player.ac,
 				initiative: player.initiative ?? undefined,
-				player: true,
 			});
-		} catch {
-			// addCreature may throw if the creature already exists — ignore
+			return;
+		}
+
+		// Truly new player: add to IT.
+		// If a creature with the same name already exists in IT (e.g. after plugin reload),
+		// addCreatures may create a duplicate — the user can run a full re-sync to fix that.
+		try {
+			if (typeof it.api?.addCreatures === 'function') {
+				it.api.addCreatures([{
+					name: player.player_name,
+					hp: player.current_hp,
+					max: player.max_hp,
+					ac: player.ac,
+					initiative: player.initiative ?? undefined,
+					player: true,
+				}]);
+			}
+		} catch (err) {
+			console.warn('[CF Sync] upsertITCreature error:', err);
+		}
+	}
+
+	private removeITCreature(_name: string) {
+		// removeCreature is not exposed in the current IT API — no-op.
+	}
+
+	// Documented API: plugin.tracker.updateCreatureByName(name, update)
+	// See https://plugins.javalent.com/it/tracker/api
+	private applyITUpdate(name: string, data: { hp?: number; max?: number; ac?: number | string; initiative?: number }) {
+		const it = this.getITPlugin();
+		if (!it) return;
+		try {
+			if (typeof it.tracker?.updateCreatureByName === 'function') {
+				it.tracker.updateCreatureByName(name, data);
+			}
+		} catch (err) {
+			console.warn('[CF Sync] applyITUpdate error:', err);
 		}
 	}
 
 	private attachITListeners() {
-		this.itApi = this.getITApi();
-		if (!this.itApi || typeof this.itApi.on !== 'function') return;
-		this.itApi.on('initiative-change', this.onITInitiativeChange);
-		this.itApi.on('hp-change', this.onITHpChange);
+		// IT does not expose an event API in the current version.
+		// IT → CF sync is therefore not available (CF is the source of truth).
 	}
 
 	private detachITListeners() {
-		if (!this.itApi || typeof this.itApi.off !== 'function') return;
-		this.itApi.off('initiative-change', this.onITInitiativeChange);
-		this.itApi.off('hp-change', this.onITHpChange);
+		// Nothing to detach.
 	}
 
 	// ── IT → CF pushes ──────────────────────────────────────────────────────────

@@ -248,7 +248,23 @@ function setupSocket(io) {
   }
 
   /**
-   * Removes a player from the session on disconnect or voluntary leave.
+   * Called when a player's socket disconnects (phone sleep, network drop, tab close).
+   * The player STAYS in the session — only socket_id is cleared.
+   * Admin/TV are NOT notified: the player is still "in session", just temporarily offline.
+   * On reconnect the player calls join-session again and gets a new socket_id.
+   * @param {import('socket.io').Socket} socket
+   */
+  async function onPlayerDisconnect(socket) {
+    if (!socket.playerId || !socket.sessionId) return
+    try {
+      await pool.query('UPDATE players SET socket_id = NULL WHERE id = $1', [socket.playerId])
+      socket.playerId = null
+      socket.sessionId = null
+    } catch (err) { console.error(err) }
+  }
+
+  /**
+   * Removes a player from the session on voluntary leave or kick.
    * Deletes associated vote responses, purchase requests, and the player record.
    * Notifies admin and TV, refreshes the active vote count, and logs the event.
    * @param {import('socket.io').Socket} socket
@@ -1009,7 +1025,7 @@ function setupSocket(io) {
       } catch (err) { console.error(err) }
     })
 
-    socket.on('disconnect', async () => { await removePlayer(socket) })
+    socket.on('disconnect', async () => { await onPlayerDisconnect(socket) })
 
     // ── Admin: create merchant ──────────────────────────────────────────────
     socket.on('create-merchant', async ({ sessionId, name, description, items }) => {
