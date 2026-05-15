@@ -41,10 +41,14 @@ watch(playerName, (name) => {
   if (profile) {
     if (profile.dndClass) dndClass.value = profile.dndClass
     if (profile.avatarUrl) avatarPreview.value = profile.avatarUrl
+    if (profile.hp != null) hp.value = profile.hp
+    if (profile.ac != null) ac.value = profile.ac
   } else {
     dndClass.value = ''
     avatarPreview.value = null
     avatarFile.value = null
+    hp.value = 20
+    ac.value = 10
   }
 })
 
@@ -115,6 +119,8 @@ async function joinSession() {
       saveProfile(playerName.value, {
         dndClass: dndClass.value,
         avatarUrl: data.player.avatar_url || avatarUrl,
+        hp: data.player.max_hp,
+        ac: data.player.ac,
       })
 
       sessionStore.setActiveSession(data.session)
@@ -164,7 +170,7 @@ async function joinSession() {
         <div class="form-group">
           <label class="form-label">Code de session</label>
           <input v-model="sessionCode" type="text" class="form-input"
-            placeholder="Série de 8 chiffres" />
+            placeholder="Code à 4 chiffres" />
           <p class="form-hint">Fourni par votre MJ ou via le QR Code.</p>
         </div>
 

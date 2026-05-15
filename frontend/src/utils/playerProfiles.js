@@ -36,6 +36,8 @@ export function saveProfile(name, profile) {
     dndClass: profile.dndClass || '',
     avatarUrl: profile.avatarUrl || null,
     displayName: name.trim(),
+    hp: profile.hp ?? null,
+    ac: profile.ac ?? null,
   }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles))
