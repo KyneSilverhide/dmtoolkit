@@ -520,6 +520,8 @@ onUnmounted(() => {
         <span class="timer-overlay-label">{{ activeTimer.label }}</span>
         <span class="timer-overlay-time">{{ timerRemainingLabel }}</span>
       </div>
+      <Transition name="tv-mode" mode="out-in">
+      <div :key="tvMode" class="tv-mode-container">
       <!-- Lobby mode: session title + QR code + session code -->
       <div v-if="tvMode === 'lobby'" class="lobby-display">
         <header class="tv-header">
@@ -746,6 +748,8 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
+      </div>
+      </Transition>
     </template>
   </div>
 </template>
@@ -1701,6 +1705,23 @@ onUnmounted(() => {
 }
 .item-stock.unlimited { color: var(--color-gold-dark); border-color: var(--color-gold-dark); }
 .item-stock.empty { color: var(--tv-danger-text); border-color: var(--tv-danger-border); background: var(--tv-danger-bg); }
+
+/* ── Mode transition ─────────────────────────────────────────────────── */
+.tv-mode-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.tv-mode-enter-active {
+  transition: opacity 0.4s ease;
+}
+.tv-mode-leave-active {
+  transition: opacity 0.25s ease;
+}
+.tv-mode-enter-from,
+.tv-mode-leave-to {
+  opacity: 0;
+}
 
 /* ── Footer ──────────────────────────────────────────────────────────── */
 .tv-footer {
