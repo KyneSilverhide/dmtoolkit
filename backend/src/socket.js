@@ -139,7 +139,14 @@ async function getActiveVote(sessionId, voteId) {
   const voteInfo = await pool.query('SELECT * FROM votes WHERE id = $1 AND status = $2', [voteId, 'active'])
   const vote = voteInfo.rows[0]
   if (!vote) return null
-  const options = typeof vote.options === 'string' ? JSON.parse(vote.options) : vote.options
+  let options
+  try {
+    options = typeof vote.options === 'string' ? JSON.parse(vote.options) : vote.options
+    if (!Array.isArray(options)) return null
+  } catch {
+    console.error('Malformed vote options in vote id:', vote.id)
+    return null
+  }
   const responses = await pool.query('SELECT option_index, player_name FROM vote_responses WHERE vote_id = $1', [vote.id])
   const results = options.map((_, i) => responses.rows.filter(r => r.option_index === i).length)
   const totalPlayers = await pool.query('SELECT COUNT(*)::int AS total FROM players WHERE session_id = $1', [sessionId])
@@ -170,7 +177,14 @@ async function getVoteState(sessionId, voteId, activeOnly = true) {
     : await pool.query('SELECT * FROM votes WHERE id = $1', [voteId])
   const vote = voteInfo.rows[0]
   if (!vote) return null
-  const options = typeof vote.options === 'string' ? JSON.parse(vote.options) : vote.options
+  let options
+  try {
+    options = typeof vote.options === 'string' ? JSON.parse(vote.options) : vote.options
+    if (!Array.isArray(options)) return null
+  } catch {
+    console.error('Malformed vote options in vote id:', vote.id)
+    return null
+  }
   const responses = await pool.query('SELECT option_index, player_name FROM vote_responses WHERE vote_id = $1', [vote.id])
   const results = options.map((_, i) => responses.rows.filter(r => r.option_index === i).length)
   const totalPlayers = await pool.query('SELECT COUNT(*)::int AS total FROM players WHERE session_id = $1', [sessionId])
@@ -764,11 +778,22 @@ function setupSocket(io) {
     socket.on('submit-vote', async ({ voteId, optionIndex }) => {
       if (!socket.playerId || !socket.sessionId) return
       try {
+        const voteCheck = await pool.query('SELECT options FROM votes WHERE id = $1 AND status = $2', [voteId, 'active'])
+        if (!voteCheck.rows[0]) { socket.emit('vote-error', { message: 'Vote introuvable ou clôturé.' }); return }
+        let voteOptions
+        try {
+          voteOptions = typeof voteCheck.rows[0].options === 'string' ? JSON.parse(voteCheck.rows[0].options) : voteCheck.rows[0].options
+        } catch { voteOptions = [] }
+        const idx = parseInt(optionIndex)
+        if (!Number.isFinite(idx) || idx < 0 || idx >= voteOptions.length) {
+          socket.emit('vote-error', { message: 'Option invalide.' })
+          return
+        }
         const existing = await pool.query('SELECT id FROM vote_responses WHERE vote_id = $1 AND player_id = $2', [voteId, socket.playerId])
         if (existing.rows[0]) { socket.emit('vote-error', { message: 'Vous avez déjà voté.' }); return }
         const pname = await pool.query('SELECT player_name FROM players WHERE id = $1', [socket.playerId])
         const playerName = pname.rows[0]?.player_name || 'Inconnu'
-        await pool.query('INSERT INTO vote_responses (vote_id, player_id, player_name, option_index) VALUES ($1, $2, $3, $4)', [voteId, socket.playerId, playerName, optionIndex])
+        await pool.query('INSERT INTO vote_responses (vote_id, player_id, player_name, option_index) VALUES ($1, $2, $3, $4)', [voteId, socket.playerId, playerName, idx])
         socket.emit('vote-submitted', { optionIndex })
 
         const voteUpdate = await getVoteState(socket.sessionId, voteId, true)

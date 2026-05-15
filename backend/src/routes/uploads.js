@@ -30,10 +30,19 @@ const upload = multer({
   fileFilter: imageFilter,
 })
 
+const AVATAR_ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+const AVATAR_ALLOWED_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+
 const avatarUpload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: imageFilter,
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase()
+    if (!AVATAR_ALLOWED_MIMES.includes(file.mimetype) || !AVATAR_ALLOWED_EXTS.includes(ext)) {
+      return cb(new Error('Format invalide. Formats acceptés : JPG, PNG, WebP, GIF.'))
+    }
+    cb(null, true)
+  },
 })
 
 router.post('/', authenticateToken, upload.fields([

@@ -1,7 +1,12 @@
 import { reactive } from 'vue'
 
 const stored = localStorage.getItem('auth')
-const initial = stored ? JSON.parse(stored) : { token: null, admin: null }
+let initial = { token: null, admin: null }
+try {
+  if (stored) initial = JSON.parse(stored)
+} catch {
+  localStorage.removeItem('auth')
+}
 
 export const authStore = reactive({
   token: initial.token,

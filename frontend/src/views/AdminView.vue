@@ -125,6 +125,8 @@ function handleAdminState(data) {
 
 function handleTvModeChanged(payload) {
   if (payload?.mode) tvMode.value = payload.mode
+  if (payload?.imageUrl !== undefined) hasActiveImage.value = !!payload.imageUrl
+  if (payload?.merchantData !== undefined) hasActiveMerchant.value = !!payload.merchantData
 }
 
 async function loadSessions() {
@@ -197,12 +199,6 @@ onMounted(() => {
   socket.on('vote-started', () => { hasActiveVote.value = true })
   socket.on('vote-closed', () => { hasActiveVote.value = false })
 
-  socket.on('tv-mode-changed', (payload) => {
-    if (payload?.mode) tvMode.value = payload.mode
-    if (payload?.imageUrl !== undefined) hasActiveImage.value = !!payload.imageUrl
-    if (payload?.merchantData !== undefined) hasActiveMerchant.value = !!payload.merchantData
-  })
-
   socket.on('map-state', (data) => {
     hasActiveMap.value = !!(data?.mapUrl)
   })
@@ -258,7 +254,6 @@ onUnmounted(() => {
 
   socket.off('vote-started')
   socket.off('vote-closed')
-  socket.off('tv-mode-changed')
   socket.off('merchant-items-updated')
   socket.off('doom-clock-started')
   socket.off('doom-clock-stopped')
