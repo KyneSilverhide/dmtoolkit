@@ -5,12 +5,14 @@ Application web temps réel pour le Maître du Jeu, permettant de gérer des ses
 ## Fonctionnalités
 
 - **Gestion des joueurs** : PV, CA, classe, avatar, conditions, concentration, initiative
-- **Écran TV** : affichage dédié avec plusieurs modes (lobby, image, map, vote, marchand, doom clock, échelle de tension)
+- **Écran TV** : affichage dédié avec plusieurs modes (lobby, image, map, vote, marchand, doom clock, échelle de tension, timer, round de combat)
 - **Battlemap interactive** : brouillard de guerre, tokens de joueurs, contrôle du viewport
 - **Messagerie** : envoi de messages et résultats de jets de dés aux joueurs
 - **Système de vote** : votes anonymes ou publics avec fermeture automatique
 - **Marchand** : boutique interactive avec panier, stock et négociation de prix
 - **Sorts** : recherche parmi 477 sorts D&D 5e en français
+- **Équipement** : recherche d'objets standard (147) et magiques D&D 5e
+- **Plugin Obsidian** : synchronisation bidirectionnelle avec l'Initiative Tracker d'Obsidian
 
 ## Architecture
 
@@ -22,7 +24,9 @@ Application web temps réel pour le Maître du Jeu, permettant de gérer des ses
 │       ├── index.js       # Point d'entrée (Express + Socket.IO)
 │       ├── socket.js      # Handlers temps réel
 │       ├── migrations.js  # Migrations PostgreSQL (auto au démarrage)
-│       └── routes/        # REST API (auth, sessions, uploads, spells)
+│       ├── data/          # Données statiques (sorts, objets)
+│       └── routes/        # REST API (auth, sessions, uploads, spells, magic-items, equipment)
+├── obsidian-plugin/   # Plugin Obsidian — sync Initiative Tracker
 └── docker-compose.yml     # PostgreSQL 16 + backend + frontend
 ```
 
@@ -70,7 +74,7 @@ cd frontend && npm test
 cd frontend && npm run build
 
 # Vérification syntaxique backend
-cd backend && node --check src/index.js src/socket.js src/routes/spells.js src/routes/sessions.js src/migrations.js
+cd backend && node --check src/index.js src/socket.js src/routes/spells.js src/routes/sessions.js src/routes/equipment.js src/migrations.js
 ```
 
 ## Variables d'environnement

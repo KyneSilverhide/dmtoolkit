@@ -11,10 +11,12 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 - La gestion en temps réel des joueurs (PV, CA, conditions, concentration, initiative)
 - L'affichage sur un écran TV dédié (vue spectateur)
 - L'envoi de messages et jets de dés aux joueurs
-- Des systèmes de vote, d'horloge de doom, d'échelle de tension
+- Des systèmes de vote, d'horloge de doom, d'échelle de tension, timer et round de combat
 - Un système de marchand interactif avec panier et négociation de prix
 - Une battlemap interactive avec brouillard de guerre et tokens de joueurs
 - La recherche de sorts D&D 5e (477 sorts FR depuis `aidedd_spells.json`)
+- La recherche d'équipement standard et d'objets magiques D&D 5e
+- Un plugin Obsidian pour synchroniser l'Initiative Tracker avec Critical Fail
 
 ---
 
@@ -24,20 +26,28 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 /
 ├── frontend/          # Vue 3 + Vite + Pinia (port 5173 en dev)
 │   ├── src/
-│   │   ├── views/     # HomeView, LoginView, AdminView, TvView, PlayerInboxView, PlayerJoinView
-│   │   ├── components/admin/  # Composants admin (MapManager, etc.)
+│   │   ├── views/     # HomeView, AdminView, TvView, PlayerInboxView, PlayerJoinView
+│   │   ├── components/admin/  # Composants admin (MapManager, MerchantManager, etc.)
+│   │   ├── components/player/ # Composants joueur (SpellSearchTool, MagicItemSearchTool, PlayerDiceTool, etc.)
+│   │   ├── components/AppIcon.vue  # Composant icônes dynamiques (remplace les emojis statiques)
 │   │   ├── stores/    # Pinia stores (auth.js, session.js)
 │   │   ├── router/    # Vue Router (toutes les vues importées statiquement)
+│   │   ├── utils/     # Utilitaires (conditions.js, playerProfiles.js, playerSessionMemory.js, themePreferences.js)
 │   │   └── socket.js  # Singleton Socket.IO client
 ├── backend/           # Node.js + Express + Socket.IO (port 3000)
 │   ├── src/
 │   │   ├── index.js       # Point d'entrée Express + Socket.IO
 │   │   ├── socket.js      # Tous les handlers Socket.IO
 │   │   ├── migrations.js  # Migrations SQL (PostgreSQL) — exécutées au démarrage
-│   │   ├── db.js          # Pool PostgreSQL (pg)
-│   │   ├── middleware/auth.js  # Vérification JWT
-│   │   └── routes/        # auth, sessions, uploads, spells (+ GET /api/sessions/:id/players pour sync Obsidian)
-│   └── aidedd_spells.json # 477 sorts D&D 5e en français
+│   │   ├── db.js          # Pool PostgreSQL (pg, max 20 connexions)
+│   │   ├── middleware/auth.js  # Vérification JWT (HS256 explicite)
+│   │   ├── data/          # Fichiers JSON de données statiques
+│   │   │   ├── aidedd_spells.json        # 477 sorts D&D 5e en français
+│   │   │   ├── aidedd_magic_items.json   # Objets magiques D&D 5e
+│   │   │   └── aidedd_standard_items.json # 147 objets standard D&D 5e
+│   │   └── routes/        # auth, sessions, uploads, spells, magic-items, equipment
+│   │                      # (+ GET /api/sessions/:id/players pour sync Obsidian)
+├── obsidian-plugin/   # Plugin Obsidian (TypeScript) — sync Initiative Tracker ↔ Critical Fail
 ├── docker-compose.yml     # Postgres 16 + backend + frontend
 └── docker-compose.prod.yml
 ```
@@ -51,7 +61,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 cd frontend && npm test && npm run build
 
 # Backend — vérification syntaxique Node.js (pas de tests automatisés)
-cd backend && node --check src/index.js src/socket.js src/routes/spells.js src/routes/sessions.js src/migrations.js
+cd backend && node --check src/index.js src/socket.js src/routes/spells.js src/routes/sessions.js src/routes/equipment.js src/migrations.js
 
 # Dev local (sans Docker)
 cd backend && npm run dev   # node --watch src/index.js
@@ -94,9 +104,10 @@ cd frontend && npm run dev  # vite dev server
 - **Ne jamais modifier le schéma directement.** Toujours ajouter des `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...` à la fin du fichier `backend/src/migrations.js`. Les migrations sont exécutées au démarrage via `runMigrations()`.
 - La DB est PostgreSQL 16. Les requêtes utilisent le driver `pg` (pool de connexions dans `db.js`).
 - Tables principales : `admins`, `sessions`, `players`, `messages`, `dice_results`, `votes`, `vote_responses`, `session_events`, `merchants`, `merchant_items`, `purchase_requests`, `session_images`.
-- Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/vote/image/map/merchant), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`.
+- Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/vote/image/map/merchant), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`, `combat_round` (entier), `timer_label` (VARCHAR 200), `timer_end_at` (TIMESTAMP).
 - Colonnes clés de `players` : `ac`, `max_hp`, `current_hp`, `initiative`, `conditions` (JSON array), `is_concentrating`, `dnd_class`, `avatar_url`, `socket_id`.
 - Les joueurs sont supprimés de la DB à la déconnexion socket (`disconnect`/`leave-session`).
+- Les codes de session sont sur **4 chiffres numériques** (migration automatique des anciens codes).
 
 ---
 
@@ -112,16 +123,23 @@ cd frontend && npm run dev  # vite dev server
 #### Joueurs
 | Événement | Description |
 |---|---|
-| `join-session` | Rejoindre une session (code, playerName, ac, hp, dndClass, avatarUrl) |
+| `join-session` | Rejoindre une session (code, playerName, ac, hp, maxHp, dndClass, avatarUrl) |
 | `leave-session` | Quitter la session |
-| `update-hp` | Mettre à jour les PV |
+| `update-hp` | Mettre à jour les PV courants |
+| `update-max-hp` | Mettre à jour les PV max |
 | `update-conditions` | Mettre à jour les conditions |
 | `update-concentration` | Basculer la concentration |
 | `update-initiative` | Mettre à jour l'initiative |
+| `player-roll` | Envoyer un jet de dé effectué par le joueur (résultat transmis à l'admin) |
 | `submit-vote` | Voter pour une option |
 | `request-purchase` | Demander l'achat d'un objet (legacy) |
 | `request-batch-purchase` | Demander l'achat d'un panier d'objets |
 | `respond-counter-offer` | Accepter/refuser une contre-offre |
+
+#### TV
+| Événement | Description |
+|---|---|
+| `tv-join` | Rejoindre la room TV (`{ sessionCode }`) — reçoit le snapshot TV |
 
 #### Admin (nécessite `socket.admin`)
 | Événement | Description |
@@ -145,11 +163,16 @@ cd frontend && npm run dev  # vite dev server
 | `map-token-remove` | Retirer un token de joueur |
 | `send-message` | Envoyer un message à un ou tous les joueurs |
 | `send-dice-result` | Envoyer un résultat de jet de dé |
+| `send-gold-split` | Envoyer une répartition d'or entre joueurs |
 | `create-merchant` | Créer un marchand |
 | `show-merchant` | Afficher le marchand sur le TV |
 | `close-merchant` | Fermer le marchand |
+| `delete-merchant` | Supprimer définitivement un marchand |
 | `respond-purchase` | Répondre à une demande d'achat (legacy) |
 | `respond-batch-purchase` | Répondre à un panier d'achat |
+| `set-combat-round` | Définir le round de combat courant |
+| `start-timer` | Démarrer un timer (`{ sessionId, label, durationSeconds }`) |
+| `stop-timer` | Arrêter le timer actif |
 | `kick-player` | Expulser un joueur |
 | `obsidian-sync-initiatives` | Sync depuis Obsidian Initiative Tracker — met à jour les initiatives en masse par nom de joueur (`{ sessionId, updates: [{playerName, initiative}] }`) |
 | `admin-update-hp` | Met à jour les PV d'un joueur par nom (pour sync Obsidian) — `{ sessionId, playerName, currentHp }` |
@@ -164,18 +187,26 @@ cd frontend && npm run dev  # vite dev server
 | `tv-snapshot` | TV | État complet pour l'écran TV |
 | `player-joined` | admin + TV | Un joueur a rejoint |
 | `player-left` | admin + TV | Un joueur a quitté/été expulsé |
-| `hp-updated` | admin + TV | Mise à jour des PV |
-| `hp-update-confirmed` | joueur | Confirmation mise à jour PV |
+| `hp-updated` | admin + TV | Mise à jour des PV (courants ou max) |
+| `hp-update-confirmed` | joueur | Confirmation mise à jour PV courants |
+| `max-hp-update-confirmed` | joueur | Confirmation mise à jour PV max |
 | `conditions-updated` | admin + TV | Mise à jour des conditions |
 | `concentration-updated` | admin + TV | Mise à jour de la concentration |
+| `concentration-confirmed` | joueur | Confirmation bascule de concentration |
 | `concentration-warning` | joueur | Alerte jet de sauvegarde de concentration |
 | `initiative-updated` | admin + TV | Mise à jour de l'initiative |
 | `initiative-confirmed` | joueur | Confirmation mise à jour initiative |
+| `player-roll-result` | admin | Résultat d'un jet de dé effectué côté joueur |
+| `player-roll-confirmed` | joueur | Confirmation du jet de dé (visible) |
+| `player-roll-hidden-sent` | joueur | Confirmation du jet de dé masqué envoyé à l'admin |
 | `tv-mode-changed` | TV + admin | Changement de mode TV |
 | `doom-clock-started` | TV + admin | Démarrage de l'horloge doom |
 | `doom-clock-stopped` | TV + admin | Arrêt de l'horloge doom |
 | `tension-scale-updated` | TV + admin | Mise à jour de l'échelle de tension |
 | `tension-scale-ended` | TV + admin | Fin de l'échelle de tension |
+| `round-updated` | TV + admin | Round de combat mis à jour |
+| `timer-updated` | TV + admin | Données du timer actif |
+| `timer-stopped` | TV + admin | Timer arrêté |
 | `vote-started` | TV + session + admin | Vote démarré |
 | `vote-updated` | TV + admin | Mise à jour des résultats du vote |
 | `vote-closed` | TV + session + admin | Vote fermé |
@@ -194,6 +225,7 @@ cd frontend && npm run dev  # vite dev server
 | `merchant-created` | admin | Marchand créé |
 | `merchant-shown` | session | Marchand affiché aux joueurs |
 | `merchant-closed` | session | Marchand fermé |
+| `merchant-deleted` | admin | Marchand supprimé définitivement |
 | `merchant-updated` | admin | Données marchand mises à jour |
 | `merchant-items-updated` | TV + session | Mise à jour des stocks |
 | `purchase-request` | admin | Demande d'achat reçue |
@@ -250,6 +282,8 @@ cd frontend && npm run dev  # vite dev server
 - ❌ Ne pas utiliser d'ESM (`import`/`export`) dans le backend (CommonJS uniquement)
 - ❌ Ne pas supprimer de colonnes DB existantes (les données en prod seraient perdues)
 - ❌ Ne pas hardcoder l'URL du backend dans le frontend (toujours utiliser `VITE_BACKEND_URL`)
+- ❌ Ne pas restreindre le CORS à `FRONTEND_URL` uniquement — les origines `app://obsidian.md` et `capacitor://obsidian.md` doivent aussi être autorisées (plugin Obsidian desktop/mobile)
+- ❌ Ne pas déplacer les fichiers JSON de données hors de `backend/src/data/` — les routes `spells`, `magic-items` et `equipment` chargent depuis ce dossier
 
 ---
 
