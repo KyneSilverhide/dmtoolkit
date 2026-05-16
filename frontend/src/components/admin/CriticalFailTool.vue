@@ -182,7 +182,7 @@ onUnmounted(() => {
               {{ p.player_name }}
             </option>
           </select>
-          <button class="send-btn" @click="sendToPlayers" :disabled="!sessionStore.activeSession || !hasConnectedPlayers">
+          <button class="send-btn" data-testid="dice-send-btn" @click="sendToPlayers" :disabled="!sessionStore.activeSession || !hasConnectedPlayers">
             <AppIcon icon="lucide:send" size="0.9em" /> Envoyer
           </button>
         </div>

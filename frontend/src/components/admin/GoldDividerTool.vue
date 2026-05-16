@@ -147,7 +147,7 @@ function reset() {
       </div>
 
       <div class="send-section">
-        <button class="send-btn" :disabled="!hasAnyCoin || !anyNonZeroShare()" @click="sendSplit">
+        <button class="send-btn" data-testid="gold-send-btn" :disabled="!hasAnyCoin || !anyNonZeroShare()" @click="sendSplit">
           <AppIcon icon="lucide:send" size="0.9em" /> Envoyer les parts aux joueurs
         </button>
         <p v-if="sendFeedback" class="send-feedback">

@@ -165,25 +165,25 @@ async function joinSession() {
     </header>
 
     <main class="join-main">
-      <form class="join-form" @submit.prevent="joinSession">
+      <form class="join-form" @submit.prevent="joinSession" data-testid="join-form">
 
         <div class="form-group">
           <label class="form-label">Code de session</label>
           <input v-model="sessionCode" type="text" class="form-input"
-            placeholder="Code à 4 chiffres" />
+            placeholder="Code à 4 chiffres" data-testid="session-code-input" />
           <p class="form-hint">Fourni par votre MJ ou via le QR Code.</p>
         </div>
 
         <div class="form-group">
           <label class="form-label">Nom du personnage</label>
-          <input v-model="playerName" type="text" class="form-input" placeholder="Gandalf le Gris" />
+          <input v-model="playerName" type="text" class="form-input" placeholder="Gandalf le Gris" data-testid="player-name-input" />
         </div>
 
         <div class="form-group">
           <label class="form-label">
             <AppIcon icon="game-icons:wizard-staff" size="0.9rem" /> Classe D&amp;D
           </label>
-          <select v-model="dndClass" class="form-input form-select">
+          <select v-model="dndClass" class="form-input form-select" data-testid="class-select">
             <option value="">— Choisir une classe —</option>
             <option v-for="cls in DND_CLASSES" :key="cls" :value="cls">{{ cls }}</option>
           </select>
@@ -217,19 +217,19 @@ async function joinSession() {
             <label class="form-label">
               <AppIcon icon="game-icons:hearts" size="0.9rem" color="var(--color-danger)" /> Points de Vie (HP)
             </label>
-            <input v-model.number="hp" type="number" min="1" max="999" class="form-input stat-input" />
+            <input v-model.number="hp" type="number" min="1" max="999" class="form-input stat-input" data-testid="hp-input" />
           </div>
           <div class="form-group">
             <label class="form-label">
               <AppIcon icon="game-icons:shield" size="0.9rem" color="var(--color-gold-bright)" /> Armure (CA)
             </label>
-            <input v-model.number="ac" type="number" min="1" max="30" class="form-input stat-input" />
+            <input v-model.number="ac" type="number" min="1" max="30" class="form-input stat-input" data-testid="ac-input" />
           </div>
         </div>
 
-        <p v-if="error" class="form-error">{{ error }}</p>
+        <p v-if="error" class="form-error" data-testid="join-error">{{ error }}</p>
 
-        <button type="submit" class="submit-btn" :disabled="loading">
+        <button type="submit" class="submit-btn" :disabled="loading" data-testid="join-button">
           <AppIcon v-if="!loading" icon="game-icons:crossed-swords" size="1em" />
           {{ loading ? 'Connexion...' : 'Rejoindre la session' }}
         </button>

@@ -188,7 +188,7 @@ async function sendMessage() {
         {{ feedback }}
       </p>
 
-      <button class="send-btn" @click="sendMessage" :disabled="!canSend">
+      <button class="send-btn" data-testid="message-send-btn" @click="sendMessage" :disabled="!canSend">
         {{ sending ? 'Envoi…' : '' }}<AppIcon v-if="!sending" icon="lucide:mail" size="0.9em" /> {{ sending ? '' : 'Envoyer' }}
       </button>
       <p v-if="!hasConnectedPlayers" class="feedback error">Aucun joueur connecté dans cette session.</p>

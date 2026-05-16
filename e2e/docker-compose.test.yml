@@ -1,0 +1,13 @@
+services:
+  postgres:
+    environment:
+      POSTGRES_DB: criticalfail_test
+
+  backend:
+    environment:
+      DATABASE_URL: postgresql://criticalfail:criticalfail@postgres:5432/criticalfail_test
+      NODE_ENV: test
+      JWT_SECRET: test-jwt-secret-e2e
+      ADMIN_DEFAULT_USERNAME: admin
+      ADMIN_DEFAULT_PASSWORD: ${TEST_ADMIN_PASSWORD:-admin}
+      FRONTEND_URL: http://localhost:5173

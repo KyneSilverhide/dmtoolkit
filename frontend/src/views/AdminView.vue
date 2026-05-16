@@ -270,11 +270,11 @@ onUnmounted(() => {
       <div class="header-top">
         <h1 class="page-title"><AppIcon icon="game-icons:dice-six-faces-five" size="1em" /> Tableau de Bord <span class="title-accent">MJ</span></h1>
         <div class="header-actions">
-          <button class="theme-toggle-btn" @click="toggleTheme">
+          <button class="theme-toggle-btn" @click="toggleTheme" data-testid="theme-toggle">
             <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.9em" />
             {{ isLightTheme ? 'Sombre' : 'Clair' }}
           </button>
-          <button class="logout-btn" @click="logout">Déconnexion</button>
+          <button class="logout-btn" @click="logout" data-testid="logout-button">Déconnexion</button>
         </div>
       </div>
       <p class="admin-name" v-if="authStore.admin">
@@ -305,6 +305,7 @@ onUnmounted(() => {
           :key="tab.key"
           class="nav-btn"
           :class="{ active: activeTab === tab.key }"
+          :data-testid="`tab-${tab.key}`"
           @click="activeTab = tab.key"
         >
           <AppIcon :icon="tab.icon" size="1em" />
@@ -365,6 +366,7 @@ onUnmounted(() => {
               class="tv-mode-btn"
               :class="{ active: tvMode === mode.key, disabled: !mode.ready }"
               :disabled="!mode.ready"
+              :data-testid="`tv-mode-btn-${mode.key}`"
               @click="setTvMode(mode.key)"
           >
             <div class="tv-mode-top">
@@ -387,6 +389,7 @@ onUnmounted(() => {
         :key="toast.id"
         class="player-roll-toast"
         :class="{ hidden: toast.hidden }"
+        data-testid="player-roll-toast"
         @click="dismissPlayerRollToast(toast.id)"
       >
         <span class="prt-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="1.5rem" /></span>

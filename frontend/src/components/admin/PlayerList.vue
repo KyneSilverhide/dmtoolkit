@@ -44,18 +44,18 @@ function kickPlayer(player) {
       <p>Aucun joueur connecté.</p>
     </div>
     <div v-else class="players">
-      <div v-for="player in sessionStore.players" :key="player.id" class="player-item">
+      <div v-for="player in sessionStore.players" :key="player.id" class="player-item" :data-testid="`player-row-${player.id}`">
         <div class="player-row-top">
           <AppIcon icon="game-icons:crossed-swords" size="1rem" color="var(--color-gold-bright)" />
-          <span class="player-name">{{ player.player_name }}</span>
-          <AppIcon v-if="player.is_concentrating" icon="game-icons:bulls-eye" size="0.95rem" color="var(--color-info-bright)" title="Concentration" />
-          <span class="initiative-badge"><AppIcon icon="game-icons:dice-six-faces-five" size="0.85rem" /> {{ player.initiative ?? '—' }}</span>
+          <span class="player-name" :data-testid="`player-name-${player.id}`">{{ player.player_name }}</span>
+          <AppIcon v-if="player.is_concentrating" icon="game-icons:bulls-eye" size="0.95rem" color="var(--color-info-bright)" title="Concentration" :data-testid="`player-concentrating-${player.id}`" />
+          <span class="initiative-badge" :data-testid="`player-initiative-${player.id}`"><AppIcon icon="game-icons:dice-six-faces-five" size="0.85rem" /> {{ player.initiative ?? '—' }}</span>
           <span class="ac-badge"><AppIcon icon="game-icons:shield" size="0.85rem" color="var(--color-gold-bright)" /> {{ player.ac ?? '?' }}</span>
-          <span class="hp-text" :style="{ color: hpColor(player) }">
+          <span class="hp-text" :style="{ color: hpColor(player) }" :data-testid="`player-hp-${player.id}`">
             <AppIcon icon="game-icons:hearts" size="0.85rem" /> {{ player.current_hp ?? '?' }}<span class="hp-max">/ {{ player.max_hp ?? '?' }}</span>
           </span>
           <span class="player-badge">En ligne</span>
-          <button class="kick-btn" @click="kickPlayer(player)" title="Expulser de la session">✕</button>
+          <button class="kick-btn" @click="kickPlayer(player)" title="Expulser de la session" :data-testid="`kick-button-${player.id}`">✕</button>
         </div>
         <div v-if="player.max_hp" class="hp-bar-track">
           <div class="hp-bar-fill"

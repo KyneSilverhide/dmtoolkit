@@ -521,16 +521,16 @@ onUnmounted(() => {
         <span class="timer-overlay-time">{{ timerRemainingLabel }}</span>
       </div>
       <Transition name="tv-mode" mode="out-in">
-      <div :key="tvMode" class="tv-mode-container">
+      <div :key="tvMode" class="tv-mode-container" data-testid="tv-container" :data-tv-mode="tvMode">
       <!-- Lobby mode: session title + QR code + session code -->
-      <div v-if="tvMode === 'lobby'" class="lobby-display">
+      <div v-if="tvMode === 'lobby'" class="lobby-display" data-testid="tv-mode-lobby">
         <header class="tv-header">
           <h1 class="session-title">{{ session.name }}</h1>
           <div class="lobby-divider" aria-hidden="true">⸻ ✦ ⸻</div>
         </header>
         <p class="lobby-title">Rejoignez la partie !</p>
         <img v-if="qrCodeDataUrl" :src="qrCodeDataUrl" alt="QR Code" class="lobby-qr" />
-        <div class="lobby-code">{{ sessionCode }}</div>
+        <div class="lobby-code" data-testid="tv-session-code">{{ sessionCode }}</div>
         <p class="lobby-hint">Scannez le QR code ou saisissez le code sur l'application</p>
       </div>
 
@@ -543,7 +543,7 @@ onUnmounted(() => {
 
         <template v-else>
           <div class="combat-header">
-            <div class="combat-round-badge"><AppIcon icon="game-icons:crossed-swords" size="1em" /> Round {{ combatRound }}</div>
+            <div class="combat-round-badge" data-testid="tv-round"><AppIcon icon="game-icons:crossed-swords" size="1em" /> Round {{ combatRound }}</div>
           </div>
           <main class="party-grid">
           <div
@@ -556,6 +556,7 @@ onUnmounted(() => {
               'is-critical': hpPercent(player) <= 20 && hpPercent(player) > 0,
               'is-ko': hpPercent(player) <= 0,
             }"
+            :data-testid="`tv-player-card-${player.id}`"
           >
             <!-- Header -->
             <div class="card-header">
@@ -635,8 +636,8 @@ onUnmounted(() => {
       </template>
 
       <!-- Vote mode -->
-      <div v-else-if="tvMode === 'vote'" class="vote-display">
-        <h2 class="vote-question">{{ activeVote?.question }}</h2>
+      <div v-else-if="tvMode === 'vote'" class="vote-display" data-testid="tv-mode-vote">
+        <h2 class="vote-question" data-testid="tv-vote-question">{{ activeVote?.question }}</h2>
         <div class="vote-progress">{{ activeVote?.totalVotes }} / {{ activeVote?.totalPlayers }} joueurs ont voté</div>
         <div v-if="activeVote?.isClosed" class="vote-results">
           <div v-for="(option, i) in activeVote.options" :key="i" class="vote-option">
@@ -659,15 +660,16 @@ onUnmounted(() => {
       </div>
 
       <!-- Doom clock mode -->
-      <div v-else-if="tvMode === 'doom'" class="doom-display">
+      <div v-else-if="tvMode === 'doom'" class="doom-display" data-testid="tv-mode-doom">
         <h2 class="doom-title">{{ activeDoomClock?.title || 'DOOM CLOCK' }}</h2>
-        <div class="doom-timer" :class="{ danger: doomRemaining <= DOOM_DANGER_THRESHOLD_SECONDS }">{{ doomRemainingLabel }}</div>
+        <div class="doom-timer" :class="{ danger: doomRemaining <= DOOM_DANGER_THRESHOLD_SECONDS }" data-testid="tv-doom-timer">{{ doomRemainingLabel }}</div>
       </div>
 
       <!-- Tension mode -->
       <div
         v-else-if="tvMode === 'tension' && activeTensionScale"
         class="tension-display"
+        data-testid="tv-mode-tension"
         :style="{ '--tension-color': tensionColor }"
       >
         <h2 class="tension-title">{{ activeTensionScale.title }}</h2>
@@ -692,12 +694,12 @@ onUnmounted(() => {
       </div>
 
       <!-- Image mode -->
-      <div v-else-if="tvMode === 'image'" class="image-display">
+      <div v-else-if="tvMode === 'image'" class="image-display" data-testid="tv-mode-image">
         <img :src="resolveMediaUrl(currentImageUrl)" class="tv-image" alt="Image affichée" />
       </div>
 
       <!-- Map mode -->
-      <div v-else-if="tvMode === 'map' && currentMapUrl" ref="mapContainerRef" class="map-display">
+      <div v-else-if="tvMode === 'map' && currentMapUrl" ref="mapContainerRef" class="map-display" data-testid="tv-mode-map">
         <!-- Layer 1: map image -->
         <img :src="resolveMediaUrl(currentMapUrl)" class="map-image" :style="mapImageStyle" alt="Carte" @load="onMapImageLoad" />
         <!-- Layer 2: fog of war canvas -->
@@ -728,7 +730,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Merchant mode -->
-      <div v-else-if="tvMode === 'merchant' && activeMerchant" class="merchant-display">
+      <div v-else-if="tvMode === 'merchant' && activeMerchant" class="merchant-display" data-testid="tv-mode-merchant">
         <div class="merchant-grid">
           <div
             v-for="item in activeMerchant.items"

@@ -767,11 +767,11 @@ onUnmounted(() => {
         <button class="notify-btn" :class="notificationButtonClass" @click="handleNotificationButton">
           <AppIcon :icon="notificationButtonIcon" size="0.9em" /> {{ notificationButtonText }}
         </button>
-        <button class="theme-toggle-btn" @click="toggleTheme">
+        <button class="theme-toggle-btn" @click="toggleTheme" data-testid="player-theme-toggle">
           <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.9em" />
           {{ isLightTheme ? 'Sombre' : 'Clair' }}
         </button>
-        <button class="leave-btn" @click="leaveSession">Quitter</button>
+        <button class="leave-btn" @click="leaveSession" data-testid="leave-button">Quitter</button>
       </div>
     </header>
 
@@ -795,7 +795,7 @@ onUnmounted(() => {
           <div class="panel hp-panel">
             <div class="panel-header">
               <span class="panel-label"><AppIcon icon="game-icons:hearts" size="0.85rem" color="var(--color-danger)" /> Points de Vie</span>
-              <span class="hp-fraction">{{ confirmedDisplayedHp }} / {{ maxHp }}</span>
+              <span class="hp-fraction" data-testid="hp-fraction">{{ confirmedDisplayedHp }} / {{ maxHp }}</span>
               <span v-if="confirmedTemporaryHp > 0" class="hp-temp">+{{ confirmedTemporaryHp }} TEMP</span>
             </div>
             <!-- Max HP edit inline -->
@@ -825,23 +825,25 @@ onUnmounted(() => {
             <div class="hp-bar-fill" :style="{ width: hpPercent + '%', background: hpBarColor }" />
           </div>
           <div class="hp-controls">
-            <button class="hp-btn minus" @click="adjustHp(-5)">−5</button>
-            <button class="hp-btn minus" @click="adjustHp(-1)">−1</button>
+            <button class="hp-btn minus" @click="adjustHp(-5)" data-testid="hp-minus-5">−5</button>
+            <button class="hp-btn minus" @click="adjustHp(-1)" data-testid="hp-minus-1">−1</button>
             <input
               v-model.number="pendingHp"
               type="number"
               class="hp-input"
               :min="0"
               :max="MAX_HP_LIMIT"
+              data-testid="hp-input"
             />
-            <button class="hp-btn plus" @click="adjustHp(1)">+1</button>
-            <button class="hp-btn plus" @click="adjustHp(5)">+5</button>
+            <button class="hp-btn plus" @click="adjustHp(1)" data-testid="hp-plus-1">+1</button>
+            <button class="hp-btn plus" @click="adjustHp(5)" data-testid="hp-plus-5">+5</button>
           </div>
           <button
             class="hp-send-btn"
             :class="{ sent: hpSent }"
             :disabled="hpSending || pendingHp === currentHp"
             @click="sendHpUpdate"
+            data-testid="hp-submit"
           >
             <AppIcon v-if="!hpSent && !hpSending" icon="lucide:send" size="0.85em" />
             {{ hpSent ? '✓ Mis à jour' : hpSending ? '…' : 'Mettre à jour' }}
@@ -861,12 +863,14 @@ onUnmounted(() => {
               :min="INITIATIVE_MIN"
               :max="INITIATIVE_MAX"
               placeholder="Ex: 14"
+              data-testid="initiative-input"
             />
               <button
                 class="initiative-send-btn"
                 :class="{ sent: initiativeSent }"
                 :disabled="initiativeSending"
                 @click="sendInitiativeUpdate"
+                data-testid="initiative-submit"
               >
                 <AppIcon v-if="!initiativeSent && !initiativeSending" icon="lucide:send" size="0.85em" />
                 {{ initiativeSent ? '✓ Envoyée' : initiativeSending ? '…' : 'Envoyer' }}
@@ -880,6 +884,7 @@ onUnmounted(() => {
             class="concentration-btn"
             :class="{ active: isConcentrating }"
             @click="toggleConcentration"
+            data-testid="concentration-toggle"
           >
             <span class="concentration-icon"><AppIcon icon="game-icons:bulls-eye" size="1.3rem" /></span>
             <div class="concentration-text">
@@ -916,6 +921,7 @@ onUnmounted(() => {
               :key="cond.id"
               class="condition-btn"
               :class="{ active: activeConditions.includes(cond.id) }"
+              :data-testid="`condition-${cond.id}`"
               @click="toggleCondition(cond.id)"
             >
               <span class="cond-icon"><AppIcon :icon="cond.icon" :color="activeConditions.includes(cond.id) ? (cond.color || 'var(--player-danger-text)') : 'currentColor'" size="1.1rem" /></span>
@@ -1078,6 +1084,7 @@ onUnmounted(() => {
         class="tab-item"
         :class="{ active: activeTab === 'combat' }"
         @click="switchTab('combat')"
+        data-testid="player-tab-combat"
       >
         <span class="tab-icon"><AppIcon icon="game-icons:crossed-swords" size="1.3rem" /></span>
         <span class="tab-label">Combat</span>
@@ -1086,6 +1093,7 @@ onUnmounted(() => {
         class="tab-item"
         :class="{ active: activeTab === 'dés' }"
         @click="switchTab('dés')"
+        data-testid="player-tab-des"
       >
         <span class="tab-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="1.3rem" /></span>
         <span class="tab-label">Dés</span>
@@ -1094,6 +1102,7 @@ onUnmounted(() => {
         class="tab-item"
         :class="{ active: activeTab === 'notes' }"
         @click="switchTab('notes')"
+        data-testid="player-tab-notes"
       >
         <span class="tab-icon"><AppIcon icon="lucide:notebook-pen" size="1.3rem" /></span>
         <span class="tab-label">Notes</span>
@@ -1102,6 +1111,7 @@ onUnmounted(() => {
         class="tab-item"
         :class="{ active: activeTab === 'sorts' }"
         @click="switchTab('sorts')"
+        data-testid="player-tab-sorts"
       >
         <span class="tab-icon"><AppIcon icon="lucide:search" size="1.3rem" /></span>
         <span class="tab-label">Sorts</span>
@@ -1110,6 +1120,7 @@ onUnmounted(() => {
         class="tab-item"
         :class="{ active: activeTab === 'objets' }"
         @click="switchTab('objets')"
+        data-testid="player-tab-objets"
       >
         <span class="tab-icon"><AppIcon icon="lucide:gem" size="1.3rem" /></span>
         <span class="tab-label">Objets</span>
@@ -1119,6 +1130,7 @@ onUnmounted(() => {
         :class="{ active: activeTab === 'boutique', disabled: !activeMerchant }"
         :disabled="!activeMerchant"
         @click="switchTab('boutique')"
+        data-testid="player-tab-boutique"
       >
         <span class="tab-icon" :class="{ 'tab-icon-notify': activeMerchant && cartItemCount === 0 }"><AppIcon icon="game-icons:shop" size="1.3rem" /></span>
         <span class="tab-label">Boutique</span>
@@ -1129,6 +1141,7 @@ onUnmounted(() => {
         class="tab-item"
         :class="{ active: activeTab === 'vote' }"
         @click="switchTab('vote'); hasNewVote = false"
+        data-testid="player-tab-vote"
       >
         <span class="tab-icon" :class="{ 'tab-icon-notify': hasNewVote && activeTab !== 'vote' }"><AppIcon icon="lucide:check-square" size="1.3rem" /></span>
         <span class="tab-label">Vote</span>
@@ -1138,6 +1151,7 @@ onUnmounted(() => {
         class="tab-item"
         :class="{ active: activeTab === 'messages' }"
         @click="switchTab('messages')"
+        data-testid="player-tab-messages"
       >
         <span class="tab-icon" :class="{ 'tab-icon-notify': unreadMessages > 0 }"><AppIcon icon="lucide:inbox" size="1.3rem" /></span>
         <span class="tab-label">Messages</span>

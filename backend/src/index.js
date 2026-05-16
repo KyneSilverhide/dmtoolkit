@@ -68,12 +68,14 @@ const apiLimiter = rateLimit({
   max: 200,
   message: { error: 'Too many requests, please try again later.' },
 })
-app.use('/api/auth', authLimiter, authRoutes)
-app.use('/api/sessions', apiLimiter, sessionRoutes)
-app.use('/api/uploads', apiLimiter, uploadRoutes)
-app.use('/api/spells', apiLimiter, spellRoutes)
-app.use('/api/magic-items', apiLimiter, magicItemRoutes)
-app.use('/api/equipment', apiLimiter, equipmentRoutes)
+// Bypass rate limiters in test mode
+const isTest = process.env.NODE_ENV === 'test'
+app.use('/api/auth', isTest ? authRoutes : [authLimiter, authRoutes])
+app.use('/api/sessions', isTest ? sessionRoutes : [apiLimiter, sessionRoutes])
+app.use('/api/uploads', isTest ? uploadRoutes : [apiLimiter, uploadRoutes])
+app.use('/api/spells', isTest ? spellRoutes : [apiLimiter, spellRoutes])
+app.use('/api/magic-items', isTest ? magicItemRoutes : [apiLimiter, magicItemRoutes])
+app.use('/api/equipment', isTest ? equipmentRoutes : [apiLimiter, equipmentRoutes])
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
 
 setupSocket(io)
@@ -107,9 +109,14 @@ async function start() {
       break
     } catch (err) {
       retries--
-      console.log(`DB not ready, retrying... (${retries} left)`)
+      console.error(`DB error (${err.message}), retrying... (${retries} left)`)
       await new Promise(r => setTimeout(r, 3000))
     }
+  }
+
+  if (retries === 0) {
+    console.error('Database not available after all retries. Exiting.')
+    process.exit(1)
   }
 
   server.listen(PORT, () => {

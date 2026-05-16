@@ -73,14 +73,14 @@ async function login() {
 
     <main class="home-main">
       <div class="home-buttons">
-        <button class="home-btn mj-btn" @click="openModal">
+        <button class="home-btn mj-btn" @click="openModal" data-testid="dm-login-button">
           <span class="btn-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="2rem" /></span>
           <div class="btn-text">
             <span class="btn-label">Je suis MJ</span>
             <span class="btn-sub">Accéder à l'administration</span>
           </div>
         </button>
-        <button class="home-btn player-btn" @click="router.push('/join')">
+        <button class="home-btn player-btn" @click="router.push('/join')" data-testid="player-login-button">
           <span class="btn-icon"><AppIcon icon="game-icons:crossed-swords" size="2rem" /></span>
           <div class="btn-text">
             <span class="btn-label">Je suis Joueur</span>
@@ -93,7 +93,7 @@ async function login() {
     <!-- Login modal -->
     <Teleport to="body">
       <Transition name="modal">
-        <div v-if="showModal" class="modal-backdrop" @click="onBackdropClick">
+        <div v-if="showModal" class="modal-backdrop" @click="onBackdropClick" data-testid="login-modal">
           <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <button class="modal-close" :disabled="loading" @click="closeModal" aria-label="Fermer">
               <AppIcon icon="lucide:x" size="1em" />
@@ -116,6 +116,7 @@ async function login() {
                   placeholder="admin"
                   autocomplete="username"
                   autofocus
+                  data-testid="username-input"
                 />
               </div>
               <div class="form-group">
@@ -127,6 +128,7 @@ async function login() {
                   class="form-input"
                   placeholder="••••••••"
                   autocomplete="current-password"
+                  data-testid="password-input"
                 />
               </div>
 
@@ -136,7 +138,7 @@ async function login() {
                 </p>
               </Transition>
 
-              <button type="submit" class="submit-btn" :disabled="loading">
+              <button type="submit" class="submit-btn" :disabled="loading" data-testid="login-submit">
                 <AppIcon v-if="!loading" icon="lucide:log-in" size="0.9em" />
                 <span>{{ loading ? 'Connexion…' : 'Se connecter' }}</span>
               </button>

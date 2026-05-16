@@ -1,4 +1,23 @@
+const { Client } = require('pg')
 const pool = require('./db')
+
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://criticalfail:criticalfail@localhost:5432/criticalfail'
+
+async function ensureDatabase() {
+  const url = new URL(DATABASE_URL)
+  const dbName = url.pathname.slice(1)
+  url.pathname = '/postgres'
+  const client = new Client({ connectionString: url.toString() })
+  await client.connect()
+  try {
+    await client.query(`CREATE DATABASE "${dbName}"`)
+    console.log(`Database "${dbName}" created.`)
+  } catch (err) {
+    if (err.code !== '42P04') throw err // 42P04 = duplicate_database, already exists
+  } finally {
+    await client.end()
+  }
+}
 
 const migrations = `
 CREATE TABLE IF NOT EXISTS admins (
@@ -58,7 +77,9 @@ ALTER TABLE messages ADD COLUMN IF NOT EXISTS text_effect VARCHAR(20) DEFAULT 'n
 ALTER TABLE players ADD COLUMN IF NOT EXISTS conditions TEXT DEFAULT '[]';
 ALTER TABLE players ADD COLUMN IF NOT EXISTS is_concentrating BOOLEAN DEFAULT FALSE;
 
+ALTER TABLE sessions ALTER COLUMN code DROP DEFAULT;
 ALTER TABLE sessions ALTER COLUMN code TYPE VARCHAR(40) USING code::text;
+ALTER TABLE sessions ALTER COLUMN code SET DEFAULT gen_random_uuid()::text;
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS tv_mode VARCHAR(20) DEFAULT 'lobby';
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_image_url VARCHAR(500);
 
@@ -183,10 +204,19 @@ END $$;
 `
 
 async function runMigrations() {
+  await ensureDatabase()
   const client = await pool.connect()
   try {
+    await client.query('BEGIN')
     await client.query(migrations)
+    await client.query('COMMIT')
     console.log('Migrations executed successfully.')
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {})
+    const pos = err.position ? parseInt(err.position) : null
+    console.error('Migration failed:', err.message)
+    if (pos) console.error('Near SQL:', migrations.slice(Math.max(0, pos - 120), pos + 120))
+    throw err
   } finally {
     client.release()
   }
