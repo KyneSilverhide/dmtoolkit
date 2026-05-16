@@ -59,7 +59,7 @@ jobs:
 #        run: docker compose -f docker-compose.yml -f e2e/docker-compose.test.yml down -v
 
   build-and-deploy:
-    needs: [e2e]
+#    needs: [e2e]
     runs-on: ubuntu-latest
     permissions:
       contents: write
