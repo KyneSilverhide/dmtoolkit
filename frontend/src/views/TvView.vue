@@ -579,7 +579,7 @@ onUnmounted(() => {
               </div>
 
               <span v-if="player.is_concentrating" class="concentration-badge" title="Concentration">
-                <AppIcon icon="game-icons:bulls-eye" size="1em" color="var(--tv-info-text, var(--color-info-bright))" />
+                <AppIcon icon="game-icons:bullseye" size="1em" color="var(--tv-info-text, var(--color-info-bright))" />
               </span>
             </div>
 

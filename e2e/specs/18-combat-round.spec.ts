@@ -30,7 +30,7 @@ test('combat round increments and TV shows updated value', async ({ browser }) =
     await adminPage.page.locator('button.action-btn').filter({ hasText: '+1' }).first().click()
 
     // TV combat round badge should show 1
-    await expect(tvPage.getCombatRound()).toContainText('1', { timeout: 8_000 })
+    await expect(tvPage.getCombatRound()).toContainText('1', { timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
@@ -57,11 +57,11 @@ test('combat round decrements (not below 0)', async ({ browser }) => {
     // Increment to 2
     await adminPage.page.locator('button.action-btn').filter({ hasText: '+1' }).first().click()
     await adminPage.page.locator('button.action-btn').filter({ hasText: '+1' }).first().click()
-    await expect(tvPage.getCombatRound()).toContainText('2', { timeout: 8_000 })
+    await expect(tvPage.getCombatRound()).toContainText('2', { timeout: 5_000 })
 
     // Decrement back to 1
     await adminPage.page.locator('button.action-btn').filter({ hasText: '−1' }).first().click()
-    await expect(tvPage.getCombatRound()).toContainText('1', { timeout: 8_000 })
+    await expect(tvPage.getCombatRound()).toContainText('1', { timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
@@ -87,11 +87,11 @@ test('reset combat round returns to 0', async ({ browser }) => {
     await adminPage.switchTab('tension')
     await adminPage.page.locator('button.action-btn').filter({ hasText: '+1' }).first().click()
     await adminPage.page.locator('button.action-btn').filter({ hasText: '+1' }).first().click()
-    await expect(tvPage.getCombatRound()).toContainText('2', { timeout: 8_000 })
+    await expect(tvPage.getCombatRound()).toContainText('2', { timeout: 5_000 })
 
     // Reset
     await adminPage.page.locator('button.action-btn.danger-btn').filter({ hasText: 'Réinitialiser' }).click()
-    await expect(tvPage.getCombatRound()).toContainText('0', { timeout: 8_000 })
+    await expect(tvPage.getCombatRound()).toContainText('0', { timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()

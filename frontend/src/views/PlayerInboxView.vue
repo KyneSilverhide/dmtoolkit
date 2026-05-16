@@ -700,7 +700,7 @@ onUnmounted(() => {
     <Teleport to="body">
       <div v-if="concentrationModal" class="modal-overlay" @click.self="dismissConcentrationModal">
         <div class="modal-box concentration-modal">
-          <div class="modal-icon"><AppIcon icon="game-icons:bulls-eye" size="3rem" color="var(--color-info-bright)" /></div>
+          <div class="modal-icon"><AppIcon icon="game-icons:bullseye" size="3rem" color="var(--color-info-bright)" /></div>
           <h2 class="modal-title">Jet de Concentration !</h2>
           <p class="modal-body">
             Vous avez subi <strong>{{ concentrationModal.damage }} dégâts</strong>.
@@ -886,7 +886,7 @@ onUnmounted(() => {
             @click="toggleConcentration"
             data-testid="concentration-toggle"
           >
-            <span class="concentration-icon"><AppIcon icon="game-icons:bulls-eye" size="1.3rem" /></span>
+            <span class="concentration-icon"><AppIcon icon="game-icons:bullseye" size="1.3rem" /></span>
             <div class="concentration-text">
               <span class="conc-label">Concentration</span>
               <span class="conc-state">{{ isConcentrating ? 'Active' : 'Inactive' }}</span>

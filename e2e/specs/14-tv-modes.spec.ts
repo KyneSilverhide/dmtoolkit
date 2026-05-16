@@ -55,7 +55,7 @@ test('admin can switch TV to combat mode', async ({ browser }) => {
     await tvPage.goto(code)
 
     await adminPage.setTvMode('combat')
-    await expect(tvPage.getMode()).toHaveAttribute('data-tv-mode', 'combat', { timeout: 8_000 })
+    await expect(tvPage.getMode()).toHaveAttribute('data-tv-mode', 'combat', { timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
@@ -78,10 +78,10 @@ test('admin can switch TV back to lobby', async ({ browser }) => {
     await tvPage.goto(code)
 
     await adminPage.setTvMode('combat')
-    await expect(tvPage.getMode()).toHaveAttribute('data-tv-mode', 'combat', { timeout: 8_000 })
+    await expect(tvPage.getMode()).toHaveAttribute('data-tv-mode', 'combat', { timeout: 5_000 })
 
     await adminPage.setTvMode('lobby')
-    await expect(tvPage.getMode()).toHaveAttribute('data-tv-mode', 'lobby', { timeout: 8_000 })
+    await expect(tvPage.getMode()).toHaveAttribute('data-tv-mode', 'lobby', { timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
@@ -103,7 +103,7 @@ test('TV combat mode shows combat round badge', async ({ browser }) => {
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
     await adminPage.setTvMode('combat')
-    await expect(tvPage.page.locator('[data-testid="tv-container"]')).toHaveAttribute('data-tv-mode', 'combat', { timeout: 8_000 })
+    await expect(tvPage.page.locator('[data-testid="tv-container"]')).toHaveAttribute('data-tv-mode', 'combat', { timeout: 5_000 })
     await expect(tvPage.getCombatRound()).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()

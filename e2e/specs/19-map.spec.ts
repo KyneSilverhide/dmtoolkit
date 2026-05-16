@@ -65,7 +65,7 @@ test('admin can upload a map and TV shows it', async ({ browser }) => {
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
-    await expect(tvPage.getMapDisplay()).toBeVisible({ timeout: 15_000 })
+    await expect(tvPage.getMapDisplay()).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
@@ -120,13 +120,13 @@ test('TV map mode shows player tokens after join', async ({ browser }) => {
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
-    await expect(tvPage.getMapDisplay()).toBeVisible({ timeout: 15_000 })
+    await expect(tvPage.getMapDisplay()).toBeVisible({ timeout: 5_000 })
 
     const { joinAsPlayer } = await import('../helpers/player')
     await joinAsPlayer(await playerCtx.newPage(), code, { name: 'MapToken', hp: 30 })
 
     // Token layer should be visible
-    await expect(tvPage.page.locator('.map-tokens-layer')).toBeVisible({ timeout: 8_000 })
+    await expect(tvPage.page.locator('.map-tokens-layer')).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()

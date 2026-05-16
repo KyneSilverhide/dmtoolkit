@@ -25,7 +25,7 @@ test('spell search returns results for known spell', async ({ browser }) => {
     await searchInput.fill('boule de feu')
     await adminPage.page.keyboard.press('Enter')
 
-    await expect(adminPage.page.getByText(/boule de feu/i)).toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.getByRole('heading', { level: 3, name: /^\s*boule de feu\s*$/i })).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
   }
@@ -46,7 +46,7 @@ test('spell search shows no results for unknown spell', async ({ browser }) => {
     await searchInput.fill('xyzzy_nonexistent_spell_xyz')
     await adminPage.page.keyboard.press('Enter')
 
-    await expect(adminPage.page.getByText(/aucun|introuvable|no result/i)).toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.getByText(/aucun sort trouvé/i)).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
   }
@@ -84,7 +84,7 @@ test('magic item search returns results', async ({ browser }) => {
       const searchInput = adminPage.page.locator('input[placeholder*="objet" i], input[placeholder*="item" i]').first()
       await searchInput.fill('épée')
       await adminPage.page.keyboard.press('Enter')
-      await expect(adminPage.page.locator('[class*="result"], [class*="item"]').first()).toBeVisible({ timeout: 8_000 })
+      await expect(adminPage.page.locator('[class*="result"], [class*="item"]').first()).toBeVisible({ timeout: 5_000 })
     }
   } finally {
     await adminCtx.close()

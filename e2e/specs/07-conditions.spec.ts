@@ -25,13 +25,13 @@ test('player can toggle a condition and admin sees it', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Cleric', hp: 45 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 10_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.toggleCondition('poisoned')
 
     // Admin should see the poisoned condition badge
-    await expect(adminPage.page.getByText('Empoisonné').first()).toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.getByText('Empoisonné').first()).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -52,15 +52,15 @@ test('player can untoggle a condition', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Paladin', hp: 55 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 10_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.toggleCondition('blinded')
-    await expect(adminPage.page.getByText('Aveuglé').first()).toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.getByText('Aveuglé').first()).toBeVisible({ timeout: 5_000 })
 
     // Untoggle
     await playerPage.toggleCondition('blinded')
-    await expect(adminPage.page.getByText('Aveuglé').first()).not.toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.getByText('Aveuglé').first()).not.toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -81,14 +81,14 @@ test('multiple conditions can be active simultaneously', async ({ browser }) => 
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Warlock', hp: 35 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 10_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.toggleCondition('frightened')
     await playerPage.toggleCondition('paralyzed')
 
-    await expect(adminPage.page.getByText('Effrayé').first()).toBeVisible({ timeout: 8_000 })
-    await expect(adminPage.page.getByText('Paralysé').first()).toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.getByText('Effrayé').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.getByText('Paralysé').first()).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -115,12 +115,12 @@ test('conditions synced to TV combat mode', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Druid', hp: 50 })
-    await expect(tvPage.page.getByText('Druid')).toBeVisible({ timeout: 10_000 })
+    await expect(tvPage.page.getByText('Druid')).toBeVisible({ timeout: 5_000 })
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.toggleCondition('stunned')
 
-    await expect(tvPage.page.getByText('Étourdi')).toBeVisible({ timeout: 8_000 })
+    await expect(tvPage.page.getByText('Étourdi')).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()

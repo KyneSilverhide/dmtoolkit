@@ -24,13 +24,13 @@ test('admin can roll the critical fail dice', async ({ browser }) => {
     await adminPage.page.getByText(code).first().click()
 
     await joinAsPlayer(await playerCtx.newPage(), code, { name: 'Fighter', hp: 45 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 10_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     await adminPage.switchTab('dice')
     await adminPage.page.locator('button.roll-btn').click()
 
     // Wait for dice animation to finish and result to appear
-    await expect(adminPage.page.locator('.result-box, .dice-result, [class*="result"]')).toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.locator('.result-card.visible')).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -51,12 +51,12 @@ test('admin sends dice result to player', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Berserker', hp: 60 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 10_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     await adminPage.switchTab('dice')
     await adminPage.page.locator('button.roll-btn').click()
     // Wait for result
-    await expect(adminPage.page.locator('.result-box, .dice-result, [class*="result"]')).toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.locator('.result-card.visible')).toBeVisible({ timeout: 5_000 })
     // Send to all players
     await adminPage.page.getByTestId('dice-send-btn').click()
 
@@ -64,7 +64,7 @@ test('admin sends dice result to player', async ({ browser }) => {
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('messages')
     // Dice results appear in the messages or as a toast
-    await expect(playerPg.locator('[class*="dice"], [class*="roll"], [class*="result"]').first()).toBeVisible({ timeout: 8_000 })
+    await expect(playerPg.locator('.dice-card').first()).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -84,14 +84,14 @@ test('admin can select combat type (melee/range/magic)', async ({ browser }) => 
     await adminPage.switchTab('dice')
 
     // Three combat type buttons should be present
-    await expect(adminPage.page.getByText('Mêlée')).toBeVisible()
-    await expect(adminPage.page.getByText('Distance')).toBeVisible()
-    await expect(adminPage.page.getByText('Magique')).toBeVisible()
+    await expect(adminPage.page.getByText('Mêlée', {exact: true})).toBeVisible()
+    await expect(adminPage.page.getByText('Distance', {exact: true})).toBeVisible()
+    await expect(adminPage.page.getByText('Magique', {exact: true})).toBeVisible()
 
     // Click Distance
     await adminPage.page.getByText('Distance').click()
     await adminPage.page.locator('button.roll-btn').click()
-    await expect(adminPage.page.locator('.result-box, .dice-result, [class*="result"]')).toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.locator('.result-card.visible')).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
   }
@@ -111,18 +111,15 @@ test('dice result shown in admin roll toast when player rolls', async ({ browser
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Knight', hp: 50 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 10_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     // Player rolls a die from the dés tab
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('des')
-    // Roll a die (click any die button)
-    await playerPg.locator('[class*="die"], [class*="dice-btn"], button[class*="d"]').first().click({ timeout: 5_000 }).catch(() => {})
+    await playerPg.locator('button.roll-btn.normal').click()
 
-    // Admin might receive a toast — check if toast container appears
-    await expect(adminPage.page.getByTestId('player-roll-toast')).toBeVisible({ timeout: 8_000 }).catch(() => {
-      // Toast might have auto-dismissed — acceptable
-    })
+    // Admin should receive a roll toast
+    await expect(adminPage.page.getByTestId('player-roll-toast')).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -142,11 +139,11 @@ test('dice roll produces a value between 1 and 100', async ({ browser }) => {
     await adminPage.page.getByText(code).first().click()
 
     await joinAsPlayer(await playerCtx.newPage(), code, { name: 'Tester', hp: 10 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 10_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     await adminPage.switchTab('dice')
     await adminPage.page.locator('button.roll-btn').click()
-    await expect(adminPage.page.locator('.roll-btn')).not.toBeDisabled({ timeout: 8_000 })
+    await expect(adminPage.page.locator('.roll-btn')).not.toBeDisabled({ timeout: 5_000 })
 
     const diceDisplayEl = adminPage.page.locator('[class*="dice-value"], [class*="animated-dice"], [class*="dice-display"]').first()
     if (await diceDisplayEl.count()) {

@@ -139,14 +139,7 @@ async function getActiveVote(sessionId, voteId) {
   const voteInfo = await pool.query('SELECT * FROM votes WHERE id = $1 AND status = $2', [voteId, 'active'])
   const vote = voteInfo.rows[0]
   if (!vote) return null
-  let options
-  try {
-    options = typeof vote.options === 'string' ? JSON.parse(vote.options) : vote.options
-    if (!Array.isArray(options)) return null
-  } catch {
-    console.error('Malformed vote options in vote id:', vote.id)
-    return null
-  }
+  const options = typeof vote.options === 'string' ? JSON.parse(vote.options) : vote.options
   const responses = await pool.query('SELECT option_index, player_name FROM vote_responses WHERE vote_id = $1', [vote.id])
   const results = options.map((_, i) => responses.rows.filter(r => r.option_index === i).length)
   const totalPlayers = await pool.query('SELECT COUNT(*)::int AS total FROM players WHERE session_id = $1', [sessionId])
@@ -177,14 +170,7 @@ async function getVoteState(sessionId, voteId, activeOnly = true) {
     : await pool.query('SELECT * FROM votes WHERE id = $1', [voteId])
   const vote = voteInfo.rows[0]
   if (!vote) return null
-  let options
-  try {
-    options = typeof vote.options === 'string' ? JSON.parse(vote.options) : vote.options
-    if (!Array.isArray(options)) return null
-  } catch {
-    console.error('Malformed vote options in vote id:', vote.id)
-    return null
-  }
+  const options = typeof vote.options === 'string' ? JSON.parse(vote.options) : vote.options
   const responses = await pool.query('SELECT option_index, player_name FROM vote_responses WHERE vote_id = $1', [vote.id])
   const results = options.map((_, i) => responses.rows.filter(r => r.option_index === i).length)
   const totalPlayers = await pool.query('SELECT COUNT(*)::int AS total FROM players WHERE session_id = $1', [sessionId])
@@ -227,11 +213,6 @@ function serializeTimer(session) {
  *
  * @param {import('socket.io').Server} io
  */
-function formatVoteCloseDesc(voteUpdate) {
-  const resultParts = voteUpdate.options.map((opt, i) => `${opt} (${voteUpdate.results[i]})`)
-  return `Vote terminé : "${voteUpdate.question}" — ${resultParts.join(', ')}`
-}
-
 function setupSocket(io) {
   io.use((socket, next) => {
     const token = socket.handshake.auth.token
@@ -619,13 +600,6 @@ function setupSocket(io) {
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'doom' })
         io.to(`tv:${sessionId}`).emit('doom-clock-started', payload)
         io.to(`admin:${sessionId}`).emit('doom-clock-started', payload)
-        const durText = safeDuration < 60 ? `${safeDuration}s` : `${Math.round(safeDuration / 60)} min`
-        const doomDesc = `Doom Clock démarrée : "${safeTitle}" (${durText})`
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'doom_clock_started', doomDesc]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'doom_clock_started', description: doomDesc, createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
@@ -643,11 +617,6 @@ function setupSocket(io) {
         io.to(`admin:${sessionId}`).emit('doom-clock-stopped')
         io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'doom_clock_stopped', 'Doom Clock arrêtée']
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'doom_clock_stopped', description: 'Doom Clock arrêtée', createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
@@ -684,12 +653,6 @@ function setupSocket(io) {
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'tension' })
         io.to(`tv:${sessionId}`).emit('tension-scale-updated', payload)
         io.to(`admin:${sessionId}`).emit('tension-scale-updated', payload)
-        const tensionDesc = `Échelle de tension : "${safeTitle}" (${safeSteps} crans)`
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'tension_started', tensionDesc]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'tension_started', description: tensionDesc, createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
@@ -718,12 +681,6 @@ function setupSocket(io) {
         }
         io.to(`tv:${sessionId}`).emit('tension-scale-updated', payload)
         io.to(`admin:${sessionId}`).emit('tension-scale-updated', payload)
-        const updateDesc = `Tension : niveau ${row.tension_level}/${row.tension_steps}`
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description, value) VALUES ($1, $2, $3, $4)',
-          [sessionId, 'tension_updated', updateDesc, row.tension_level]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'tension_updated', description: updateDesc, value: row.tension_level, createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
@@ -741,11 +698,6 @@ function setupSocket(io) {
         io.to(`admin:${sessionId}`).emit('tension-scale-ended')
         io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'tension_ended', 'Échelle de tension terminée']
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'tension_ended', description: 'Échelle de tension terminée', createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
@@ -765,12 +717,6 @@ function setupSocket(io) {
         io.to(`session:${sessionId}`).emit('vote-started', voteData)
         io.to(`admin:${sessionId}`).emit('vote-started', voteData)
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'vote' })
-        const voteStartDesc = `Vote démarré : "${question}"`
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'vote_started', voteStartDesc]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'vote_started', description: voteStartDesc, createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
@@ -778,22 +724,11 @@ function setupSocket(io) {
     socket.on('submit-vote', async ({ voteId, optionIndex }) => {
       if (!socket.playerId || !socket.sessionId) return
       try {
-        const voteCheck = await pool.query('SELECT options FROM votes WHERE id = $1 AND status = $2', [voteId, 'active'])
-        if (!voteCheck.rows[0]) { socket.emit('vote-error', { message: 'Vote introuvable ou clôturé.' }); return }
-        let voteOptions
-        try {
-          voteOptions = typeof voteCheck.rows[0].options === 'string' ? JSON.parse(voteCheck.rows[0].options) : voteCheck.rows[0].options
-        } catch { voteOptions = [] }
-        const idx = parseInt(optionIndex)
-        if (!Number.isFinite(idx) || idx < 0 || idx >= voteOptions.length) {
-          socket.emit('vote-error', { message: 'Option invalide.' })
-          return
-        }
         const existing = await pool.query('SELECT id FROM vote_responses WHERE vote_id = $1 AND player_id = $2', [voteId, socket.playerId])
         if (existing.rows[0]) { socket.emit('vote-error', { message: 'Vous avez déjà voté.' }); return }
         const pname = await pool.query('SELECT player_name FROM players WHERE id = $1', [socket.playerId])
         const playerName = pname.rows[0]?.player_name || 'Inconnu'
-        await pool.query('INSERT INTO vote_responses (vote_id, player_id, player_name, option_index) VALUES ($1, $2, $3, $4)', [voteId, socket.playerId, playerName, idx])
+        await pool.query('INSERT INTO vote_responses (vote_id, player_id, player_name, option_index) VALUES ($1, $2, $3, $4)', [voteId, socket.playerId, playerName, optionIndex])
         socket.emit('vote-submitted', { optionIndex })
 
         const voteUpdate = await getVoteState(socket.sessionId, voteId, true)
@@ -807,12 +742,6 @@ function setupSocket(io) {
             io.to(`tv:${socket.sessionId}`).emit('vote-closed', voteUpdate)
             io.to(`session:${socket.sessionId}`).emit('vote-closed', voteUpdate)
             io.to(`admin:${socket.sessionId}`).emit('vote-closed', voteUpdate)
-            const autoCloseDesc = formatVoteCloseDesc(voteUpdate)
-            await pool.query(
-              'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-              [socket.sessionId, 'vote_closed', autoCloseDesc]
-            )
-            io.to(`admin:${socket.sessionId}`).emit('session-event', { eventType: 'vote_closed', description: autoCloseDesc, createdAt: new Date() })
           }
         }
       } catch (err) { console.error(err) }
@@ -831,12 +760,6 @@ function setupSocket(io) {
         io.to(`tv:${sessionId}`).emit('vote-closed', voteUpdate)
         io.to(`session:${sessionId}`).emit('vote-closed', voteUpdate)
         io.to(`admin:${sessionId}`).emit('vote-closed', voteUpdate)
-        const voteCloseDesc = formatVoteCloseDesc(voteUpdate)
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'vote_closed', voteCloseDesc]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'vote_closed', description: voteCloseDesc, createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
@@ -1079,21 +1002,6 @@ function setupSocket(io) {
 
         io.to(`admin:${socket.sessionId}`).emit('player-roll-result', payload)
 
-        if (sides === 20 && count === 1 && finalRolls.length === 1) {
-          const singleRoll = finalRolls[0]
-          if (singleRoll === 20 || singleRoll === 1) {
-            const critType = singleRoll === 20 ? 'critical_hit' : 'critical_miss'
-            const critDesc = singleRoll === 20
-              ? `${playerName} a obtenu un 20 naturel !`
-              : `${playerName} a obtenu un 1 naturel...`
-            await pool.query(
-              'INSERT INTO session_events (session_id, event_type, description, player_name, value) VALUES ($1, $2, $3, $4, $5)',
-              [socket.sessionId, critType, critDesc, playerName, singleRoll]
-            )
-            io.to(`admin:${socket.sessionId}`).emit('session-event', { eventType: critType, description: critDesc, playerName, value: singleRoll, createdAt: new Date() })
-          }
-        }
-
         if (!hidden) {
           socket.emit('player-roll-confirmed', payload)
         } else {
@@ -1282,12 +1190,6 @@ function setupSocket(io) {
           socket.emit('merchant-updated', merchantData)
           io.to(`tv:${req.session_id}`).emit('merchant-items-updated', merchantData)
           io.to(`session:${req.session_id}`).emit('merchant-items-updated', merchantData)
-          const purchaseDesc = `${req.player_name} a acheté ${req.quantity}x ${req.item_name} pour ${req.base_price} po`
-          await pool.query(
-            'INSERT INTO session_events (session_id, event_type, description, player_name, value) VALUES ($1, $2, $3, $4, $5)',
-            [req.session_id, 'purchase_accepted', purchaseDesc, req.player_name, req.base_price]
-          )
-          io.to(`admin:${req.session_id}`).emit('session-event', { eventType: 'purchase_accepted', description: purchaseDesc, playerName: req.player_name, value: req.base_price, createdAt: new Date() })
         } else if (action === 'discount' || action === 'increase') {
           const fp = Math.max(0, parseInt(finalPrice) || req.base_price)
           await pool.query('UPDATE purchase_requests SET status = $1, final_price = $2 WHERE id = $3', [action, fp, requestId])
@@ -1296,12 +1198,6 @@ function setupSocket(io) {
           await pool.query('UPDATE purchase_requests SET status = $1 WHERE id = $2', ['rejected', requestId])
           const items = [{ item_name: req.item_name, quantity: req.quantity, total_price: req.base_price }]
           if (playerSocketId) io.to(playerSocketId).emit('batch-rejected', { items })
-          const rejectDesc = `Achat refusé pour ${req.player_name} : ${req.quantity}x ${req.item_name}`
-          await pool.query(
-            'INSERT INTO session_events (session_id, event_type, description, player_name) VALUES ($1, $2, $3, $4)',
-            [req.session_id, 'purchase_rejected', rejectDesc, req.player_name]
-          )
-          io.to(`admin:${req.session_id}`).emit('session-event', { eventType: 'purchase_rejected', description: rejectDesc, playerName: req.player_name, createdAt: new Date() })
         }
         socket.emit('purchase-responded', { requestId, action })
       } catch (err) { console.error(err) }
@@ -1353,14 +1249,6 @@ function setupSocket(io) {
           io.to(`tv:${reqs[0].session_id}`).emit('merchant-items-updated', merchantData)
           io.to(`session:${reqs[0].session_id}`).emit('merchant-items-updated', merchantData)
           socket.emit('purchase-responded', { batchId, action, totalPrice: finalTotal })
-          const batchPlayerName = reqs[0].player_name
-          const batchItemSummary = reqs.map(r => `${r.quantity}x ${r.item_name}`).join(', ')
-          const batchDesc = `${batchPlayerName} a acheté ${batchItemSummary} pour ${finalTotal} po`
-          await pool.query(
-            'INSERT INTO session_events (session_id, event_type, description, player_name, value) VALUES ($1, $2, $3, $4, $5)',
-            [reqs[0].session_id, 'purchase_accepted', batchDesc, batchPlayerName, finalTotal]
-          )
-          io.to(`admin:${reqs[0].session_id}`).emit('session-event', { eventType: 'purchase_accepted', description: batchDesc, playerName: batchPlayerName, value: finalTotal, createdAt: new Date() })
         } else if (action === 'reject') {
           for (const req of reqs) {
             await pool.query('UPDATE purchase_requests SET status = $1 WHERE id = $2', ['rejected', req.id])
@@ -1368,14 +1256,6 @@ function setupSocket(io) {
           const items = reqs.map(r => ({ item_name: r.item_name, quantity: r.quantity, total_price: r.base_price }))
           if (playerSocketId) io.to(playerSocketId).emit('batch-rejected', { batchId, items })
           socket.emit('purchase-responded', { batchId, action })
-          const rejectPlayerName = reqs[0].player_name
-          const rejectItemSummary = reqs.map(r => `${r.quantity}x ${r.item_name}`).join(', ')
-          const rejectBatchDesc = `Achat refusé pour ${rejectPlayerName} : ${rejectItemSummary}`
-          await pool.query(
-            'INSERT INTO session_events (session_id, event_type, description, player_name) VALUES ($1, $2, $3, $4)',
-            [reqs[0].session_id, 'purchase_rejected', rejectBatchDesc, rejectPlayerName]
-          )
-          io.to(`admin:${reqs[0].session_id}`).emit('session-event', { eventType: 'purchase_rejected', description: rejectBatchDesc, playerName: rejectPlayerName, createdAt: new Date() })
         }
       } catch (err) { console.error(err) }
     })
@@ -1467,14 +1347,6 @@ function setupSocket(io) {
         )
         io.to(`tv:${sessionId}`).emit('round-updated', { round: safeRound })
         io.to(`admin:${sessionId}`).emit('round-updated', { round: safeRound })
-        if (safeRound > 0) {
-          const roundDesc = `Round de combat ${safeRound}`
-          await pool.query(
-            'INSERT INTO session_events (session_id, event_type, description, value) VALUES ($1, $2, $3, $4)',
-            [sessionId, 'combat_round', roundDesc, safeRound]
-          )
-          io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'combat_round', description: roundDesc, value: safeRound, createdAt: new Date() })
-        }
       } catch (err) { console.error(err) }
     })
 

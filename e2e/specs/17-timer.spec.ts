@@ -46,7 +46,7 @@ test('admin starts a timer and it shows on TV in combat mode', async ({ browser 
     await startTimer(adminPage, 0, 30, 'Temps de réflexion')
 
     // Timer should appear on TV (in combat mode, shown as overlay)
-    await expect(tvPage.page.getByText(/Temps de réflexion|minuteur|timer/i)).toBeVisible({ timeout: 8_000 })
+    await expect(tvPage.page.getByText(/Temps de réflexion|minuteur|timer/i)).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
@@ -72,7 +72,7 @@ test('timer counts down on TV', async ({ browser }) => {
     await startTimer(adminPage, 0, 15)
 
     const timerEl = tvPage.page.locator('[class*="timer"], [class*="countdown"]').first()
-    await expect(timerEl).toBeVisible({ timeout: 10_000 })
+    await expect(timerEl).toBeVisible({ timeout: 5_000 })
     const t1 = await timerEl.textContent()
     await tvPage.page.waitForTimeout(2_000)
     const t2 = await timerEl.textContent()
@@ -126,7 +126,7 @@ test('timer label is displayed', async ({ browser }) => {
 
     await startTimer(adminPage, 1, 0, 'Décision finale')
 
-    await expect(tvPage.page.getByText(/Décision finale/i)).toBeVisible({ timeout: 10_000 })
+    await expect(tvPage.page.getByText(/Décision finale/i)).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()

@@ -29,14 +29,14 @@ test('player HP update reflects in admin list', async ({ browser }) => {
 
     // Get player id from admin DOM
     const playerRow = await adminPage.page.locator('[data-testid^="player-row-"]').first()
-    await expect(playerRow).toBeVisible({ timeout: 10_000 })
+    await expect(playerRow).toBeVisible({ timeout: 5_000 })
     const testId = await playerRow.getAttribute('data-testid')
     const playerId = Number(testId?.replace('player-row-', ''))
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.setHp(25)
 
-    await expect(adminPage.page.getByTestId(`player-hp-${playerId}`)).toContainText('25', { timeout: 8_000 })
+    await expect(adminPage.page.getByTestId(`player-hp-${playerId}`)).toContainText('25', { timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -59,7 +59,7 @@ test('HP bar color changes with HP percentage', async ({ browser }) => {
     await joinAsPlayer(playerPg, code, { name: 'Theodin', hp: 100 })
 
     const playerRow = adminPage.page.locator('[data-testid^="player-row-"]').first()
-    await expect(playerRow).toBeVisible({ timeout: 10_000 })
+    await expect(playerRow).toBeVisible({ timeout: 5_000 })
     const testId = await playerRow.getAttribute('data-testid')
     const playerId = Number(testId?.replace('player-row-', ''))
 
@@ -70,7 +70,7 @@ test('HP bar color changes with HP percentage', async ({ browser }) => {
     // Reduce to low HP
     const playerPage = new PlayerPage(playerPg)
     await playerPage.setHp(10)
-    await expect(hpEl).toContainText('10', { timeout: 8_000 })
+    await expect(hpEl).toContainText('10', { timeout: 5_000 })
     const color = await hpEl.evaluate((el) => getComputedStyle(el).color)
     // Should be red/danger color at 10% HP — verify it changed from green
     expect(color).not.toBe('')
@@ -96,18 +96,18 @@ test('player HP update reflects on TV in combat mode', async ({ browser }) => {
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
     await adminPage.setTvMode('combat')
-    await expect(tvPage.page.locator('[data-testid="tv-container"]')).toHaveAttribute('data-tv-mode', 'combat', { timeout: 8_000 })
+    await expect(tvPage.page.locator('[data-testid="tv-container"]')).toHaveAttribute('data-tv-mode', 'combat', { timeout: 5_000 })
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Gandalf', hp: 80 })
 
-    await expect(tvPage.page.getByText('Gandalf')).toBeVisible({ timeout: 10_000 })
+    await expect(tvPage.page.getByText('Gandalf')).toBeVisible({ timeout: 5_000 })
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.setHp(40)
 
     // TV should show updated HP
-    await expect(tvPage.page.getByText('40')).toBeVisible({ timeout: 8_000 })
+    await expect(tvPage.page.getByText('40', { exact: true })).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
@@ -131,17 +131,17 @@ test('HP increment buttons work', async ({ browser }) => {
     await joinAsPlayer(playerPg, code, { name: 'Pippin', hp: 30 })
 
     const playerRow = adminPage.page.locator('[data-testid^="player-row-"]').first()
-    await expect(playerRow).toBeVisible({ timeout: 10_000 })
+    await expect(playerRow).toBeVisible({ timeout: 5_000 })
     const testId = await playerRow.getAttribute('data-testid')
     const playerId = Number(testId?.replace('player-row-', ''))
 
     const playerPage = new PlayerPage(playerPg)
     // First set an initial HP that is not at max so we can increment
     await playerPage.setHp(20)
-    await expect(adminPage.page.getByTestId(`player-hp-${playerId}`)).toContainText('20', { timeout: 6_000 })
+    await expect(adminPage.page.getByTestId(`player-hp-${playerId}`)).toContainText('20', { timeout: 5_000 })
 
     await playerPage.incrementHp(5)
-    await expect(adminPage.page.getByTestId(`player-hp-${playerId}`)).toContainText('25', { timeout: 6_000 })
+    await expect(adminPage.page.getByTestId(`player-hp-${playerId}`)).toContainText('25', { timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -164,15 +164,15 @@ test('HP decrement buttons work', async ({ browser }) => {
     await joinAsPlayer(playerPg, code, { name: 'Merry', hp: 30 })
 
     const playerRow = adminPage.page.locator('[data-testid^="player-row-"]').first()
-    await expect(playerRow).toBeVisible({ timeout: 10_000 })
+    await expect(playerRow).toBeVisible({ timeout: 5_000 })
     const testId = await playerRow.getAttribute('data-testid')
     const playerId = Number(testId?.replace('player-row-', ''))
 
     const playerPage = new PlayerPage(playerPg)
-    await expect(adminPage.page.getByTestId(`player-hp-${playerId}`)).toContainText('30', { timeout: 6_000 })
+    await expect(adminPage.page.getByTestId(`player-hp-${playerId}`)).toContainText('30', { timeout: 5_000 })
 
     await playerPage.decrementHp(1)
-    await expect(adminPage.page.getByTestId(`player-hp-${playerId}`)).toContainText('29', { timeout: 6_000 })
+    await expect(adminPage.page.getByTestId(`player-hp-${playerId}`)).toContainText('29', { timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -215,12 +215,15 @@ test('TV shows player card with HP', async ({ browser }) => {
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
     await adminPage.setTvMode('combat')
-    await expect(tvPage.page.locator('[data-testid="tv-container"]')).toHaveAttribute('data-tv-mode', 'combat', { timeout: 8_000 })
+    await expect(tvPage.page.locator('[data-testid="tv-container"]')).toHaveAttribute('data-tv-mode', 'combat', { timeout: 5_000 })
 
     await joinAsPlayer(await playerCtx.newPage(), code, { name: 'Sauron', hp: 999 })
 
-    await expect(tvPage.page.getByText('Sauron')).toBeVisible({ timeout: 10_000 })
-    await expect(tvPage.page.getByText('999')).toBeVisible()
+    await expect(tvPage.page.getByText('Sauron')).toBeVisible({ timeout: 5_000 })
+    const hpValues = tvPage.page.getByText('999')
+    await expect(hpValues).toHaveCount(2) // show twice as 999 / 999 PV
+    await expect(hpValues.nth(0)).toBeVisible()
+    await expect(hpValues.nth(1)).toBeVisible()
   } finally {
     await adminCtx.close()
     await tvCtx.close()
@@ -244,7 +247,7 @@ test('HP displays in correct color zones', async ({ browser }) => {
     await joinAsPlayer(playerPg, code, { name: 'Eowyn', hp: 100 })
 
     const playerRow = adminPage.page.locator('[data-testid^="player-row-"]').first()
-    await expect(playerRow).toBeVisible({ timeout: 10_000 })
+    await expect(playerRow).toBeVisible({ timeout: 5_000 })
     const testId = await playerRow.getAttribute('data-testid')
     const playerId = Number(testId?.replace('player-row-', ''))
 
@@ -253,12 +256,12 @@ test('HP displays in correct color zones', async ({ browser }) => {
     // Set to >50% HP (green zone)
     const playerPage = new PlayerPage(playerPg)
     await playerPage.setHp(60)
-    await expect(hpEl).toContainText('60', { timeout: 6_000 })
+    await expect(hpEl).toContainText('60', { timeout: 5_000 })
     const greenStyle = await hpEl.getAttribute('style')
 
     // Set to ≤20% HP (red zone)
     await playerPage.setHp(10)
-    await expect(hpEl).toContainText('10', { timeout: 6_000 })
+    await expect(hpEl).toContainText('10', { timeout: 5_000 })
     const redStyle = await hpEl.getAttribute('style')
 
     expect(greenStyle).not.toBe(redStyle)

@@ -27,14 +27,14 @@ test('player can toggle concentration on', async ({ browser }) => {
     await joinAsPlayer(playerPg, code, { name: 'Wizard', hp: 28 })
 
     const playerRow = adminPage.page.locator('[data-testid^="player-row-"]').first()
-    await expect(playerRow).toBeVisible({ timeout: 10_000 })
+    await expect(playerRow).toBeVisible({ timeout: 5_000 })
     const testId = await playerRow.getAttribute('data-testid')
     const playerId = Number(testId?.replace('player-row-', ''))
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.toggleConcentration()
 
-    await expect(adminPage.page.getByTestId(`player-concentrating-${playerId}`)).toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.getByTestId(`player-concentrating-${playerId}`)).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -57,16 +57,16 @@ test('player can toggle concentration off', async ({ browser }) => {
     await joinAsPlayer(playerPg, code, { name: 'Sorcerer', hp: 22 })
 
     const playerRow = adminPage.page.locator('[data-testid^="player-row-"]').first()
-    await expect(playerRow).toBeVisible({ timeout: 10_000 })
+    await expect(playerRow).toBeVisible({ timeout: 5_000 })
     const testId = await playerRow.getAttribute('data-testid')
     const playerId = Number(testId?.replace('player-row-', ''))
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.toggleConcentration()
-    await expect(adminPage.page.getByTestId(`player-concentrating-${playerId}`)).toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.getByTestId(`player-concentrating-${playerId}`)).toBeVisible({ timeout: 5_000 })
 
     await playerPage.toggleConcentration()
-    await expect(adminPage.page.getByTestId(`player-concentrating-${playerId}`)).not.toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.getByTestId(`player-concentrating-${playerId}`)).not.toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -87,14 +87,14 @@ test('concentration warning sent when concentrating player takes damage', async 
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Enchanter', hp: 40 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 10_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.toggleConcentration()
     await playerPage.setHp(30)
 
     // The concentration-warning event triggers a toast/alert for the player
-    await expect(playerPg.getByText(/concentration/i)).toBeVisible({ timeout: 8_000 })
+    await expect(playerPg.getByText(/concentration/i)).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -118,18 +118,18 @@ test('concentration icon visible on TV combat mode', async ({ browser }) => {
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
     await adminPage.setTvMode('combat')
-    await expect(tvPage.page.locator('[data-testid="tv-container"]')).toHaveAttribute('data-tv-mode', 'combat', { timeout: 8_000 })
+    await expect(tvPage.page.locator('[data-testid="tv-container"]')).toHaveAttribute('data-tv-mode', 'combat', { timeout: 5_000 })
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Illusionist', hp: 26 })
-    await expect(tvPage.page.getByText('Illusionist')).toBeVisible({ timeout: 10_000 })
+    await expect(tvPage.page.getByText('Illusionist')).toBeVisible({ timeout: 5_000 })
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.toggleConcentration()
 
-    // TV should show concentration indicator (bulls-eye icon via AppIcon or a class)
-    const playerCard = tvPage.page.getByText('Illusionist').locator('..')
-    await expect(playerCard.getByTitle(/concentration/i)).toBeVisible({ timeout: 8_000 })
+    // TV should show concentration indicator (bullseye icon via AppIcon)
+    const playerCard = tvPage.page.locator('[data-testid^="tv-player-card-"]', { hasText: 'Illusionist' })
+    await expect(playerCard.locator('[title="Concentration"]')).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
@@ -146,8 +146,8 @@ test('concentration button UI reflects current state', async ({ page }) => {
   const btn = page.getByTestId('concentration-toggle')
 
   await playerPage.toggleConcentration()
-  await expect(btn).toHaveClass(/active|on|concentrating/, { timeout: 5_000 })
+  await expect(btn).toHaveClass(/active/, { timeout: 5_000 })
 
   await playerPage.toggleConcentration()
-  await expect(btn).not.toHaveClass(/active|on|concentrating/, { timeout: 5_000 })
+  await expect(btn).not.toHaveClass(/active/, { timeout: 5_000 })
 })

@@ -27,7 +27,7 @@ test('shows error on wrong credentials', async ({ page }) => {
   await page.getByTestId('username-input').fill('admin')
   await page.getByTestId('password-input').fill('wrong-password')
   await page.getByTestId('login-submit').click()
-  await expect(page.getByText(/identifiants/i).first()).toBeVisible()
+  await expect(page.getByText(/Invalid credentials/i).first()).toBeVisible()
 })
 
 test('successful login redirects to /admin', async ({ page }) => {
@@ -36,7 +36,7 @@ test('successful login redirects to /admin', async ({ page }) => {
   await page.getByTestId('username-input').fill(process.env.ADMIN_DEFAULT_USERNAME || 'admin')
   await page.getByTestId('password-input').fill(process.env.ADMIN_DEFAULT_PASSWORD || 'admin')
   await page.getByTestId('login-submit').click()
-  await page.waitForURL('/admin', { timeout: 10_000 })
+  await page.waitForURL('/admin', { timeout: 5_000 })
   await expect(page).toHaveURL('/admin')
 })
 

@@ -20,7 +20,7 @@ test('player view persists after page reload', async ({ page }) => {
   await page.reload()
 
   // After reload, auto-rejoin kicks in — tab bar should appear
-  await expect(page.getByTestId('player-tab-combat')).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByTestId('player-tab-combat')).toBeVisible({ timeout: 5_000 })
 })
 
 test('player name is preserved after auto-rejoin', async ({ page }) => {
@@ -29,7 +29,7 @@ test('player name is preserved after auto-rejoin', async ({ page }) => {
   await joinAsPlayer(page, code, { name: 'Gollum', hp: 25 })
 
   await page.reload()
-  await expect(page.getByText('Gollum')).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByText('Gollum')).toBeVisible({ timeout: 5_000 })
 })
 
 test('navigating directly to /view/:code auto-rejoins from localStorage', async ({ page }) => {
@@ -56,7 +56,7 @@ test('navigating directly to /view/:code auto-rejoins from localStorage', async 
   )
 
   await page.goto(`/view/${code}`)
-  await expect(page.getByTestId('player-tab-combat')).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByTestId('player-tab-combat')).toBeVisible({ timeout: 5_000 })
   await expect(page.getByText('Tom Bombadil')).toBeVisible()
 })
 
@@ -69,7 +69,7 @@ test('auto-rejoin error shown when no localStorage entry exists', async ({ page 
 
   // Should show an error or redirect to join page
   await Promise.race([
-    expect(page.getByText(/session non récupérable/i)).toBeVisible({ timeout: 8_000 }),
-    expect(page).toHaveURL(/\/join\//, { timeout: 8_000 }),
+    expect(page.getByText(/session non récupérable/i)).toBeVisible({ timeout: 5_000 }),
+    expect(page).toHaveURL(/\/join\//, { timeout: 5_000 }),
   ])
 })

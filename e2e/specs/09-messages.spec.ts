@@ -25,7 +25,7 @@ test('admin sends a message to all players and player receives it', async ({ bro
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Rogue', hp: 32 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 10_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     // Switch to message tab
     await adminPage.switchTab('message')
@@ -37,7 +37,7 @@ test('admin sends a message to all players and player receives it', async ({ bro
     // Player should see the message in messages tab
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('messages')
-    await expect(playerPg.getByText('Bienvenue dans le donjon !')).toBeVisible({ timeout: 10_000 })
+    await expect(playerPg.getByText('Bienvenue dans le donjon !')).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -58,14 +58,14 @@ test('unread messages badge increments', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Scout', hp: 28 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 10_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     await adminPage.switchTab('message')
     await adminPage.page.locator('textarea.form-textarea').fill('Message 1')
     await adminPage.page.getByTestId('message-send-btn').click()
 
     // The messages tab badge on player should show 1
-    await expect(playerPg.locator('[data-testid="player-tab-messages"] .tab-badge')).toBeVisible({ timeout: 8_000 })
+    await expect(playerPg.locator('[data-testid="player-tab-messages"] .tab-badge')).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -91,19 +91,19 @@ test('message targeted to specific player received only by them', async ({ brows
     const player2Pg = await player2Ctx.newPage()
     await joinAsPlayer(player2Pg, code, { name: 'Cleric', hp: 40 })
 
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]')).toHaveCount(2, { timeout: 10_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]')).toHaveCount(2, { timeout: 5_000 })
 
     await adminPage.switchTab('message')
 
     // Select Fighter specifically (first player in list)
-    const playerSelect = adminPage.page.locator('select').first()
-    await playerSelect.selectOption({ label: /Fighter/i })
+    const playerSelect = adminPage.page.locator('select.form-select')
+    await playerSelect.selectOption({ label: 'Fighter' })
     await adminPage.page.locator('textarea.form-textarea').fill('Message secret pour Fighter')
     await adminPage.page.getByTestId('message-send-btn').click()
 
     const p1page = new PlayerPage(player1Pg)
     await p1page.switchTab('messages')
-    await expect(player1Pg.getByText('Message secret pour Fighter')).toBeVisible({ timeout: 8_000 })
+    await expect(player1Pg.getByText('Message secret pour Fighter')).toBeVisible({ timeout: 5_000 })
 
     // Player 2 should NOT receive it
     const p2page = new PlayerPage(player2Pg)
@@ -130,7 +130,7 @@ test('player message appears with author name', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Ranger', hp: 42 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 10_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     await adminPage.switchTab('message')
     const authorInput = adminPage.page.locator('input[placeholder*="auteur" i], input[placeholder*="author" i]').first()
@@ -142,7 +142,7 @@ test('player message appears with author name', async ({ browser }) => {
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('messages')
-    await expect(playerPg.getByText('Ton destin t\'attend.')).toBeVisible({ timeout: 8_000 })
+    await expect(playerPg.getByText('Ton destin t\'attend.')).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -163,7 +163,7 @@ test('message clears after send', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Druid', hp: 46 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 10_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     await adminPage.switchTab('message')
     const textarea = adminPage.page.locator('textarea.form-textarea')
@@ -177,7 +177,7 @@ test('message clears after send', async ({ browser }) => {
   }
 })
 
-test('player attention toast appears on new message', async ({ browser }) => {
+test('messages tab icon animates on new message', async ({ browser }) => {
   const token = await getAdminToken()
   const code = await createSession(token)
 
@@ -191,14 +191,14 @@ test('player attention toast appears on new message', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Barbarian', hp: 70 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 10_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     await adminPage.switchTab('message')
     await adminPage.page.locator('textarea.form-textarea').fill('Alerte !')
     await adminPage.page.getByTestId('message-send-btn').click()
 
-    // Player should see a toast notification
-    await expect(playerPg.getByText('Alerte !')).toBeVisible({ timeout: 8_000 })
+    // The messages tab icon should get the notify animation class (tab-icon-notify)
+    await expect(playerPg.locator('[data-testid="player-tab-messages"] .tab-icon-notify')).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()

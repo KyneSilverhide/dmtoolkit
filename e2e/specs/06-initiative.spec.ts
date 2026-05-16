@@ -27,14 +27,14 @@ test('player sets initiative and admin sees it', async ({ browser }) => {
     await joinAsPlayer(playerPg, code, { name: 'Ranger', hp: 40 })
 
     const playerRow = adminPage.page.locator('[data-testid^="player-row-"]').first()
-    await expect(playerRow).toBeVisible({ timeout: 10_000 })
+    await expect(playerRow).toBeVisible({ timeout: 5_000 })
     const testId = await playerRow.getAttribute('data-testid')
     const playerId = Number(testId?.replace('player-row-', ''))
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.setInitiative(18)
 
-    await expect(adminPage.page.getByTestId(`player-initiative-${playerId}`)).toContainText('18', { timeout: 8_000 })
+    await expect(adminPage.page.getByTestId(`player-initiative-${playerId}`)).toContainText('18', { timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -92,11 +92,11 @@ test('initiative shown in TV combat mode', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Quickdraw', hp: 30 })
-    await expect(tvPage.page.getByText('Quickdraw')).toBeVisible({ timeout: 10_000 })
+    await expect(tvPage.page.getByText('Quickdraw')).toBeVisible({ timeout: 5_000 })
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.setInitiative(22)
-    await expect(tvPage.page.getByText('22')).toBeVisible({ timeout: 8_000 })
+    await expect(tvPage.page.getByText('22')).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
