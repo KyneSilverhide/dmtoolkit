@@ -12,7 +12,7 @@ test.beforeEach(async () => {
   await resetDb()
 })
 
-async function createMerchant(adminPage: AdminPage, merchantName: string, items: Array<{ name: string; price: number }>) {
+async function createMerchant(adminPage: AdminPage, merchantName: string, items: Array<{ name: string; price: number; stock?: number }>) {
   await adminPage.switchTab('merchants')
   const pg = adminPage.page
 
@@ -22,10 +22,13 @@ async function createMerchant(adminPage: AdminPage, merchantName: string, items:
   await pg.locator('input[placeholder*="Brom" i], input[placeholder*="marchand" i]').first().fill(merchantName)
 
   for (let i = 0; i < items.length; i++) {
-    if (i > 0) await pg.locator('button.small-btn').filter({ hasText: /\+ Ajouter/ }).click()
+    await pg.locator('button.small-btn').filter({ hasText: /\+ Ajouter/ }).click()
     const itemRows = pg.locator('.item-row')
     await itemRows.nth(i).locator('input.item-name-input').fill(items[i].name)
     await itemRows.nth(i).locator('input.item-price-input').fill(String(items[i].price))
+    if (items[i].stock !== undefined) {
+      await itemRows.nth(i).locator('input.item-stock-input').fill(String(items[i].stock))
+    }
   }
 
   await pg.locator('button.action-btn').filter({ hasText: /Créer le marchand/ }).click()
@@ -35,7 +38,7 @@ async function showMerchant(adminPage: AdminPage) {
   await adminPage.switchTab('merchants')
   const pg = adminPage.page
   await pg.locator('button.tab-btn').filter({ hasText: 'Liste' }).click()
-  await pg.locator('button').filter({ hasText: /afficher|montrer|ouvrir/i }).first().click()
+  await pg.locator('button.show-tv-btn').first().click()
 }
 
 test('admin creates a merchant', async ({ browser }) => {
@@ -139,7 +142,7 @@ test('player can add item to cart', async ({ browser }) => {
     await expect(playerPg.getByText('Nourriture')).toBeVisible({ timeout: 5_000 })
 
     // Add to cart
-    await playerPg.locator('button').filter({ hasText: /\+|ajouter|panier/i }).first().click()
+    await playerPg.locator('button.qty-btn').last().click()
 
     // Cart badge should appear
     await expect(playerPg.locator('[data-testid="player-tab-boutique"] .tab-badge')).toBeVisible({ timeout: 5_000 })
@@ -171,14 +174,14 @@ test('admin receives purchase request after player submits cart', async ({ brows
     await expect(playerPg.getByTestId('player-tab-boutique')).not.toBeDisabled({ timeout: 5_000 })
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('boutique')
-    await playerPg.locator('button').filter({ hasText: /\+|ajouter/i }).first().click()
+    await playerPg.locator('button.qty-btn').last().click()
 
     // Submit cart
-    await playerPg.locator('button').filter({ hasText: /valider|soumettre|commander/i }).first().click()
+    await playerPg.locator('button.cart-submit-btn').click()
 
     // Admin should see purchase request
     await adminPage.switchTab('merchants')
-    await expect(adminPage.page.getByText(/demande|achat|Customer/i)).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.getByText(/Customer souhaite acheter/i)).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -199,7 +202,7 @@ test('admin can accept purchase request', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Accepted', hp: 40 })
-    await expect(adminPage.page.getByText('Accepted')).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     await createMerchant(adminPage, 'Voran le Sage', [{ name: 'Parchemin', price: 5 }])
     await showMerchant(adminPage)
@@ -207,16 +210,16 @@ test('admin can accept purchase request', async ({ browser }) => {
     await expect(playerPg.getByTestId('player-tab-boutique')).not.toBeDisabled({ timeout: 5_000 })
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('boutique')
-    await playerPg.locator('button').filter({ hasText: /\+|ajouter/i }).first().click()
-    await playerPg.locator('button').filter({ hasText: /valider|soumettre|commander/i }).first().click()
+    await playerPg.locator('button.qty-btn').last().click()
+    await playerPg.locator('button.cart-submit-btn').click()
 
     await adminPage.switchTab('merchants')
     await adminPage.page.locator('button.respond-btn').first().click()
-    // Accept the purchase in the response dialog
-    await adminPage.page.locator('button').filter({ hasText: /accepter|accept/i }).first().click()
+    // 'accept' is the default action — confirm directly
+    await adminPage.page.locator('.respond-dialog button.action-btn').click()
 
     // Player should receive confirmation
-    await expect(playerPg.getByText(/accepté|accepted/i)).toBeVisible({ timeout: 5_000 })
+    await expect(playerPg.getByText('Achat accepté', {exact: true})).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -237,7 +240,7 @@ test('admin can reject purchase request', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Rejected', hp: 28 })
-    await expect(adminPage.page.getByText('Rejected')).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     await createMerchant(adminPage, 'Avar le Radin', [{ name: 'Gemme', price: 100 }])
     await showMerchant(adminPage)
@@ -245,14 +248,15 @@ test('admin can reject purchase request', async ({ browser }) => {
     await expect(playerPg.getByTestId('player-tab-boutique')).not.toBeDisabled({ timeout: 5_000 })
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('boutique')
-    await playerPg.locator('button').filter({ hasText: /\+|ajouter/i }).first().click()
-    await playerPg.locator('button').filter({ hasText: /valider|soumettre|commander/i }).first().click()
+    await playerPg.locator('button.qty-btn').last().click()
+    await playerPg.locator('button.cart-submit-btn').click()
 
     await adminPage.switchTab('merchants')
     await adminPage.page.locator('button.respond-btn').first().click()
-    await adminPage.page.locator('button').filter({ hasText: /refuser|reject/i }).first().click()
+    await adminPage.page.locator('button.respond-action-btn.reject').click()
+    await adminPage.page.locator('.respond-dialog button.action-btn').click()
 
-    await expect(playerPg.getByText(/refusé|rejected/i)).toBeVisible({ timeout: 5_000 })
+    await expect(playerPg.getByRole('heading', { name: 'Achat refusé' })).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -274,13 +278,9 @@ test('merchant items stock decrements after accepted purchase', async ({ browser
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'StockTester', hp: 30 })
-    await expect(adminPage.page.getByText('StockTester')).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
-    // Create merchant with stock of 2
-    await createMerchant(adminPage, 'Ingrid la Mercante', [{ name: 'Bouclier', price: 10 }])
-    // Set stock manually (items row)
-    await adminPage.page.locator('input.item-stock-input').fill('2')
-    await adminPage.page.locator('button.action-btn').filter({ hasText: /Créer/ }).click().catch(() => {})
+    await createMerchant(adminPage, 'Ingrid la Mercante', [{ name: 'Bouclier', price: 10, stock: 2 }])
 
     await showMerchant(adminPage)
     await adminPage.setTvMode('merchant')
@@ -292,12 +292,12 @@ test('merchant items stock decrements after accepted purchase', async ({ browser
     await expect(playerPg.getByTestId('player-tab-boutique')).not.toBeDisabled({ timeout: 5_000 })
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('boutique')
-    await playerPg.locator('button').filter({ hasText: /\+|ajouter/i }).first().click()
-    await playerPg.locator('button').filter({ hasText: /valider|soumettre|commander/i }).first().click()
+    await playerPg.locator('button.qty-btn').last().click()
+    await playerPg.locator('button.cart-submit-btn').click()
 
     await adminPage.switchTab('merchants')
     await adminPage.page.locator('button.respond-btn').first().click()
-    await adminPage.page.locator('button').filter({ hasText: /accepter|accept/i }).first().click()
+    await adminPage.page.locator('.respond-dialog button.action-btn').click()
 
     // TV merchant display should now show updated stock
     await expect(tvPage.page.locator('[class*="stock"]').first()).toBeVisible({ timeout: 5_000 })
@@ -322,7 +322,7 @@ test('admin can close merchant', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Sonder', hp: 22 })
-    await expect(adminPage.page.getByText('Sonder')).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
 
     await createMerchant(adminPage, 'Greta', [{ name: 'Clé', price: 3 }])
     await showMerchant(adminPage)
@@ -330,7 +330,7 @@ test('admin can close merchant', async ({ browser }) => {
 
     // Close the merchant
     await adminPage.switchTab('merchants')
-    await adminPage.page.locator('button').filter({ hasText: /fermer|clôturer/i }).first().click()
+    await adminPage.page.locator('.close-merchant-btn').click()
 
     // Player boutique tab should be disabled again
     await expect(playerPg.getByTestId('player-tab-boutique')).toBeDisabled({ timeout: 5_000 })

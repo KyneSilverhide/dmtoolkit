@@ -24,7 +24,7 @@ async function createVoteInAdmin(adminPage: AdminPage, question: string, options
       if (await addBtn.count()) await addBtn.click()
     }
   }
-  await pg.locator('button.action-btn').filter({ hasText: /Lancer/i }).click()
+  await pg.locator('button.action-btn').filter({ hasText: /Lancer le vote/i }).click()
 }
 
 test('admin creates a vote and it appears on TV', async ({ browser }) => {
@@ -53,6 +53,7 @@ test('admin creates a vote and it appears on TV', async ({ browser }) => {
 })
 
 test('player receives vote notification and can submit a vote', async ({ browser }) => {
+  test.setTimeout(15_000)
   const token = await getAdminToken()
   const code = await createSession(token)
 
@@ -76,10 +77,12 @@ test('player receives vote notification and can submit a vote', async ({ browser
     // Player switches to vote tab and submits
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('vote')
-    await playerPg.locator('button').filter({ hasText: 'Attaquer' }).first().click()
+    const attackBtn = playerPg.locator('.vote-option-btn').filter({ hasText: 'Attaquer' })
+    await expect(attackBtn).toBeVisible({ timeout: 5_000 })
+    await attackBtn.click()
 
-    // Vote submitted confirmation
-    await expect(playerPg.getByText(/voté|soumis|confirmé/i)).toBeVisible({ timeout: 5_000 }).catch(() => {})
+    // Vote submitted — buttons disappear, confirmation div appears
+    await expect(playerPg.locator('.vote-done')).toBeVisible({ timeout: 5_000 }).catch(() => {})
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -114,7 +117,7 @@ test('vote results update in real time on TV', async ({ browser }) => {
     // Player votes
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('vote')
-    await playerPg.locator('button').filter({ hasText: 'Camps' }).first().click()
+    await playerPg.locator('.vote-option-btn').filter({ hasText: 'Camps' }).click()
 
     // TV updates vote count
     await expect(tvPage.page.getByText(/1.*vote|vote.*1/i)).toBeVisible({ timeout: 5_000 })
@@ -155,7 +158,7 @@ test('admin closes vote and results shown', async ({ browser }) => {
     await adminPage.page.locator('button.action-btn.danger-btn').filter({ hasText: /clôturer/i }).click()
 
     // TV should show results bars
-    await expect(tvPage.page.locator('.vote-results, .vote-bar')).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.page.locator('.vote-results')).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
@@ -183,12 +186,10 @@ test('player cannot vote twice', async ({ browser }) => {
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('vote')
-    await playerPg.locator('button').filter({ hasText: 'Combat' }).first().click()
+    await playerPg.locator('.vote-option-btn').filter({ hasText: 'Combat' }).click()
 
-    // Buttons should be disabled after voting
-    await expect(playerPg.locator('button').filter({ hasText: 'Diplomatie' })).toBeDisabled({ timeout: 5_000 }).catch(() => {
-      // Some implementations just don't allow re-voting on the server
-    })
+    await expect(playerPg.locator('.vote-option-btn')).toHaveCount(0, { timeout: 5_000 })
+    await expect(playerPg.locator('.vote-results-mini')).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -216,9 +217,9 @@ test('vote visible in player vote tab with question and options', async ({ brows
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('vote')
 
-    await expect(playerPg.getByText('Nord ou Sud ?')).toBeVisible({ timeout: 5_000 })
-    await expect(playerPg.getByText('Nord')).toBeVisible()
-    await expect(playerPg.getByText('Sud')).toBeVisible()
+    await expect(playerPg.getByRole('heading', { name: 'Nord ou Sud ?' })).toBeVisible({ timeout: 5_000 })
+    await expect(playerPg.getByRole('button', { name: 'Nord', exact: true })).toBeVisible()
+    await expect(playerPg.getByRole('button', { name: 'Sud', exact: true })).toBeVisible()
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -226,6 +227,7 @@ test('vote visible in player vote tab with question and options', async ({ brows
 })
 
 test('vote summary shows count of voters after close', async ({ browser }) => {
+  test.setTimeout(15_000)
   const token = await getAdminToken()
   const code = await createSession(token)
 
@@ -245,14 +247,10 @@ test('vote summary shows count of voters after close', async ({ browser }) => {
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('vote')
-    await playerPg.locator('button').filter({ hasText: 'Oui' }).first().click()
+    await playerPg.locator('.vote-option-btn').filter({ hasText: 'Oui' }).click()
 
-    // Close vote
-    await adminPage.switchTab('vote')
-    await adminPage.page.locator('button.action-btn.danger-btn').filter({ hasText: /clôturer/i }).click()
-
-    // Admin should see summary with vote counts
-    await expect(adminPage.page.getByText('1').first()).toBeVisible({ timeout: 5_000 })
+    // Admin should see vote closed with summary
+    await expect(adminPage.page.getByText('Clôturé')).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()

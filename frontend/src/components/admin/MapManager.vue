@@ -764,7 +764,7 @@ watch(fogEnabled, () => render())
 
     <!-- Upload -->
     <div class="upload-area">
-      <label class="upload-btn" :class="{ disabled: uploading }">
+      <label class="upload-btn" data-testid="map-upload-btn" :class="{ disabled: uploading }">
         <span>{{ uploading ? `Envoi… ${uploadProgress}%` : 'Téléverser des images' }}</span>
         <input type="file" accept="image/*" multiple class="file-input" :disabled="uploading" @change="handleFileUpload" />
       </label>

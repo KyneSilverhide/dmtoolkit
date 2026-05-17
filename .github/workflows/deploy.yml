@@ -10,56 +10,56 @@ env:
   FRONTEND_IMAGE: ghcr.io/kynesilverhide/critical-fail-frontend
 
 jobs:
-#  e2e:
-#    runs-on: ubuntu-latest
-#    env:
-#      TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
-#      ADMIN_DEFAULT_USERNAME: admin
-#      ADMIN_DEFAULT_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
-#
-#    steps:
-#      - uses: actions/checkout@v4
-#
-#      - name: Set up Node.js
-#        uses: actions/setup-node@v4
-#        with:
-#          node-version: '20'
-#
-#      - name: Start test stack
-#        run: |
-#          docker compose -f docker-compose.yml -f e2e/docker-compose.test.yml up -d postgres backend
-#          timeout 60 bash -c 'until curl -sf http://localhost:3000/api/health 2>/dev/null; do sleep 2; done' || echo "Backend health check skipped"
-#
-#      - name: Install frontend deps & start dev server
-#        run: |
-#          cd frontend && npm ci && npm run dev &
-#          timeout 30 bash -c 'until curl -sf http://localhost:5173 2>/dev/null; do sleep 2; done' || echo "Frontend ready"
-#
-#      - name: Install E2E deps & browsers
-#        run: cd e2e && npm ci && npx playwright install --with-deps chromium
-#
-#      - name: Run E2E tests
-#        run: cd e2e && npx playwright test
-#        env:
-#          PLAYWRIGHT_BASE_URL: http://localhost:5173
-#          BACKEND_URL: http://localhost:3000
-#          DATABASE_URL: postgresql://criticalfail:criticalfail@localhost:5432/criticalfail_test
-#          JWT_SECRET: test-jwt-secret-e2e
-#
-#      - name: Upload traces on failure
-#        if: failure()
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: playwright-traces
-#          path: e2e/test-results/
-#          retention-days: 7
-#
-#      - name: Teardown test stack
-#        if: always()
-#        run: docker compose -f docker-compose.yml -f e2e/docker-compose.test.yml down -v
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
+      ADMIN_DEFAULT_USERNAME: admin
+      ADMIN_DEFAULT_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Start test stack
+        run: |
+          docker compose -f docker-compose.yml -f e2e/docker-compose.test.yml up -d postgres backend
+          timeout 60 bash -c 'until curl -sf http://localhost:3000/api/health 2>/dev/null; do sleep 2; done' || echo "Backend health check skipped"
+
+      - name: Install frontend deps & start dev server
+        run: |
+          cd frontend && npm ci && npm run dev &
+          timeout 30 bash -c 'until curl -sf http://localhost:5173 2>/dev/null; do sleep 2; done' || echo "Frontend ready"
+
+      - name: Install E2E deps & browsers
+        run: cd e2e && npm ci && npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: cd e2e && npx playwright test
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:5173
+          BACKEND_URL: http://localhost:3000
+          DATABASE_URL: postgresql://criticalfail:criticalfail@localhost:5432/criticalfail_test
+          JWT_SECRET: test-jwt-secret-e2e
+
+      - name: Upload traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: e2e/test-results/
+          retention-days: 7
+
+      - name: Teardown test stack
+        if: always()
+        run: docker compose -f docker-compose.yml -f e2e/docker-compose.test.yml down -v
 
   build-and-deploy:
-#    needs: [e2e]
+    needs: [e2e]
     runs-on: ubuntu-latest
     permissions:
       contents: write

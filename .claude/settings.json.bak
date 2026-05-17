@@ -33,30 +33,6 @@
           }
         ]
       }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "git rev-parse --git-dir >/dev/null 2>&1 && code-review-graph update --skip-flows --repo \"C:/Users/aurel/IdeaProjects/critical-fail\" || true",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "git rev-parse --git-dir >/dev/null 2>&1 && code-review-graph status --repo \"C:/Users/aurel/IdeaProjects/critical-fail\" || echo 'Not a git repo, skipping'",
-            "timeout": 10
-          }
-        ]
-      }
     ]
   }
 }
