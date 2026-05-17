@@ -81,8 +81,8 @@ test('concentration warning sent when concentrating player takes damage', async 
     await playerPage.toggleConcentration()
     await playerPage.setHp(30)
 
-    // The concentration-warning event triggers a toast/alert for the player
-    await expect(playerPg.getByText(/concentration/i)).toBeVisible({ timeout: 5_000 })
+    // The concentration-warning event triggers a modal with this heading
+    await expect(playerPg.getByRole('heading', { name: /Jet de Concentration/i })).toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
