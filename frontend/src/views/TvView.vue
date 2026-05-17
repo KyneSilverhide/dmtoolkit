@@ -24,6 +24,7 @@ const tvMode = ref('lobby')
 const qrCodeDataUrl = ref(null)
 const sessionCode = ref('')
 const currentImageUrl = ref(null)
+const lobbyBgUrl = ref(null)
 const activeVote = ref(null)
 const activeMerchant = ref(null)
 const activeDoomClock = ref(null)
@@ -318,6 +319,7 @@ onMounted(() => {
     qrCodeDataUrl.value = data.qrCodeDataUrl || null
     sessionCode.value = data.sessionCode || ''
     currentImageUrl.value = data.currentImageUrl || null
+    lobbyBgUrl.value = data.lobbyBgUrl || null
     activeVote.value = data.activeVote || null
     activeMerchant.value = data.activeMerchant || null
     activeDoomClock.value = data.doomClock || null
@@ -443,6 +445,10 @@ onMounted(() => {
     activeTimer.value = null
   })
 
+  socket.on('lobby-bg-updated', ({ url }) => {
+    lobbyBgUrl.value = url || null
+  })
+
   // ── Map events ─────────────────────────────────────────────────────────
   socket.on('map-state', applyMapState)
 
@@ -524,6 +530,7 @@ onUnmounted(() => {
       <div :key="tvMode" class="tv-mode-container" data-testid="tv-container" :data-tv-mode="tvMode">
       <!-- Lobby mode: session title + QR code + session code -->
       <div v-if="tvMode === 'lobby'" class="lobby-display" data-testid="tv-mode-lobby">
+        <img v-if="lobbyBgUrl" :src="resolveMediaUrl(lobbyBgUrl)" class="lobby-bg-img" aria-hidden="true" />
         <header class="tv-header">
           <h1 class="session-title">{{ session.name }}</h1>
           <div class="lobby-divider" aria-hidden="true">⸻ ✦ ⸻</div>
@@ -862,11 +869,22 @@ onUnmounted(() => {
 /* ── Lobby mode ───────────────────────────────────────────────────────── */
 .lobby-display {
   flex: 1;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.9rem;
+}
+.lobby-bg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.25;
+  pointer-events: none;
+  user-select: none;
 }
 .lobby-title {
   font-family: var(--font-title);

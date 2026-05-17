@@ -523,6 +523,7 @@ function setupSocket(io) {
           mapState: serializeMapState(session),
           combatRound: session.combat_round || 0,
           timer: serializeTimer(session),
+          lobbyBgUrl: session.lobby_bg_url || null,
         })
       } catch (err) { console.error(err) }
     })
@@ -563,6 +564,7 @@ function setupSocket(io) {
           mapState: serializeMapState(session),
           combatRound: session.combat_round || 0,
           timer: serializeTimer(session),
+          lobbyBgUrl: session.lobby_bg_url || null,
         })
       } catch (err) { console.error(err) }
     })
@@ -770,6 +772,17 @@ function setupSocket(io) {
         await pool.query('UPDATE sessions SET tv_mode = $1, current_image_url = $2 WHERE id = $3 AND created_by = $4', ['image', imageUrl, sessionId, socket.admin.id])
         io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl })
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: set lobby background image ─────────────────────────────────
+    socket.on('set-lobby-bg', async ({ sessionId, imageUrl }) => {
+      if (!socket.admin) return
+      try {
+        const url = (imageUrl && typeof imageUrl === 'string') ? imageUrl : null
+        await pool.query('UPDATE sessions SET lobby_bg_url = $1 WHERE id = $2 AND created_by = $3', [url, sessionId, socket.admin.id])
+        io.to(`tv:${sessionId}`).emit('lobby-bg-updated', { url })
+        io.to(`admin:${sessionId}`).emit('lobby-bg-updated', { url })
       } catch (err) { console.error(err) }
     })
 

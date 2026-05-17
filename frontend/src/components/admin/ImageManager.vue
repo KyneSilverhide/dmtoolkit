@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
 import { authStore } from '../../stores/auth.js'
 import { sessionStore } from '../../stores/session.js'
@@ -9,6 +9,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
 const images = ref([])
 const selectedImageUrl = ref(null)
+const activeLobbyBgUrl = ref(null)
 const uploading = ref(false)
 const uploadError = ref('')
 const uploadProgress = ref(0)   // 0–100
@@ -79,6 +80,25 @@ function showImageOnTv(imageUrl) {
   socket.emit('show-image', { sessionId: sessionStore.activeSession.id, imageUrl })
 }
 
+function setLobbyBg(imageUrl) {
+  const socket = getSocket()
+  socket.emit('set-lobby-bg', { sessionId: sessionStore.activeSession.id, imageUrl })
+}
+
+function clearLobbyBg() {
+  const socket = getSocket()
+  socket.emit('set-lobby-bg', { sessionId: sessionStore.activeSession.id, imageUrl: null })
+}
+
+function handleAdminState(data) {
+  if (sessionStore.activeSession?.id !== data.sessionId) return
+  activeLobbyBgUrl.value = data.lobbyBgUrl || null
+}
+
+function handleLobbyBgUpdated({ url }) {
+  activeLobbyBgUrl.value = url || null
+}
+
 function imageFullUrl(url) {
   if (url.startsWith('http')) return url
   return `${BACKEND_URL}${url}`
@@ -99,7 +119,18 @@ async function deleteImage(img, event) {
   } catch (err) { console.error(err) }
 }
 
-onMounted(loadImages)
+onMounted(() => {
+  loadImages()
+  const socket = getSocket()
+  socket.on('admin-state', handleAdminState)
+  socket.on('lobby-bg-updated', handleLobbyBgUpdated)
+})
+
+onUnmounted(() => {
+  const socket = getSocket()
+  socket.off('admin-state', handleAdminState)
+  socket.off('lobby-bg-updated', handleLobbyBgUpdated)
+})
 </script>
 
 <template>
@@ -127,6 +158,14 @@ onMounted(loadImages)
       <p v-if="uploadError" class="upload-error">{{ uploadError }}</p>
     </div>
 
+    <div v-if="activeLobbyBgUrl" class="lobby-bg-active">
+      <AppIcon icon="lucide:image-play" size="0.85em" />
+      Fond lobby actif
+      <button class="lobby-bg-clear-btn" @click="clearLobbyBg">
+        <AppIcon icon="lucide:x" size="0.8em" /> Retirer
+      </button>
+    </div>
+
     <div v-if="images.length === 0" class="empty-gallery">
       <p>Aucune image téléversée pour cette session.</p>
     </div>
@@ -144,6 +183,14 @@ onMounted(loadImages)
         <p class="img-name">{{ img.original_name || img.url.split('/').pop() }}</p>
         <button class="show-btn" @click.stop="selectedImageUrl = img.url; showImageOnTv(img.url)" title="Afficher sur la TV">
           <AppIcon icon="lucide:monitor" size="0.85em" /> Afficher TV
+        </button>
+        <button
+          class="show-btn lobby-btn"
+          :class="{ active: activeLobbyBgUrl === img.url }"
+          @click.stop="setLobbyBg(img.url)"
+          title="Définir comme fond du lobby"
+        >
+          <AppIcon icon="lucide:image-play" size="0.85em" /> Fond lobby
         </button>
       </div>
     </div>
@@ -312,4 +359,50 @@ onMounted(loadImages)
   line-height: 1;
 }
 .thumb-wrapper:hover .delete-btn { opacity: 1; }
+
+.lobby-btn {
+  margin-top: 0.2rem;
+  border-color: var(--color-info-border, #3a8fba);
+  color: var(--color-info-bright, #7ecfff);
+  background: var(--color-info-soft, rgba(58,143,186,0.12));
+}
+.lobby-btn:hover, .lobby-btn.active {
+  background: var(--color-info-soft, rgba(58,143,186,0.25));
+  border-color: var(--color-info-bright, #7ecfff);
+  color: var(--color-info-bright, #7ecfff);
+}
+
+.lobby-bg-active {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--color-info-bright, #7ecfff);
+  background: var(--color-info-soft, rgba(58,143,186,0.12));
+  border: 1px solid var(--color-info-border, #3a8fba);
+  border-radius: 6px;
+  padding: 0.35rem 0.6rem;
+}
+
+.lobby-bg-clear-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.15rem 0.5rem;
+  background: transparent;
+  border: 1px solid var(--color-danger, #e74c3c);
+  border-radius: 4px;
+  color: var(--color-danger, #e74c3c);
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.lobby-bg-clear-btn:hover {
+  background: var(--tv-danger-bg, rgba(231,76,60,0.15));
+}
 </style>
