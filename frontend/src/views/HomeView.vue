@@ -1,10 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { authStore } from '../stores/auth.js'
 import AppIcon from '../components/AppIcon.vue'
-
-const router = useRouter()
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
 const showModal = ref(false)
@@ -52,13 +49,14 @@ async function login() {
     const data = await res.json()
     if (!res.ok) {
       error.value = data.error || 'Identifiants incorrects.'
+      loading.value = false
       return
     }
     authStore.login(data.token, data.admin)
-    router.push('/admin')
+    window.location.href = '/admin'
+    // loading reste true pendant le rechargement de la page
   } catch {
     error.value = 'Erreur de connexion au serveur.'
-  } finally {
     loading.value = false
   }
 }
