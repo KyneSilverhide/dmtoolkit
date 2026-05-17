@@ -1,15 +1,10 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache } from '../helpers/auth'
+import { test, expect } from '../fixtures'
+import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 
 const PLAYER_MEMORY_KEY = 'cf_player_last_known_by_session'
 
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 test('player view persists after page reload', async ({ page }) => {
   const token = await getAdminToken()

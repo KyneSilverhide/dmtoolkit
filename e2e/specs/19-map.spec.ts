@@ -1,16 +1,11 @@
-import {expect, Page, test} from '@playwright/test'
-import {resetDb} from '../fixtures/db'
-import {clearTokenCache, getAdminToken} from '../helpers/auth'
-import {createSession} from '../helpers/session'
-import {AdminPage} from '../page-objects/AdminPage'
-import {TvPage} from '../page-objects/TvPage'
+import { test, expect } from '../fixtures'
+import type { Page } from '@playwright/test'
+import { getAdminToken } from '../helpers/auth'
+import { createSession } from '../helpers/session'
+import { AdminPage } from '../page-objects/AdminPage'
+import { TvPage } from '../page-objects/TvPage'
 import * as path from 'path'
 import * as fs from 'fs'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 async function uploadMap(page: Page): Promise<void> {
   const tmpPath = path.join(process.cwd(), 'fixtures', '_test_map.jpg')
@@ -38,7 +33,7 @@ test('admin can upload a map and TV shows it', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
     await adminPage.switchTab('map')
 
     await uploadMap(adminPage.page)
@@ -71,7 +66,7 @@ test('admin can toggle fog of war', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
     await adminPage.switchTab('map')
 
     await uploadMap(adminPage.page)
@@ -105,7 +100,7 @@ test('TV map mode shows player tokens after join', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
     await adminPage.switchTab('map')
 
     await uploadMap(adminPage.page)

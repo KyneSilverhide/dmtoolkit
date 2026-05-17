@@ -1,13 +1,7 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache } from '../helpers/auth'
+import { test, expect } from '../fixtures'
+import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { AdminPage } from '../page-objects/AdminPage'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 test('spell search returns results for known spell', async ({ browser }) => {
   const token = await getAdminToken()
@@ -17,7 +11,7 @@ test('spell search returns results for known spell', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
     await adminPage.switchTab('search')
 
     // Search for a known D&D 5e spell
@@ -39,7 +33,7 @@ test('spell search shows no results for unknown spell', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
     await adminPage.switchTab('search')
 
     const searchInput = adminPage.page.locator('input[placeholder*="sort" i], input[placeholder*="spell" i], input[placeholder*="recherche" i]').first()
@@ -74,7 +68,7 @@ test('magic item search returns results', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
     await adminPage.switchTab('search')
 
     // Switch to magic items search tab if exists

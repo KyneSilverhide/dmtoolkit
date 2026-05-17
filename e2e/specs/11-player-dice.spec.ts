@@ -1,15 +1,9 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache } from '../helpers/auth'
+import { test, expect } from '../fixtures'
+import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 import { AdminPage } from '../page-objects/AdminPage'
 import { PlayerPage } from '../page-objects/PlayerPage'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 test('player can roll a d20', async ({ page }) => {
   const token = await getAdminToken()
@@ -59,7 +53,7 @@ test('player hidden roll notifies admin without showing result to player', async
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Assassin', hp: 28 })
@@ -106,7 +100,7 @@ test('player roll result propagated as admin toast', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Brawler', hp: 55 })

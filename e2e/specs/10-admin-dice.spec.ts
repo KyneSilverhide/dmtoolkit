@@ -1,15 +1,9 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache } from '../helpers/auth'
+import { test, expect } from '../fixtures'
+import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 import { AdminPage } from '../page-objects/AdminPage'
 import { PlayerPage } from '../page-objects/PlayerPage'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 test('admin can roll the critical fail dice', async ({ browser }) => {
   const token = await getAdminToken()
@@ -21,7 +15,7 @@ test('admin can roll the critical fail dice', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     await joinAsPlayer(await playerCtx.newPage(), code, { name: 'Fighter', hp: 45 })
     await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
@@ -47,7 +41,7 @@ test('admin sends dice result to player', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Berserker', hp: 60 })
@@ -79,7 +73,7 @@ test('admin can select combat type (melee/range/magic)', async ({ browser }) => 
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     await adminPage.switchTab('dice')
 
@@ -107,7 +101,7 @@ test('dice result shown in admin roll toast when player rolls', async ({ browser
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Knight', hp: 50 })
@@ -136,7 +130,7 @@ test('dice roll produces a value between 1 and 100', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     await joinAsPlayer(await playerCtx.newPage(), code, { name: 'Tester', hp: 10 })
     await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })

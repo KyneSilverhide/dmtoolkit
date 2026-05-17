@@ -1,15 +1,9 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache } from '../helpers/auth'
+import { test, expect } from '../fixtures'
+import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 import { AdminPage } from '../page-objects/AdminPage'
 import { PlayerPage } from '../page-objects/PlayerPage'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 test('player can toggle a condition and admin sees it', async ({ browser }) => {
   const token = await getAdminToken()
@@ -21,7 +15,7 @@ test('player can toggle a condition and admin sees it', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Cleric', hp: 45 })
@@ -48,7 +42,7 @@ test('player can untoggle a condition', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Paladin', hp: 55 })
@@ -77,7 +71,7 @@ test('multiple conditions can be active simultaneously', async ({ browser }) => 
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Warlock', hp: 35 })
@@ -106,7 +100,7 @@ test('conditions synced to TV combat mode', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
     await adminPage.setTvMode('combat')
 
     const { TvPage } = await import('../page-objects/TvPage')

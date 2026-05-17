@@ -1,15 +1,9 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache } from '../helpers/auth'
+import { test, expect } from '../fixtures'
+import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 import { AdminPage } from '../page-objects/AdminPage'
 import { PlayerPage } from '../page-objects/PlayerPage'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 test('player sets initiative and admin sees it', async ({ browser }) => {
   const token = await getAdminToken()
@@ -21,15 +15,12 @@ test('player sets initiative and admin sees it', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Ranger', hp: 40 })
 
-    const playerRow = adminPage.page.locator('[data-testid^="player-row-"]').first()
-    await expect(playerRow).toBeVisible({ timeout: 5_000 })
-    const testId = await playerRow.getAttribute('data-testid')
-    const playerId = Number(testId?.replace('player-row-', ''))
+    const playerId = await adminPage.getFirstPlayerId()
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.setInitiative(18)
@@ -83,7 +74,7 @@ test('initiative shown in TV combat mode', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
     await adminPage.setTvMode('combat')
 
     const { TvPage } = await import('../page-objects/TvPage')

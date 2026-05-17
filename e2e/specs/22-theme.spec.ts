@@ -1,13 +1,7 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache, loginAsAdmin } from '../helpers/auth'
+import { test, expect } from '../fixtures'
+import { getAdminToken, loginAsAdmin } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 test('admin can toggle theme and preference persists', async ({ page }) => {
   const token = await getAdminToken()

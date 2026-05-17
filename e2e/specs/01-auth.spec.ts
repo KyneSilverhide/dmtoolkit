@@ -1,11 +1,5 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache, loginAsAdmin } from '../helpers/auth'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
+import { test, expect } from '../fixtures'
+import { getAdminToken, loginAsAdmin } from '../helpers/auth'
 
 test('DM login button opens modal', async ({ page }) => {
   await page.goto('/')

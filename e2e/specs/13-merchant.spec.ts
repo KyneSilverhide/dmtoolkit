@@ -1,16 +1,10 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache } from '../helpers/auth'
+import { test, expect } from '../fixtures'
+import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 import { AdminPage } from '../page-objects/AdminPage'
 import { PlayerPage } from '../page-objects/PlayerPage'
 import { TvPage } from '../page-objects/TvPage'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 async function createMerchant(adminPage: AdminPage, merchantName: string, items: Array<{ name: string; price: number; stock?: number }>) {
   await adminPage.switchTab('merchants')
@@ -49,7 +43,7 @@ test('admin creates a merchant', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     await createMerchant(adminPage, 'Brom le Forgeron', [{ name: 'Épée longue', price: 15 }])
 
@@ -70,7 +64,7 @@ test('merchant shown on TV in merchant mode', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     await createMerchant(adminPage, 'Elara la Magicienne', [{ name: 'Potion de soin', price: 50 }])
     await showMerchant(adminPage)
@@ -97,7 +91,7 @@ test('player can see merchant in boutique tab', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Buyer', hp: 40 })
@@ -127,7 +121,7 @@ test('player can add item to cart', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Shopper', hp: 30 })
@@ -162,7 +156,7 @@ test('admin receives purchase request after player submits cart', async ({ brows
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Customer', hp: 35 })
@@ -198,7 +192,7 @@ test('admin can accept purchase request', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Accepted', hp: 40 })
@@ -236,7 +230,7 @@ test('admin can reject purchase request', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Rejected', hp: 28 })
@@ -274,7 +268,7 @@ test('merchant items stock decrements after accepted purchase', async ({ browser
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'StockTester', hp: 30 })
@@ -318,7 +312,7 @@ test('admin can close merchant', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Sonder', hp: 22 })

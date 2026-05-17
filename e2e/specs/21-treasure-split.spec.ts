@@ -1,14 +1,8 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache } from '../helpers/auth'
+import { test, expect } from '../fixtures'
+import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 import { AdminPage } from '../page-objects/AdminPage'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 test('treasure split tool is accessible from admin', async ({ browser }) => {
   const token = await getAdminToken()
@@ -18,7 +12,7 @@ test('treasure split tool is accessible from admin', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
     await adminPage.switchTab('tresor')
 
     await expect(adminPage.page.locator('.gold-divider')).toBeVisible({ timeout: 5_000 })
@@ -38,7 +32,7 @@ test('treasure split calculates correct share per player', async ({ browser }) =
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     await joinAsPlayer(await playerCtx.newPage(), code, { name: 'Shareowner', hp: 30 })
     await expect(adminPage.page.locator('[data-testid^="player-name-"]').filter({ hasText: 'Shareowner' })).toBeVisible({ timeout: 5_000 })
@@ -69,7 +63,7 @@ test('treasure split updates when more players join', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     await joinAsPlayer(await player1Ctx.newPage(), code, { name: 'Partageur1', hp: 30 })
     await expect(adminPage.page.locator('[data-testid^="player-name-"]').filter({ hasText: 'Partageur1' })).toBeVisible({ timeout: 5_000 })
@@ -109,7 +103,7 @@ test('treasure split handles zero gold gracefully', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     await joinAsPlayer(await playerCtx.newPage(), code, { name: 'ZeroGold', hp: 20 })
     await expect(adminPage.page.locator('[data-testid^="player-name-"]').filter({ hasText: 'ZeroGold' })).toBeVisible({ timeout: 5_000 })

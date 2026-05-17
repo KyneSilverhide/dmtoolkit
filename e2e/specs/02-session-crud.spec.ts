@@ -1,12 +1,6 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache, loginAsAdmin } from '../helpers/auth'
+import { test, expect } from '../fixtures'
+import { getAdminToken, loginAsAdmin } from '../helpers/auth'
 import { createSession, listSessions } from '../helpers/session'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 test('creates a session via API', async () => {
   const token = await getAdminToken()

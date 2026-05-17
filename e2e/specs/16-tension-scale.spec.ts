@@ -1,14 +1,8 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache } from '../helpers/auth'
+import { test, expect } from '../fixtures'
+import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { AdminPage } from '../page-objects/AdminPage'
 import { TvPage } from '../page-objects/TvPage'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 async function createTensionScale(adminPage: AdminPage, title = 'Tension', steps = 6) {
   await adminPage.switchTab('tension')
@@ -34,7 +28,7 @@ test('admin creates a tension scale and TV shows it', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     await createTensionScale(adminPage, 'Combat épique', 5)
 
@@ -59,7 +53,7 @@ test('admin can increment tension and TV updates', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     await createTensionScale(adminPage, 'Alarme', 4)
 
@@ -92,7 +86,7 @@ test('tension title visible on TV', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     await createTensionScale(adminPage, 'Invasion Imminente', 3)
     await adminPage.setTvMode('tension')
@@ -116,7 +110,7 @@ test('admin can end tension scale', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     await createTensionScale(adminPage, 'Tension Finale', 3)
     await adminPage.setTvMode('tension')
@@ -147,7 +141,7 @@ test('tension steps are displayed on TV', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     await createTensionScale(adminPage, 'Échelle', 5)
     await adminPage.setTvMode('tension')

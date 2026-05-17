@@ -1,15 +1,9 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache } from '../helpers/auth'
+import { test, expect } from '../fixtures'
+import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 import { AdminPage } from '../page-objects/AdminPage'
 import { TvPage } from '../page-objects/TvPage'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 test('TV defaults to lobby mode', async ({ browser }) => {
   const token = await getAdminToken()
@@ -50,7 +44,7 @@ test('admin can switch TV to combat mode', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
@@ -73,7 +67,7 @@ test('admin can switch TV back to lobby', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
@@ -101,7 +95,7 @@ test('TV combat mode shows combat round badge', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
@@ -130,7 +124,7 @@ test('TV image mode shows image display container', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     // Upload an image first (or use URL) — skip upload, just try setting image mode
     // Image mode requires a current image; try anyway for the mode selector smoke test
@@ -156,7 +150,7 @@ test('TV mode buttons reflect ready state', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     // Lobby and combat are always ready
     await expect(adminPage.page.getByTestId('tv-mode-btn-lobby')).toBeVisible()
@@ -175,7 +169,7 @@ test('TV mode changes propagate to admin header', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     await adminPage.setTvMode('combat')
     // Le bouton du mode actif reçoit la classe "active" (bord coloré)

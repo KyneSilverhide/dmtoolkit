@@ -1,6 +1,6 @@
-import { test as base, Browser, Page } from '@playwright/test'
+import { test as base } from '@playwright/test'
 import { resetDb } from './db'
-import { getAdminToken } from '../helpers/auth'
+import { getAdminToken, clearTokenCache } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 
 export type Fixtures = {
@@ -8,7 +8,13 @@ export type Fixtures = {
   sessionCode: string
 }
 
-export const test = base.extend<Fixtures>({
+export const test = base.extend<Fixtures & { _reset: void }>({
+  _reset: [async ({}, use) => {
+    clearTokenCache()
+    await resetDb()
+    await use()
+  }, { auto: true }],
+
   adminToken: async ({}, use) => {
     const token = await getAdminToken()
     await use(token)

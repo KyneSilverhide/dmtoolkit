@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test'
+import { Page, Locator, expect } from '@playwright/test'
 import { loginAsAdmin } from '../helpers/auth'
 
 export class AdminPage {
@@ -41,10 +41,12 @@ export class AdminPage {
     return this.page.getByTestId(`kick-button-${playerId}`)
   }
 
-  async sendMessage(text: string, targetPlayerId?: number) {
-    await this.switchTab('message')
-    await this.page.getByPlaceholder(/message/i).fill(text)
-    await this.page.getByRole('button', { name: /envoyer/i }).click()
+  async getFirstPlayerId(): Promise<number> {
+    const row = this.page.locator('[data-testid^="player-row-"]').first()
+    await expect(row).toBeVisible()
+    const testId = await row.getAttribute('data-testid')
+    if (!testId) throw new Error('player-row testid not found')
+    return Number(testId.replace('player-row-', ''))
   }
 
   async kickPlayer(playerId: number) {

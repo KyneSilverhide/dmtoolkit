@@ -1,14 +1,8 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache } from '../helpers/auth'
+import { test, expect } from '../fixtures'
+import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { AdminPage } from '../page-objects/AdminPage'
 import { TvPage } from '../page-objects/TvPage'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 async function startDoomClock(adminPage: AdminPage, minutes = 0, seconds = 30, title = 'DOOM CLOCK') {
   await adminPage.switchTab('tension')
@@ -36,7 +30,7 @@ test('admin can start doom clock and TV shows it', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
@@ -63,7 +57,7 @@ test('doom clock counts down on TV', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
@@ -95,7 +89,7 @@ test('admin can stop doom clock', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
@@ -127,7 +121,7 @@ test('doom clock danger style applies when time is low', async ({ browser }) => 
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
@@ -156,7 +150,7 @@ test('doom clock title displayed on TV', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)

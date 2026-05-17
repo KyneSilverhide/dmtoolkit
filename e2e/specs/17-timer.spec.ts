@@ -1,14 +1,8 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache } from '../helpers/auth'
+import { test, expect } from '../fixtures'
+import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { AdminPage } from '../page-objects/AdminPage'
 import { TvPage } from '../page-objects/TvPage'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 async function startTimer(adminPage: AdminPage, minutes = 0, seconds = 30, label = 'Minuteur') {
   await adminPage.switchTab('tension')
@@ -37,7 +31,7 @@ test('admin starts a timer and it shows on TV in combat mode', async ({ browser 
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
     await adminPage.setTvMode('combat')
 
     const tvPage = new TvPage(await tvCtx.newPage())
@@ -63,7 +57,7 @@ test('timer counts down on TV', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
     await adminPage.setTvMode('combat')
 
     const tvPage = new TvPage(await tvCtx.newPage())
@@ -92,7 +86,7 @@ test('admin can stop the timer', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     await startTimer(adminPage, 0, 30)
 
@@ -118,7 +112,7 @@ test('timer label is displayed', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
     await adminPage.setTvMode('combat')
 
     const tvPage = new TvPage(await tvCtx.newPage())

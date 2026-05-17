@@ -1,16 +1,10 @@
-import { test, expect } from '@playwright/test'
-import { resetDb } from '../fixtures/db'
-import { getAdminToken, clearTokenCache, loginAsAdmin } from '../helpers/auth'
+import { test, expect } from '../fixtures'
+import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 import { AdminPage } from '../page-objects/AdminPage'
 import { PlayerPage } from '../page-objects/PlayerPage'
 import { TvPage } from '../page-objects/TvPage'
-
-test.beforeEach(async () => {
-  clearTokenCache()
-  await resetDb()
-})
 
 test('player HP update reflects in admin list', async ({ browser }) => {
   const token = await getAdminToken()
@@ -22,16 +16,12 @@ test('player HP update reflects in admin list', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Boromir', hp: 50 })
 
-    // Get player id from admin DOM
-    const playerRow = await adminPage.page.locator('[data-testid^="player-row-"]').first()
-    await expect(playerRow).toBeVisible({ timeout: 5_000 })
-    const testId = await playerRow.getAttribute('data-testid')
-    const playerId = Number(testId?.replace('player-row-', ''))
+    const playerId = await adminPage.getFirstPlayerId()
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.setHp(25)
@@ -53,15 +43,12 @@ test('HP bar color changes with HP percentage', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Theodin', hp: 100 })
 
-    const playerRow = adminPage.page.locator('[data-testid^="player-row-"]').first()
-    await expect(playerRow).toBeVisible({ timeout: 5_000 })
-    const testId = await playerRow.getAttribute('data-testid')
-    const playerId = Number(testId?.replace('player-row-', ''))
+    const playerId = await adminPage.getFirstPlayerId()
 
     // Full HP → green color
     const hpEl = adminPage.page.getByTestId(`player-hp-${playerId}`)
@@ -91,7 +78,7 @@ test('player HP update reflects on TV in combat mode', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
@@ -125,15 +112,12 @@ test('HP increment buttons work', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Pippin', hp: 30 })
 
-    const playerRow = adminPage.page.locator('[data-testid^="player-row-"]').first()
-    await expect(playerRow).toBeVisible({ timeout: 5_000 })
-    const testId = await playerRow.getAttribute('data-testid')
-    const playerId = Number(testId?.replace('player-row-', ''))
+    const playerId = await adminPage.getFirstPlayerId()
 
     const playerPage = new PlayerPage(playerPg)
     // First set an initial HP that is not at max so we can increment
@@ -158,15 +142,12 @@ test('HP decrement buttons work', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Merry', hp: 30 })
 
-    const playerRow = adminPage.page.locator('[data-testid^="player-row-"]').first()
-    await expect(playerRow).toBeVisible({ timeout: 5_000 })
-    const testId = await playerRow.getAttribute('data-testid')
-    const playerId = Number(testId?.replace('player-row-', ''))
+    const playerId = await adminPage.getFirstPlayerId()
 
     const playerPage = new PlayerPage(playerPg)
     await expect(adminPage.page.getByTestId(`player-hp-${playerId}`)).toContainText('30', { timeout: 5_000 })
@@ -210,7 +191,7 @@ test('TV shows player card with HP', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
@@ -241,15 +222,12 @@ test('HP displays in correct color zones', async ({ browser }) => {
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
     await adminPage.login(token)
-    await adminPage.page.getByText(code).first().click()
+    await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Eowyn', hp: 100 })
 
-    const playerRow = adminPage.page.locator('[data-testid^="player-row-"]').first()
-    await expect(playerRow).toBeVisible({ timeout: 5_000 })
-    const testId = await playerRow.getAttribute('data-testid')
-    const playerId = Number(testId?.replace('player-row-', ''))
+    const playerId = await adminPage.getFirstPlayerId()
 
     const hpEl = adminPage.page.getByTestId(`player-hp-${playerId}`)
 
