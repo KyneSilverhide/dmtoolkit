@@ -90,7 +90,8 @@ test('message targeted to specific player received only by them', async ({ brows
     await adminPage.switchTab('message')
 
     // Select Fighter specifically (first player in list)
-    const playerSelect = adminPage.page.locator('select.form-select')
+    const playerSelect = adminPage.page.locator('.message-tool select.form-select')
+    await expect(playerSelect).toBeVisible({ timeout: 5_000 })
     await playerSelect.selectOption({ label: 'Fighter' })
     await adminPage.page.locator('textarea.form-textarea').fill('Message secret pour Fighter')
     await adminPage.page.getByTestId('message-send-btn').click()
