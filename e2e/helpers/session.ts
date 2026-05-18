@@ -1,6 +1,11 @@
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000'
 
 export async function createSession(token: string, name = 'Test Session'): Promise<string> {
+  const s = await createSessionFull(token, name)
+  return s.code
+}
+
+export async function createSessionFull(token: string, name = 'Test Session'): Promise<{ id: number; code: string }> {
   const res = await fetch(`${BACKEND_URL}/api/sessions`, {
     method: 'POST',
     headers: {
@@ -10,8 +15,8 @@ export async function createSession(token: string, name = 'Test Session'): Promi
     body: JSON.stringify({ name }),
   })
   if (!res.ok) throw new Error(`createSession failed: ${res.status} ${await res.text()}`)
-  const data = await res.json() as { session: { code: string } }
-  return data.session.code
+  const data = await res.json() as { session: { id: number; code: string } }
+  return data.session
 }
 
 export async function deleteSession(token: string, sessionId: number): Promise<void> {

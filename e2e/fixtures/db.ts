@@ -20,6 +20,23 @@ async function ensureDbExists(): Promise<void> {
   }
 }
 
+export async function createTestAdmin(username: string, password: string): Promise<{ id: number }> {
+  const client = new Client({ connectionString: DATABASE_URL })
+  await client.connect()
+  try {
+    const hash = await bcrypt.hash(password, 10)
+    const result = await client.query(
+      `INSERT INTO admins (username, password_hash) VALUES ($1, $2)
+       ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash
+       RETURNING id`,
+      [username, hash]
+    )
+    return { id: result.rows[0].id }
+  } finally {
+    await client.end()
+  }
+}
+
 export async function resetDb(): Promise<void> {
   await ensureDbExists()
   const client = new Client({ connectionString: DATABASE_URL })
@@ -34,13 +51,17 @@ export async function resetDb(): Promise<void> {
         players, sessions
       RESTART IDENTITY CASCADE
     `)
+    // Remove test admins created during multi-tenant tests
+    const defaultUsername = process.env.ADMIN_DEFAULT_USERNAME || 'admin'
+    await client.query('DELETE FROM admins WHERE username != $1', [defaultUsername])
+
     // Ensure the admin account exists (idempotent upsert)
-    const username = process.env.ADMIN_DEFAULT_USERNAME || 'admin'
+    const username = defaultUsername
     const password = process.env.ADMIN_DEFAULT_PASSWORD || 'admin'
     const existing = await client.query('SELECT id FROM admins WHERE username = $1', [username])
     if (existing.rowCount === 0) {
       const hash = await bcrypt.hash(password, 10)
-      await client.query('INSERT INTO admins (username, password) VALUES ($1, $2)', [username, hash])
+      await client.query('INSERT INTO admins (username, password_hash) VALUES ($1, $2)', [username, hash])
     }
   } finally {
     await client.end()

@@ -64,6 +64,7 @@ function onAvatarChange(event) {
 async function uploadAvatar() {
   if (!avatarFile.value) return null
   const formData = new FormData()
+  if (sessionCode.value) formData.append('sessionCode', sessionCode.value)
   formData.append('file', avatarFile.value)
   try {
     const res = await fetch(`${BACKEND_URL}/api/uploads/avatar`, {

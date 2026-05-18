@@ -1,20 +1,49 @@
 const express = require('express')
 const multer = require('multer')
 const path = require('path')
+const fs = require('fs')
 const { authenticateToken } = require('../middleware/auth')
 const pool = require('../db')
 
 const router = express.Router()
 
-const storage = multer.diskStorage({
+const UPLOADS_DIR = path.join(__dirname, '../../uploads')
+
+const makeFilename = (req, file, cb) => {
+  const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
+  const ext = path.extname(file.originalname)
+  cb(null, `${unique}${ext}`)
+}
+
+// Storage pour uploads authentifiés — sous-dossier par admin_id
+const adminStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../../uploads'))
+    const dir = path.join(UPLOADS_DIR, String(req.admin.id))
+    fs.mkdir(dir, { recursive: true }, err => cb(err, dir))
   },
-  filename: (req, file, cb) => {
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
-    const ext = path.extname(file.originalname)
-    cb(null, `${unique}${ext}`)
+  filename: makeFilename,
+})
+
+// Storage pour avatars publics — résout l'admin_id depuis le sessionCode
+const avatarStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const sessionCode = req.body.sessionCode
+    if (!sessionCode) {
+      const dir = path.join(UPLOADS_DIR, 'public')
+      return fs.mkdir(dir, { recursive: true }, err => cb(err, dir))
+    }
+    pool.query('SELECT created_by FROM sessions WHERE code = $1', [sessionCode])
+      .then(result => {
+        const adminId = result.rows[0]?.created_by
+        const dir = path.join(UPLOADS_DIR, adminId ? String(adminId) : 'public')
+        fs.mkdir(dir, { recursive: true }, err => cb(err, dir))
+      })
+      .catch(() => {
+        const dir = path.join(UPLOADS_DIR, 'public')
+        fs.mkdir(dir, { recursive: true }, err => cb(err, dir))
+      })
   },
+  filename: makeFilename,
 })
 
 const imageFilter = (req, file, cb) => {
@@ -25,7 +54,7 @@ const imageFilter = (req, file, cb) => {
 }
 
 const upload = multer({
-  storage,
+  storage: adminStorage,
   limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: imageFilter,
 })
@@ -34,7 +63,7 @@ const AVATAR_ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gi
 const AVATAR_ALLOWED_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
 
 const avatarUpload = multer({
-  storage,
+  storage: avatarStorage,
   limits: { fileSize: 2 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase()
@@ -45,6 +74,11 @@ const avatarUpload = multer({
   },
 })
 
+const fileToUrl = (file) => {
+  const relPath = path.relative(UPLOADS_DIR, file.path).replace(/\\/g, '/')
+  return `/uploads/${relPath}`
+}
+
 router.post('/', authenticateToken, upload.fields([
   { name: 'file', maxCount: 1 }, // backward compatibility
   { name: 'files', maxCount: 20 },
@@ -52,7 +86,7 @@ router.post('/', authenticateToken, upload.fields([
   const uploadedFiles = [...(req.files?.files || []), ...(req.files?.file || [])]
   if (uploadedFiles.length === 0) return res.status(400).json({ error: 'No file uploaded.' })
 
-  const urls = uploadedFiles.map(file => `/uploads/${file.filename}`)
+  const urls = uploadedFiles.map(fileToUrl)
   if (req.body.session_id) {
     try {
       const type = req.body.type || 'image'
@@ -73,7 +107,7 @@ router.post('/', authenticateToken, upload.fields([
 // Public endpoint for player avatar uploads (no admin auth required)
 router.post('/avatar', avatarUpload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded.' })
-  res.json({ url: `/uploads/${req.file.filename}` })
+  res.json({ url: fileToUrl(req.file) })
 })
 
 module.exports = router

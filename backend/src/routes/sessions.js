@@ -184,7 +184,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         [sessionId]
     )
     for (const row of imgRows.rows) {
-      if (row.url) filesToDelete.push(path.join(__dirname, '../../uploads', path.basename(row.url)))
+      if (row.url) filesToDelete.push(path.join(__dirname, '../../uploads', row.url.replace(/^\/uploads\//, '')))
     }
 
     // Collecter les avatars joueurs
@@ -193,7 +193,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         [sessionId]
     )
     for (const row of avatarRows.rows) {
-      if (row.avatar_url) filesToDelete.push(path.join(__dirname, '../../uploads', path.basename(row.avatar_url)))
+      if (row.avatar_url) filesToDelete.push(path.join(__dirname, '../../uploads', row.avatar_url.replace(/^\/uploads\//, '')))
     }
 
     // 1) Nullifier current_vote_id (FK vers votes)

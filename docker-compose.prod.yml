@@ -23,12 +23,14 @@ services:
       - postgres
     volumes:
       - uploads:/app/uploads
+
   dmtoolkit-frontend:
     image: ghcr.io/kynesilverhide/critical-fail-frontend:latest
     ports:
       - "8080:80"
     depends_on:
       - dmtoolkit-backend
+      -
 volumes:
   pgdata:
   uploads:

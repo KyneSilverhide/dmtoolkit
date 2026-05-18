@@ -23,6 +23,17 @@ export function clearTokenCache() {
   cachedToken = null
 }
 
+export async function loginAs(username: string, password: string): Promise<string> {
+  const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  })
+  if (!res.ok) throw new Error(`Login failed for ${username}: ${res.status} ${await res.text()}`)
+  const data = await res.json() as { token: string }
+  return data.token
+}
+
 export async function loginAsAdmin(page: Page, token: string) {
   await page.goto('/')
   await page.evaluate((t) => {

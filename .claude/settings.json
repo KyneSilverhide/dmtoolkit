@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell.exe -NonInteractive -File .claude/hooks/check-docs.ps1"
+            "command": "powershell.exe -NonInteractive -File \"C:/Users/aurel/IdeaProjects/critical-fail/.claude/hooks/check-docs.ps1\""
           }
         ]
       }
