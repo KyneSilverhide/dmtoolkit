@@ -16,6 +16,7 @@ import MerchantManager from '../components/admin/MerchantManager.vue'
 import SearchTool from '../components/admin/SearchTool.vue'
 import MapManager from '../components/admin/MapManager.vue'
 import GoldDividerTool from '../components/admin/GoldDividerTool.vue'
+import GeneratorTool from '../components/admin/GeneratorTool.vue'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
 
@@ -64,6 +65,7 @@ const tabs = [
   { key: 'merchants', label: 'Marchands',      icon: 'game-icons:shop' },
   { key: 'tresor',    label: 'Trésor',         icon: 'game-icons:coins' },
   { key: 'search',    label: 'Recherche',      icon: 'lucide:search' },
+  { key: 'generator', label: 'Générateur',     icon: 'lucide:wand-2' },
 ]
 
 const tvModes = computed(() => ([
@@ -349,6 +351,9 @@ onUnmounted(() => {
         </div>
         <div v-show="activeTab === 'search'">
           <SearchTool />
+        </div>
+        <div v-show="activeTab === 'generator'">
+          <GeneratorTool />
         </div>
         </template>
         <p v-else class="no-session-msg">Sélectionnez ou créez une session pour accéder aux outils.</p>
