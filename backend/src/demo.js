@@ -155,6 +155,12 @@ async function resetDemoContent(demoAdminId, io) {
       )
     `, [demoAdminId])
 
+    // NULL out current_vote_id before deleting votes (FK constraint)
+    await pool.query(`
+      UPDATE sessions SET current_vote_id = NULL
+      WHERE created_by = $1
+    `, [demoAdminId])
+
     await pool.query(`
       DELETE FROM votes
       WHERE session_id IN (SELECT id FROM sessions WHERE created_by = $1)
