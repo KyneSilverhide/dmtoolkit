@@ -11,6 +11,10 @@ router.post('/login', async (req, res) => {
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password required.' })
   }
+  // Limit password length to prevent bcrypt DoS (bcrypt is CPU-intensive for large inputs)
+  if (typeof password !== 'string' || password.length > 128) {
+    return res.status(400).json({ error: 'Invalid credentials.' })
+  }
   try {
     const result = await pool.query('SELECT * FROM admins WHERE username = $1', [username])
     const admin = result.rows[0]

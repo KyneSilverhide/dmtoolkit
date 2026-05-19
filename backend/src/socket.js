@@ -5,6 +5,13 @@ const pool = require('./db')
 const INITIATIVE_MIN = -10
 const INITIATIVE_MAX = 99
 
+// Valid D&D 5e condition ids — mirrors frontend/src/utils/conditions.js
+const VALID_CONDITIONS = new Set([
+  'blinded', 'charmed', 'deafened', 'exhaustion', 'frightened', 'grappled',
+  'incapacitated', 'invisible', 'paralyzed', 'petrified', 'poisoned',
+  'prone', 'restrained', 'stunned', 'unconscious',
+])
+
 const MIN_DOOM_DURATION_SECONDS = 5
 const MAX_DOOM_DURATION_SECONDS = 24 * 60 * 60
 const MIN_TIMER_DURATION_SECONDS = 5
@@ -127,35 +134,6 @@ function serializeMapState(session) {
 }
 
 /**
- * Returns the currently active vote for a session with live result counts.
- * Returns null if there is no active vote or if the vote cannot be found.
- * Used to send vote state to TV and admin on snapshot events.
- * @param {number} sessionId
- * @param {number|null} voteId
- * @returns {Promise<{id, question, options, isAnonymous, results, totalPlayers, totalVotes, voterNames}|null>}
- */
-async function getActiveVote(sessionId, voteId) {
-  if (!voteId) return null
-  const voteInfo = await pool.query('SELECT * FROM votes WHERE id = $1 AND status = $2', [voteId, 'active'])
-  const vote = voteInfo.rows[0]
-  if (!vote) return null
-  const options = typeof vote.options === 'string' ? JSON.parse(vote.options) : vote.options
-  const responses = await pool.query('SELECT option_index, player_name FROM vote_responses WHERE vote_id = $1', [vote.id])
-  const results = options.map((_, i) => responses.rows.filter(r => r.option_index === i).length)
-  const totalPlayers = await pool.query('SELECT COUNT(*)::int AS total FROM players WHERE session_id = $1', [sessionId])
-  return {
-    id: vote.id,
-    question: vote.question,
-    options,
-    isAnonymous: vote.is_anonymous,
-    results,
-    totalPlayers: totalPlayers.rows[0].total,
-    totalVotes: responses.rows.length,
-    voterNames: responses.rows.map(r => ({ name: r.player_name, optionIndex: r.option_index })),
-  }
-}
-
-/**
  * Returns vote state for a given vote, optionally filtering for active votes only.
  * Includes result counts per option, total players in the session, and voter names.
  * @param {number} sessionId
@@ -185,6 +163,18 @@ async function getVoteState(sessionId, voteId, activeOnly = true) {
     voterNames: responses.rows.map(r => ({ name: r.player_name, optionIndex: r.option_index })),
     status: vote.status,
   }
+}
+
+/**
+ * Convenience wrapper: returns the active vote for a session, without the status field.
+ * @param {number} sessionId
+ * @param {number|null} voteId
+ */
+async function getActiveVote(sessionId, voteId) {
+  const vote = await getVoteState(sessionId, voteId, true)
+  if (!vote) return null
+  const { status, ...rest } = vote
+  return rest
 }
 
 /**
@@ -218,7 +208,7 @@ function setupSocket(io) {
     const token = socket.handshake.auth.token
     if (token) {
       try {
-        socket.admin = jwt.verify(token, process.env.JWT_SECRET)
+        socket.admin = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] })
       } catch { /* not an admin */ }
     }
     next()
@@ -468,9 +458,12 @@ function setupSocket(io) {
     socket.on('update-conditions', async ({ conditions }) => {
       if (!socket.playerId || !socket.sessionId) return
       try {
-        const conditionsJson = JSON.stringify(Array.isArray(conditions) ? conditions : [])
+        const validConditions = Array.isArray(conditions)
+          ? conditions.filter(c => VALID_CONDITIONS.has(c))
+          : []
+        const conditionsJson = JSON.stringify(validConditions)
         await pool.query('UPDATE players SET conditions = $1 WHERE id = $2', [conditionsJson, socket.playerId])
-        const event = { playerId: socket.playerId, conditions }
+        const event = { playerId: socket.playerId, conditions: validConditions }
         io.to(`admin:${socket.sessionId}`).emit('conditions-updated', event)
         io.to(`tv:${socket.sessionId}`).emit('conditions-updated', event)
       } catch (err) { console.error(err) }
@@ -716,6 +709,11 @@ function setupSocket(io) {
     socket.on('create-vote', async ({ sessionId, question, options, isAnonymous }) => {
       if (!socket.admin) return
       try {
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        if (!sessionCheck.rows[0]) return
         const voteRes = await pool.query(
           'INSERT INTO votes (session_id, question, options, is_anonymous) VALUES ($1, $2, $3, $4) RETURNING *',
           [sessionId, question, JSON.stringify(options), isAnonymous || false]
@@ -737,10 +735,19 @@ function setupSocket(io) {
       try {
         const existing = await pool.query('SELECT id FROM vote_responses WHERE vote_id = $1 AND player_id = $2', [voteId, socket.playerId])
         if (existing.rows[0]) { socket.emit('vote-error', { message: 'Vous avez déjà voté.' }); return }
+        // Validate vote exists, is active, and optionIndex is in bounds
+        const voteInfo = await pool.query('SELECT options FROM votes WHERE id = $1 AND status = $2', [voteId, 'active'])
+        const voteRow = voteInfo.rows[0]
+        if (!voteRow) { socket.emit('vote-error', { message: 'Vote inexistant ou terminé.' }); return }
+        const voteOptions = typeof voteRow.options === 'string' ? JSON.parse(voteRow.options) : voteRow.options
+        const idx = parseInt(optionIndex, 10)
+        if (!Number.isFinite(idx) || idx < 0 || idx >= voteOptions.length) {
+          socket.emit('vote-error', { message: 'Option de vote invalide.' }); return
+        }
         const pname = await pool.query('SELECT player_name FROM players WHERE id = $1', [socket.playerId])
         const playerName = pname.rows[0]?.player_name || 'Inconnu'
-        await pool.query('INSERT INTO vote_responses (vote_id, player_id, player_name, option_index) VALUES ($1, $2, $3, $4)', [voteId, socket.playerId, playerName, optionIndex])
-        socket.emit('vote-submitted', { optionIndex })
+        await pool.query('INSERT INTO vote_responses (vote_id, player_id, player_name, option_index) VALUES ($1, $2, $3, $4)', [voteId, socket.playerId, playerName, idx])
+        socket.emit('vote-submitted', { optionIndex: idx })
 
         const voteUpdate = await getVoteState(socket.sessionId, voteId, true)
         if (!voteUpdate) return
@@ -762,7 +769,10 @@ function setupSocket(io) {
     socket.on('close-vote', async ({ sessionId }) => {
       if (!socket.admin) return
       try {
-        const sessionRes = await pool.query('SELECT current_vote_id FROM sessions WHERE id = $1', [sessionId])
+        const sessionRes = await pool.query(
+          'SELECT current_vote_id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
         const voteId = sessionRes.rows[0]?.current_vote_id
         if (!voteId) return
         const voteUpdate = await getVoteState(sessionId, voteId, false)
@@ -932,6 +942,11 @@ function setupSocket(io) {
     socket.on('send-message', async ({ sessionId, toPlayerId, type, content, voiceStyle, textEffect, authorName }) => {
       if (!socket.admin) return
       try {
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        if (!sessionCheck.rows[0]) return
         if (!toPlayerId) {
           const cnt = await pool.query('SELECT COUNT(*)::int AS total FROM players WHERE session_id = $1', [sessionId])
           if ((cnt.rows[0]?.total || 0) === 0) { socket.emit('send-error', { message: 'Aucun joueur connecté.' }); return }
@@ -955,6 +970,11 @@ function setupSocket(io) {
     socket.on('send-dice-result', async ({ sessionId, combatType, rollValue, resultText, toPlayerId }) => {
       if (!socket.admin) return
       try {
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        if (!sessionCheck.rows[0]) return
         if (!toPlayerId) {
           const cnt = await pool.query('SELECT COUNT(*)::int AS total FROM players WHERE session_id = $1', [sessionId])
           if ((cnt.rows[0]?.total || 0) === 0) { socket.emit('send-error', { message: 'Aucun joueur connecté.' }); return }
@@ -1074,6 +1094,11 @@ function setupSocket(io) {
     socket.on('create-merchant', async ({ sessionId, name, description, items }) => {
       if (!socket.admin) return
       try {
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        if (!sessionCheck.rows[0]) return
         const mr = await pool.query(
           'INSERT INTO merchants (session_id, name, description) VALUES ($1, $2, $3) RETURNING *',
           [sessionId, name, description || '']
@@ -1491,8 +1516,11 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         const pr = await pool.query(
-          'SELECT socket_id, player_name, session_id FROM players WHERE id = $1',
-          [playerId]
+          `SELECT p.socket_id, p.player_name, p.session_id
+           FROM players p
+           JOIN sessions s ON s.id = p.session_id
+           WHERE p.id = $1 AND s.created_by = $2`,
+          [playerId, socket.admin.id]
         )
         const player = pr.rows[0]
         if (!player) return

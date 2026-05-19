@@ -166,13 +166,6 @@ async function resetDemoContent(demoAdminId, io) {
       WHERE session_id IN (SELECT id FROM sessions WHERE created_by = $1)
     `, [demoAdminId])
 
-    await pool.query(`
-      DELETE FROM merchant_items
-      WHERE merchant_id IN (
-        SELECT id FROM merchants
-        WHERE session_id IN (SELECT id FROM sessions WHERE created_by = $1)
-      )
-    `, [demoAdminId])
 
     await pool.query(`
       DELETE FROM merchants

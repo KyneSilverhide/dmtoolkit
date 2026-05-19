@@ -2,12 +2,12 @@ const express = require('express')
 const QRCode = require('qrcode')
 const path = require('path')
 const fs = require('fs').promises
+const crypto = require('crypto')
 const pool = require('../db')
 const { authenticateToken } = require('../middleware/auth')
 
 const router = express.Router()
 
-const crypto = require('crypto')
 
 async function generateUniqueCode(pool) {
   for (let i = 0; i < 20; i++) {

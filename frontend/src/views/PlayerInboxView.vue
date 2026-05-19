@@ -13,6 +13,20 @@ import { applyTheme, getThemePreference, setThemePreference } from '../utils/the
 import AppIcon from '../components/AppIcon.vue'
 import DemoBanner from '../components/DemoBanner.vue'
 import { DND_CONDITIONS } from '../utils/conditions.js'
+import {
+  JOIN_SESSION, LEAVE_SESSION, SESSION_JOINED, ERROR,
+  UPDATE_HP, UPDATE_MAX_HP, UPDATE_CONDITIONS, UPDATE_CONCENTRATION, UPDATE_INITIATIVE,
+  HP_UPDATE_CONFIRMED, MAX_HP_UPDATE_CONFIRMED,
+  CONCENTRATION_CONFIRMED, CONCENTRATION_WARNING,
+  INITIATIVE_CONFIRMED,
+  SUBMIT_VOTE, VOTE_STARTED, VOTE_CLOSED, VOTE_SUBMITTED,
+  REQUEST_BATCH_PURCHASE, RESPOND_COUNTER_OFFER,
+  NEW_MESSAGE, DICE_RESULT,
+  MERCHANT_SHOWN, MERCHANT_CLOSED, MERCHANT_ITEMS_UPDATED,
+  PURCHASE_REQUESTED, BATCH_ACCEPTED, BATCH_REJECTED,
+  PURCHASE_COUNTER_OFFER, COUNTER_OFFER_RESULT, PURCHASE_ERROR,
+  KICKED, DEMO_RESET,
+} from '../socket-events.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -145,22 +159,22 @@ async function rejoinFromKnownPlayer(sessionCode) {
 
   return await new Promise((resolve) => {
     const onJoined = (data) => {
-      socket.off('error', onError)
+      socket.off(ERROR, onError)
       rejoining.value = false
       applyJoinedState(data)
       resolve(true)
     }
 
     const onError = (err) => {
-      socket.off('session-joined', onJoined)
+      socket.off(SESSION_JOINED, onJoined)
       rejoining.value = false
       rejoinError.value = err?.message || 'Impossible de reprendre la session automatiquement.'
       resolve(false)
     }
 
-    socket.once('session-joined', onJoined)
-    socket.once('error', onError)
-    socket.emit('join-session', {
+    socket.once(SESSION_JOINED, onJoined)
+    socket.once(ERROR, onError)
+    socket.emit(JOIN_SESSION, {
       code: sessionCode,
       playerName: knownPlayer.name,
       ac: knownPlayer.ac,
@@ -250,7 +264,7 @@ function sendMaxHpUpdate() {
   const socket = getSocket()
   const val = Math.max(1, Math.min(9999, parseInt(pendingMaxHp.value) || 1))
   maxHpSending.value = true
-  socket.emit('update-max-hp', { newMaxHp: val })
+  socket.emit(UPDATE_MAX_HP, { newMaxHp: val })
 }
 const handleMaxHpConfirmed = (data) => {
   maxHp.value = data.newMaxHp
@@ -298,7 +312,7 @@ const concentrationModal = ref(null) // { damage, dc }
 function toggleConcentration() {
   isConcentrating.value = !isConcentrating.value
   const socket = getSocket()
-  socket.emit('update-concentration', { isConcentrating: isConcentrating.value })
+  socket.emit(UPDATE_CONCENTRATION, { isConcentrating: isConcentrating.value })
 }
 
 function dismissConcentrationModal() {
@@ -314,7 +328,7 @@ function toggleCondition(conditionId) {
   if (idx === -1) activeConditions.value.push(conditionId)
   else activeConditions.value.splice(idx, 1)
   const socket = getSocket()
-  socket.emit('update-conditions', { conditions: activeConditions.value })
+  socket.emit(UPDATE_CONDITIONS, { conditions: activeConditions.value })
 }
 
 function adjustHp(delta) {
@@ -324,7 +338,7 @@ function adjustHp(delta) {
 function sendHpUpdate() {
   const socket = getSocket()
   hpSending.value = true
-  socket.emit('update-hp', { newHp: pendingHp.value })
+  socket.emit(UPDATE_HP, { newHp: pendingHp.value })
 }
 
 function sendInitiativeUpdate() {
@@ -334,12 +348,12 @@ function sendInitiativeUpdate() {
   const initiative = Number.isFinite(parsed)
     ? Math.max(INITIATIVE_MIN, Math.min(INITIATIVE_MAX, parsed))
     : null
-  socket.emit('update-initiative', { initiative })
+  socket.emit(UPDATE_INITIATIVE, { initiative })
 }
 
 function leaveSession() {
   const socket = getSocket()
-  socket.emit('leave-session')
+  socket.emit(LEAVE_SESSION)
   resetSocket()
   sessionStore.setActiveSession(null)
   sessionStore.playerInfo = null
@@ -353,7 +367,7 @@ const hasNewVote = ref(false)
 
 function submitVote(optionIndex) {
   const socket = getSocket()
-  socket.emit('submit-vote', { voteId: activeVote.value.id, optionIndex })
+  socket.emit(SUBMIT_VOTE, { voteId: activeVote.value.id, optionIndex })
 }
 
 // ── Merchant / Cart ──────────────────────────────────────────────────────
@@ -394,7 +408,7 @@ function submitCart() {
   }
   if (items.length === 0) return
   cartSending.value = true
-  socket.emit('request-batch-purchase', { items })
+  socket.emit(REQUEST_BATCH_PURCHASE, { items })
 }
 
 function clearCart() {
@@ -403,7 +417,7 @@ function clearCart() {
 
 function respondCounterOffer(requestId, accept) {
   const socket = getSocket()
-  socket.emit('respond-counter-offer', { requestId, accept })
+  socket.emit(RESPOND_COUNTER_OFFER, { requestId, accept })
   counterOffers.value = counterOffers.value.filter(c => c.requestId !== requestId)
 }
 
@@ -580,27 +594,27 @@ async function handleSocketReconnect() {
   if (!sessionStore.activeSession || !playerInfo.value) return
   const socket = getSocket()
 
-  const onJoined = (data) => {
-    clearTimeout(reconnectTimeout)
-    socket.off('error', onError)
-    applyJoinedState(data)
-  }
-  const onError = () => {
-    clearTimeout(reconnectTimeout)
-    socket.off('session-joined', onJoined)
-  }
+    const onJoined = (data) => {
+      clearTimeout(reconnectTimeout)
+      socket.off(ERROR, onError)
+      applyJoinedState(data)
+    }
+    const onError = () => {
+      clearTimeout(reconnectTimeout)
+      socket.off(SESSION_JOINED, onJoined)
+    }
 
-  socket.once('session-joined', onJoined)
-  socket.once('error', onError)
+    socket.once(SESSION_JOINED, onJoined)
+    socket.once(ERROR, onError)
 
   // Safety timeout: clean up listeners if the server never responds
-  const reconnectTimeout = setTimeout(() => {
-    socket.off('session-joined', onJoined)
-    socket.off('error', onError)
-  }, 10000)
+    const reconnectTimeout = setTimeout(() => {
+      socket.off(SESSION_JOINED, onJoined)
+      socket.off(ERROR, onError)
+    }, 10000)
 
   try {
-    socket.emit('join-session', {
+    socket.emit(JOIN_SESSION, {
       code: sessionStore.activeSession.code,
       playerName: playerInfo.value.name,
       ac: playerInfo.value.ac,
@@ -611,8 +625,8 @@ async function handleSocketReconnect() {
     })
   } catch (err) {
     clearTimeout(reconnectTimeout)
-    socket.off('session-joined', onJoined)
-    socket.off('error', onError)
+    socket.off(SESSION_JOINED, onJoined)
+    socket.off(ERROR, onError)
     console.error('Reconnect emit failed:', err)
   }
 }
@@ -638,27 +652,27 @@ onMounted(async () => {
   notificationPermission.value = readNotificationPermission()
   const socket = getSocket()
   socket.on('connect', handleSocketReconnect)
-  socket.on('new-message', handleNewMessage)
-  socket.on('dice-result', handleDiceResult)
-  socket.on('hp-update-confirmed', handleHpConfirmed)
-  socket.on('max-hp-update-confirmed', handleMaxHpConfirmed)
-  socket.on('concentration-confirmed', handleConcentrationConfirmed)
-  socket.on('initiative-confirmed', handleInitiativeConfirmed)
-  socket.on('concentration-warning', handleConcentrationWarning)
-  socket.on('vote-started', handleVoteStarted)
-  socket.on('vote-closed', handleVoteClosed)
-  socket.on('vote-submitted', handleVoteSubmitted)
-  socket.on('merchant-shown', handleMerchantShown)
-  socket.on('merchant-closed', handleMerchantClosed)
-  socket.on('merchant-items-updated', handleMerchantItemsUpdated)
-  socket.on('purchase-requested', handlePurchaseRequested)
-  socket.on('batch-accepted', handleBatchAccepted)
-  socket.on('batch-rejected', handleBatchRejected)
-  socket.on('purchase-counter-offer', handlePurchaseCounterOffer)
-  socket.on('counter-offer-result', handleCounterOfferResult)
-  socket.on('purchase-error', handlePurchaseError)
-  socket.on('kicked', handleKicked)
-  socket.on('demo-reset', () => { window.location.reload() })
+  socket.on(NEW_MESSAGE, handleNewMessage)
+  socket.on(DICE_RESULT, handleDiceResult)
+  socket.on(HP_UPDATE_CONFIRMED, handleHpConfirmed)
+  socket.on(MAX_HP_UPDATE_CONFIRMED, handleMaxHpConfirmed)
+  socket.on(CONCENTRATION_CONFIRMED, handleConcentrationConfirmed)
+  socket.on(INITIATIVE_CONFIRMED, handleInitiativeConfirmed)
+  socket.on(CONCENTRATION_WARNING, handleConcentrationWarning)
+  socket.on(VOTE_STARTED, handleVoteStarted)
+  socket.on(VOTE_CLOSED, handleVoteClosed)
+  socket.on(VOTE_SUBMITTED, handleVoteSubmitted)
+  socket.on(MERCHANT_SHOWN, handleMerchantShown)
+  socket.on(MERCHANT_CLOSED, handleMerchantClosed)
+  socket.on(MERCHANT_ITEMS_UPDATED, handleMerchantItemsUpdated)
+  socket.on(PURCHASE_REQUESTED, handlePurchaseRequested)
+  socket.on(BATCH_ACCEPTED, handleBatchAccepted)
+  socket.on(BATCH_REJECTED, handleBatchRejected)
+  socket.on(PURCHASE_COUNTER_OFFER, handlePurchaseCounterOffer)
+  socket.on(COUNTER_OFFER_RESULT, handleCounterOfferResult)
+  socket.on(PURCHASE_ERROR, handlePurchaseError)
+  socket.on(KICKED, handleKicked)
+  socket.on(DEMO_RESET, () => { window.location.reload() })
   window.addEventListener('beforeunload', handleBeforeUnload)
 })
 
@@ -668,29 +682,29 @@ onUnmounted(() => {
   if (socket) {
     // Only emit leave-session on intentional SPA navigation, NOT on page refresh/close.
     // isRefreshing is set in handleBeforeUnload (fires only on real page unload).
-    if (!isRefreshing && sessionStore.activeSession) socket.emit('leave-session')
+    if (!isRefreshing && sessionStore.activeSession) socket.emit(LEAVE_SESSION)
     socket.off('connect', handleSocketReconnect)
-    socket.off('new-message', handleNewMessage)
-    socket.off('dice-result', handleDiceResult)
-    socket.off('hp-update-confirmed', handleHpConfirmed)
-    socket.off('max-hp-update-confirmed', handleMaxHpConfirmed)
-    socket.off('concentration-confirmed', handleConcentrationConfirmed)
-    socket.off('initiative-confirmed', handleInitiativeConfirmed)
-    socket.off('concentration-warning', handleConcentrationWarning)
-    socket.off('vote-started', handleVoteStarted)
-    socket.off('vote-closed', handleVoteClosed)
-    socket.off('vote-submitted', handleVoteSubmitted)
-    socket.off('merchant-shown', handleMerchantShown)
-    socket.off('merchant-closed', handleMerchantClosed)
-    socket.off('merchant-items-updated', handleMerchantItemsUpdated)
-    socket.off('purchase-requested', handlePurchaseRequested)
-    socket.off('batch-accepted', handleBatchAccepted)
-    socket.off('batch-rejected', handleBatchRejected)
-    socket.off('purchase-counter-offer', handlePurchaseCounterOffer)
-    socket.off('counter-offer-result', handleCounterOfferResult)
-    socket.off('purchase-error', handlePurchaseError)
-    socket.off('kicked', handleKicked)
-    socket.off('demo-reset')
+    socket.off(NEW_MESSAGE, handleNewMessage)
+    socket.off(DICE_RESULT, handleDiceResult)
+    socket.off(HP_UPDATE_CONFIRMED, handleHpConfirmed)
+    socket.off(MAX_HP_UPDATE_CONFIRMED, handleMaxHpConfirmed)
+    socket.off(CONCENTRATION_CONFIRMED, handleConcentrationConfirmed)
+    socket.off(INITIATIVE_CONFIRMED, handleInitiativeConfirmed)
+    socket.off(CONCENTRATION_WARNING, handleConcentrationWarning)
+    socket.off(VOTE_STARTED, handleVoteStarted)
+    socket.off(VOTE_CLOSED, handleVoteClosed)
+    socket.off(VOTE_SUBMITTED, handleVoteSubmitted)
+    socket.off(MERCHANT_SHOWN, handleMerchantShown)
+    socket.off(MERCHANT_CLOSED, handleMerchantClosed)
+    socket.off(MERCHANT_ITEMS_UPDATED, handleMerchantItemsUpdated)
+    socket.off(PURCHASE_REQUESTED, handlePurchaseRequested)
+    socket.off(BATCH_ACCEPTED, handleBatchAccepted)
+    socket.off(BATCH_REJECTED, handleBatchRejected)
+    socket.off(PURCHASE_COUNTER_OFFER, handlePurchaseCounterOffer)
+    socket.off(COUNTER_OFFER_RESULT, handleCounterOfferResult)
+    socket.off(PURCHASE_ERROR, handlePurchaseError)
+    socket.off(KICKED, handleKicked)
+    socket.off(DEMO_RESET)
   }
   window.removeEventListener('beforeunload', handleBeforeUnload)
   if (attentionAudioContext) {

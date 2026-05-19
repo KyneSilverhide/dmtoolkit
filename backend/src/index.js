@@ -21,6 +21,13 @@ const setupSocket = require('./socket')
 const app = express()
 const server = http.createServer(app)
 
+// Fail fast if JWT_SECRET is not configured — signing with undefined would create tokens
+// verifiable by anyone who knows the key is "undefined"
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is not set. Refusing to start.')
+  process.exit(1)
+}
+
 app.set('trust proxy', 1)
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'

@@ -1,11 +1,12 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSocket } from '../socket.js'
 import { sessionStore } from '../stores/session.js'
 import { getProfile, saveProfile } from '../utils/playerProfiles.js'
 import { saveLastKnownPlayer } from '../utils/playerSessionMemory.js'
 import AppIcon from '../components/AppIcon.vue'
+import { JOIN_SESSION, SESSION_JOINED, ERROR } from '../socket-events.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -28,11 +29,29 @@ const DND_CLASSES = [
   'Ensorceleur', 'Occultiste', 'Magicien',
 ]
 
+// Pending socket handlers — saved so onUnmounted can remove them if the user
+// navigates away before the join completes (avoids stale callbacks).
+let _pendingJoinedHandler = null
+let _pendingErrorHandler = null
+
 onMounted(() => {
   if (sessionStore.activeSession && sessionStore.playerInfo) {
     const code = sessionStore.activeSession.code
     router.replace(code ? `/view/${code}` : '/player')
   }
+})
+
+onUnmounted(() => {
+  const socket = getSocket()
+  if (_pendingJoinedHandler) {
+    socket.off(SESSION_JOINED, _pendingJoinedHandler)
+    _pendingJoinedHandler = null
+  }
+  if (_pendingErrorHandler) {
+    socket.off(ERROR, _pendingErrorHandler)
+    _pendingErrorHandler = null
+  }
+  loading.value = false
 })
 
 // Auto-fill from localStorage when playerName changes
@@ -106,16 +125,10 @@ async function joinSession() {
 
     const socket = getSocket()
 
-    socket.emit('join-session', {
-      code: sessionCode.value,
-      playerName: playerName.value,
-      ac: ac.value,
-      hp: hp.value,
-      dndClass: dndClass.value || null,
-      avatarUrl,
-    })
-
-    socket.once('session-joined', (data) => {
+    _pendingJoinedHandler = (data) => {
+      _pendingJoinedHandler = null
+      _pendingErrorHandler = null
+      loading.value = false
       // Persist profile to localStorage
       saveProfile(playerName.value, {
         dndClass: dndClass.value,
@@ -145,11 +158,25 @@ async function joinSession() {
         avatarUrl: data.player.avatar_url,
       })
       router.push(`/view/${data.session.code}`)
-    })
+    }
 
-    socket.once('error', (err) => {
+    _pendingErrorHandler = (err) => {
+      _pendingJoinedHandler = null
+      _pendingErrorHandler = null
       error.value = err.message || 'Erreur lors de la connexion.'
       loading.value = false
+    }
+
+    socket.once(SESSION_JOINED, _pendingJoinedHandler)
+    socket.once(ERROR, _pendingErrorHandler)
+
+    socket.emit(JOIN_SESSION, {
+      code: sessionCode.value,
+      playerName: playerName.value,
+      ac: ac.value,
+      hp: hp.value,
+      dndClass: dndClass.value || null,
+      avatarUrl,
     })
   } catch {
     error.value = 'Erreur de connexion au serveur.'

@@ -25,17 +25,20 @@ export const LEAVE_SESSION = 'leave-session'
 /** Player updates their current HP: { newHp } */
 export const UPDATE_HP = 'update-hp'
 
-/** Player updates their conditions: { conditions } */
+/** Player updates their max HP: { newMaxHp } */
+export const UPDATE_MAX_HP = 'update-max-hp'
+
+/** Player updates their conditions array: { conditions } */
 export const UPDATE_CONDITIONS = 'update-conditions'
 
 /** Player toggles concentration: { isConcentrating } */
 export const UPDATE_CONCENTRATION = 'update-concentration'
 
+/** Player rolls dice and sends result to admin: { diceCount, diceType, modifier, rollType, total, hidden } */
+export const PLAYER_ROLL = 'player-roll'
+
 /** Player updates their initiative: { initiative } */
 export const UPDATE_INITIATIVE = 'update-initiative'
-
-/** Player submits a vote: { voteId, optionIndex } */
-export const SUBMIT_VOTE = 'submit-vote'
 
 /** Player requests purchase of a single item (legacy): { itemId, quantity } */
 export const REQUEST_PURCHASE = 'request-purchase'
@@ -45,6 +48,9 @@ export const REQUEST_BATCH_PURCHASE = 'request-batch-purchase'
 
 /** Player responds to a counter-offer: { requestId, accept } */
 export const RESPOND_COUNTER_OFFER = 'respond-counter-offer'
+
+/** Player submits a vote: { voteId, optionIndex } */
+export const SUBMIT_VOTE = 'submit-vote'
 
 // ── Incoming events: Admin → Server ─────────────────────────────────────────
 
@@ -151,6 +157,9 @@ export const HP_UPDATED = 'hp-updated'
 
 /** Sent to player confirming HP update: { newHp } */
 export const HP_UPDATE_CONFIRMED = 'hp-update-confirmed'
+
+/** Sent to player confirming max HP update: { newMaxHp } */
+export const MAX_HP_UPDATE_CONFIRMED = 'max-hp-update-confirmed'
 
 /** Sent to player when taking damage while concentrating: { damage, dc } */
 export const CONCENTRATION_WARNING = 'concentration-warning'
@@ -272,6 +281,33 @@ export const COUNTER_OFFER_RESULT = 'counter-offer-result'
 /** Sent to admin when player responds to a counter-offer: { requestId, accepted, playerName } */
 export const COUNTER_OFFER_RESPONSE = 'counter-offer-response'
 
+/** Sent to TV + admin when the lobby background changes: { url } */
+export const LOBBY_BG_UPDATED = 'lobby-bg-updated'
+
+/** Sent to TV + admin when combat round changes: { round } */
+export const ROUND_UPDATED = 'round-updated'
+
+/** Sent to TV + admin when a timer is active: { label, endAt } */
+export const TIMER_UPDATED = 'timer-updated'
+
+/** Sent to TV + admin when the timer is stopped */
+export const TIMER_STOPPED = 'timer-stopped'
+
+/** Sent to admin when a merchant is permanently deleted: { merchantId } */
+export const MERCHANT_DELETED = 'merchant-deleted'
+
+/** Sent to admin with a dice roll result from a player: { playerName, diceCount, diceType, modifier, rollType, total, hidden } */
+export const PLAYER_ROLL_RESULT = 'player-roll-result'
+
+/** Sent to player confirming their dice roll was sent visibly to admin */
+export const PLAYER_ROLL_CONFIRMED = 'player-roll-confirmed'
+
+/** Sent to player confirming their hidden dice roll was sent to admin */
+export const PLAYER_ROLL_HIDDEN_SENT = 'player-roll-hidden-sent'
+
+/** Sent to all connected clients when the demo account is reset — triggers page reload */
+export const DEMO_RESET = 'demo-reset'
+
 /** Sent to a player when they are kicked from the session */
 export const KICKED = 'kicked'
 
@@ -289,8 +325,10 @@ export default {
   JOIN_SESSION,
   LEAVE_SESSION,
   UPDATE_HP,
+  UPDATE_MAX_HP,
   UPDATE_CONDITIONS,
   UPDATE_CONCENTRATION,
+  PLAYER_ROLL,
   UPDATE_INITIATIVE,
   SUBMIT_VOTE,
   REQUEST_PURCHASE,
@@ -332,6 +370,7 @@ export default {
   PLAYER_LEFT,
   HP_UPDATED,
   HP_UPDATE_CONFIRMED,
+  MAX_HP_UPDATE_CONFIRMED,
   CONCENTRATION_WARNING,
   CONCENTRATION_UPDATED,
   CONCENTRATION_CONFIRMED,
@@ -363,6 +402,7 @@ export default {
   MERCHANT_CLOSED,
   MERCHANT_UPDATED,
   MERCHANT_ITEMS_UPDATED,
+  MERCHANT_DELETED,
   PURCHASE_REQUEST,
   PURCHASE_REQUESTED,
   PURCHASE_ERROR,
@@ -372,6 +412,14 @@ export default {
   BATCH_REJECTED,
   COUNTER_OFFER_RESULT,
   COUNTER_OFFER_RESPONSE,
+  LOBBY_BG_UPDATED,
+  ROUND_UPDATED,
+  TIMER_UPDATED,
+  TIMER_STOPPED,
+  PLAYER_ROLL_RESULT,
+  PLAYER_ROLL_CONFIRMED,
+  PLAYER_ROLL_HIDDEN_SENT,
+  DEMO_RESET,
   KICKED,
   ERROR,
   TV_CONTROL_ERROR,

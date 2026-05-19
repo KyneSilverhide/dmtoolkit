@@ -89,14 +89,21 @@ router.post('/', authenticateToken, upload.fields([
   const urls = uploadedFiles.map(fileToUrl)
   if (req.body.session_id) {
     try {
-      const type = req.body.type || 'image'
-      for (let i = 0; i < uploadedFiles.length; i++) {
-        const url = urls[i]
-        const originalName = uploadedFiles[i].originalname
-        await pool.query(
-            'INSERT INTO session_images (session_id, url, original_name, type) VALUES ($1, $2, $3, $4)',
-            [req.body.session_id, url, originalName, type]
-        )
+      // Verify the session belongs to this admin before linking uploaded files
+      const sessionCheck = await pool.query(
+        'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+        [req.body.session_id, req.admin.id]
+      )
+      if (sessionCheck.rows[0]) {
+        const type = req.body.type || 'image'
+        for (let i = 0; i < uploadedFiles.length; i++) {
+          const url = urls[i]
+          const originalName = uploadedFiles[i].originalname
+          await pool.query(
+              'INSERT INTO session_images (session_id, url, original_name, type) VALUES ($1, $2, $3, $4)',
+              [req.body.session_id, url, originalName, type]
+          )
+        }
       }
     } catch (err) { console.error(err) }
   }

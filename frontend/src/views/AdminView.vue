@@ -20,6 +20,14 @@ import GeneratorTool from '../components/admin/GeneratorTool.vue'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
 import DemoBanner from '../components/DemoBanner.vue'
+import {
+  PLAYER_JOINED, PLAYER_LEFT, PLAYERS_SNAPSHOT, HP_UPDATED,
+  CONDITIONS_UPDATED, CONCENTRATION_UPDATED, INITIATIVE_UPDATED,
+  ADMIN_STATE, TV_MODE_CHANGED, VOTE_STARTED, VOTE_CLOSED,
+  MAP_STATE, MERCHANT_ITEMS_UPDATED, DOOM_CLOCK_STARTED, DOOM_CLOCK_STOPPED,
+  TENSION_SCALE_UPDATED, TENSION_SCALE_ENDED, PLAYER_ROLL_RESULT, DEMO_RESET,
+  ADMIN_JOIN, SET_TV_MODE,
+} from '../socket-events.js'
 
 const router = useRouter()
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
@@ -40,6 +48,10 @@ const hasActiveMap = ref(false)
 
 const playerRollToasts = ref([])
 let playerRollToastId = 0
+
+// Keeps the socket instance used in onMounted so onUnmounted can clean up
+// safely even after resetSocket() was called (e.g. on logout before unmount).
+let _socket = null
 
 function pushPlayerRollToast(payload) {
   const id = ++playerRollToastId
@@ -99,16 +111,12 @@ function modeReady(modeKey) {
   return !!mode?.ready
 }
 
-function modeReadyLabel(modeKey) {
-  return modeReady(modeKey) ? 'prêt' : 'non prêt'
-}
-
 function setTvMode(mode) {
   if (!sessionStore.activeSession?.id) return
   if (!modeReady(mode)) return
 
   const socket = getSocket(authStore.token)
-  socket.emit('set-tv-mode', {
+  socket.emit(SET_TV_MODE, {
     sessionId: sessionStore.activeSession.id,
     mode,
   })
@@ -161,69 +169,69 @@ function toggleTheme() {
 
 onMounted(() => {
   loadSessions()
-  const socket = getSocket(authStore.token)
+  _socket = getSocket(authStore.token)
 
   // Re-join admin room after socket reconnects so we don't miss events
-  socket.on('connect', () => {
+  _socket.on('connect', () => {
     if (sessionStore.activeSession?.id) {
-      socket.emit('admin-join', sessionStore.activeSession.id)
+      _socket.emit(ADMIN_JOIN, sessionStore.activeSession.id)
     }
   })
 
-  socket.on('player-joined', (player) => {
+  _socket.on(PLAYER_JOINED, (player) => {
     sessionStore.addPlayer(player)
   })
 
-  socket.on('player-left', (data) => {
+  _socket.on(PLAYER_LEFT, (data) => {
     sessionStore.removePlayer(data.playerId)
   })
 
-  socket.on('players-snapshot', ({ sessionId, players }) => {
+  _socket.on(PLAYERS_SNAPSHOT, ({ sessionId, players }) => {
     if (sessionStore.activeSession?.id !== sessionId) return
     sessionStore.setPlayers(players)
   })
 
-  socket.on('hp-updated', ({ playerId, newHp, newMaxHp }) => {
+  _socket.on(HP_UPDATED, ({ playerId, newHp, newMaxHp }) => {
     sessionStore.updatePlayerHp(playerId, newHp, newMaxHp)
   })
 
-  socket.on('conditions-updated', ({ playerId, conditions }) => {
+  _socket.on(CONDITIONS_UPDATED, ({ playerId, conditions }) => {
     sessionStore.updatePlayerConditions(playerId, conditions)
   })
 
-  socket.on('concentration-updated', ({ playerId, isConcentrating }) => {
+  _socket.on(CONCENTRATION_UPDATED, ({ playerId, isConcentrating }) => {
     sessionStore.updatePlayerConcentration(playerId, isConcentrating)
   })
 
-  socket.on('initiative-updated', ({ playerId, initiative }) => {
+  _socket.on(INITIATIVE_UPDATED, ({ playerId, initiative }) => {
     sessionStore.updatePlayerInitiative(playerId, initiative)
   })
 
-  socket.on('admin-state', handleAdminState)
-  socket.on('tv-mode-changed', handleTvModeChanged)
+  _socket.on(ADMIN_STATE, handleAdminState)
+  _socket.on(TV_MODE_CHANGED, handleTvModeChanged)
 
-  socket.on('vote-started', () => { hasActiveVote.value = true })
-  socket.on('vote-closed', () => { hasActiveVote.value = false })
+  _socket.on(VOTE_STARTED, () => { hasActiveVote.value = true })
+  _socket.on(VOTE_CLOSED, () => { hasActiveVote.value = false })
 
-  socket.on('map-state', (data) => {
+  _socket.on(MAP_STATE, (data) => {
     hasActiveMap.value = !!(data?.mapUrl)
   })
 
-  socket.on('merchant-items-updated', () => { hasActiveMerchant.value = true })
+  _socket.on(MERCHANT_ITEMS_UPDATED, () => { hasActiveMerchant.value = true })
 
-  socket.on('doom-clock-started', () => { hasActiveDoom.value = true })
-  socket.on('doom-clock-stopped', () => {
+  _socket.on(DOOM_CLOCK_STARTED, () => { hasActiveDoom.value = true })
+  _socket.on(DOOM_CLOCK_STOPPED, () => {
     hasActiveDoom.value = false
     if (tvMode.value === 'doom') tvMode.value = 'lobby'
   })
 
-  socket.on('tension-scale-updated', () => { hasActiveTension.value = true })
-  socket.on('tension-scale-ended', () => {
+  _socket.on(TENSION_SCALE_UPDATED, () => { hasActiveTension.value = true })
+  _socket.on(TENSION_SCALE_ENDED, () => {
     hasActiveTension.value = false
     if (tvMode.value === 'tension') tvMode.value = 'lobby'
   })
 
-  socket.on('player-roll-result', (payload) => {
+  _socket.on(PLAYER_ROLL_RESULT, (payload) => {
     try {
       if (payload && typeof payload === 'object') {
         pushPlayerRollToast(payload)
@@ -233,7 +241,7 @@ onMounted(() => {
     }
   })
 
-  socket.on('demo-reset', () => {
+  _socket.on(DEMO_RESET, () => {
     window.location.reload()
   })
 })
@@ -244,34 +252,35 @@ watch(
     if (!sessionId) return
     isSessionPanelCollapsed.value = true
     const socket = getSocket(authStore.token)
-    socket.emit('admin-join', sessionId)
+    socket.emit(ADMIN_JOIN, sessionId)
   },
   { immediate: true }
 )
 
 onUnmounted(() => {
-  const socket = getSocket()
-  socket.off('connect')
-  socket.off('player-joined')
-  socket.off('player-left')
-  socket.off('players-snapshot')
-  socket.off('hp-updated')
-  socket.off('conditions-updated')
-  socket.off('concentration-updated')
-  socket.off('initiative-updated')
-  socket.off('admin-state', handleAdminState)
-  socket.off('tv-mode-changed', handleTvModeChanged)
-
-  socket.off('vote-started')
-  socket.off('vote-closed')
-  socket.off('merchant-items-updated')
-  socket.off('doom-clock-started')
-  socket.off('doom-clock-stopped')
-  socket.off('tension-scale-updated')
-  socket.off('tension-scale-ended')
-  socket.off('map-state')
-  socket.off('player-roll-result')
-  socket.off('demo-reset')
+  if (_socket) {
+    _socket.off('connect')
+    _socket.off(PLAYER_JOINED)
+    _socket.off(PLAYER_LEFT)
+    _socket.off(PLAYERS_SNAPSHOT)
+    _socket.off(HP_UPDATED)
+    _socket.off(CONDITIONS_UPDATED)
+    _socket.off(CONCENTRATION_UPDATED)
+    _socket.off(INITIATIVE_UPDATED)
+    _socket.off(ADMIN_STATE, handleAdminState)
+    _socket.off(TV_MODE_CHANGED, handleTvModeChanged)
+    _socket.off(VOTE_STARTED)
+    _socket.off(VOTE_CLOSED)
+    _socket.off(MERCHANT_ITEMS_UPDATED)
+    _socket.off(DOOM_CLOCK_STARTED)
+    _socket.off(DOOM_CLOCK_STOPPED)
+    _socket.off(TENSION_SCALE_UPDATED)
+    _socket.off(TENSION_SCALE_ENDED)
+    _socket.off(MAP_STATE)
+    _socket.off(PLAYER_ROLL_RESULT)
+    _socket.off(DEMO_RESET)
+    _socket = null
+  }
 })
 </script>
 
