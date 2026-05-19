@@ -1559,10 +1559,11 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 0;
 }
 .tv-image {
-  max-width: 100%;
-  max-height: 90vh;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   border-radius: 8px;
 }
