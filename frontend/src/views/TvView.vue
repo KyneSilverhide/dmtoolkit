@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { io } from 'socket.io-client'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
+import DemoBanner from '../components/DemoBanner.vue'
 import { DND_CONDITIONS_MAP } from '../utils/conditions.js'
 
 const DOOM_DANGER_THRESHOLD_SECONDS = 10
@@ -49,6 +50,9 @@ const mapFogCanvas = ref(null)
 const mapContainerRef = ref(null)
 const mapImageSize = ref({ w: 0, h: 0 })
 const mapTokens = ref({})  // { [playerId]: { nx, ny } }
+
+// ── Demo mode ───────────────────────────────────────────────────────────────
+const isDemo = ref(false)
 
 const mapImageStyle = computed(() => {
   const container = mapContainerRef.value
@@ -326,6 +330,7 @@ onMounted(() => {
     activeTensionScale.value = data.tensionScale || null
     combatRound.value = data.combatRound || 0
     activeTimer.value = data.timer || null
+    isDemo.value = !!data.isDemo
     data.players.forEach(pl => { previousHp.value[pl.id] = pl.current_hp })
     if (data.mapState) applyMapState(data.mapState)
   })
@@ -485,6 +490,10 @@ onMounted(() => {
     mapTokens.value = next
   })
 
+  socket.on('demo-reset', () => {
+    window.location.reload()
+  })
+
   window.addEventListener('resize', renderMapFog)
 })
 
@@ -501,6 +510,10 @@ onUnmounted(() => {
       <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="1em" />
       {{ isLightTheme ? 'Sombre' : 'Clair' }}
     </button>
+    <!-- Demo banner — fixed at bottom to avoid disrupting the spectator view -->
+    <div v-if="isDemo" class="tv-demo-banner" role="alert">
+      ⚠️ Mode démonstration — contenu effacé chaque nuit à minuit
+    </div>
     <!-- Error state -->
     <div v-if="connectionError" class="tv-error">
       <p class="error-icon"><AppIcon icon="lucide:alert-triangle" size="3rem" color="var(--color-warning)" /></p>
@@ -1755,5 +1768,24 @@ onUnmounted(() => {
   text-transform: uppercase;
   color: var(--color-text-dim);
   opacity: 0.7;
+}
+
+/* ── Demo banner ─────────────────────────────────────────────────────── */
+.tv-demo-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9000;
+  text-align: center;
+  padding: 0.3rem 1rem;
+  background: rgba(146, 64, 14, 0.75);
+  color: #fef3c7;
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  backdrop-filter: blur(4px);
+  border-top: 1px solid rgba(245, 158, 11, 0.4);
 }
 </style>

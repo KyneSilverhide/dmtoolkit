@@ -11,6 +11,7 @@ import PlayerDiceTool from '../components/player/PlayerDiceTool.vue'
 import { getLastKnownPlayer, saveLastKnownPlayer, removeLastKnownPlayer } from '../utils/playerSessionMemory.js'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
+import DemoBanner from '../components/DemoBanner.vue'
 import { DND_CONDITIONS } from '../utils/conditions.js'
 
 const router = useRouter()
@@ -36,6 +37,9 @@ const isLightTheme = computed(() => theme.value === 'light')
 const notificationPermission = ref(readNotificationPermission())
 const attentionToasts = ref([])
 let attentionToastId = 0
+
+// ── Demo mode ─────────────────────────────────────────────────────────────
+const isDemo = ref(false)
 
 function toggleTheme() {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
@@ -117,6 +121,7 @@ function applyJoinedState(data) {
   pendingHp.value = data.player.current_hp
   initiativeValue.value = data.player.initiative
   isConcentrating.value = !!data.player.is_concentrating
+  isDemo.value = !!data.isDemo
   try {
     const rawConds = data.player.conditions
     const parsed = typeof rawConds === 'string' ? JSON.parse(rawConds) : rawConds
@@ -653,6 +658,7 @@ onMounted(async () => {
   socket.on('counter-offer-result', handleCounterOfferResult)
   socket.on('purchase-error', handlePurchaseError)
   socket.on('kicked', handleKicked)
+  socket.on('demo-reset', () => { window.location.reload() })
   window.addEventListener('beforeunload', handleBeforeUnload)
 })
 
@@ -684,6 +690,7 @@ onUnmounted(() => {
     socket.off('counter-offer-result', handleCounterOfferResult)
     socket.off('purchase-error', handlePurchaseError)
     socket.off('kicked', handleKicked)
+    socket.off('demo-reset')
   }
   window.removeEventListener('beforeunload', handleBeforeUnload)
   if (attentionAudioContext) {
@@ -696,8 +703,7 @@ onUnmounted(() => {
 <template>
   <div class="inbox-wrapper">
 
-    <!-- ── Concentration modal ───────────────────────────────────────────── -->
-    <Teleport to="body">
+    <!-- ── Concentration modal ───────────────────────────────────────────── -->    <Teleport to="body">
       <div v-if="concentrationModal" class="modal-overlay" @click.self="dismissConcentrationModal">
         <div class="modal-box concentration-modal">
           <div class="modal-icon"><AppIcon icon="game-icons:bullseye" size="3rem" color="var(--color-info-bright)" /></div>
@@ -744,6 +750,8 @@ onUnmounted(() => {
         </div>
       </div>
     </Teleport>
+
+    <DemoBanner v-if="isDemo" />
 
     <!-- ── Fixed header ─────────────────────────────────────────────────── -->
     <header class="inbox-header">

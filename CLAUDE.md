@@ -41,6 +41,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │   ├── index.js       # Point d'entrée Express + Socket.IO
 │   │   ├── socket.js      # Tous les handlers Socket.IO
 │   │   ├── migrations.js  # Migrations SQL (PostgreSQL) — exécutées au démarrage
+│   │   ├── demo.js        # Compte démo : seed, reset nocturne, scheduler (code 0000 réservé)
 │   │   ├── db.js          # Pool PostgreSQL (pg, max 20 connexions)
 │   │   ├── middleware/auth.js  # Vérification JWT (HS256 explicite)
 │   │   ├── data/          # Fichiers JSON de données statiques
@@ -63,7 +64,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 cd frontend && npm test && npm run build
 
 # Backend — vérification syntaxique Node.js (pas de tests automatisés)
-cd backend && node --check src/index.js src/socket.js src/routes/spells.js src/routes/sessions.js src/routes/equipment.js src/routes/generate.js src/migrations.js
+cd backend && node --check src/index.js src/socket.js src/routes/spells.js src/routes/sessions.js src/routes/equipment.js src/routes/generate.js src/demo.js src/migrations.js
 
 # Dev local (sans Docker)
 cd backend && npm run dev   # node --watch src/index.js
@@ -110,6 +111,8 @@ cd frontend && npm run dev  # vite dev server
 - Colonnes clés de `players` : `ac`, `max_hp`, `current_hp`, `initiative`, `conditions` (JSON array), `is_concentrating`, `dnd_class`, `avatar_url`, `socket_id`.
 - Les joueurs sont supprimés de la DB à la déconnexion socket (`disconnect`/`leave-session`).
 - Les codes de session sont sur **4 chiffres numériques** (migration automatique des anciens codes).
+- Le code `0000` est **réservé** à la session de démonstration du compte `demo` — il n'est jamais généré par la logique normale (qui génère entre 1000 et 9999).
+- La colonne `admins.is_demo` (BOOLEAN) identifie le compte de démonstration. Son contenu est effacé et re-seedé chaque nuit à minuit via `backend/src/demo.js`.
 
 ---
 
@@ -242,6 +245,7 @@ cd frontend && npm run dev  # vite dev server
 | `batch-accepted` | joueur | Panier accepté |
 | `batch-rejected` | joueur | Panier refusé |
 | `kicked` | joueur | Joueur expulsé |
+| `demo-reset` | session + admin + TV | Réinitialisation du compte démo — déclenche `window.location.reload()` côté client |
 | `error` | émetteur | Erreur générique |
 | `tv-control-error` | admin | Erreur de contrôle TV |
 | `send-error` | admin | Erreur d'envoi de message |
@@ -276,6 +280,11 @@ cd frontend && npm run dev  # vite dev server
 | `FRONTEND_URL` | backend | URL du frontend pour CORS et QR codes |
 | `VITE_BACKEND_URL` | frontend (build) | URL du backend pour le client Socket.IO et fetch |
 | `GITHUB_TOKEN` | backend | Token GitHub (classic, aucun scope requis) pour le générateur IA via GitHub Models (gpt-4o-mini). Optionnel — sans ce token, `POST /api/generate` retourne 503. |
+| `DEMO_ENABLED` | backend | Met à `false` pour désactiver entièrement le compte démo (défaut : `true`) |
+| `DEMO_PASSWORD` | backend | Mot de passe du compte `demo` (défaut : `demo`) |
+| `DEMO_SEED_ENABLED` | backend | Met à `false` pour ne pas re-seeder le contenu démo au démarrage (défaut : `true`) |
+| `DEMO_FORCE_RESEED` | backend | Met à `true` pour forcer un clean + re-seed complet du contenu démo à chaque démarrage (défaut : `false`) |
+| `DEMO_RESET_ENABLED` | backend | Met à `false` pour désactiver le reset nocturne automatique à minuit (défaut : `true`) |
 
 ---
 
@@ -290,6 +299,8 @@ cd frontend && npm run dev  # vite dev server
 - ❌ Ne pas restreindre le CORS à `FRONTEND_URL` uniquement — les origines `app://obsidian.md` et `capacitor://obsidian.md` doivent aussi être autorisées (plugin Obsidian desktop/mobile)
 - ❌ Ne pas déplacer les fichiers JSON de données hors de `backend/src/data/` — les routes `spells`, `magic-items` et `equipment` chargent depuis ce dossier
 - ❌ Dans un FormData d'upload avatar, toujours appender `sessionCode` **avant** le champ `file` — multer résout le dossier tenant dans `destination()` au moment où le flux fichier arrive ; les champs après le fichier ne sont pas encore dans `req.body`
+- ❌ Ne pas utiliser le code de session `0000` pour autre chose que la session démo — il est réservé et ne sera jamais généré par la logique normale
+- ❌ Ne pas supprimer ou renommer le compte `demo` dans la DB sans mettre à jour `seedDemoAdmin()` dans `index.js`
 
 ---
 

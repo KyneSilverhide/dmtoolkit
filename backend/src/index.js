@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt')
 const { rateLimit } = require('express-rate-limit')
 const runMigrations = require('./migrations')
 const pool = require('./db')
+const { seedDemoContent, resetDemoContent, scheduleDemoReset } = require('./demo')
 const authRoutes = require('./routes/auth')
 const sessionRoutes = require('./routes/sessions')
 const uploadRoutes = require('./routes/uploads')
@@ -100,6 +101,28 @@ async function seedAdmin() {
   }
 }
 
+async function seedDemoAdmin() {
+  // Skip entirely if demo is disabled
+  if (process.env.DEMO_ENABLED === 'false') return
+  try {
+    const existing = await pool.query("SELECT id FROM admins WHERE username = 'demo'")
+    if (existing.rows.length === 0) {
+      const demoPassword = process.env.DEMO_PASSWORD || 'demo'
+      const hash = await bcrypt.hash(demoPassword, 10)
+      await pool.query(
+        'INSERT INTO admins (username, password_hash, is_demo) VALUES ($1, $2, TRUE)',
+        ['demo', hash]
+      )
+      console.log('Demo admin account created')
+    } else {
+      // Ensure is_demo flag is set (in case it was created before this feature)
+      await pool.query("UPDATE admins SET is_demo = TRUE WHERE username = 'demo'")
+    }
+  } catch (err) {
+    console.error('Error seeding demo admin:', err)
+  }
+}
+
 const PORT = process.env.PORT || 3000
 
 async function start() {
@@ -108,6 +131,7 @@ async function start() {
     try {
       await runMigrations()
       await seedAdmin()
+      await seedDemoAdmin()
       break
     } catch (err) {
       retries--
@@ -119,6 +143,33 @@ async function start() {
   if (retries === 0) {
     console.error('Database not available after all retries. Exiting.')
     process.exit(1)
+  }
+
+  // Demo account seeding + scheduler
+  // DEMO_ENABLED       : 'false' = désactiver entièrement
+  // DEMO_SEED_ENABLED  : 'false' = ne pas seeder au démarrage
+  // DEMO_FORCE_RESEED  : 'true'  = forcer un clean + re-seed au démarrage (utile en dev/CI)
+  // DEMO_RESET_ENABLED : 'false' = désactiver le reset nocturne automatique
+  if (process.env.DEMO_ENABLED !== 'false') {
+    try {
+      const demoResult = await pool.query("SELECT id FROM admins WHERE username = 'demo' AND is_demo = TRUE")
+      if (demoResult.rows[0]) {
+        const demoAdminId = demoResult.rows[0].id
+        if (process.env.DEMO_SEED_ENABLED !== 'false') {
+          if (process.env.DEMO_FORCE_RESEED === 'true') {
+            console.log('[Demo] DEMO_FORCE_RESEED=true — forcing clean + re-seed at startup')
+            await resetDemoContent(demoAdminId)
+          } else {
+            await seedDemoContent(demoAdminId)
+          }
+        }
+        if (process.env.DEMO_RESET_ENABLED !== 'false') {
+          scheduleDemoReset(demoAdminId, io)
+        }
+      }
+    } catch (err) {
+      console.error('Error initialising demo account:', err)
+    }
   }
 
   server.listen(PORT, () => {

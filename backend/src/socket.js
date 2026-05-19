@@ -320,7 +320,10 @@ function setupSocket(io) {
           return
         }
         const sessionResult = await pool.query(
-          "SELECT * FROM sessions WHERE code = $1 AND status = 'active'", [code])
+          `SELECT s.*, a.is_demo AS admin_is_demo
+           FROM sessions s
+           JOIN admins a ON a.id = s.created_by
+           WHERE s.code = $1 AND s.status = 'active'`, [code])
         const session = sessionResult.rows[0]
         if (!session) { socket.emit('error', { message: 'Session introuvable ou fermée.' }); return }
         const acVal = Math.max(1, parseInt(ac) || 10)
@@ -375,6 +378,7 @@ function setupSocket(io) {
           activeMerchant: (session.current_merchant_id && session.tv_mode === 'merchant')
             ? await getMerchantData(session.current_merchant_id)
             : null,
+          isDemo: !!session.admin_is_demo,
         })
         io.to(`admin:${session.id}`).emit('player-joined', player)
         io.to(`tv:${session.id}`).emit('player-joined', player)
@@ -524,6 +528,7 @@ function setupSocket(io) {
           combatRound: session.combat_round || 0,
           timer: serializeTimer(session),
           lobbyBgUrl: session.lobby_bg_url || null,
+          isDemo: !!socket.admin.is_demo,
         })
       } catch (err) { console.error(err) }
     })
@@ -532,7 +537,10 @@ function setupSocket(io) {
     socket.on('tv-join', async ({ sessionCode }) => {
       try {
         const sessionResult = await pool.query(
-          "SELECT * FROM sessions WHERE code = $1 AND status = 'active'", [sessionCode])
+          `SELECT s.*, a.is_demo AS admin_is_demo
+           FROM sessions s
+           JOIN admins a ON a.id = s.created_by
+           WHERE s.code = $1 AND s.status = 'active'`, [sessionCode])
         const session = sessionResult.rows[0]
         if (!session) { socket.emit('error', { message: 'Session not found or closed.' }); return }
         socket.join(`tv:${session.id}`)
@@ -565,6 +573,7 @@ function setupSocket(io) {
           combatRound: session.combat_round || 0,
           timer: serializeTimer(session),
           lobbyBgUrl: session.lobby_bg_url || null,
+          isDemo: !!session.admin_is_demo,
         })
       } catch (err) { console.error(err) }
     })

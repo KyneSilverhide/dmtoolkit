@@ -22,13 +22,13 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials.' })
     }
     const token = jwt.sign(
-      { id: admin.id, username: admin.username },
+      { id: admin.id, username: admin.username, is_demo: !!admin.is_demo },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     )
     res.json({
       token,
-      admin: { id: admin.id, username: admin.username },
+      admin: { id: admin.id, username: admin.username, is_demo: !!admin.is_demo },
     })
   } catch (err) {
     console.error(err)
@@ -38,7 +38,7 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, username, created_at FROM admins WHERE id = $1', [req.admin.id])
+    const result = await pool.query('SELECT id, username, is_demo, created_at FROM admins WHERE id = $1', [req.admin.id])
     if (!result.rows[0]) return res.status(404).json({ error: 'Admin not found.' })
     res.json(result.rows[0])
   } catch (err) {

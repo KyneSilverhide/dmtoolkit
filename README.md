@@ -14,6 +14,7 @@ Application web temps réel pour le Maître du Jeu, permettant de gérer des ses
 - **Équipement** : recherche d'objets standard (147) et magiques D&D 5e
 - **Générateur IA** : génération de noms de PNJ, lieux, auberges, accroches de quêtes et descriptions via GitHub Models (gpt-4o-mini)
 - **Multi-tenant** : isolation complète des sessions et des fichiers uploadés par administrateur
+- **Compte démo** : compte `demo` (mot de passe `demo`) disponible par défaut ; son contenu est effacé et réinitialisé automatiquement chaque nuit à minuit — un bandeau d'avertissement est affiché dans toutes les interfaces
 - **Plugin Obsidian** : synchronisation bidirectionnelle avec l'Initiative Tracker d'Obsidian
 
 ## Architecture
@@ -89,6 +90,11 @@ cd backend && node --check src/index.js src/socket.js src/routes/spells.js src/r
 | `FRONTEND_URL` | backend | URL du frontend pour CORS et QR codes |
 | `VITE_BACKEND_URL` | frontend | URL du backend pour le client Socket.IO |
 | `GITHUB_TOKEN` | backend | Token GitHub (classic, aucun scope requis) pour le générateur IA via GitHub Models |
+| `DEMO_ENABLED` | backend | Désactiver le compte démo en mettant `false` (défaut : `true`) |
+| `DEMO_PASSWORD` | backend | Mot de passe du compte `demo` (défaut : `demo`) |
+| `DEMO_FORCE_RESEED` | backend | Forcer un clean + re-seed du contenu démo au démarrage en mettant `true` (défaut : `false`) |
+| `DEMO_RESET_ENABLED` | backend | Désactiver le reset nocturne automatique en mettant `false` (défaut : `true`) |
+| `DEMO_SEED_ENABLED` | backend | Désactiver le seed initial du contenu démo en mettant `false` (défaut : `true`) |
 
 ## Stack technique
 

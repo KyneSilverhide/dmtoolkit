@@ -173,6 +173,9 @@ async function joinSession() {
           <input v-model="sessionCode" type="text" class="form-input"
             placeholder="Code à 4 chiffres" data-testid="session-code-input" />
           <p class="form-hint">Fourni par votre MJ ou via le QR Code.</p>
+          <p v-if="sessionCode === '0000'" class="form-hint demo-hint">
+            🎲 Ce code correspond à la session de démonstration — le contenu est effacé chaque nuit à minuit.
+          </p>
         </div>
 
         <div class="form-group">
@@ -423,4 +426,9 @@ async function joinSession() {
   box-shadow: var(--shadow-soft);
 }
 .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.demo-hint {
+  color: #f59e0b;
+  font-style: italic;
+}
 </style>

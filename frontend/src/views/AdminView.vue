@@ -19,6 +19,7 @@ import GoldDividerTool from '../components/admin/GoldDividerTool.vue'
 import GeneratorTool from '../components/admin/GeneratorTool.vue'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
+import DemoBanner from '../components/DemoBanner.vue'
 
 const router = useRouter()
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
@@ -123,6 +124,9 @@ function handleAdminState(data) {
   hasActiveDoom.value = !!data.doomClock
   hasActiveTension.value = !!data.tensionScale
   hasActiveMap.value = !!(data.mapState?.mapUrl)
+  if (data.isDemo !== undefined && authStore.admin) {
+    authStore.admin = { ...authStore.admin, is_demo: data.isDemo }
+  }
 }
 
 function handleTvModeChanged(payload) {
@@ -228,6 +232,10 @@ onMounted(() => {
       console.error('player-roll-result handler error:', err)
     }
   })
+
+  socket.on('demo-reset', () => {
+    window.location.reload()
+  })
 })
 
 watch(
@@ -263,11 +271,13 @@ onUnmounted(() => {
   socket.off('tension-scale-ended')
   socket.off('map-state')
   socket.off('player-roll-result')
+  socket.off('demo-reset')
 })
 </script>
 
 <template>
   <div class="admin-wrapper">
+    <DemoBanner v-if="authStore.admin?.is_demo" />
     <header class="admin-header">
       <div class="header-top">
         <h1 class="page-title"><AppIcon icon="game-icons:dice-six-faces-five" size="1em" /> Tableau de Bord <span class="title-accent">MJ</span></h1>
