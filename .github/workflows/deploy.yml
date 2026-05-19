@@ -12,6 +12,8 @@ env:
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
       ADMIN_DEFAULT_USERNAME: admin
