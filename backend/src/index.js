@@ -80,6 +80,16 @@ app.use('/api/magic-items', isTest ? magicItemRoutes : [apiLimiter, magicItemRou
 app.use('/api/equipment', isTest ? equipmentRoutes : [apiLimiter, equipmentRoutes])
 app.use('/api/generate', isTest ? generateRoutes : [apiLimiter, generateRoutes])
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
+app.get('/api/config', (req, res) => {
+  const demoEnabled = process.env.DEMO_ENABLED !== 'false'
+  res.json({
+    demoEnabled,
+    ...(demoEnabled && {
+      demoUsername: 'demo',
+      demoPassword: process.env.DEMO_PASSWORD || 'demo',
+    }),
+  })
+})
 
 setupSocket(io)
 

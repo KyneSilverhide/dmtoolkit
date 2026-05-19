@@ -9,6 +9,22 @@ const username = ref('')
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
+const demoEnabled = ref(false)
+const demoUsername = ref('')
+const demoPassword = ref('')
+
+onMounted(async () => {
+  window.addEventListener('keydown', onKeydown)
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/config`)
+    if (res.ok) {
+      const cfg = await res.json()
+      demoEnabled.value = cfg.demoEnabled
+      demoUsername.value = cfg.demoUsername || ''
+      demoPassword.value = cfg.demoPassword || ''
+    }
+  } catch { /* silently ignore */ }
+})
 
 function openModal() {
   showModal.value = true
@@ -30,7 +46,6 @@ function onKeydown(e) {
   if (e.key === 'Escape') closeModal()
 }
 
-onMounted(() => window.addEventListener('keydown', onKeydown))
 onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 async function login() {
@@ -104,6 +119,14 @@ async function login() {
             </div>
 
             <form class="modal-form" @submit.prevent="login">
+              <!-- Demo hint -->
+              <div v-if="demoEnabled" class="demo-hint">
+                <AppIcon icon="lucide:info" size="0.85em" class="demo-hint-icon" />
+                <span>
+                  Compte démo disponible —
+                  <strong>{{ demoUsername }}</strong> / <strong>{{ demoPassword }}</strong>
+                </span>
+              </div>
               <div class="form-group">
                 <label class="form-label" for="login-username">Nom d'utilisateur</label>
                 <input
@@ -380,6 +403,29 @@ async function login() {
   box-shadow: var(--shadow-soft);
 }
 .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Demo hint ──────────────────────────────────────────────────────────── */
+.demo-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(201, 162, 39, 0.08);
+  border: 1px solid rgba(201, 162, 39, 0.25);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--color-text-dim);
+  line-height: 1.4;
+}
+.demo-hint-icon {
+  color: var(--color-gold-dark);
+  flex-shrink: 0;
+}
+.demo-hint strong {
+  color: var(--color-gold-bright);
+  font-weight: 600;
+}
 
 /* ── Transitions ────────────────────────────────────────────────────────── */
 .modal-enter-active { transition: opacity 0.2s ease; }
