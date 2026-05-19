@@ -16,6 +16,8 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 - Une battlemap interactive avec brouillard de guerre et tokens de joueurs
 - La recherche de sorts D&D 5e (477 sorts FR depuis `aidedd_spells.json`)
 - La recherche d'équipement standard et d'objets magiques D&D 5e
+- Un générateur IA de noms (PNJ, lieux, auberges), accroches de quêtes et descriptions via GitHub Models (gpt-4o-mini)
+- Une isolation multi-tenant : chaque admin ne voit que ses propres sessions, et les fichiers uploadés sont stockés par tenant (`/uploads/<adminId>/`)
 - Un plugin Obsidian pour synchroniser l'Initiative Tracker avec Critical Fail
 
 ---
@@ -27,12 +29,12 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 ├── frontend/          # Vue 3 + Vite + Pinia (port 5173 en dev)
 │   ├── src/
 │   │   ├── views/     # HomeView, AdminView, TvView, PlayerInboxView, PlayerJoinView
-│   │   ├── components/admin/  # Composants admin (MapManager, MerchantManager, etc.)
+│   │   ├── components/admin/  # Composants admin (MapManager, MerchantManager, GeneratorTool, etc.)
 │   │   ├── components/player/ # Composants joueur (SpellSearchTool, MagicItemSearchTool, PlayerDiceTool, etc.)
 │   │   ├── components/AppIcon.vue  # Composant icônes dynamiques (remplace les emojis statiques)
 │   │   ├── stores/    # Pinia stores (auth.js, session.js)
 │   │   ├── router/    # Vue Router (toutes les vues importées statiquement)
-│   │   ├── utils/     # Utilitaires (conditions.js, playerProfiles.js, playerSessionMemory.js, themePreferences.js)
+│   │   ├── utils/     # Utilitaires (conditions.js, playerProfiles.js, playerSessionMemory.js, themePreferences.js, generatorUtils.js)
 │   │   └── socket.js  # Singleton Socket.IO client
 ├── backend/           # Node.js + Express + Socket.IO (port 3000)
 │   ├── src/
@@ -45,7 +47,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │   │   ├── aidedd_spells.json        # 477 sorts D&D 5e en français
 │   │   │   ├── aidedd_magic_items.json   # Objets magiques D&D 5e
 │   │   │   └── aidedd_standard_items.json # 147 objets standard D&D 5e
-│   │   └── routes/        # auth, sessions, uploads, spells, magic-items, equipment
+│   │   └── routes/        # auth, sessions, uploads, spells, magic-items, equipment, generate
 │   │                      # (+ GET /api/sessions/:id/players pour sync Obsidian)
 ├── obsidian-plugin/   # Plugin Obsidian (TypeScript) — sync Initiative Tracker ↔ Critical Fail
 ├── docker-compose.yml     # Postgres 16 + backend + frontend
@@ -61,7 +63,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 cd frontend && npm test && npm run build
 
 # Backend — vérification syntaxique Node.js (pas de tests automatisés)
-cd backend && node --check src/index.js src/socket.js src/routes/spells.js src/routes/sessions.js src/routes/equipment.js src/migrations.js
+cd backend && node --check src/index.js src/socket.js src/routes/spells.js src/routes/sessions.js src/routes/equipment.js src/routes/generate.js src/migrations.js
 
 # Dev local (sans Docker)
 cd backend && npm run dev   # node --watch src/index.js
@@ -273,6 +275,7 @@ cd frontend && npm run dev  # vite dev server
 | `PORT` | backend | Port Express (défaut 3000) |
 | `FRONTEND_URL` | backend | URL du frontend pour CORS et QR codes |
 | `VITE_BACKEND_URL` | frontend (build) | URL du backend pour le client Socket.IO et fetch |
+| `GITHUB_TOKEN` | backend | Token GitHub (classic, aucun scope requis) pour le générateur IA via GitHub Models (gpt-4o-mini). Optionnel — sans ce token, `POST /api/generate` retourne 503. |
 
 ---
 
@@ -286,6 +289,7 @@ cd frontend && npm run dev  # vite dev server
 - ❌ Ne pas hardcoder l'URL du backend dans le frontend (toujours utiliser `VITE_BACKEND_URL`)
 - ❌ Ne pas restreindre le CORS à `FRONTEND_URL` uniquement — les origines `app://obsidian.md` et `capacitor://obsidian.md` doivent aussi être autorisées (plugin Obsidian desktop/mobile)
 - ❌ Ne pas déplacer les fichiers JSON de données hors de `backend/src/data/` — les routes `spells`, `magic-items` et `equipment` chargent depuis ce dossier
+- ❌ Dans un FormData d'upload avatar, toujours appender `sessionCode` **avant** le champ `file` — multer résout le dossier tenant dans `destination()` au moment où le flux fichier arrive ; les champs après le fichier ne sont pas encore dans `req.body`
 
 ---
 
