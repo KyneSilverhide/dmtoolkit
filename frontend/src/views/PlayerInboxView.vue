@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSocket, resetSocket } from '../socket.js'
 import { sessionStore } from '../stores/session.js'
@@ -43,6 +43,8 @@ const MAX_HP_LIMIT = 9999
 // ── Active tab ───────────────────────────────────────────────────────────
 // Tabs: 'combat' | 'dés' | 'notes' | 'sorts' | 'objets' | 'boutique' | 'vote' | 'messages'
 const activeTab = ref('combat')
+// Classe d'animation CSS déclenchée à chaque changement d'onglet
+const tabAnimKey = ref(0)
 let hasRequestedNotificationPermission = false
 const rejoinError = ref('')
 const rejoining = ref(false)
@@ -51,6 +53,12 @@ const isLightTheme = computed(() => theme.value === 'light')
 const notificationPermission = ref(readNotificationPermission())
 const attentionToasts = ref([])
 let attentionToastId = 0
+
+// ── Header menu mobile ────────────────────────────────────────────────────
+const showHeaderMenu = ref(false)
+
+// ── Leave confirmation ────────────────────────────────────────────────────
+const showLeaveConfirm = ref(false)
 
 // ── Demo mode ─────────────────────────────────────────────────────────────
 const isDemo = ref(false)
@@ -236,6 +244,8 @@ async function handleNotificationButton() {
 
 function switchTab(tab) {
   activeTab.value = tab
+  tabAnimKey.value++
+  showHeaderMenu.value = false
   if (tab === 'messages') unreadMessages.value = 0
   requestNotificationPermissionOnce({ interactive: true }).catch(() => {})
 }
@@ -246,6 +256,7 @@ const maxHp = ref(playerInfo.value?.maxHp ?? 20)
 const pendingHp = ref(currentHp.value)
 const hpSending = ref(false)
 const hpSent = ref(false)
+let hpDebounceTimer = null
 
 // ── Max HP editing ────────────────────────────────────────────────────────
 const editingMaxHp = ref(false)
@@ -335,9 +346,26 @@ function adjustHp(delta) {
   pendingHp.value = Math.max(0, Math.min(MAX_HP_LIMIT, pendingHp.value + delta))
 }
 
+// Auto-send HP after 800ms of inactivity
+watch(pendingHp, (newVal) => {
+  if (newVal === currentHp.value) {
+    if (hpDebounceTimer) { clearTimeout(hpDebounceTimer); hpDebounceTimer = null }
+    return
+  }
+  if (hpSending.value) return
+  if (hpDebounceTimer) clearTimeout(hpDebounceTimer)
+  hpDebounceTimer = setTimeout(() => {
+    hpDebounceTimer = null
+    if (pendingHp.value !== currentHp.value && !hpSending.value) {
+      sendHpUpdate()
+    }
+  }, 800)
+})
+
 function sendHpUpdate() {
   const socket = getSocket()
   hpSending.value = true
+  if (hpDebounceTimer) { clearTimeout(hpDebounceTimer); hpDebounceTimer = null }
   socket.emit(UPDATE_HP, { newHp: pendingHp.value })
 }
 
@@ -352,6 +380,7 @@ function sendInitiativeUpdate() {
 }
 
 function leaveSession() {
+  showLeaveConfirm.value = false
   const socket = getSocket()
   socket.emit(LEAVE_SESSION)
   resetSocket()
@@ -513,6 +542,12 @@ const handleVoteStarted = (voteData) => {
 }
 const handleVoteClosed = (voteData) => {
   activeVote.value = { ...voteData, isClosed: true }
+  // Give 5s to read results then auto-hide the tab
+  setTimeout(() => {
+    if (activeTab.value === 'vote') activeTab.value = 'combat'
+    activeVote.value = null
+    hasNewVote.value = false
+  }, 5000)
 }
 const handleVoteSubmitted = (data) => {
   myVote.value = data.optionIndex
@@ -707,6 +742,7 @@ onUnmounted(() => {
     socket.off(DEMO_RESET)
   }
   window.removeEventListener('beforeunload', handleBeforeUnload)
+  if (hpDebounceTimer) { clearTimeout(hpDebounceTimer); hpDebounceTimer = null }
   if (attentionAudioContext) {
     attentionAudioContext.close().catch(() => {})
     attentionAudioContext = null
@@ -767,6 +803,21 @@ onUnmounted(() => {
 
     <DemoBanner v-if="isDemo" />
 
+    <!-- ── Leave confirmation modal ─────────────────────────────────────── -->
+    <Teleport to="body">
+      <div v-if="showLeaveConfirm" class="modal-overlay" @click.self="showLeaveConfirm = false">
+        <div class="modal-box leave-confirm-modal">
+          <div class="modal-icon"><AppIcon icon="lucide:log-out" size="3rem" color="var(--player-danger-text, var(--color-danger))" /></div>
+          <h2 class="modal-title">Quitter la session ?</h2>
+          <p class="modal-body">Votre personnage sera retiré de la session. Vous pouvez rejoindre à nouveau avec le même code.</p>
+          <div class="leave-confirm-actions">
+            <button class="modal-close-btn leave-confirm-cancel" @click="showLeaveConfirm = false">Rester</button>
+            <button class="modal-close-btn leave-confirm-leave" @click="leaveSession" data-testid="confirm-leave-button">Quitter</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- ── Fixed header ─────────────────────────────────────────────────── -->
     <header class="inbox-header">
       <div class="header-left">
@@ -786,14 +837,41 @@ onUnmounted(() => {
       </div>
       <div class="header-right">
         <span class="ac-chip"><AppIcon icon="game-icons:shield" size="0.85rem" /> {{ playerInfo?.ac ?? 10 }}</span>
-        <button class="notify-btn" :class="notificationButtonClass" @click="handleNotificationButton">
-          <AppIcon :icon="notificationButtonIcon" size="0.9em" /> {{ notificationButtonText }}
-        </button>
-        <button class="theme-toggle-btn" @click="toggleTheme" data-testid="player-theme-toggle">
-          <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.9em" />
-          {{ isLightTheme ? 'Sombre' : 'Clair' }}
-        </button>
-        <button class="leave-btn" @click="leaveSession" data-testid="leave-button">Quitter</button>
+        <span v-if="unreadMessages > 0" class="msg-chip" @click="switchTab('messages')">
+          <AppIcon icon="lucide:inbox" size="0.85rem" />{{ unreadMessages }}
+        </span>
+        <!-- Menu secondaire -->
+        <div class="header-menu-wrap">
+          <button
+            class="header-menu-btn"
+            :class="{ active: showHeaderMenu }"
+            @click.stop="showHeaderMenu = !showHeaderMenu"
+            aria-label="Menu"
+            data-testid="header-menu-btn"
+          >
+            <AppIcon icon="lucide:more-vertical" size="1rem" />
+          </button>
+          <Teleport to="body">
+            <div v-if="showHeaderMenu" class="header-menu-backdrop" @click="showHeaderMenu = false" />
+            <Transition name="menu-drop">
+              <div v-if="showHeaderMenu" class="header-menu-dropdown" @click.stop>
+                <button class="menu-item" :class="notificationButtonClass" @click="handleNotificationButton; showHeaderMenu = false" data-testid="player-theme-toggle">
+                  <AppIcon :icon="notificationButtonIcon" size="0.95em" />
+                  <span>Notifications — {{ notificationButtonText }}</span>
+                </button>
+                <button class="menu-item" @click="toggleTheme(); showHeaderMenu = false">
+                  <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.95em" />
+                  <span>{{ isLightTheme ? 'Thème sombre' : 'Thème clair' }}</span>
+                </button>
+                <div class="menu-divider" />
+                <button class="menu-item menu-item-danger" @click="showLeaveConfirm = true; showHeaderMenu = false" data-testid="leave-button">
+                  <AppIcon icon="lucide:log-out" size="0.95em" />
+                  <span>Quitter la session</span>
+                </button>
+              </div>
+            </Transition>
+          </Teleport>
+        </div>
       </div>
     </header>
 
@@ -810,6 +888,7 @@ onUnmounted(() => {
 
     <!-- ── Scrollable content ────────────────────────────────────────────── -->
     <main v-else class="inbox-content">
+      <div :key="tabAnimKey" class="tab-anim-wrapper">
 
       <!-- ── COMBAT tab (Statut + Conditions) ───────────────────────────── -->
       <div v-show="activeTab === 'combat'" class="tab-panel">
@@ -1085,6 +1164,7 @@ onUnmounted(() => {
         </div>
       </div>
 
+      </div><!-- end tab-anim-wrapper -->
     </main>
 
     <TransitionGroup name="toast" tag="div" class="toast-stack">
@@ -1101,71 +1181,83 @@ onUnmounted(() => {
     </TransitionGroup>
 
     <!-- ── Bottom tab bar ────────────────────────────────────────────────── -->
-    <nav v-if="!rejoining && !rejoinError" class="tab-bar">
+    <nav v-if="!rejoining && !rejoinError" class="tab-bar" role="tablist">
       <button
         class="tab-item"
         :class="{ active: activeTab === 'combat' }"
         @click="switchTab('combat')"
+        aria-label="Combat"
         data-testid="player-tab-combat"
       >
-        <span class="tab-icon"><AppIcon icon="game-icons:crossed-swords" size="1.3rem" /></span>
+        <span class="tab-icon"><AppIcon icon="game-icons:crossed-swords" size="1.4rem" /></span>
         <span class="tab-label">Combat</span>
       </button>
       <button
         class="tab-item"
         :class="{ active: activeTab === 'dés' }"
         @click="switchTab('dés')"
+        aria-label="Dés"
         data-testid="player-tab-des"
       >
-        <span class="tab-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="1.3rem" /></span>
+        <span class="tab-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="1.4rem" /></span>
         <span class="tab-label">Dés</span>
       </button>
       <button
         class="tab-item"
         :class="{ active: activeTab === 'notes' }"
         @click="switchTab('notes')"
+        aria-label="Notes"
         data-testid="player-tab-notes"
       >
-        <span class="tab-icon"><AppIcon icon="lucide:notebook-pen" size="1.3rem" /></span>
+        <span class="tab-icon"><AppIcon icon="lucide:notebook-pen" size="1.4rem" /></span>
         <span class="tab-label">Notes</span>
       </button>
       <button
         class="tab-item"
         :class="{ active: activeTab === 'sorts' }"
         @click="switchTab('sorts')"
+        aria-label="Sorts"
         data-testid="player-tab-sorts"
       >
-        <span class="tab-icon"><AppIcon icon="lucide:search" size="1.3rem" /></span>
+        <span class="tab-icon"><AppIcon icon="lucide:sparkles" size="1.4rem" /></span>
         <span class="tab-label">Sorts</span>
       </button>
       <button
         class="tab-item"
         :class="{ active: activeTab === 'objets' }"
         @click="switchTab('objets')"
+        aria-label="Objets"
         data-testid="player-tab-objets"
       >
-        <span class="tab-icon"><AppIcon icon="lucide:gem" size="1.3rem" /></span>
+        <span class="tab-icon"><AppIcon icon="lucide:gem" size="1.4rem" /></span>
         <span class="tab-label">Objets</span>
       </button>
       <button
+        v-if="activeMerchant"
         class="tab-item"
-        :class="{ active: activeTab === 'boutique', disabled: !activeMerchant }"
-        :disabled="!activeMerchant"
+        :class="{ active: activeTab === 'boutique' }"
         @click="switchTab('boutique')"
+        aria-label="Boutique"
         data-testid="player-tab-boutique"
       >
-        <span class="tab-icon" :class="{ 'tab-icon-notify': activeMerchant && cartItemCount === 0 }"><AppIcon icon="game-icons:shop" size="1.3rem" /></span>
+        <span class="tab-icon" :class="{ 'tab-icon-notify': cartItemCount === 0 && activeTab !== 'boutique' }">
+          <AppIcon icon="game-icons:shop" size="1.4rem" />
+        </span>
         <span class="tab-label">Boutique</span>
         <span v-if="cartItemCount > 0" class="tab-badge tab-badge-urgent">{{ cartItemCount }}</span>
-        <span v-else-if="activeMerchant && activeTab !== 'boutique'" class="tab-badge tab-badge-pulse">!</span>
+        <span v-else-if="activeTab !== 'boutique'" class="tab-badge tab-badge-pulse">!</span>
       </button>
       <button
+        v-if="activeVote"
         class="tab-item"
         :class="{ active: activeTab === 'vote' }"
         @click="switchTab('vote'); hasNewVote = false"
+        aria-label="Vote"
         data-testid="player-tab-vote"
       >
-        <span class="tab-icon" :class="{ 'tab-icon-notify': hasNewVote && activeTab !== 'vote' }"><AppIcon icon="lucide:check-square" size="1.3rem" /></span>
+        <span class="tab-icon" :class="{ 'tab-icon-notify': hasNewVote && activeTab !== 'vote' }">
+          <AppIcon icon="lucide:check-square" size="1.4rem" />
+        </span>
         <span class="tab-label">Vote</span>
         <span v-if="hasNewVote && activeTab !== 'vote'" class="tab-badge tab-badge-pulse">!</span>
       </button>
@@ -1173,9 +1265,12 @@ onUnmounted(() => {
         class="tab-item"
         :class="{ active: activeTab === 'messages' }"
         @click="switchTab('messages')"
+        aria-label="Messages"
         data-testid="player-tab-messages"
       >
-        <span class="tab-icon" :class="{ 'tab-icon-notify': unreadMessages > 0 }"><AppIcon icon="lucide:inbox" size="1.3rem" /></span>
+        <span class="tab-icon" :class="{ 'tab-icon-notify': unreadMessages > 0 }">
+          <AppIcon icon="lucide:inbox" size="1.4rem" />
+        </span>
         <span class="tab-label">Messages</span>
         <span v-if="unreadMessages > 0" class="tab-badge tab-badge-urgent">{{ unreadMessages }}</span>
       </button>
@@ -1225,66 +1320,20 @@ onUnmounted(() => {
 /* ── Header ──────────────────────────────────────────────────────────── */
 .inbox-header {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 0.85rem;
   background: var(--player-header-bg);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
   gap: 0.5rem;
+  min-height: 56px;
 }
 .header-left { display: flex; align-items: center; gap: 0.6rem; min-width: 0; flex: 1; }
-.header-right { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; flex-wrap: wrap; }
-
-@media (max-width: 480px) {
-  .inbox-header { padding: 0.5rem 0.75rem; gap: 0.35rem; }
-  .header-left { flex: 1 1 100%; }
-  .header-right { flex: 1 1 100%; justify-content: flex-end; }
-  .notify-btn, .theme-toggle-btn, .leave-btn { font-size: 0.6rem; padding: 0.28rem 0.5rem; }
-  .ac-chip { font-size: 0.7rem; }
-}
-
-.notify-btn,
-.theme-toggle-btn {
-  background: none;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 0.35rem 0.65rem;
-  color: var(--color-text-dim);
-  font-family: var(--font-heading);
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.notify-btn:hover,
-.theme-toggle-btn:hover {
-  color: var(--color-gold-bright);
-  border-color: var(--color-gold-dark);
-}
-
-.notify-btn.is-ready {
-  color: var(--player-success-text);
-  border-color: var(--player-success-border);
-  background: var(--player-success-bg);
-}
-
-.notify-btn.is-blocked {
-  color: var(--player-danger-text);
-  border-color: var(--player-danger-border);
-  background: var(--player-danger-bg);
-}
-
-.notify-btn.is-pending {
-  color: var(--player-warning-text);
-  border-color: var(--player-warning-border);
-  background: var(--player-warning-bg);
-}
+.header-right { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
 
 .player-avatar-wrap {
-  width: 38px; height: 38px;
+  width: 40px; height: 40px;
   border-radius: 50%;
   border: 2px solid var(--color-gold-dark);
   overflow: hidden;
@@ -1298,16 +1347,16 @@ onUnmounted(() => {
 .header-info { min-width: 0; }
 .player-name {
   font-family: var(--font-heading);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   color: var(--color-parchment);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   margin: 0;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .session-name {
-  font-family: var(--font-heading);
+  font-family: var(--font-ui, var(--font-heading));
   font-size: 0.6rem;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-dim);
   margin: 0;
@@ -1315,30 +1364,106 @@ onUnmounted(() => {
 
 .ac-chip {
   font-family: var(--font-heading);
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
   color: var(--color-gold-bright);
   background: var(--player-gold-bg);
   border: 1px solid var(--color-gold-dark);
   border-radius: 20px;
-  padding: 0.2rem 0.6rem;
+  padding: 0.2rem 0.55rem;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.msg-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  color: var(--player-danger-text);
+  background: var(--player-danger-bg);
+  border: 1px solid var(--player-danger-border);
+  border-radius: 20px;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  animation: urgentPulse 1.2s ease-in-out infinite;
   white-space: nowrap;
 }
-.leave-btn {
+
+/* ── Header menu ─────────────────────────────────────────────────────── */
+.header-menu-wrap { position: relative; }
+
+.header-menu-btn {
   background: none;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
+  padding: 0.4rem;
   cursor: pointer;
-  text-transform: uppercase;
-  transition: all 0.2s;
-  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s;
+  min-width: 36px;
+  min-height: 36px;
 }
-.leave-btn:hover { border-color: var(--player-danger-border); color: var(--player-danger-text); }
+.header-menu-btn:hover, .header-menu-btn.active {
+  border-color: var(--color-gold-dark);
+  color: var(--color-gold-bright);
+  background: var(--player-gold-bg);
+}
+
+.header-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+}
+
+.header-menu-dropdown {
+  position: fixed;
+  top: 56px;
+  right: 0.75rem;
+  z-index: 1200;
+  background: var(--player-panel-highlight-bg, var(--gradient-panel-soft));
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 12px;
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  box-shadow: var(--shadow-strong);
+  min-width: 210px;
+}
+
+.menu-drop-enter-active { animation: fadeUp 0.18s ease both; }
+.menu-drop-leave-active { transition: opacity 0.12s ease, transform 0.12s ease; }
+.menu-drop-leave-to { opacity: 0; transform: translateY(-6px); }
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  color: var(--color-text-dim);
+  font-family: var(--font-ui, var(--font-heading));
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  width: 100%;
+}
+.menu-item:hover { background: var(--surface-raised); color: var(--color-parchment); }
+.menu-item.is-ready { color: var(--player-success-text); }
+.menu-item.is-blocked { color: var(--player-danger-text); }
+.menu-item.is-pending { color: var(--player-warning-text); }
+.menu-item-danger:hover { color: var(--player-danger-text); background: var(--player-danger-bg); }
+.menu-divider { height: 1px; background: var(--color-border); margin: 0.2rem 0.4rem; }
 
 .resume-state {
   flex: 1;
@@ -1384,13 +1509,22 @@ onUnmounted(() => {
 .inbox-content {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem;
+  padding: 0.85rem;
   -webkit-overflow-scrolling: touch;
+  position: relative;
 }
-.tab-panel {
+
+/* Wrapper animé à chaque changement d'onglet */
+.tab-anim-wrapper {
+  animation: tabFadeIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-height: 100%;
+}
+
+.tab-panel {
+  display: contents;
 }
 
 /* ── Panel cards ─────────────────────────────────────────────────────── */
@@ -1440,28 +1574,29 @@ onUnmounted(() => {
 }
 .hp-btn {
   flex: 1;
-  height: 40px;
-  border-radius: 8px;
+  height: 52px;
+  border-radius: 10px;
   border: 1px solid var(--color-border);
   background: var(--player-control-bg);
   color: var(--color-parchment);
   font-family: var(--font-heading);
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.15s;
+  touch-action: manipulation;
 }
-.hp-btn.minus:hover { border-color: var(--player-danger-border); color: var(--player-danger-text); background: var(--player-danger-bg); }
-.hp-btn.plus:hover { border-color: var(--player-success-border); color: var(--player-success-text); background: var(--player-success-bg); }
+.hp-btn.minus:hover, .hp-btn.minus:active { border-color: var(--player-danger-border); color: var(--player-danger-text); background: var(--player-danger-bg); }
+.hp-btn.plus:hover, .hp-btn.plus:active { border-color: var(--player-success-border); color: var(--player-success-text); background: var(--player-success-bg); }
 .hp-input {
   flex: 2;
-  height: 40px;
+  height: 52px;
   text-align: center;
   background: var(--player-control-bg);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--color-parchment);
   font-family: var(--font-heading);
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   font-weight: 700;
   outline: none;
 }
@@ -1825,41 +1960,52 @@ onUnmounted(() => {
 /* ── Tab bar ─────────────────────────────────────────────────────────── */
 .tab-bar {
   display: flex;
+  overflow-x: auto;
   background: var(--player-header-bg);
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
   padding-bottom: env(safe-area-inset-bottom, 0);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.tab-bar::-webkit-scrollbar { display: none; }
+
 .tab-item {
   flex: 1;
+  flex-shrink: 0;
+  min-width: 56px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
-  padding: 0.6rem 0.25rem;
+  gap: 0.1rem;
+  padding: 0.55rem 0.3rem 0.5rem;
+  min-height: 56px;
   background: none;
   border: none;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-ui, var(--font-heading));
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color 0.18s;
   position: relative;
-  min-width: 0;
+  touch-action: manipulation;
 }
 .tab-item:hover:not(:disabled) { color: var(--color-parchment); }
 .tab-item.active { color: var(--color-gold-bright); }
+
+/* Indicateur actif — ligne en haut */
 .tab-item.active::before {
   content: '';
   position: absolute;
-  top: 0; left: 20%; right: 20%;
+  top: 0; left: 15%; right: 15%;
   height: 2px;
-  background: var(--color-gold-dark);
+  background: linear-gradient(90deg, transparent, var(--color-gold-bright), transparent);
   border-radius: 0 0 2px 2px;
 }
+
 .tab-item:disabled { opacity: 0.3; cursor: not-allowed; }
 .tab-icon {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   line-height: 1;
   transition: transform 0.2s, filter 0.2s;
 }
@@ -1871,21 +2017,20 @@ onUnmounted(() => {
   0% { transform: rotate(-8deg) scale(1.1); }
   100% { transform: rotate(8deg) scale(1.2); }
 }
-.tab-label { font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+.tab-label { font-size: 0.5rem; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
 
-@media (max-width: 420px) {
+@media (max-width: 380px) {
   .tab-label { display: none; }
-  .tab-item { padding: 0.7rem 0.2rem; }
-  .tab-icon { font-size: 1.35rem; }
+  .tab-item { min-height: 52px; padding: 0.65rem 0.2rem; }
 }
 .tab-badge {
   position: absolute;
-  top: 4px; right: calc(50% - 18px);
+  top: 4px; right: calc(50% - 20px);
   min-width: 18px; height: 18px;
   padding: 0 4px;
   border-radius: 9px;
   font-family: var(--font-heading);
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: white;
   display: flex; align-items: center; justify-content: center;
@@ -1982,6 +2127,32 @@ onUnmounted(() => {
   margin-top: 0.5rem;
 }
 .modal-close-btn:hover { background: var(--player-gold-bg-strong, var(--surface-gold-soft-strong)); }
+
+/* Leave confirmation modal */
+.leave-confirm-modal { border-color: var(--player-danger-border, var(--color-danger-border)); }
+.leave-confirm-modal .modal-title { color: var(--player-danger-text, var(--color-danger)); }
+.leave-confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+.leave-confirm-cancel {
+  border-color: var(--color-gold-dark);
+  background: var(--player-gold-bg, var(--surface-gold-soft));
+  color: var(--color-gold);
+}
+.leave-confirm-leave {
+  border-color: var(--player-danger-border, var(--color-danger-border));
+  background: var(--player-danger-bg, var(--color-danger-soft));
+  color: var(--player-danger-text, var(--color-danger));
+  margin-top: 0;
+}
+.leave-confirm-leave:hover {
+  background: var(--player-danger-border, var(--color-danger-border));
+  color: var(--color-bg);
+}
 
 /* Concentration modal specifics */
 .concentration-modal { border-color: var(--player-info-border, var(--color-info-border)); }

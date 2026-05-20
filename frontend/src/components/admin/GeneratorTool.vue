@@ -179,13 +179,17 @@ async function copyResult(text, index) {
   gap: 1.25rem;
 }
 
+/* Matches `.section-title` from TvControls / VoteManager */
 .tool-title {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-gold-dark);
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--color-text);
+  margin: 0;
 }
 
 .generator-form {
@@ -200,46 +204,56 @@ async function copyResult(text, index) {
   gap: 0.75rem;
 }
 
+/* Matches form labels in VoteManager / TvControls */
 .form-label {
-  min-width: 5rem;
-  font-size: 0.875rem;
-  color: var(--color-text-muted, #888);
+  min-width: 4rem;
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
 }
 
+/* Matches `.form-input` from TvControls */
 .form-select {
   flex: 1;
-  padding: 0.4rem 0.6rem;
-  border-radius: 6px;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-size: 0.9rem;
+  background: var(--admin-control-bg, var(--surface-raised));
+  color: var(--color-parchment);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
 }
+.form-select:focus { border-color: var(--color-gold-dark); }
 
+/* Generate button — matches `.action-btn` from TvControls / VoteManager */
 .generate-btn {
   align-self: flex-start;
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.5rem 1.25rem;
-  border-radius: 6px;
-  border: none;
-  background: var(--color-primary, #7c5cbf);
-  color: #fff;
-  font-size: 0.9rem;
-  font-weight: 600;
+  padding: 0.45rem 1rem;
+  background: var(--gradient-accent-action);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 8px;
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: background 0.15s;
 }
-
-.generate-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+.generate-btn:hover:not(:disabled) { background: var(--gradient-accent-action-hover); }
+.generate-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .form-error {
-  color: var(--color-danger, #e05555);
-  font-size: 0.875rem;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--admin-danger-text, var(--color-danger));
+  margin: 0;
 }
 
 .results-section {
@@ -254,7 +268,7 @@ async function copyResult(text, index) {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
 .result-item {
@@ -262,47 +276,46 @@ async function copyResult(text, index) {
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 0.75rem;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: var(--admin-control-bg, var(--surface-raised));
   cursor: pointer;
-  transition: background 0.12s;
+  transition: border-color 0.15s;
 }
-
-.result-item:hover {
-  background: var(--color-surface-hover, rgba(255,255,255,0.05));
-}
+.result-item:hover { border-color: var(--color-gold-dark); }
 
 .result-text {
-  font-size: 0.95rem;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-parchment);
 }
 
 .copy-hint {
-  color: var(--color-text-muted, #888);
+  color: var(--color-text-dim);
   font-size: 0.8rem;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .result-block {
   padding: 0.75rem 1rem;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: var(--admin-control-bg, var(--surface-raised));
   cursor: pointer;
-  transition: background 0.12s;
+  transition: border-color 0.15s;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
-
-.result-block:hover {
-  background: var(--color-surface-hover, rgba(255,255,255,0.05));
-}
+.result-block:hover { border-color: var(--color-gold-dark); }
 
 .result-text-long {
-  font-size: 0.95rem;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
   line-height: 1.6;
+  color: var(--color-parchment);
   margin: 0;
 }
 
@@ -310,14 +323,18 @@ async function copyResult(text, index) {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  color: var(--color-text-muted, #888);
-  font-size: 0.8rem;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
   align-self: flex-end;
 }
 
 .results-hint {
-  font-size: 0.78rem;
-  color: var(--color-text-muted, #888);
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: var(--color-text-dim);
   margin: 0;
 }
 
@@ -325,27 +342,27 @@ async function copyResult(text, index) {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.8rem;
-  color: var(--color-text-muted, #888);
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: var(--color-text-dim);
   padding: 0.4rem 0.75rem;
-  border-radius: 6px;
-  background: var(--color-surface);
+  border-radius: 8px;
+  background: var(--admin-control-bg, var(--surface-raised));
   border: 1px solid var(--color-border);
 }
-
 .quota-bar.quota-low {
-  color: #d97706;
-  border-color: #d97706;
+  color: var(--color-warning, #d97706);
+  border-color: var(--color-warning, #d97706);
 }
-
 .quota-bar.quota-empty {
-  color: var(--color-danger, #e05555);
-  border-color: var(--color-danger, #e05555);
+  color: var(--admin-danger-text, var(--color-danger));
+  border-color: var(--admin-danger-border, var(--color-danger-border));
 }
 
 .quota-api {
-  opacity: 0.6;
-  font-size: 0.75em;
+  opacity: 0.65;
+  font-size: 0.9em;
 }
 
 .spin {

@@ -39,6 +39,23 @@ const tvMode = ref('lobby')
 const theme = ref(getThemePreference('admin', 'dark'))
 const isLightTheme = computed(() => theme.value === 'light')
 
+// Mapping clé d'onglet → composant (pour <KeepAlive> + <Transition>)
+const tabComponents = {
+  players: PlayerList,
+  message: MessageTool,
+  dice: CriticalFailTool,
+  journal: SessionJournal,
+  tension: TvControls,
+  vote: VoteManager,
+  images: ImageManager,
+  map: MapManager,
+  merchants: MerchantManager,
+  tresor: GoldDividerTool,
+  search: SearchTool,
+  generator: GeneratorTool,
+}
+const currentTabComponent = computed(() => tabComponents[activeTab.value] || null)
+
 const hasActiveVote = ref(false)
 const hasActiveImage = ref(false)
 const hasActiveMerchant = ref(false)
@@ -46,23 +63,53 @@ const hasActiveDoom = ref(false)
 const hasActiveTension = ref(false)
 const hasActiveMap = ref(false)
 
-const playerRollToasts = ref([])
-let playerRollToastId = 0
+// Badge d'activité par onglet (point de couleur dans la nav)
+const tabActivity = computed(() => ({
+  vote: hasActiveVote.value,
+  images: hasActiveImage.value,
+  merchants: hasActiveMerchant.value,
+  tension: hasActiveDoom.value || hasActiveTension.value,
+  map: hasActiveMap.value,
+}))
 
 // Keeps the socket instance used in onMounted so onUnmounted can clean up
 // safely even after resetSocket() was called (e.g. on logout before unmount).
 let _socket = null
 
+const playerRollToasts = ref([])
+let playerRollToastId = 0
+const toastTimers = new Map() // id -> timerId
+
+function scheduleToastDismiss(id, delay) {
+  const timerId = setTimeout(() => {
+    dismissPlayerRollToast(id)
+    toastTimers.delete(id)
+  }, delay)
+  toastTimers.set(id, timerId)
+}
+
 function pushPlayerRollToast(payload) {
   const id = ++playerRollToastId
   playerRollToasts.value = [...playerRollToasts.value, { id, ...payload }]
-  setTimeout(() => {
-    playerRollToasts.value = playerRollToasts.value.filter(t => t.id !== id)
-  }, 6000)
+  scheduleToastDismiss(id, 6000)
 }
 
 function dismissPlayerRollToast(id) {
   playerRollToasts.value = playerRollToasts.value.filter(t => t.id !== id)
+  toastTimers.delete(id)
+}
+
+function pauseToast(id) {
+  const timerId = toastTimers.get(id)
+  if (timerId) {
+    clearTimeout(timerId)
+    toastTimers.delete(id)
+  }
+}
+
+function resumeToast(id) {
+  if (!playerRollToasts.value.find(t => t.id === id)) return
+  scheduleToastDismiss(id, 3000)
 }
 
 
@@ -320,17 +367,23 @@ onUnmounted(() => {
         </div>
       </section>
 
-      <nav v-if="sessionStore.activeSession" class="admin-nav">
+      <nav v-if="sessionStore.activeSession" class="admin-nav" role="tablist">
         <button
           v-for="tab in tabs"
           :key="tab.key"
           class="nav-btn"
           :class="{ active: activeTab === tab.key }"
           :data-testid="`tab-${tab.key}`"
+          role="tab"
+          :aria-selected="activeTab === tab.key"
+          :title="tab.label"
           @click="activeTab = tab.key"
         >
-          <AppIcon :icon="tab.icon" size="1em" />
-          <span>{{ tab.label }}</span>
+          <span class="nav-btn-icon-wrap">
+            <AppIcon :icon="tab.icon" size="1.1em" />
+            <span v-if="tabActivity[tab.key] && activeTab !== tab.key" class="nav-activity-dot" />
+          </span>
+          <span class="nav-btn-label">{{ tab.label }}</span>
         </button>
       </nav>
     </header>
@@ -338,42 +391,11 @@ onUnmounted(() => {
     <main class="admin-main-grid">
       <section class="admin-main">
         <template v-if="sessionStore.activeSession">
-        <div v-show="activeTab === 'players'">
-          <PlayerList />
-        </div>
-        <div v-show="activeTab === 'message'">
-          <MessageTool />
-        </div>
-        <div v-show="activeTab === 'dice'">
-          <CriticalFailTool />
-        </div>
-        <div v-show="activeTab === 'journal'">
-          <SessionJournal />
-        </div>
-        <div v-show="activeTab === 'tension'">
-          <TvControls />
-        </div>
-        <div v-show="activeTab === 'vote'">
-          <VoteManager />
-        </div>
-        <div v-show="activeTab === 'images'">
-          <ImageManager />
-        </div>
-        <div v-show="activeTab === 'map'">
-          <MapManager />
-        </div>
-        <div v-show="activeTab === 'merchants'">
-          <MerchantManager />
-        </div>
-        <div v-show="activeTab === 'tresor'">
-          <GoldDividerTool />
-        </div>
-        <div v-show="activeTab === 'search'">
-          <SearchTool />
-        </div>
-        <div v-show="activeTab === 'generator'">
-          <GeneratorTool />
-        </div>
+          <Transition name="tab-fade" mode="out-in">
+            <KeepAlive>
+              <component :is="currentTabComponent" :key="activeTab" />
+            </KeepAlive>
+          </Transition>
         </template>
         <p v-else class="no-session-msg">Sélectionnez ou créez une session pour accéder aux outils.</p>
       </section>
@@ -415,6 +437,8 @@ onUnmounted(() => {
         :class="{ hidden: toast.hidden }"
         data-testid="player-roll-toast"
         @click="dismissPlayerRollToast(toast.id)"
+        @mouseenter="pauseToast(toast.id)"
+        @mouseleave="resumeToast(toast.id)"
       >
         <span class="prt-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="1.5rem" /></span>
         <div class="prt-body">
@@ -545,28 +569,60 @@ onUnmounted(() => {
 
 .admin-nav {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
+  overflow-x: auto;
+  gap: 0.15rem;
   margin-top: 0.5rem;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.admin-nav::-webkit-scrollbar { display: none; }
 
 .nav-btn {
-  flex: 1;
+  flex-shrink: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  padding: 0.6rem 0.5rem;
+  gap: 0.2rem;
+  padding: 0.5rem 0.6rem;
+  min-height: 52px;
+  min-width: 52px;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
   color: var(--color-text-dim);
   font-family: var(--font-heading);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: color 0.18s, border-color 0.18s;
+  position: relative;
+}
+
+.nav-btn-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-activity-dot {
+  position: absolute;
+  top: -3px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-gold-bright);
+  border: 1.5px solid var(--color-bg);
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+.nav-btn-label {
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .nav-btn:hover { color: var(--color-parchment); }
@@ -574,6 +630,14 @@ onUnmounted(() => {
 .nav-btn.active {
   color: var(--color-gold-bright);
   border-bottom-color: var(--color-gold-bright);
+}
+
+@media (min-width: 860px) {
+  .nav-btn {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.6rem;
+  }
 }
 
 .admin-main {
@@ -820,6 +884,12 @@ onUnmounted(() => {
   cursor: pointer;
   min-width: 200px;
   max-width: 300px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.player-roll-toast:hover {
+  border-color: var(--color-gold-bright);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .player-roll-toast.hidden {

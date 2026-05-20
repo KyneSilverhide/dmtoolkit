@@ -275,7 +275,7 @@ onUnmounted(() => {
         <label class="checkbox-label"><input v-model="tensionVibration" type="checkbox" /> Vibration</label>
       </div>
       <div class="inline-actions">
-        <button class="action-btn" @click="createTensionScale">Créer</button>
+        <button class="action-btn" @click="createTensionScale">{{ activeTensionScale ? 'Recréer' : 'Créer' }}</button>
         <button class="action-btn" :disabled="!activeTensionScale" @click="incrementTensionScale">{{ tensionAdvanceLabel }}</button>
         <button class="action-btn danger-btn" :disabled="!activeTensionScale" @click="endTensionScale">Terminer</button>
       </div>

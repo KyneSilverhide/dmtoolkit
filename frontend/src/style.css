@@ -73,13 +73,10 @@
   --school-necromancie: #cc99ff;
   --school-transmutation: #f0e68c;
   --school-default: var(--color-gold);
-  /*--font-title: 'Cinzel Decorative', 'Cinzel', Georgia, serif;*/
-  /*--font-heading: 'Cinzel', Georgia, serif;*/
-  /*--font-body: 'IM Fell English', Georgia, 'Times New Roman', serif;*/
-
-  --font-ui: "Segoe UI", "Inter", "Roboto", "Noto Sans", "Helvetica Neue", Arial, sans-serif;
-  --font-heading: var(--font-ui);
-  --font-body: var(--font-ui);
+  --font-title: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-heading: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-ui: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   color-scheme: dark;
 }
 
@@ -170,21 +167,32 @@
 html, body {
   height: 100%;
   overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-family: var(--font-body), serif;
+  font-family: var(--font-ui);
   font-size: 1rem;
   line-height: 1.6;
-  font-weight: 500;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   min-height: 100vh;
   background-image: var(--gradient-page);
   transition: background-color 0.2s ease, color 0.2s ease, background-image 0.2s ease;
 }
+
+
+/* Personnalisation scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-gold-dark); }
 
 #app {
   max-width: 1440px;
@@ -253,15 +261,34 @@ button:hover:not(:disabled),
 }
 
 @keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+
+@keyframes tabFadeIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes tabFadeOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-8px) scale(0.99); }
+}
+
+@keyframes dotPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%        { transform: scale(1.4); opacity: 0.75; }
+}
+
+/* Transitions d'onglets admin */
+.tab-fade-enter-active  { animation: tabFadeIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.tab-fade-leave-active  { animation: tabFadeOut 0.15s ease forwards; }
+
+/* Transitions d'onglets joueur (slide) */
+.tab-slide-enter-active { transition: opacity 0.2s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1); }
+.tab-slide-leave-active { transition: opacity 0.15s ease, transform 0.15s ease; position: absolute; width: 100%; }
+.tab-slide-enter-from   { opacity: 0; transform: translateX(24px); }
+.tab-slide-leave-to     { opacity: 0; transform: translateX(-24px); }
 
 @media (min-width: 1024px) {
   .admin-wrapper {

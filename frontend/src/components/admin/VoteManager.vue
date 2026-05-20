@@ -196,7 +196,7 @@ onUnmounted(() => {
 .form-input {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 0.5rem 0.75rem;
   color: var(--color-parchment);
   font-family: var(--font-body);

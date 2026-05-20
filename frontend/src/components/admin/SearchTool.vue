@@ -315,7 +315,7 @@ onUnmounted(() => {
 
 .search-input {
   flex: 1;
-  background: var(--color-surface);
+  background: var(--admin-control-bg, var(--surface-raised));
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0.6rem 0.9rem;
