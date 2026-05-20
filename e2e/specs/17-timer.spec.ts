@@ -7,18 +7,12 @@ import { TvPage } from '../page-objects/TvPage'
 async function startTimer(adminPage: AdminPage, minutes = 0, seconds = 30, label = 'Minuteur') {
   await adminPage.switchTab('tension')
   const pg = adminPage.page
-  const labelEl = pg.locator('input[placeholder*="Minuteur" i], input[placeholder*="timer" i]').first()
-  if (await labelEl.count()) await labelEl.fill(label)
 
-  // Timer minute and second inputs (find them after doom clock inputs)
-  const numberInputs = pg.locator('input[type="number"]')
-  const count = await numberInputs.count()
-  if (count >= 4) {
-    await numberInputs.nth(2).fill(String(minutes))
-    await numberInputs.nth(3).fill(String(seconds))
-  }
-
-  await pg.locator('button.action-btn').filter({ hasText: 'Démarrer' }).click()
+  // Wait for the timer inputs to be visible (tab transition may be in progress)
+  await pg.getByTestId('timer-label-input').fill(label)
+  await pg.getByTestId('timer-minutes-input').fill(String(minutes))
+  await pg.getByTestId('timer-seconds-input').fill(String(seconds))
+  await pg.getByTestId('timer-start-btn').click()
 }
 
 test('admin starts a timer and it shows on TV in combat mode', async ({ browser }) => {

@@ -1,7 +1,10 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { authStore } from '../stores/auth.js'
 import AppIcon from '../components/AppIcon.vue'
+
+const router = useRouter()
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
 const showModal = ref(false)

@@ -67,6 +67,9 @@ test('player theme toggle works', async ({ page }) => {
   const code = await createSession(token)
   await joinAsPlayer(page, code, { name: 'Themed', hp: 20 })
 
+  // The theme toggle is inside the hamburger menu — open it first
+  await page.getByTestId('header-menu-btn').click()
+
   const toggleBtn = page.getByTestId('player-theme-toggle')
   await expect(toggleBtn).toBeVisible()
 

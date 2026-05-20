@@ -320,14 +320,14 @@ test('admin can close merchant', async ({ browser }) => {
 
     await createMerchant(adminPage, 'Greta', [{ name: 'Clé', price: 3 }])
     await showMerchant(adminPage)
-    await expect(playerPg.getByTestId('player-tab-boutique')).not.toBeDisabled({ timeout: 5_000 })
+    await expect(playerPg.getByTestId('player-tab-boutique')).toBeVisible({ timeout: 5_000 })
 
     // Close the merchant
     await adminPage.switchTab('merchants')
     await adminPage.page.locator('.close-merchant-btn').click()
 
-    // Player boutique tab should be disabled again
-    await expect(playerPg.getByTestId('player-tab-boutique')).toBeDisabled({ timeout: 5_000 })
+    // Player boutique tab should be hidden again
+    await expect(playerPg.getByTestId('player-tab-boutique')).not.toBeVisible({ timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()

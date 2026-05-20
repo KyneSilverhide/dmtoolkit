@@ -244,15 +244,15 @@ onUnmounted(() => {
     <section class="control-section">
       <h2 class="section-title"><AppIcon icon="lucide:hourglass" size="0.9em" /> Minuteur libre</h2>
       <div class="form-row">
-        <input v-model="timerLabel" class="form-input" type="text" placeholder="Libellé du minuteur" />
+        <input v-model="timerLabel" class="form-input" type="text" placeholder="Libellé du minuteur" data-testid="timer-label-input" />
       </div>
       <div class="form-row split">
-        <input v-model.number="timerMinutes" class="form-input" type="number" min="0" max="1440" placeholder="Minutes" />
-        <input v-model.number="timerSeconds" class="form-input" type="number" min="0" max="59" placeholder="Secondes" />
+        <input v-model.number="timerMinutes" class="form-input" type="number" min="0" max="1440" placeholder="Minutes" data-testid="timer-minutes-input" />
+        <input v-model.number="timerSeconds" class="form-input" type="number" min="0" max="59" placeholder="Secondes" data-testid="timer-seconds-input" />
       </div>
       <div class="inline-actions">
-        <button class="action-btn" @click="startTimer">Démarrer</button>
-        <button class="action-btn danger-btn" :disabled="!activeTimer" @click="stopTimer">Arrêter</button>
+        <button class="action-btn" @click="startTimer" data-testid="timer-start-btn">Démarrer</button>
+        <button class="action-btn danger-btn" :disabled="!activeTimer" @click="stopTimer" data-testid="timer-stop-btn">Arrêter</button>
       </div>
       <p v-if="activeTimer" class="status-line">
         {{ activeTimer.label }} — {{ timerRemainingLabel }}

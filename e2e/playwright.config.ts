@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   testDir: './specs',
-  timeout: 5_000,
+  timeout: 15_000,
   expect: { timeout: 5_000 },
   retries: process.env.CI ? 1 : 0,
   workers: 1,
@@ -10,6 +10,7 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5173',
     trace: 'retain-on-failure',
     video: 'retain-on-failure',
+    navigationTimeout: 15_000,
   },
   globalSetup: './global-setup.ts',
   reporter: [

@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { authStore } from '../stores/auth.js'
@@ -39,7 +39,7 @@ const tvMode = ref('lobby')
 const theme = ref(getThemePreference('admin', 'dark'))
 const isLightTheme = computed(() => theme.value === 'light')
 
-// Mapping clé d'onglet → composant (pour <KeepAlive> + <Transition>)
+// Mapping clÃ© d'onglet â†’ composant (pour <KeepAlive> + <Transition>)
 const tabComponents = {
   players: PlayerList,
   message: MessageTool,
@@ -63,7 +63,7 @@ const hasActiveDoom = ref(false)
 const hasActiveTension = ref(false)
 const hasActiveMap = ref(false)
 
-// Badge d'activité par onglet (point de couleur dans la nav)
+// Badge d'activitÃ© par onglet (point de couleur dans la nav)
 const tabActivity = computed(() => ({
   vote: hasActiveVote.value,
   images: hasActiveImage.value,
@@ -115,7 +115,7 @@ function resumeToast(id) {
 
 const tabs = [
   { key: 'players',   label: 'Joueurs',       icon: 'game-icons:wizard-staff' },
-  { key: 'message',   label: 'Message',        icon: 'lucide:mail' },
+  { key: 'message',   label: 'Messages',       icon: 'lucide:mail' },
   { key: 'dice',      label: 'Critical Fail',  icon: 'game-icons:dice-six-faces-five' },
   { key: 'journal',   label: 'Journal',        icon: 'game-icons:scroll-unfurled' },
   { key: 'tension',   label: 'Rythme',         icon: 'lucide:timer' },
@@ -127,6 +127,25 @@ const tabs = [
   { key: 'search',    label: 'Recherche',      icon: 'lucide:search' },
   { key: 'generator', label: 'Générateur',     icon: 'lucide:wand-2' },
 ]
+
+// Groupes de navigation pour la sidebar
+const navGroups = [
+  {
+    label: 'En jeu',
+    items: ['players', 'message', 'dice', 'journal'],
+  },
+  {
+    label: 'Scène',
+    items: ['tension', 'vote', 'images', 'map', 'merchants'],
+  },
+  {
+    label: 'Outils',
+    items: ['tresor', 'search', 'generator'],
+  },
+]
+
+// Sidebar rÃ©duite (icon-only) ou complÃ¨te
+const isNavCollapsed = ref(false)
 
 const tvModes = computed(() => ([
   { key: 'lobby', label: 'Lobby', hint: 'Code et QR de session', ready: true },
@@ -334,101 +353,162 @@ onUnmounted(() => {
 <template>
   <div class="admin-wrapper">
     <DemoBanner v-if="authStore.admin?.is_demo" />
+
+    <!-- â”€â”€ Topbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
     <header class="admin-header">
       <div class="header-top">
-        <h1 class="page-title"><AppIcon icon="game-icons:dice-six-faces-five" size="1em" /> Tableau de Bord <span class="title-accent">MJ</span></h1>
+        <h1 class="page-title">
+          <AppIcon icon="game-icons:dice-six-faces-five" size="1em" />
+          Tableau de Bord <span class="title-accent">MJ</span>
+        </h1>
         <div class="header-actions">
+          <p class="admin-name" v-if="authStore.admin">
+            {{ authStore.admin.username }}
+            <span class="app-version">v{{ appVersion }}</span>
+          </p>
           <button class="theme-toggle-btn" @click="toggleTheme" data-testid="theme-toggle">
             <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.9em" />
             {{ isLightTheme ? 'Sombre' : 'Clair' }}
           </button>
-          <button class="logout-btn" @click="logout" data-testid="logout-button">Déconnexion</button>
+          <button class="logout-btn" @click="logout" data-testid="logout-button">
+            <AppIcon icon="lucide:log-out" size="0.9em" /> Déconnexion
+          </button>
         </div>
       </div>
-      <p class="admin-name" v-if="authStore.admin">
-        {{ authStore.admin.username }}
-        <span class="app-version">v{{ appVersion }}</span>
-      </p>
 
       <section class="session-header-panel">
         <div class="session-header-top">
           <h2 class="session-header-title"><AppIcon icon="lucide:clipboard-list" size="1em" /> Sessions</h2>
           <button class="session-collapse-btn" @click="toggleSessionPanel">
+            <AppIcon :icon="isSessionPanelCollapsed ? 'lucide:chevron-down' : 'lucide:chevron-up'" size="0.9em" />
             {{ isSessionPanelCollapsed ? 'Afficher' : 'Réduire' }}
           </button>
         </div>
-
         <p v-if="isSessionPanelCollapsed && sessionStore.activeSession" class="session-header-active">
-          Session active: {{ activeSessionLabel }}
+          Session active : {{ activeSessionLabel }}
         </p>
-
         <div v-show="!isSessionPanelCollapsed" class="session-header-content">
           <SessionManager />
         </div>
       </section>
-
-      <nav v-if="sessionStore.activeSession" class="admin-nav" role="tablist">
-        <button
-          v-for="tab in tabs"
-          :key="tab.key"
-          class="nav-btn"
-          :class="{ active: activeTab === tab.key }"
-          :data-testid="`tab-${tab.key}`"
-          role="tab"
-          :aria-selected="activeTab === tab.key"
-          :title="tab.label"
-          @click="activeTab = tab.key"
-        >
-          <span class="nav-btn-icon-wrap">
-            <AppIcon :icon="tab.icon" size="1.1em" />
-            <span v-if="tabActivity[tab.key] && activeTab !== tab.key" class="nav-activity-dot" />
-          </span>
-          <span class="nav-btn-label">{{ tab.label }}</span>
-        </button>
-      </nav>
     </header>
 
-    <main class="admin-main-grid">
-      <section class="admin-main">
-        <template v-if="sessionStore.activeSession">
-          <Transition name="tab-fade" mode="out-in">
-            <KeepAlive>
-              <component :is="currentTabComponent" :key="activeTab" />
-            </KeepAlive>
-          </Transition>
-        </template>
-        <p v-else class="no-session-msg">Sélectionnez ou créez une session pour accéder aux outils.</p>
-      </section>
+    <!-- â”€â”€ Corps : sidebar + contenu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+    <div class="admin-body">
 
-      <aside class="tv-sidebar">
-        <h2 class="tv-sidebar-title"><AppIcon icon="lucide:monitor" size="1em" /> Diffusion TV</h2>
-        <p class="tv-sidebar-subtitle">
-          Mode actuel: <span class="tv-mode-current">{{ activeTvModeLabel }}</span>
-        </p>
-        <div v-if="sessionStore.activeSession" class="tv-mode-list">
-          <button
-              v-for="mode in tvModes"
-              :key="mode.key"
-              class="tv-mode-btn"
-              :class="{ active: tvMode === mode.key, disabled: !mode.ready }"
-              :disabled="!mode.ready"
-              :data-testid="`tv-mode-btn-${mode.key}`"
-              @click="setTvMode(mode.key)"
+      <!-- Sidebar de navigation (desktop) -->
+      <nav
+        v-if="sessionStore.activeSession"
+        class="admin-sidebar"
+        :class="{ collapsed: isNavCollapsed }"
+        role="navigation"
+        aria-label="Navigation admin"
+      >
+        <div class="sidebar-groups">
+          <div
+            v-for="group in navGroups"
+            :key="group.label"
+            class="sidebar-group"
           >
-            <div class="tv-mode-top">
-              <span class="tv-mode-label">{{ mode.label }}</span>
-              <span class="tv-ready-badge" :class="mode.ready ? 'ready' : 'not-ready'">
-                {{ mode.ready ? 'prêt' : 'non prêt' }}
+            <span class="sidebar-group-label">{{ group.label }}</span>
+            <button
+              v-for="key in group.items"
+              :key="key"
+              class="sidebar-item"
+              :class="{ active: activeTab === key }"
+              :data-testid="`tab-${key}`"
+              :title="tabs.find(t => t.key === key)?.label"
+              @click="activeTab = key"
+            >
+              <span class="sidebar-item-icon">
+                <AppIcon :icon="tabs.find(t => t.key === key)?.icon" size="1.3rem" />
+                <span v-if="tabActivity[key] && activeTab !== key" class="sidebar-dot" />
               </span>
-            </div>
-            <span class="tv-mode-hint">{{ mode.hint }}</span>
-          </button>
+              <span class="sidebar-item-label">
+                {{ tabs.find(t => t.key === key)?.label }}
+              </span>
+            </button>
+          </div>
         </div>
-        <p v-else class="no-session-msg">Sélectionnez une session pour piloter l'écran TV.</p>
-      </aside>
-    </main>
 
-    <!-- ── Player roll toasts ──────────────────────────────────────────────── -->
+        <!-- Bouton de rÃ©duction sidebar -->
+        <button
+          class="sidebar-collapse-btn"
+          @click="isNavCollapsed = !isNavCollapsed"
+          :title="isNavCollapsed ? 'Agrandir la navigation' : 'Réduire la navigation'"
+        >
+          <AppIcon :icon="isNavCollapsed ? 'lucide:chevrons-right' : 'lucide:chevrons-left'" size="1rem" />
+          <span class="sidebar-item-label">Réduire</span>
+        </button>
+      </nav>
+
+      <!-- Contenu principal + sidebar TV -->
+      <div class="admin-content-area">
+        <!-- Tab bar mobile (< 768px) -->
+        <nav
+          v-if="sessionStore.activeSession"
+          class="admin-nav-mobile"
+          role="tablist"
+        >
+          <button
+            v-for="tab in tabs"
+            :key="tab.key"
+            class="mobile-nav-btn"
+            :class="{ active: activeTab === tab.key }"
+            :title="tab.label"
+            @click="activeTab = tab.key"
+          >
+            <span class="mobile-nav-icon-wrap">
+              <AppIcon :icon="tab.icon" size="1.3rem" />
+              <span v-if="tabActivity[tab.key] && activeTab !== tab.key" class="nav-activity-dot" />
+            </span>
+            <span class="mobile-nav-label">{{ tab.label }}</span>
+          </button>
+        </nav>
+
+        <div class="admin-main-grid">
+          <section class="admin-main">
+            <template v-if="sessionStore.activeSession">
+              <Transition name="tab-fade" mode="out-in">
+                <KeepAlive>
+                  <component :is="currentTabComponent" />
+                </KeepAlive>
+              </Transition>
+            </template>
+            <p v-else class="no-session-msg">Sélectionnez ou créez une session pour accéder aux outils.</p>
+          </section>
+
+          <aside class="tv-sidebar">
+            <h2 class="tv-sidebar-title"><AppIcon icon="lucide:monitor" size="1em" /> Diffusion TV</h2>
+            <p class="tv-sidebar-subtitle">
+              Mode actuel : <span class="tv-mode-current">{{ activeTvModeLabel }}</span>
+            </p>
+            <div v-if="sessionStore.activeSession" class="tv-mode-list">
+              <button
+                v-for="mode in tvModes"
+                :key="mode.key"
+                class="tv-mode-btn"
+                :class="{ active: tvMode === mode.key, disabled: !mode.ready }"
+                :disabled="!mode.ready"
+                :data-testid="`tv-mode-btn-${mode.key}`"
+                @click="setTvMode(mode.key)"
+              >
+                <div class="tv-mode-top">
+                  <span class="tv-mode-label">{{ mode.label }}</span>
+                  <span class="tv-ready-badge" :class="mode.ready ? 'ready' : 'not-ready'">
+                    {{ mode.ready ? 'prêt' : 'non prêt' }}
+                  </span>
+                </div>
+                <span class="tv-mode-hint">{{ mode.hint }}</span>
+              </button>
+            </div>
+            <p v-else class="no-session-msg">Sélectionnez une session pour piloter l'écran TV.</p>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+    <!-- â”€â”€ Player roll toasts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
     <TransitionGroup name="roll-toast" tag="div" class="player-roll-toasts">
       <div
         v-for="toast in playerRollToasts"
@@ -450,7 +530,9 @@ onUnmounted(() => {
               {{ toast.rollType === 'advantage' ? ' (avantage)' : ' (désavantage)' }}
             </span>
           </span>
-          <span v-if="toast.hidden" class="prt-result hidden-result"><AppIcon icon="lucide:eye-off" size="0.85em" /> Jet caché — {{ toast.total }}</span>
+          <span v-if="toast.hidden" class="prt-result hidden-result">
+            <AppIcon icon="lucide:eye-off" size="0.85em" /> Jet caché — {{ toast.total }}
+          </span>
           <span v-else class="prt-result">= {{ toast.total }}</span>
         </div>
       </div>
@@ -459,6 +541,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* â”€â”€ Variables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .admin-wrapper {
   display: flex;
   flex-direction: column;
@@ -486,19 +569,24 @@ onUnmounted(() => {
   --admin-danger-bg: var(--color-danger-soft);
   --admin-danger-border: var(--color-danger-border);
   --admin-danger-text: var(--color-danger);
+  --sidebar-width: 210px;
+  --sidebar-collapsed-width: 56px;
 }
 
+/* â”€â”€ Topbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .admin-header {
-  padding: 1.5rem 1.5rem 0;
+  padding: 0.85rem 1.25rem 0;
   background: linear-gradient(180deg, var(--admin-header-bg) 0%, transparent 100%);
   border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
 }
 
 .header-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.25rem;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
 }
 
 .header-actions {
@@ -507,359 +595,370 @@ onUnmounted(() => {
   gap: 0.5rem;
 }
 
-.theme-toggle-btn {
-  background: none;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 0.4rem 0.75rem;
-  color: var(--color-text-dim);
-  font-family: var(--font-heading);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  text-transform: uppercase;
-}
-
-.theme-toggle-btn:hover {
-  border-color: var(--color-gold-dark);
-  color: var(--color-gold-bright);
-}
-
-.page-title {
-  font-size: 1.4rem;
-  color: var(--color-parchment);
-}
-
+.page-title { font-size: 1.2rem; color: var(--color-parchment); font-weight: 600; }
 .title-accent { color: var(--color-gold-bright); }
 
 .admin-name {
-  font-family: var(--font-heading);
-  font-size: 0.7rem;
-  letter-spacing: 0.15em;
+  font-size: 0.75rem;
   color: var(--color-text-dim);
-  text-transform: uppercase;
-  margin-bottom: 1rem;
+  margin: 0;
 }
-
 .app-version {
-  margin-left: 0.5rem;
-  opacity: 0.5;
+  margin-left: 0.4rem;
+  opacity: 0.45;
   font-size: 0.65rem;
-  letter-spacing: 0.05em;
 }
 
+.theme-toggle-btn,
 .logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   background: none;
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  padding: 0.4rem 0.75rem;
+  padding: 0.35rem 0.65rem;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
+  font-size: 0.75rem;
   cursor: pointer;
-  text-transform: uppercase;
-  transition: all 0.2s;
-}
-
-.logout-btn:hover {
-  border-color: var(--admin-danger-border);
-  color: var(--admin-danger-text);
-}
-
-.admin-nav {
-  display: flex;
-  overflow-x: auto;
-  gap: 0.15rem;
-  margin-top: 0.5rem;
-  padding-bottom: 2px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.admin-nav::-webkit-scrollbar { display: none; }
-
-.nav-btn {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.2rem;
-  padding: 0.5rem 0.6rem;
-  min-height: 52px;
-  min-width: 52px;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--color-text-dim);
-  font-family: var(--font-heading);
-  font-size: 0.55rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: color 0.18s, border-color 0.18s;
-  position: relative;
-}
-
-.nav-btn-icon-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-activity-dot {
-  position: absolute;
-  top: -3px;
-  right: -4px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-gold-bright);
-  border: 1.5px solid var(--color-bg);
-  animation: dotPulse 1.4s ease-in-out infinite;
-}
-
-.nav-btn-label {
+  transition: all 0.18s;
   white-space: nowrap;
-  pointer-events: none;
 }
+.theme-toggle-btn:hover { border-color: var(--color-gold-dark); color: var(--color-gold-bright); }
+.logout-btn:hover { border-color: var(--admin-danger-border); color: var(--admin-danger-text); }
 
-.nav-btn:hover { color: var(--color-parchment); }
-
-.nav-btn.active {
-  color: var(--color-gold-bright);
-  border-bottom-color: var(--color-gold-bright);
-}
-
-@media (min-width: 860px) {
-  .nav-btn {
-    flex: 1;
-    min-width: 0;
-    font-size: 0.6rem;
-  }
-}
-
-.admin-main {
-  min-width: 0;
-}
-
-.admin-main-grid {
-  flex: 1;
-  padding: 1.5rem;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 1rem;
-  align-items: start;
-}
-
-.tv-sidebar {
-  position: sticky;
-  top: 1rem;
-  background: var(--admin-panel-highlight-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-   padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.tv-sidebar-title {
-  font-family: var(--font-heading);
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-gold-dark);
-  margin: 0;
-}
-
-.tv-sidebar-subtitle {
-  margin: 0;
-  color: var(--color-text-dim);
-  font-family: var(--font-heading);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.tv-mode-current {
-  color: var(--color-gold-bright);
-}
-
-.tv-mode-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.tv-mode-btn {
-  width: 100%;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.55rem 0.7rem;
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
-  background: var(--admin-control-bg);
-  color: var(--color-text);
-  cursor: pointer;
-}
-
-.tv-mode-btn:hover {
-  border-color: var(--color-gold-dark);
-}
-
-.tv-mode-btn.active {
-  border-color: var(--color-gold-bright);
-  background: var(--admin-gold-bg);
-}
-
-.tv-mode-label {
-  font-family: var(--font-heading);
-  font-size: 0.72rem;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.tv-mode-hint {
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  color: var(--color-text-dim);
-}
-
+/* â”€â”€ Session panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .session-header-panel {
-  margin: 0.5rem 0 0.75rem;
+  margin: 0 0 0.75rem;
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  padding: 0.75rem;
+  padding: 0.65rem 0.85rem;
   background: var(--admin-panel-highlight-bg);
 }
-
 .session-header-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
 }
-
 .session-header-title {
   margin: 0;
-  font-family: var(--font-heading);
-  font-size: 0.74rem;
-  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
 }
-
 .session-collapse-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
   border: 1px solid var(--color-border);
   background: var(--admin-control-bg);
   color: var(--color-text-dim);
   border-radius: 6px;
-  padding: 0.35rem 0.6rem;
-  font-family: var(--font-heading);
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.7rem;
   cursor: pointer;
+  transition: all 0.18s;
 }
-
-.session-collapse-btn:hover {
-  border-color: var(--color-gold-dark);
-  color: var(--color-gold-bright);
-}
-
+.session-collapse-btn:hover { border-color: var(--color-gold-dark); color: var(--color-gold-bright); }
 .session-header-active {
-  margin: 0.45rem 0 0;
+  margin: 0.4rem 0 0;
   color: var(--color-gold);
-  font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+}
+.session-header-content { margin-top: 0.65rem; }
+
+/* â”€â”€ Corps : sidebar + zone contenu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.admin-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.session-header-content {
-  margin-top: 0.75rem;
+/* â”€â”€ Sidebar de navigation (desktop â‰¥ 768px) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.admin-sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--color-border);
+  background: var(--admin-panel-highlight-bg);
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  scrollbar-width: none;
+}
+.admin-sidebar::-webkit-scrollbar { display: none; }
+.admin-sidebar.collapsed { width: var(--sidebar-collapsed-width); }
+
+.sidebar-groups {
+  flex: 1;
+  padding: 0.75rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-@media (max-width: 1220px) {
-  .admin-main-grid {
-    grid-template-columns: 1fr;
-  }
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.5rem;
+}
+.sidebar-group:last-child { margin-bottom: 0; }
 
-  .tv-sidebar {
-    position: static;
-    order: -1;
-  }
+.sidebar-group-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  padding: 0.25rem 0.6rem 0.1rem;
+  opacity: 0.6;
+  white-space: nowrap;
+  overflow: hidden;
+  /* MasquÃ©e quand sidebar rÃ©duite */
+  transition: opacity 0.15s;
+}
+.admin-sidebar.collapsed .sidebar-group-label { opacity: 0; }
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.6rem 0.65rem;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-text-dim);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;
+}
+.sidebar-item:hover { background: var(--surface-raised); color: var(--color-parchment); }
+.sidebar-item.active {
+  background: var(--admin-gold-bg);
+  color: var(--color-gold-bright);
+  font-weight: 600;
+}
+.sidebar-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 20%; bottom: 20%;
+  width: 3px;
+  background: var(--color-gold-bright);
+  border-radius: 0 3px 3px 0;
 }
 
-@media (max-width: 860px) {
-  .header-top {
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
+.sidebar-item-icon {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+}
+.sidebar-dot {
+  position: absolute;
+  top: -1px; right: -2px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--color-gold-bright);
+  border: 1.5px solid var(--color-bg);
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+.sidebar-item-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 0.15s, max-width 0.22s;
+  max-width: 200px;
+}
+.admin-sidebar.collapsed .sidebar-item-label { opacity: 0; max-width: 0; }
+
+/* Bouton de collapse en bas de sidebar */
+.sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.65rem;
+  border: none;
+  border-top: 1px solid var(--color-border);
+  background: none;
+  color: var(--color-text-dim);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.sidebar-collapse-btn:hover { background: var(--surface-raised); color: var(--color-parchment); }
+.admin-sidebar.collapsed .sidebar-collapse-btn .sidebar-item-label { opacity: 0; max-width: 0; }
+
+/* â”€â”€ Contenu + grid TV â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.admin-content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+/* Tab bar mobile â€” masquÃ©e sur desktop */
+.admin-nav-mobile { display: none; }
+
+.admin-main-grid {
+  flex: 1;
+  padding: 1.25rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 1rem;
+  align-items: start;
 }
 
 .admin-main {
-  padding: 1.5rem;
+  min-width: 0;
+  background: var(--admin-panel-bg);
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: var(--admin-panel-bg);
+  padding: 1.25rem;
 }
 
-.app-footer {
-  padding: 1.5rem;
-  text-align: center;
-  font-family: var(--font-heading);
-  font-size: 0.65rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--color-border);
+/* â”€â”€ Responsive : tablette â‰¤ 1100px â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+@media (max-width: 1100px) {
+  .admin-main-grid { grid-template-columns: 1fr; }
+  .tv-sidebar { order: -1; position: static; }
 }
 
-.no-session-msg {
-  font-family: var(--font-body);
-  color: var(--color-text-dim);
-  font-size: 0.9rem;
-  padding: 1rem 0;
+/* â”€â”€ Responsive : mobile < 768px â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+@media (max-width: 767px) {
+  .admin-body { flex-direction: column; }
+
+  /* Cacher la sidebar et afficher la tab bar mobile */
+  .admin-sidebar { display: none; }
+  .admin-nav-mobile {
+    display: flex;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--admin-panel-highlight-bg);
+    padding: 0.35rem 0.5rem;
+    gap: 0.2rem;
+    scrollbar-width: none;
+    flex-shrink: 0;
+  }
+  .admin-nav-mobile::-webkit-scrollbar { display: none; }
+  .mobile-nav-btn {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.5rem 0.6rem;
+    min-height: 52px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: var(--color-text-dim);
+    font-size: 0.55rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+    position: relative;
+  }
+  .mobile-nav-btn:hover { color: var(--color-parchment); background: var(--surface-raised); }
+  .mobile-nav-btn.active { color: var(--color-gold-bright); background: var(--admin-gold-bg); }
+  .mobile-nav-icon-wrap { position: relative; }
+  .mobile-nav-label { white-space: nowrap; }
+  .nav-activity-dot {
+    position: absolute;
+    top: -2px; right: -3px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--color-gold-bright);
+    border: 1.5px solid var(--color-bg);
+    animation: dotPulse 1.4s ease-in-out infinite;
+  }
+  .admin-main-grid { padding: 0.75rem; }
+  .admin-main { padding: 0.85rem; }
+  .header-top { flex-wrap: wrap; gap: 0.5rem; }
+  .admin-name { display: none; }
 }
 
-.tv-mode-top {
+/* â”€â”€ TV Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.tv-sidebar {
+  position: sticky;
+  top: 1rem;
+  background: var(--admin-panel-highlight-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1rem;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.75rem;
 }
-
+.tv-sidebar-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-gold-dark);
+  margin: 0;
+}
+.tv-sidebar-subtitle {
+  margin: 0;
+  color: var(--color-text-dim);
+  font-size: 0.72rem;
+}
+.tv-mode-current { color: var(--color-gold-bright); font-weight: 600; }
+.tv-mode-list { display: flex; flex-direction: column; gap: 0.35rem; }
+.tv-mode-btn {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--admin-control-bg);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color 0.18s;
+}
+.tv-mode-btn:hover { border-color: var(--color-gold-dark); }
+.tv-mode-btn.active { border-color: var(--color-gold-bright); background: var(--admin-gold-bg); }
+.tv-mode-label { font-size: 0.75rem; font-weight: 600; }
+.tv-mode-hint { font-size: 0.72rem; color: var(--color-text-dim); }
+.tv-mode-top { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; }
 .tv-ready-badge {
-  font-family: var(--font-heading);
-  font-size: 0.6rem;
-  letter-spacing: 0.08em;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   border-radius: 999px;
-  padding: 0.12rem 0.45rem;
+  padding: 0.1rem 0.4rem;
   border: 1px solid transparent;
 }
+.tv-ready-badge.ready { color: var(--admin-success-text); background: var(--admin-success-bg); border-color: var(--admin-success-border); }
+.tv-ready-badge.not-ready { color: var(--color-text-dim); background: var(--admin-control-bg-muted); border-color: var(--color-border); }
+.tv-mode-btn.disabled, .tv-mode-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-.tv-ready-badge.ready {
-  color: var(--admin-success-text);
-  background: var(--admin-success-bg);
-  border-color: var(--admin-success-border);
-}
+/* â”€â”€ Ã‰tats vides â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.no-session-msg { font-size: 0.88rem; color: var(--color-text-dim); padding: 1rem 0; }
 
-.tv-ready-badge.not-ready {
-  color: var(--color-text-dim);
-  background: var(--admin-control-bg-muted);
-  border-color: var(--color-border);
-}
-
-.tv-mode-btn.disabled,
-.tv-mode-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* ── Player roll toasts ─────────────────────────────────────────────── */
+/* â”€â”€ Player roll toasts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .player-roll-toasts {
   position: fixed;
   bottom: 1.5rem;
@@ -870,7 +969,6 @@ onUnmounted(() => {
   z-index: 900;
   pointer-events: none;
 }
-
 .player-roll-toast {
   pointer-events: auto;
   display: flex;
@@ -880,68 +978,21 @@ onUnmounted(() => {
   border-radius: 10px;
   border: 1px solid var(--color-gold-dark);
   background: var(--admin-panel-highlight-bg);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
   cursor: pointer;
   min-width: 200px;
   max-width: 300px;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-
-.player-roll-toast:hover {
-  border-color: var(--color-gold-bright);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-}
-
-.player-roll-toast.hidden {
-  border-color: var(--admin-info-border);
-}
-
-.roll-toast-enter-active, .roll-toast-leave-active {
-  transition: opacity 0.3s, transform 0.3s;
-}
-.roll-toast-enter-from, .roll-toast-leave-to {
-  opacity: 0;
-  transform: translateX(30px);
-}
-
-.prt-icon {
-  font-size: 1.4rem;
-  flex-shrink: 0;
-}
-
-.prt-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
-}
-
-.prt-name {
-  font-family: var(--font-heading);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-gold-dark);
-}
-
-.prt-label {
-  font-family: var(--font-heading);
-  font-size: 0.72rem;
-  color: var(--color-text-dim);
-}
-
-.prt-type {
-  font-style: italic;
-}
-
-.prt-result {
-  font-family: var(--font-heading);
-  font-size: 1.1rem;
-  color: var(--color-gold-bright);
-}
-
-.prt-result.hidden-result {
-  color: var(--admin-info-text);
-  font-size: 0.85rem;
-}
+.player-roll-toast:hover { border-color: var(--color-gold-bright); box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+.player-roll-toast.hidden { border-color: var(--admin-info-border); }
+.roll-toast-enter-active, .roll-toast-leave-active { transition: opacity 0.3s, transform 0.3s; }
+.roll-toast-enter-from, .roll-toast-leave-to { opacity: 0; transform: translateX(30px); }
+.prt-icon { font-size: 1.4rem; flex-shrink: 0; }
+.prt-body { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.prt-name { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-gold-dark); }
+.prt-label { font-size: 0.72rem; color: var(--color-text-dim); }
+.prt-type { font-style: italic; }
+.prt-result { font-size: 1.1rem; font-weight: 700; color: var(--color-gold-bright); }
+.prt-result.hidden-result { color: var(--admin-info-text); font-size: 0.85rem; }
 </style>

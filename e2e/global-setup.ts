@@ -2,6 +2,7 @@ import { getAdminToken } from './helpers/auth'
 import { resetDb } from './fixtures/db'
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000'
+const FRONTEND_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5173'
 
 async function waitForBackend(timeoutMs = 60_000): Promise<void> {
   const deadline = Date.now() + timeoutMs
@@ -18,9 +19,26 @@ async function waitForBackend(timeoutMs = 60_000): Promise<void> {
   )
 }
 
+async function waitForFrontend(timeoutMs = 60_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    try {
+      const res = await fetch(FRONTEND_URL)
+      if (res.ok) return
+    } catch {}
+    await new Promise(r => setTimeout(r, 2_000))
+  }
+  throw new Error(
+    `Frontend at ${FRONTEND_URL} not reachable after ${timeoutMs / 1000}s.\n` +
+    `Start it first: docker compose -f docker-compose.yml -f e2e/docker-compose.test.yml up -d frontend`
+  )
+}
+
 export default async function globalSetup() {
   // Wait for backend to be ready — it runs DB migrations on startup.
   await waitForBackend()
+  // Wait for frontend to be ready (avoids timeout on first page.goto in slow Docker environments).
+  await waitForFrontend()
   // Reset DB to a clean slate (DB is created automatically if missing).
   await resetDb()
   // Verify admin credentials are valid.

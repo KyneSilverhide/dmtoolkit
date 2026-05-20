@@ -855,11 +855,11 @@ onUnmounted(() => {
             <div v-if="showHeaderMenu" class="header-menu-backdrop" @click="showHeaderMenu = false" />
             <Transition name="menu-drop">
               <div v-if="showHeaderMenu" class="header-menu-dropdown" @click.stop>
-                <button class="menu-item" :class="notificationButtonClass" @click="handleNotificationButton; showHeaderMenu = false" data-testid="player-theme-toggle">
+                <button class="menu-item" :class="notificationButtonClass" @click="handleNotificationButton; showHeaderMenu = false">
                   <AppIcon :icon="notificationButtonIcon" size="0.95em" />
                   <span>Notifications — {{ notificationButtonText }}</span>
                 </button>
-                <button class="menu-item" @click="toggleTheme(); showHeaderMenu = false">
+                <button class="menu-item" @click="toggleTheme(); showHeaderMenu = false" data-testid="player-theme-toggle">
                   <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.95em" />
                   <span>{{ isLightTheme ? 'Thème sombre' : 'Thème clair' }}</span>
                 </button>
