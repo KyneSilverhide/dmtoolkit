@@ -313,11 +313,45 @@ router.get('/:id/images', authenticateToken, async (req, res) => {
 
     const { type } = req.query  // ?type=image ou ?type=map
     const query = type
-        ? 'SELECT id, url, original_name, type, uploaded_at FROM session_images WHERE session_id = $1 AND type = $2 ORDER BY uploaded_at DESC'
-        : 'SELECT id, url, original_name, type, uploaded_at FROM session_images WHERE session_id = $1 ORDER BY uploaded_at DESC'
+        ? 'SELECT id, url, original_name, type, audio_category, uploaded_at FROM session_images WHERE session_id = $1 AND type = $2 ORDER BY uploaded_at DESC'
+        : 'SELECT id, url, original_name, type, audio_category, uploaded_at FROM session_images WHERE session_id = $1 ORDER BY uploaded_at DESC'
     const params = type ? [req.params.id, type] : [req.params.id]
     const result = await pool.query(query, params)
     res.json(result.rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
+router.patch('/:id/images/:imageId', authenticateToken, async (req, res) => {
+  try {
+    const sessionCheck = await pool.query(
+      'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+      [req.params.id, req.admin.id]
+    )
+    if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
+
+    const record = await pool.query(
+      'SELECT id FROM session_images WHERE id = $1 AND session_id = $2',
+      [req.params.imageId, req.params.id]
+    )
+    if (!record.rows[0]) return res.status(404).json({ error: 'File not found.' })
+
+    const { original_name, audio_category } = req.body
+    const updates = []
+    const values = []
+    let idx = 1
+    if (original_name !== undefined) { updates.push(`original_name = $${idx++}`); values.push(String(original_name).slice(0, 500)) }
+    if (audio_category !== undefined) { updates.push(`audio_category = $${idx++}`); values.push(String(audio_category).slice(0, 50)) }
+    if (updates.length === 0) return res.status(400).json({ error: 'Nothing to update.' })
+
+    values.push(req.params.imageId)
+    const row = await pool.query(
+      `UPDATE session_images SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, url, original_name, type, audio_category, uploaded_at`,
+      values
+    )
+    res.json(row.rows[0])
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Server error.' })

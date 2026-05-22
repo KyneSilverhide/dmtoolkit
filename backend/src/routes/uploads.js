@@ -53,6 +53,27 @@ const imageFilter = (req, file, cb) => {
   cb(null, true)
 }
 
+const AUDIO_ALLOWED_MIMES = [
+  'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/wave', 'audio/x-wav',
+  'audio/ogg', 'audio/flac', 'audio/x-flac', 'audio/mp4', 'audio/x-m4a',
+  'audio/aac', 'audio/webm',
+]
+const AUDIO_ALLOWED_EXTS = ['.mp3', '.wav', '.ogg', '.flac', '.m4a', '.aac', '.webm']
+
+const audioFilter = (req, file, cb) => {
+  const ext = path.extname(file.originalname).toLowerCase()
+  if (!AUDIO_ALLOWED_MIMES.includes(file.mimetype) && !AUDIO_ALLOWED_EXTS.includes(ext)) {
+    return cb(new Error('Format invalide. Formats acceptés : MP3, WAV, OGG, FLAC, M4A, AAC, WebM.'))
+  }
+  cb(null, true)
+}
+
+const audioUploadAdmin = multer({
+  storage: adminStorage,
+  limits: { fileSize: 150 * 1024 * 1024 },
+  fileFilter: audioFilter,
+})
+
 const upload = multer({
   storage: adminStorage,
   limits: { fileSize: 50 * 1024 * 1024 },
@@ -102,6 +123,36 @@ router.post('/', authenticateToken, upload.fields([
           await pool.query(
               'INSERT INTO session_images (session_id, url, original_name, type) VALUES ($1, $2, $3, $4)',
               [req.body.session_id, url, originalName, type]
+          )
+        }
+      }
+    } catch (err) { console.error(err) }
+  }
+
+  return res.json({ url: urls.length === 1 ? urls[0] : null, urls })
+})
+
+// Audio upload endpoint — admin only, up to 150MB per file
+router.post('/audio', authenticateToken, audioUploadAdmin.fields([
+  { name: 'files', maxCount: 10 },
+  { name: 'file', maxCount: 1 },
+]), async (req, res) => {
+  const uploadedFiles = [...(req.files?.files || []), ...(req.files?.file || [])]
+  if (uploadedFiles.length === 0) return res.status(400).json({ error: 'No file uploaded.' })
+
+  const urls = uploadedFiles.map(fileToUrl)
+  if (req.body.session_id) {
+    try {
+      const sessionCheck = await pool.query(
+        'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+        [req.body.session_id, req.admin.id]
+      )
+      if (sessionCheck.rows[0]) {
+        const category = req.body.audio_category || 'ambiance'
+        for (let i = 0; i < uploadedFiles.length; i++) {
+          await pool.query(
+            'INSERT INTO session_images (session_id, url, original_name, type, audio_category) VALUES ($1, $2, $3, $4, $5)',
+            [req.body.session_id, urls[i], uploadedFiles[i].originalname, 'audio', category]
           )
         }
       }

@@ -137,24 +137,22 @@ onUnmounted(() => {
   <div class="image-manager">
     <h3 class="section-title"><AppIcon icon="lucide:image" size="0.9em" /> Gestionnaire d'Images</h3>
 
-    <div class="upload-area">
-      <label class="upload-btn" :class="{ disabled: uploading }">
-        <span>{{ uploading ? `Envoi… ${uploadProgress}%` : 'Téléverser des images' }}</span>
+    <div class="upload-card">
+      <label class="upload-btn" :class="{ disabled: uploading || !sessionStore.activeSession }">
+        <AppIcon icon="lucide:upload" size="0.8em" />
+        {{ uploading ? `Envoi… ${uploadProgress}%` : 'Téléverser des images' }}
         <input
-            type="file"
-            accept="image/*"
-            multiple
-            class="file-input"
-            :disabled="uploading"
-            @change="handleFileUpload"
+          type="file"
+          accept="image/*"
+          multiple
+          class="file-input"
+          :disabled="uploading || !sessionStore.activeSession"
+          @change="handleFileUpload"
         />
       </label>
-
       <div v-if="uploading" class="progress-track">
         <div class="progress-fill" :style="{ width: uploadProgress + '%' }" />
-        <span class="progress-label">{{ uploadProgress }}%</span>
       </div>
-
       <p v-if="uploadError" class="upload-error">{{ uploadError }}</p>
     </div>
 
@@ -166,8 +164,10 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <div v-if="images.length === 0" class="empty-gallery">
+    <div v-if="images.length === 0" class="empty-state">
+      <AppIcon icon="lucide:image" size="1.4em" />
       <p>Aucune image téléversée pour cette session.</p>
+      <p class="empty-hint">Utilisez le bouton ci-dessus pour en ajouter.</p>
     </div>
 
     <div v-else class="gallery">
@@ -213,27 +213,31 @@ onUnmounted(() => {
   margin-bottom: 0.25rem;
 }
 
-.upload-area {
+.upload-card {
   display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 0.75rem;
+  background: var(--surface-gold-soft);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 8px;
 }
 
 .upload-btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 0.5rem 1rem;
+  gap: 0.3rem;
+  padding: 0.3rem 0.8rem;
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
-  border-radius: 8px;
+  border-radius: 6px;
   color: var(--color-gold-bright);
   font-family: var(--font-heading);
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+  letter-spacing: 0.07em;
   cursor: pointer;
-  transition: all 0.2s;
-  width: fit-content;
+  transition: background 0.2s;
 }
 .upload-btn:hover { background: var(--gradient-accent-action-hover); }
 
@@ -247,11 +251,18 @@ onUnmounted(() => {
   font-size: 0.8rem;
 }
 
-.empty-gallery {
-  font-family: var(--font-body);
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 2rem 1rem;
   color: var(--color-text-dim);
+  font-family: var(--font-body);
   font-size: 0.85rem;
+  text-align: center;
 }
+.empty-hint { font-size: 0.75rem; opacity: 0.7; }
 
 .gallery {
   columns: 5;
@@ -310,32 +321,18 @@ onUnmounted(() => {
 }
 
 .progress-track {
-  position: relative;
-  height: 10px;
+  flex: 1;
+  min-width: 6rem;
+  height: 5px;
   background: var(--surface-track);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--color-gold-dark), var(--color-gold-bright));
-  border-radius: 6px;
   transition: width 0.15s ease;
-}
-
-.progress-label {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-family: var(--font-heading);
-  font-size: 0.6rem;
-  color: var(--color-text-dim);
-  letter-spacing: 0.05em;
-  line-height: 1;
-  pointer-events: none;
 }
 
 .thumb-wrapper {

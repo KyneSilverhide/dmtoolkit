@@ -12,6 +12,7 @@ import SessionJournal from '../components/admin/SessionJournal.vue'
 import TvControls from '../components/admin/TvControls.vue'
 import VoteManager from '../components/admin/VoteManager.vue'
 import ImageManager from '../components/admin/ImageManager.vue'
+import AudioManager from '../components/admin/AudioManager.vue'
 import MerchantManager from '../components/admin/MerchantManager.vue'
 import SearchTool from '../components/admin/SearchTool.vue'
 import MapManager from '../components/admin/MapManager.vue'
@@ -48,6 +49,7 @@ const tabComponents = {
   tension: TvControls,
   vote: VoteManager,
   images: ImageManager,
+  audio: AudioManager,
   map: MapManager,
   merchants: MerchantManager,
   tresor: GoldDividerTool,
@@ -121,6 +123,7 @@ const tabs = [
   { key: 'tension',   label: 'Rythme',         icon: 'lucide:timer' },
   { key: 'vote',      label: 'Vote',           icon: 'lucide:check-square' },
   { key: 'images',    label: 'Images',         icon: 'lucide:image' },
+  { key: 'audio',     label: 'Audio',          icon: 'lucide:music-2' },
   { key: 'map',       label: 'Carte',          icon: 'lucide:map' },
   { key: 'merchants', label: 'Marchands',      icon: 'game-icons:shop' },
   { key: 'tresor',    label: 'Trésor',         icon: 'game-icons:coins' },
@@ -136,7 +139,7 @@ const navGroups = [
   },
   {
     label: 'Scène',
-    items: ['tension', 'vote', 'images', 'map', 'merchants'],
+    items: ['tension', 'vote', 'images', 'audio', 'map', 'merchants'],
   },
   {
     label: 'Outils',
