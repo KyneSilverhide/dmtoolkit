@@ -2,12 +2,60 @@ const express = require('express')
 const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
+const { OpenAI } = require('openai')
 const { authenticateToken } = require('../middleware/auth')
 const pool = require('../db')
+
+const DEFAULT_AUDIO_CATEGORY = 'Général'
+
+const aiClient = process.env.GITHUB_TOKEN
+  ? new OpenAI({ baseURL: 'https://models.inference.ai.azure.com', apiKey: process.env.GITHUB_TOKEN })
+  : null
+
+async function categorizeTracksChunk(filenames) {
+  const list = filenames.join('\n')
+  const completion = await aiClient.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: 'Tu es un assistant pour jeux de rôle D&D 5e. Réponds uniquement avec du JSON valide, sans markdown ni explication.' },
+      { role: 'user', content: `Voici des noms de fichiers audio D&D. Pour chacun, donne une courte catégorie (1-2 mots français, ex : "Combat", "Ambiance", "Taverne", "Forêt", "Donjons", "Musique", "Effet sonore"). Retourne un objet JSON {"nom_fichier": "catégorie"} :\n${list}` },
+    ],
+    max_tokens: 1500,
+    temperature: 0.2,
+  })
+  const raw = completion.choices[0]?.message?.content?.trim() || '{}'
+  const cleaned = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+  try {
+    return JSON.parse(cleaned)
+  } catch (parseErr) {
+    console.error('[upload] AI JSON parse error:', parseErr.message, '— raw:', raw.slice(0, 200))
+    return {}
+  }
+}
+
+async function categorizeTracks(filenames) {
+  if (!aiClient || filenames.length === 0) return {}
+  const CHUNK = 20
+  const result = {}
+  try {
+    for (let i = 0; i < filenames.length; i += CHUNK) {
+      const chunk = filenames.slice(i, i + CHUNK)
+      const partial = await categorizeTracksChunk(chunk)
+      Object.assign(result, partial)
+    }
+  } catch (err) {
+    console.error('[upload] AI categorize error:', err.message)
+  }
+  return result
+}
 
 const router = express.Router()
 
 const UPLOADS_DIR = path.join(__dirname, '../../uploads')
+
+// Demo account upload limits
+const DEMO_MAX_FILE_BYTES  = 1 * 1024 * 1024        // 1 MB per file
+const DEMO_MAX_TOTAL_BYTES = 500 * 1024 * 1024       // 500 MB total per session
 
 const makeFilename = (req, file, cb) => {
   const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
@@ -68,6 +116,7 @@ const audioFilter = (req, file, cb) => {
   cb(null, true)
 }
 
+// Multer instances — normal limits
 const audioUploadAdmin = multer({
   storage: adminStorage,
   limits: { fileSize: 150 * 1024 * 1024 },
@@ -78,6 +127,19 @@ const upload = multer({
   storage: adminStorage,
   limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: imageFilter,
+})
+
+// Multer instances — demo limits (1 MB per file)
+const demoUploadImage = multer({
+  storage: adminStorage,
+  limits: { fileSize: DEMO_MAX_FILE_BYTES },
+  fileFilter: imageFilter,
+})
+
+const demoUploadAudio = multer({
+  storage: adminStorage,
+  limits: { fileSize: DEMO_MAX_FILE_BYTES },
+  fileFilter: audioFilter,
 })
 
 const AVATAR_ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -100,66 +162,183 @@ const fileToUrl = (file) => {
   return `/uploads/${relPath}`
 }
 
-router.post('/', authenticateToken, upload.fields([
-  { name: 'file', maxCount: 1 }, // backward compatibility
-  { name: 'files', maxCount: 20 },
-]), async (req, res) => {
-  const uploadedFiles = [...(req.files?.files || []), ...(req.files?.file || [])]
-  if (uploadedFiles.length === 0) return res.status(400).json({ error: 'No file uploaded.' })
-
-  const urls = uploadedFiles.map(fileToUrl)
-  if (req.body.session_id) {
-    try {
-      // Verify the session belongs to this admin before linking uploaded files
-      const sessionCheck = await pool.query(
-        'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
-        [req.body.session_id, req.admin.id]
-      )
-      if (sessionCheck.rows[0]) {
-        const type = req.body.type || 'image'
-        for (let i = 0; i < uploadedFiles.length; i++) {
-          const url = urls[i]
-          const originalName = uploadedFiles[i].originalname
-          await pool.query(
-              'INSERT INTO session_images (session_id, url, original_name, type) VALUES ($1, $2, $3, $4)',
-              [req.body.session_id, url, originalName, type]
-          )
-        }
+// Picks the right Multer instance (demo vs normal) and converts Multer errors to JSON responses.
+function handleUpload(normalInstance, demoInstance, fields) {
+  return (req, res, next) => {
+    const instance = req.admin?.is_demo ? demoInstance : normalInstance
+    instance.fields(fields)(req, res, (err) => {
+      if (!err) return next()
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({
+          error: `Limite du mode démo : chaque fichier ne peut pas dépasser 1 Mo.`,
+        })
       }
-    } catch (err) { console.error(err) }
+      if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+        return res.status(400).json({ error: 'Trop de fichiers envoyés simultanément.' })
+      }
+      // fileFilter errors (format invalide, etc.) — renvoyer le message directement
+      if (err.message) {
+        return res.status(400).json({ error: err.message })
+      }
+      next(err)
+    })
+  }
+}
+
+// Returns true if adding newBytes to the session's tracked storage would exceed the demo quota.
+async function exceedsDemoTotal(sessionId, newBytes) {
+  const { rows } = await pool.query(
+    'SELECT COALESCE(SUM(file_size), 0)::bigint AS total FROM session_images WHERE session_id = $1',
+    [sessionId]
+  )
+  return Number(rows[0].total) + newBytes > DEMO_MAX_TOTAL_BYTES
+}
+
+// Deletes uploaded files from disk (best-effort, errors are non-fatal).
+function removeFiles(files) {
+  for (const f of files) {
+    fs.unlink(f.path, err => { if (err) console.error('[upload] cleanup error:', err) })
+  }
+}
+
+router.post('/',
+  authenticateToken,
+  handleUpload(upload, demoUploadImage, [
+    { name: 'file',  maxCount: 1  },
+    { name: 'files', maxCount: 20 },
+  ]),
+  async (req, res) => {
+    const uploadedFiles = [...(req.files?.files || []), ...(req.files?.file || [])]
+    if (uploadedFiles.length === 0) return res.status(400).json({ error: 'No file uploaded.' })
+
+    const sessionId = req.body.session_id
+    const urls = uploadedFiles.map(fileToUrl)
+
+    if (sessionId) {
+      try {
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, req.admin.id]
+        )
+        if (sessionCheck.rows[0]) {
+          // Demo total storage check
+          if (req.admin.is_demo) {
+            const newBytes = uploadedFiles.reduce((s, f) => s + f.size, 0)
+            if (await exceedsDemoTotal(sessionId, newBytes)) {
+              removeFiles(uploadedFiles)
+              return res.status(413).json({
+                error: `Limite du mode démo atteinte : le stockage total est limité à 500 Mo par session.`,
+              })
+            }
+          }
+
+          const type = req.body.type || 'image'
+          for (let i = 0; i < uploadedFiles.length; i++) {
+            await pool.query(
+              'INSERT INTO session_images (session_id, url, original_name, type, file_size) VALUES ($1, $2, $3, $4, $5)',
+              [sessionId, urls[i], uploadedFiles[i].originalname, type, uploadedFiles[i].size]
+            )
+          }
+        }
+      } catch (err) { console.error(err) }
+    }
+
+    return res.json({ url: urls.length === 1 ? urls[0] : null, urls })
+  }
+)
+
+// Audio upload endpoint — admin only
+router.post('/audio',
+  authenticateToken,
+  handleUpload(audioUploadAdmin, demoUploadAudio, [
+    { name: 'files', maxCount: 50 },
+    { name: 'file',  maxCount: 1  },
+  ]),
+  async (req, res) => {
+    const uploadedFiles = [...(req.files?.files || []), ...(req.files?.file || [])]
+    if (uploadedFiles.length === 0) return res.status(400).json({ error: 'No file uploaded.' })
+
+    const sessionId = req.body.session_id
+    const urls = uploadedFiles.map(fileToUrl)
+
+    if (sessionId) {
+      try {
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, req.admin.id]
+        )
+        if (sessionCheck.rows[0]) {
+          // Demo total storage check
+          if (req.admin.is_demo) {
+            const newBytes = uploadedFiles.reduce((s, f) => s + f.size, 0)
+            if (await exceedsDemoTotal(sessionId, newBytes)) {
+              removeFiles(uploadedFiles)
+              return res.status(413).json({
+                error: `Limite du mode démo atteinte : le stockage total est limité à 500 Mo par session.`,
+              })
+            }
+          }
+
+          const aiCategories = await categorizeTracks(uploadedFiles.map(f => f.originalname))
+          for (let i = 0; i < uploadedFiles.length; i++) {
+            const category = aiCategories[uploadedFiles[i].originalname] || DEFAULT_AUDIO_CATEGORY
+            await pool.query(
+              'INSERT INTO session_images (session_id, url, original_name, type, audio_category, file_size) VALUES ($1, $2, $3, $4, $5, $6)',
+              [sessionId, urls[i], uploadedFiles[i].originalname, 'audio', category, uploadedFiles[i].size]
+            )
+          }
+        }
+      } catch (err) { console.error(err) }
+    }
+
+    return res.json({ url: urls.length === 1 ? urls[0] : null, urls })
+  }
+)
+
+// Reclassify a batch of audio tracks for a session using AI.
+// Body: { session_id, ids: [id, ...] }  — ids is required (send chunks of ~20 from the client)
+router.post('/audio/reclassify', authenticateToken, async (req, res) => {
+  if (!aiClient) {
+    return res.status(503).json({ error: 'GITHUB_TOKEN non configuré — IA indisponible.' })
+  }
+  const { session_id: sessionId, ids } = req.body
+  if (!sessionId || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'session_id et ids[] requis.' })
   }
 
-  return res.json({ url: urls.length === 1 ? urls[0] : null, urls })
-})
+  try {
+    const sessionCheck = await pool.query(
+      'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+      [sessionId, req.admin.id]
+    )
+    if (!sessionCheck.rows[0]) return res.status(403).json({ error: 'Session introuvable.' })
 
-// Audio upload endpoint — admin only, up to 150MB per file
-router.post('/audio', authenticateToken, audioUploadAdmin.fields([
-  { name: 'files', maxCount: 10 },
-  { name: 'file', maxCount: 1 },
-]), async (req, res) => {
-  const uploadedFiles = [...(req.files?.files || []), ...(req.files?.file || [])]
-  if (uploadedFiles.length === 0) return res.status(400).json({ error: 'No file uploaded.' })
+    const placeholders = ids.map((_, i) => `$${i + 1}`).join(',')
+    const { rows: tracks } = await pool.query(
+      `SELECT id, original_name FROM session_images WHERE id IN (${placeholders}) AND session_id = $${ids.length + 1} AND type = 'audio'`,
+      [...ids, sessionId]
+    )
+    if (tracks.length === 0) return res.json({ updated: 0, categories: {} })
 
-  const urls = uploadedFiles.map(fileToUrl)
-  if (req.body.session_id) {
-    try {
-      const sessionCheck = await pool.query(
-        'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
-        [req.body.session_id, req.admin.id]
-      )
-      if (sessionCheck.rows[0]) {
-        const category = req.body.audio_category || 'ambiance'
-        for (let i = 0; i < uploadedFiles.length; i++) {
-          await pool.query(
-            'INSERT INTO session_images (session_id, url, original_name, type, audio_category) VALUES ($1, $2, $3, $4, $5)',
-            [req.body.session_id, urls[i], uploadedFiles[i].originalname, 'audio', category]
-          )
-        }
+    const filenames = tracks.map(t => t.original_name).filter(Boolean)
+    const aiCategories = await categorizeTracksChunk(filenames)
+
+    let updated = 0
+    for (const track of tracks) {
+      const category = aiCategories[track.original_name]
+      if (category) {
+        await pool.query(
+          'UPDATE session_images SET audio_category = $1 WHERE id = $2',
+          [category, track.id]
+        )
+        updated++
       }
-    } catch (err) { console.error(err) }
+    }
+    res.json({ updated, categories: aiCategories })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erreur lors de la reclassification.' })
   }
-
-  return res.json({ url: urls.length === 1 ? urls[0] : null, urls })
 })
 
 // Public endpoint for player avatar uploads (no admin auth required)

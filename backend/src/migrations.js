@@ -209,6 +209,9 @@ ALTER TABLE admins ADD COLUMN IF NOT EXISTS is_demo BOOLEAN DEFAULT FALSE;
 
 -- Audio manager: category per audio file
 ALTER TABLE session_images ADD COLUMN IF NOT EXISTS audio_category VARCHAR(50) DEFAULT 'ambiance';
+
+-- File size tracking (used for demo storage quota enforcement)
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS file_size BIGINT DEFAULT 0;
 `
 
 async function runMigrations() {
