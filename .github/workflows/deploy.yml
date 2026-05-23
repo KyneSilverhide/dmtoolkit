@@ -29,7 +29,7 @@ jobs:
 
       - name: Start test stack
         run: |
-          docker compose -f docker-compose.yml -f e2e/docker-compose.test.yml up -d postgres backend
+          docker compose -f docker-compose.yml -f e2e/docker-compose.test.yml up -d postgres dmtoolkit-backend
           timeout 60 bash -c 'until curl -sf http://localhost:3000/api/health 2>/dev/null; do sleep 2; done' || echo "Backend health check skipped"
 
       - name: Install frontend deps & start dev server
@@ -38,7 +38,7 @@ jobs:
           timeout 30 bash -c 'until curl -sf http://localhost:5173 2>/dev/null; do sleep 2; done' || echo "Frontend ready"
 
       - name: Install E2E deps & browsers
-        run: cd e2e && npm ci && npx playwright install --with-deps chromium
+        run: cd e2e && npm ci && npx playwright install --with-deps firefox
 
       - name: Run E2E tests
         run: cd e2e && npx playwright test
