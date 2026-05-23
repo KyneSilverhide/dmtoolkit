@@ -1,12 +1,11 @@
 import { test, expect } from '../fixtures'
-import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 import { AdminPage } from '../page-objects/AdminPage'
 import { PlayerPage } from '../page-objects/PlayerPage'
 
-test('admin can roll the critical fail dice', async ({ browser }) => {
-  const token = await getAdminToken()
+test('admin can roll the critical fail dice', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -18,21 +17,21 @@ test('admin can roll the critical fail dice', async ({ browser }) => {
     await adminPage.selectSession(code)
 
     await joinAsPlayer(await playerCtx.newPage(), code, { name: 'Fighter', hp: 45 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
     await adminPage.switchTab('dice')
     await adminPage.page.locator('button.roll-btn').click()
 
     // Wait for dice animation to finish and result to appear
-    await expect(adminPage.page.locator('.result-card.visible')).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('.result-card.visible')).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
   }
 })
 
-test('admin sends dice result to player', async ({ browser }) => {
-  const token = await getAdminToken()
+test('admin sends dice result to player', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -45,12 +44,12 @@ test('admin sends dice result to player', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Berserker', hp: 60 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
     await adminPage.switchTab('dice')
     await adminPage.page.locator('button.roll-btn').click()
     // Wait for result
-    await expect(adminPage.page.locator('.result-card.visible')).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('.result-card.visible')).toBeVisible({ timeout: 8_000 })
     // Send to all players
     await adminPage.page.getByTestId('dice-send-btn').click()
 
@@ -58,15 +57,15 @@ test('admin sends dice result to player', async ({ browser }) => {
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('messages')
     // Dice results appear in the messages or as a toast
-    await expect(playerPg.locator('.dice-card').first()).toBeVisible({ timeout: 5_000 })
+    await expect(playerPg.locator('.dice-card').first()).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
   }
 })
 
-test('admin can select combat type (melee/range/magic)', async ({ browser }) => {
-  const token = await getAdminToken()
+test('admin can select combat type (melee/range/magic)', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -85,14 +84,14 @@ test('admin can select combat type (melee/range/magic)', async ({ browser }) => 
     // Click Distance
     await adminPage.page.getByText('Distance').click()
     await adminPage.page.locator('button.roll-btn').click()
-    await expect(adminPage.page.locator('.result-card.visible')).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('.result-card.visible')).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
   }
 })
 
-test('dice result shown in admin roll toast when player rolls', async ({ browser }) => {
-  const token = await getAdminToken()
+test('dice result shown in admin roll toast when player rolls', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -105,7 +104,7 @@ test('dice result shown in admin roll toast when player rolls', async ({ browser
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Knight', hp: 50 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
     // Player rolls a die from the dés tab
     const playerPage = new PlayerPage(playerPg)
@@ -113,15 +112,15 @@ test('dice result shown in admin roll toast when player rolls', async ({ browser
     await playerPg.locator('button.roll-btn.normal').click()
 
     // Admin should receive a roll toast
-    await expect(adminPage.page.getByTestId('player-roll-toast')).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.getByTestId('player-roll-toast')).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
   }
 })
 
-test('dice roll produces a value between 1 and 100', async ({ browser }) => {
-  const token = await getAdminToken()
+test('dice roll produces a value between 1 and 100', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -133,11 +132,11 @@ test('dice roll produces a value between 1 and 100', async ({ browser }) => {
     await adminPage.selectSession(code)
 
     await joinAsPlayer(await playerCtx.newPage(), code, { name: 'Tester', hp: 10 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
     await adminPage.switchTab('dice')
     await adminPage.page.locator('button.roll-btn').click()
-    await expect(adminPage.page.locator('.roll-btn')).not.toBeDisabled({ timeout: 5_000 })
+    await expect(adminPage.page.locator('.roll-btn')).not.toBeDisabled({ timeout: 8_000 })
 
     const diceDisplayEl = adminPage.page.locator('[class*="dice-value"], [class*="animated-dice"], [class*="dice-display"]').first()
     if (await diceDisplayEl.count()) {

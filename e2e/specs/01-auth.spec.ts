@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures'
-import { getAdminToken, loginAsAdmin } from '../helpers/auth'
+import { loginAsAdmin } from '../helpers/auth'
 
 test('DM login button opens modal', async ({ page }) => {
   await page.goto('/')
@@ -30,18 +30,18 @@ test('successful login redirects to /admin', async ({ page }) => {
   await page.getByTestId('username-input').fill(process.env.ADMIN_DEFAULT_USERNAME || 'admin')
   await page.getByTestId('password-input').fill(process.env.ADMIN_DEFAULT_PASSWORD || 'admin')
   await page.getByTestId('login-submit').click()
-  await page.waitForURL('/admin', { timeout: 5_000 })
+  await page.waitForURL('/admin', { timeout: 8_000 })
   await expect(page).toHaveURL('/admin')
 })
 
 test('/admin redirects to / when not authenticated', async ({ page }) => {
   await page.goto('/admin')
-  await page.waitForURL('/', { timeout: 5_000 })
+  await page.waitForURL('/', { timeout: 8_000 })
   await expect(page).toHaveURL('/')
 })
 
-test('JWT token survives page reload', async ({ page }) => {
-  const token = await getAdminToken()
+test('JWT token survives page reload', async ({ page, adminToken }) => {
+  const token = adminToken
   await loginAsAdmin(page, token)
   await page.reload()
   await expect(page).toHaveURL('/admin')

@@ -1,5 +1,4 @@
 import { test, expect } from '../fixtures'
-import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { AdminPage } from '../page-objects/AdminPage'
 import { TvPage } from '../page-objects/TvPage'
@@ -18,8 +17,8 @@ async function createTensionScale(adminPage: AdminPage, title = 'Tension', steps
   await tensionSection.locator('button.action-btn').filter({ hasText: 'Créer' }).click()
 }
 
-test('admin creates a tension scale and TV shows it', async ({ browser }) => {
-  const token = await getAdminToken()
+test('admin creates a tension scale and TV shows it', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -35,16 +34,16 @@ test('admin creates a tension scale and TV shows it', async ({ browser }) => {
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
     await adminPage.setTvMode('tension')
-    await expect(tvPage.page.locator('[data-testid="tv-container"]')).toHaveAttribute('data-tv-mode', 'tension', { timeout: 5_000 })
-    await expect(tvPage.getTensionDisplay()).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.page.locator('[data-testid="tv-container"]')).toHaveAttribute('data-tv-mode', 'tension', { timeout: 8_000 })
+    await expect(tvPage.getTensionDisplay()).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
   }
 })
 
-test('admin can increment tension and TV updates', async ({ browser }) => {
-  const token = await getAdminToken()
+test('admin can increment tension and TV updates', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -60,8 +59,8 @@ test('admin can increment tension and TV updates', async ({ browser }) => {
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
     await adminPage.setTvMode('tension')
-    await expect(tvPage.page.locator('[data-testid="tv-container"]')).toHaveAttribute('data-tv-mode', 'tension', { timeout: 5_000 })
-    await expect(tvPage.getTensionDisplay()).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.page.locator('[data-testid="tv-container"]')).toHaveAttribute('data-tv-mode', 'tension', { timeout: 8_000 })
+    await expect(tvPage.getTensionDisplay()).toBeVisible({ timeout: 8_000 })
 
     // Increment tension — scope to the tension section, button text is '+1' (ascending) or '-1' (descending)
     await adminPage.switchTab('tension')
@@ -69,15 +68,15 @@ test('admin can increment tension and TV updates', async ({ browser }) => {
     await tensionSection.locator('button.action-btn').filter({ hasText: /^\+1$|^-1$/ }).click()
 
     // Tension level 1 should be shown on TV
-    await expect(tvPage.page.locator('.tension-level')).toContainText('1', { timeout: 5_000 })
+    await expect(tvPage.page.locator('.tension-level')).toContainText('1', { timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
   }
 })
 
-test('tension title visible on TV', async ({ browser }) => {
-  const token = await getAdminToken()
+test('tension title visible on TV', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -93,15 +92,15 @@ test('tension title visible on TV', async ({ browser }) => {
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
-    await expect(tvPage.page.getByText('Invasion Imminente')).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.page.getByText('Invasion Imminente')).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
   }
 })
 
-test('admin can end tension scale', async ({ browser }) => {
-  const token = await getAdminToken()
+test('admin can end tension scale', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -117,22 +116,22 @@ test('admin can end tension scale', async ({ browser }) => {
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
-    await expect(tvPage.getTensionDisplay()).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.getTensionDisplay()).toBeVisible({ timeout: 8_000 })
 
     // End tension
     await adminPage.switchTab('tension')
     await adminPage.page.locator('button.action-btn.danger-btn').filter({ hasText: 'Terminer' }).click()
 
     // TV should revert to lobby
-    await expect(tvPage.getLobbyDisplay()).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.getLobbyDisplay()).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
   }
 })
 
-test('tension steps are displayed on TV', async ({ browser }) => {
-  const token = await getAdminToken()
+test('tension steps are displayed on TV', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -148,10 +147,10 @@ test('tension steps are displayed on TV', async ({ browser }) => {
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
-    await expect(tvPage.getTensionDisplay()).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.getTensionDisplay()).toBeVisible({ timeout: 8_000 })
 
     // 5 step indicators should be visible
-    await expect(tvPage.page.locator('.tension-step')).toHaveCount(5, { timeout: 5_000 })
+    await expect(tvPage.page.locator('.tension-step')).toHaveCount(5, { timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()

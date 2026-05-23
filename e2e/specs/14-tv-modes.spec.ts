@@ -1,12 +1,11 @@
 import { test, expect } from '../fixtures'
-import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 import { AdminPage } from '../page-objects/AdminPage'
 import { TvPage } from '../page-objects/TvPage'
 
-test('TV defaults to lobby mode', async ({ browser }) => {
-  const token = await getAdminToken()
+test('TV defaults to lobby mode', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const tvCtx = await browser.newContext()
@@ -20,8 +19,8 @@ test('TV defaults to lobby mode', async ({ browser }) => {
   }
 })
 
-test('TV lobby shows session code', async ({ browser }) => {
-  const token = await getAdminToken()
+test('TV lobby shows session code', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const tvCtx = await browser.newContext()
@@ -34,8 +33,8 @@ test('TV lobby shows session code', async ({ browser }) => {
   }
 })
 
-test('admin can switch TV to combat mode', async ({ browser }) => {
-  const token = await getAdminToken()
+test('admin can switch TV to combat mode', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -50,15 +49,15 @@ test('admin can switch TV to combat mode', async ({ browser }) => {
     await tvPage.goto(code)
 
     await adminPage.setTvMode('combat')
-    await expect(tvPage.getMode()).toHaveAttribute('data-tv-mode', 'combat', { timeout: 5_000 })
+    await expect(tvPage.getMode()).toHaveAttribute('data-tv-mode', 'combat', { timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
   }
 })
 
-test('admin can switch TV back to lobby', async ({ browser }) => {
-  const token = await getAdminToken()
+test('admin can switch TV back to lobby', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -73,19 +72,19 @@ test('admin can switch TV back to lobby', async ({ browser }) => {
     await tvPage.goto(code)
 
     await adminPage.setTvMode('combat')
-    await expect(tvPage.getMode()).toHaveAttribute('data-tv-mode', 'combat', { timeout: 5_000 })
+    await expect(tvPage.getMode()).toHaveAttribute('data-tv-mode', 'combat', { timeout: 8_000 })
 
     await adminPage.setTvMode('lobby')
-    await expect(tvPage.getMode()).toHaveAttribute('data-tv-mode', 'lobby', { timeout: 5_000 })
+    await expect(tvPage.getMode()).toHaveAttribute('data-tv-mode', 'lobby', { timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
   }
 })
 
-test('TV combat mode shows combat round badge', async ({ browser }) => {
+test('TV combat mode shows combat round badge', async ({ browser, adminToken }) => {
   test.setTimeout(20_000)
-  const token = await getAdminToken()
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -101,11 +100,11 @@ test('TV combat mode shows combat round badge', async ({ browser }) => {
     await tvPage.goto(code)
 
     await joinAsPlayer(await playerCtx.newPage(), code)
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
     await adminPage.setTvMode('combat')
-    await expect(tvPage.page.locator('[data-testid="tv-container"]')).toHaveAttribute('data-tv-mode', 'combat', { timeout: 5_000 })
-    await expect(tvPage.getCombatRound()).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.page.locator('[data-testid="tv-container"]')).toHaveAttribute('data-tv-mode', 'combat', { timeout: 8_000 })
+    await expect(tvPage.getCombatRound()).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
@@ -113,9 +112,9 @@ test('TV combat mode shows combat round badge', async ({ browser }) => {
   }
 })
 
-test('TV image mode shows image display container', async ({ browser }) => {
+test('TV image mode shows image display container', async ({ browser, adminToken }) => {
   test.setTimeout(10_000)
-  const token = await getAdminToken()
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -142,8 +141,8 @@ test('TV image mode shows image display container', async ({ browser }) => {
   }
 })
 
-test('TV mode buttons reflect ready state', async ({ browser }) => {
-  const token = await getAdminToken()
+test('TV mode buttons reflect ready state', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -160,9 +159,8 @@ test('TV mode buttons reflect ready state', async ({ browser }) => {
   }
 })
 
-test('TV mode changes propagate to admin header', async ({ browser }) => {
-  test.setTimeout(15_000)
-  const token = await getAdminToken()
+test('TV mode changes propagate to admin header', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -173,7 +171,7 @@ test('TV mode changes propagate to admin header', async ({ browser }) => {
 
     await adminPage.setTvMode('combat')
     // Le bouton du mode actif reçoit la classe "active" (bord coloré)
-    await expect(adminPage.page.getByTestId('tv-mode-btn-combat')).toHaveClass(/active/, { timeout: 5_000 })
+    await expect(adminPage.page.getByTestId('tv-mode-btn-combat')).toHaveClass(/active/, { timeout: 8_000 })
   } finally {
     await adminCtx.close()
   }

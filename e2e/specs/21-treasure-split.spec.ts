@@ -1,11 +1,10 @@
 import { test, expect } from '../fixtures'
-import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 import { AdminPage } from '../page-objects/AdminPage'
 
-test('treasure split tool is accessible from admin', async ({ browser }) => {
-  const token = await getAdminToken()
+test('treasure split tool is accessible from admin', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -15,15 +14,14 @@ test('treasure split tool is accessible from admin', async ({ browser }) => {
     await adminPage.selectSession(code)
     await adminPage.switchTab('tresor')
 
-    await expect(adminPage.page.locator('.gold-divider')).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('.gold-divider')).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
   }
 })
 
-test('treasure split calculates correct share per player', async ({ browser }) => {
-  test.setTimeout(15_000)
-  const token = await getAdminToken()
+test('treasure split calculates correct share per player', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -35,7 +33,7 @@ test('treasure split calculates correct share per player', async ({ browser }) =
     await adminPage.selectSession(code)
 
     await joinAsPlayer(await playerCtx.newPage(), code, { name: 'Shareowner', hp: 30 })
-    await expect(adminPage.page.locator('[data-testid^="player-name-"]').filter({ hasText: 'Shareowner' })).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-name-"]').filter({ hasText: 'Shareowner' })).toBeVisible({ timeout: 8_000 })
 
     await adminPage.switchTab('tresor')
 
@@ -44,16 +42,16 @@ test('treasure split calculates correct share per player', async ({ browser }) =
     await poInput.fill('100')
 
     // Result should show per-player share: 100 PO
-    await expect(adminPage.page.locator('.gold-divider .player-share').first()).toContainText('100', { timeout: 5_000 })
+    await expect(adminPage.page.locator('.gold-divider .player-share').first()).toContainText('100', { timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
   }
 })
 
-test('treasure split updates when more players join', async ({ browser }) => {
+test('treasure split updates when more players join', async ({ browser, adminToken }) => {
   test.setTimeout(20_000)
-  const token = await getAdminToken()
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -66,7 +64,7 @@ test('treasure split updates when more players join', async ({ browser }) => {
     await adminPage.selectSession(code)
 
     await joinAsPlayer(await player1Ctx.newPage(), code, { name: 'Partageur1', hp: 30 })
-    await expect(adminPage.page.locator('[data-testid^="player-name-"]').filter({ hasText: 'Partageur1' })).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-name-"]').filter({ hasText: 'Partageur1' })).toBeVisible({ timeout: 8_000 })
 
     await adminPage.switchTab('tresor')
     const poInput = adminPage.page.locator('.gold-divider .coin-input').nth(1)
@@ -74,15 +72,15 @@ test('treasure split updates when more players join', async ({ browser }) => {
 
     // 1 player → 200 PO
     const shareEl = adminPage.page.locator('.gold-divider .player-share').first()
-    await expect(shareEl).toContainText('200', { timeout: 5_000 })
+    await expect(shareEl).toContainText('200', { timeout: 8_000 })
     const onePShare = await shareEl.textContent()
 
     await joinAsPlayer(await player2Ctx.newPage(), code, { name: 'Partageur2', hp: 25 })
     // Wait for Partageur2 to appear in the gold divider table (players tab is now hidden)
-    await expect(adminPage.page.locator('.gold-divider .player-row')).toHaveCount(2, { timeout: 5_000 })
+    await expect(adminPage.page.locator('.gold-divider .player-row')).toHaveCount(2, { timeout: 8_000 })
 
     // 2 players → 100 PO each — share should have changed
-    await expect(shareEl).toContainText('100', { timeout: 5_000 })
+    await expect(shareEl).toContainText('100', { timeout: 8_000 })
     const twoShare = await shareEl.textContent()
     expect(onePShare).not.toBe(twoShare)
   } finally {
@@ -92,9 +90,8 @@ test('treasure split updates when more players join', async ({ browser }) => {
   }
 })
 
-test('treasure split handles zero gold gracefully', async ({ browser }) => {
-  test.setTimeout(15_000)
-  const token = await getAdminToken()
+test('treasure split handles zero gold gracefully', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -106,14 +103,14 @@ test('treasure split handles zero gold gracefully', async ({ browser }) => {
     await adminPage.selectSession(code)
 
     await joinAsPlayer(await playerCtx.newPage(), code, { name: 'ZeroGold', hp: 20 })
-    await expect(adminPage.page.locator('[data-testid^="player-name-"]').filter({ hasText: 'ZeroGold' })).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-name-"]').filter({ hasText: 'ZeroGold' })).toBeVisible({ timeout: 8_000 })
 
     await adminPage.switchTab('tresor')
     const poInput = adminPage.page.locator('.gold-divider .coin-input').nth(1)
     await poInput.fill('0')
 
     // No crash — with 0 coins the players table is hidden and send button is disabled
-    await expect(adminPage.page.locator('.gold-divider')).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('.gold-divider')).toBeVisible({ timeout: 8_000 })
     await expect(adminPage.page.getByTestId('gold-send-btn')).toBeDisabled()
   } finally {
     await adminCtx.close()

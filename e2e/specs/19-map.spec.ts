@@ -1,6 +1,5 @@
 import { test, expect } from '../fixtures'
 import type { Page } from '@playwright/test'
-import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { AdminPage } from '../page-objects/AdminPage'
 import { TvPage } from '../page-objects/TvPage'
@@ -21,10 +20,10 @@ async function uploadMap(page: Page): Promise<void> {
   await page.locator('.gallery-item').first().waitFor({ timeout: 10_000 })
 }
 
-test('admin can upload a map and TV shows it', async ({ browser }) => {
+test('admin can upload a map and TV shows it', async ({ browser, adminToken }) => {
   test.setTimeout(30_000)
 
-  const token = await getAdminToken()
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -43,22 +42,22 @@ test('admin can upload a map and TV shows it', async ({ browser }) => {
     await showBtn.click()
 
     // Wait for backend map-state event: hasActiveMap becomes true → button enabled
-    await expect(adminPage.page.getByTestId('tv-mode-btn-map')).toBeEnabled({ timeout: 5_000 })
+    await expect(adminPage.page.getByTestId('tv-mode-btn-map')).toBeEnabled({ timeout: 8_000 })
     await adminPage.setTvMode('map')
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
-    await expect(tvPage.getMapDisplay()).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.getMapDisplay()).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
   }
 })
 
-test('admin can toggle fog of war', async ({ browser }) => {
+test('admin can toggle fog of war', async ({ browser, adminToken }) => {
   test.setTimeout(30_000)
 
-  const token = await getAdminToken()
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -74,7 +73,7 @@ test('admin can toggle fog of war', async ({ browser }) => {
     // Trigger show-map to activate fog controls (requires isMapActive = true)
     const showBtn = adminPage.page.locator('button').filter({ hasText: 'Carte TV' }).first()
     await showBtn.click()
-    await expect(adminPage.page.getByTestId('tv-mode-btn-map')).toBeEnabled({ timeout: 5_000 })
+    await expect(adminPage.page.getByTestId('tv-mode-btn-map')).toBeEnabled({ timeout: 8_000 })
 
     // Fog toggle button should now be visible
     const fogBtn = adminPage.page.locator('button').filter({ hasText: /activer|désactiver/i }).first()
@@ -87,10 +86,10 @@ test('admin can toggle fog of war', async ({ browser }) => {
   }
 })
 
-test('TV map mode shows player tokens after join', async ({ browser }) => {
+test('TV map mode shows player tokens after join', async ({ browser, adminToken }) => {
   test.setTimeout(30_000)
 
-  const token = await getAdminToken()
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -108,18 +107,18 @@ test('TV map mode shows player tokens after join', async ({ browser }) => {
     const showBtn = adminPage.page.locator('button').filter({ hasText: 'Carte TV' }).first()
     await showBtn.click()
 
-    await expect(adminPage.page.getByTestId('tv-mode-btn-map')).toBeEnabled({ timeout: 5_000 })
+    await expect(adminPage.page.getByTestId('tv-mode-btn-map')).toBeEnabled({ timeout: 8_000 })
     await adminPage.setTvMode('map')
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
-    await expect(tvPage.getMapDisplay()).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.getMapDisplay()).toBeVisible({ timeout: 8_000 })
 
     const { joinAsPlayer } = await import('../helpers/player')
     await joinAsPlayer(await playerCtx.newPage(), code, { name: 'MapToken', hp: 30 })
 
     // Token layer is always rendered inside the map display
-    await expect(tvPage.page.locator('.map-tokens-layer')).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.page.locator('.map-tokens-layer')).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()

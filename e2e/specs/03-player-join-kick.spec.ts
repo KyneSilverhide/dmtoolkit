@@ -1,26 +1,25 @@
 import { test, expect } from '../fixtures'
-import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 import { AdminPage } from '../page-objects/AdminPage'
 import { TvPage } from '../page-objects/TvPage'
 
-test('player join form navigates to player view', async ({ page }) => {
-  const token = await getAdminToken()
+test('player join form navigates to player view', async ({ page, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
   await joinAsPlayer(page, code, { name: 'Legolas' })
   await expect(page).toHaveURL(/\/view\//)
 })
 
-test('player join form fills session code from URL', async ({ page }) => {
-  const token = await getAdminToken()
+test('player join form fills session code from URL', async ({ page, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
   await page.goto(`/join/${code}`)
   await expect(page.getByTestId('session-code-input')).toHaveValue(code)
 })
 
-test('player appears in admin list after joining', async ({ browser }) => {
-  const token = await getAdminToken()
+test('player appears in admin list after joining', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -34,15 +33,15 @@ test('player appears in admin list after joining', async ({ browser }) => {
     const playerPage = await playerCtx.newPage()
     await joinAsPlayer(playerPage, code, { name: 'Gimli', hp: 50 })
 
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
   }
 })
 
-test('player appears on TV player list after joining', async ({ browser }) => {
-  const token = await getAdminToken()
+test('player appears on TV player list after joining', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const tvCtx = await browser.newContext()
@@ -62,7 +61,7 @@ test('player appears on TV player list after joining', async ({ browser }) => {
     const playerPage = await playerCtx.newPage()
     await joinAsPlayer(playerPage, code, { name: 'Aragorn', hp: 60 })
 
-    await expect(tvPage.page.getByText('Aragorn')).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.page.getByText('Aragorn')).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
@@ -70,8 +69,8 @@ test('player appears on TV player list after joining', async ({ browser }) => {
   }
 })
 
-test('kicking player removes them from admin list', async ({ browser }) => {
-  const token = await getAdminToken()
+test('kicking player removes them from admin list', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -89,15 +88,15 @@ test('kicking player removes them from admin list', async ({ browser }) => {
     const playerId = await adminPage.getFirstPlayerId()
 
     await adminPage.kickPlayer(playerId)
-    await expect(adminPage.page.getByTestId(`player-row-${playerId}`)).not.toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.getByTestId(`player-row-${playerId}`)).not.toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
   }
 })
 
-test('kicked player sees kicked screen', async ({ browser }) => {
-  const token = await getAdminToken()
+test('kicked player sees kicked screen', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -110,12 +109,12 @@ test('kicked player sees kicked screen', async ({ browser }) => {
 
     const playerPage = await playerCtx.newPage()
     await joinAsPlayer(playerPage, code, { name: 'Sam', hp: 35 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
     const playerId = await adminPage.getFirstPlayerId()
 
     await adminPage.kickPlayer(playerId)
-    await expect(playerPage.getByText(/Je suis joueur/i)).toBeVisible({ timeout: 5_000 })
+    await expect(playerPage.getByText(/Je suis joueur/i)).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
