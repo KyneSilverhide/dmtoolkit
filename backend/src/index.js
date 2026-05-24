@@ -102,16 +102,23 @@ setupSocket(io)
 
 async function seedAdmin() {
   try {
+    const adminUsername = process.env.ADMIN_DEFAULT_USERNAME || 'admin'
+    const adminPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'admin123'
     const result = await pool.query('SELECT COUNT(*) FROM admins')
     if (parseInt(result.rows[0].count) === 0) {
-      const adminPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'admin123'
-      const adminUsername = process.env.ADMIN_DEFAULT_USERNAME || 'admin'
       const hash = await bcrypt.hash(adminPassword, 10)
       await pool.query(
           'INSERT INTO admins (username, password_hash) VALUES ($1, $2)',
           [adminUsername, hash]
       )
       console.log('Default admin account created')
+    } else if (process.env.ADMIN_DEFAULT_PASSWORD) {
+      const hash = await bcrypt.hash(adminPassword, 10)
+      await pool.query(
+          'UPDATE admins SET password_hash = $1 WHERE username = $2 AND is_demo IS NOT TRUE',
+          [hash, adminUsername]
+      )
+      console.log('Admin account password updated from ADMIN_DEFAULT_PASSWORD')
     }
   } catch (err) {
     console.error('Error seeding admin:', err)
