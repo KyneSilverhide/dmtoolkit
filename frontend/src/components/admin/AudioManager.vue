@@ -19,6 +19,48 @@ const loops = ref({})            // id -> boolean
 const durations = ref({})        // id -> seconds (NaN until loaded)
 const currentTimes = ref({})     // id -> seconds
 
+// Web Audio API — shared context + per-track gain nodes to prevent clipping
+let audioCtx = null
+let masterLimiter = null
+const gainNodes = new Map()    // id -> GainNode
+const sourceNodes = new Map()  // id -> MediaElementSourceNode
+
+function getAudioContext() {
+  if (!audioCtx) {
+    audioCtx = new AudioContext()
+    // Brick-wall limiter: only activates near 0 dBFS so multiple tracks can't clip
+    masterLimiter = audioCtx.createDynamicsCompressor()
+    masterLimiter.threshold.value = -3
+    masterLimiter.knee.value = 0
+    masterLimiter.ratio.value = 20
+    masterLimiter.attack.value = 0.001
+    masterLimiter.release.value = 0.1
+    masterLimiter.connect(audioCtx.destination)
+  }
+  return audioCtx
+}
+
+function connectToContext(track) {
+  if (sourceNodes.has(track.id)) return
+  const ctx = getAudioContext()
+  const audio = audioObjects.get(track.id)
+  if (!audio) return
+  const source = ctx.createMediaElementSource(audio)
+  const gain = ctx.createGain()
+  gain.gain.value = volumes.value[track.id] ?? 1
+  source.connect(gain)
+  gain.connect(masterLimiter)
+  sourceNodes.set(track.id, source)
+  gainNodes.set(track.id, gain)
+}
+
+function disconnectTrack(id) {
+  const source = sourceNodes.get(id)
+  const gain = gainNodes.get(id)
+  if (source) { try { source.disconnect() } catch (_) {} sourceNodes.delete(id) }
+  if (gain) { try { gain.disconnect() } catch (_) {} gainNodes.delete(id) }
+}
+
 // rename state
 const renamingId = ref(null)
 const renameValue = ref('')
@@ -59,8 +101,9 @@ async function loadTracks() {
 function getAudio(track) {
   if (!audioObjects.has(track.id)) {
     const src = track.url.startsWith('http') ? track.url : `${BACKEND_URL}${track.url}`
-    const audio = new Audio(src)
-    audio.volume = volumes.value[track.id] ?? 1
+    const audio = new Audio()
+    audio.crossOrigin = 'anonymous'  // required for AudioContext cross-origin
+    audio.src = src
     audio.loop = loops.value[track.id] ?? false
     audio.addEventListener('ended', () => {
       if (!audio.loop) {
@@ -84,6 +127,9 @@ function togglePlay(track) {
     audio.pause()
     playing.value = new Set([...playing.value].filter(id => id !== track.id))
   } else {
+    connectToContext(track)
+    const ctx = getAudioContext()
+    if (ctx.state === 'suspended') ctx.resume()
     audio.play().catch(err => console.error(err))
     playing.value = new Set([...playing.value, track.id])
   }
@@ -100,8 +146,12 @@ function stopAll() {
 
 function setVolume(track, val) {
   volumes.value = { ...volumes.value, [track.id]: val }
-  const audio = audioObjects.get(track.id)
-  if (audio) audio.volume = val
+  const gain = gainNodes.get(track.id)
+  if (gain) gain.gain.value = val
+  else {
+    const audio = audioObjects.get(track.id)
+    if (audio) audio.volume = val
+  }
 }
 
 function toggleLoop(track) {
@@ -167,6 +217,7 @@ async function deleteAll() {
   for (const track of [...tracks.value]) {
     const audio = audioObjects.get(track.id)
     if (audio) { audio.pause(); audioObjects.delete(track.id) }
+    disconnectTrack(track.id)
   }
   playing.value = new Set()
   try {
@@ -183,6 +234,7 @@ async function deleteCategory(categoryTracks) {
   for (const track of categoryTracks) {
     const audio = audioObjects.get(track.id)
     if (audio) { audio.pause(); audioObjects.delete(track.id) }
+    disconnectTrack(track.id)
     playing.value = new Set([...playing.value].filter(id => id !== track.id))
   }
   try {
@@ -198,6 +250,7 @@ async function deleteTrack(track) {
   if (!confirm(`Supprimer "${track.original_name || track.url}" ?`)) return
   const audio = audioObjects.get(track.id)
   if (audio) { audio.pause(); audioObjects.delete(track.id) }
+  disconnectTrack(track.id)
   playing.value = new Set([...playing.value].filter(id => id !== track.id))
   try {
     await fetch(
@@ -301,6 +354,9 @@ onMounted(() => loadTracks())
 onUnmounted(() => {
   for (const [, audio] of audioObjects) { audio.pause() }
   audioObjects.clear()
+  gainNodes.clear()
+  sourceNodes.clear()
+  if (audioCtx) { audioCtx.close(); audioCtx = null; masterLimiter = null }
 })
 </script>
 
