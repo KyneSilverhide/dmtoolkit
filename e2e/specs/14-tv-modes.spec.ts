@@ -113,7 +113,6 @@ test('TV combat mode shows combat round badge', async ({ browser, adminToken }) 
 })
 
 test('TV image mode shows image display container', async ({ browser, adminToken }) => {
-  test.setTimeout(10_000)
   const token = adminToken
   const code = await createSession(token)
 
