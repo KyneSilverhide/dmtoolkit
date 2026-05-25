@@ -784,6 +784,7 @@ onUnmounted(() => {
 }
 
 .tv-wrapper {
+  height: 100vh;
   min-height: 100vh;
   background: var(--color-bg);
   background-image: var(--gradient-page);
