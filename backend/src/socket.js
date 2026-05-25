@@ -593,12 +593,13 @@ function setupSocket(io) {
         const safeDuration = Math.max(MIN_DOOM_DURATION_SECONDS, Math.min(MAX_DOOM_DURATION_SECONDS, parsedDuration))
         const endAt = new Date(Date.now() + safeDuration * 1000)
         const safeTitle = (title || 'DOOM CLOCK').trim().slice(0, MAX_TITLE_LENGTH) || 'DOOM CLOCK'
-        await pool.query(
+        const updateRes = await pool.query(
           `UPDATE sessions
            SET doom_clock_title = $1, doom_clock_end_at = $2, tv_mode = 'doom'
            WHERE id = $3 AND created_by = $4`,
           [safeTitle, endAt, sessionId, socket.admin.id]
         )
+        if (updateRes.rowCount === 0) return
         const payload = { title: safeTitle, endAt: endAt.toISOString() }
         io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'doom' })
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'doom' })
@@ -616,12 +617,13 @@ function setupSocket(io) {
     socket.on('stop-doom-clock', async ({ sessionId }) => {
       if (!socket.admin) return
       try {
-        await pool.query(
+        const stopRes = await pool.query(
           `UPDATE sessions
            SET doom_clock_title = NULL, doom_clock_end_at = NULL, tv_mode = 'lobby'
            WHERE id = $1 AND created_by = $2`,
           [sessionId, socket.admin.id]
         )
+        if (stopRes.rowCount === 0) return
         io.to(`tv:${sessionId}`).emit('doom-clock-stopped')
         io.to(`admin:${sessionId}`).emit('doom-clock-stopped')
         io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
@@ -821,7 +823,8 @@ function setupSocket(io) {
         if (!voteId) return
         const voteUpdate = await getVoteState(sessionId, voteId, false)
         if (!voteUpdate) return
-        await pool.query('UPDATE votes SET status = $1 WHERE id = $2', ['closed', voteId])
+        const voteCloseRes = await pool.query('UPDATE votes SET status = $1 WHERE id = $2 AND status = $3', ['closed', voteId, 'active'])
+        if (voteCloseRes.rowCount === 0) return
         io.to(`tv:${sessionId}`).emit('vote-closed', voteUpdate)
         io.to(`session:${sessionId}`).emit('vote-closed', voteUpdate)
         io.to(`admin:${sessionId}`).emit('vote-closed', voteUpdate)
@@ -1265,8 +1268,9 @@ function setupSocket(io) {
         const reqRes = await pool.query(
           `SELECT pr.*, mi.stock AS item_stock, mi.name AS item_name
            FROM purchase_requests pr JOIN merchant_items mi ON pr.item_id = mi.id
-           WHERE pr.id = $1`,
-          [requestId]
+           JOIN sessions s ON s.id = pr.session_id
+           WHERE pr.id = $1 AND s.created_by = $2`,
+          [requestId, socket.admin.id]
         )
         const req = reqRes.rows[0]
         if (!req || req.status !== 'pending') return
@@ -1319,8 +1323,9 @@ function setupSocket(io) {
         const reqsRes = await pool.query(
           `SELECT pr.*, mi.stock AS item_stock, mi.name AS item_name
            FROM purchase_requests pr JOIN merchant_items mi ON pr.item_id = mi.id
-           WHERE pr.batch_id = $1 AND pr.status = 'pending'`,
-          [batchId]
+           JOIN sessions s ON s.id = pr.session_id
+           WHERE pr.batch_id = $1 AND pr.status = 'pending' AND s.created_by = $2`,
+          [batchId, socket.admin.id]
         )
         const reqs = reqsRes.rows
         if (reqs.length === 0) return
@@ -1462,10 +1467,11 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         const safeRound = Math.max(0, Math.min(MAX_COMBAT_ROUND, parseInt(round) || 0))
-        await pool.query(
+        const roundUpdateRes = await pool.query(
           'UPDATE sessions SET combat_round = $1 WHERE id = $2 AND created_by = $3',
           [safeRound, sessionId, socket.admin.id]
         )
+        if (roundUpdateRes.rowCount === 0) return
         io.to(`tv:${sessionId}`).emit('round-updated', { round: safeRound })
         io.to(`admin:${sessionId}`).emit('round-updated', { round: safeRound })
         const roundDesc = safeRound === 0 ? 'Réinitialisation du round de combat' : `Round de combat : ${safeRound}`
