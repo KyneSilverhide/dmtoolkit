@@ -4,7 +4,7 @@ import { getSocket } from '../../socket.js'
 import AppIcon from '../AppIcon.vue'
 import { DND_CONDITIONS_MAP } from '../../utils/conditions.js'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
 
 function hpPercent(player) {
   if (!player.max_hp) return 100

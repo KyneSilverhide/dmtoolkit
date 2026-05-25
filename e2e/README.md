@@ -1,4 +1,4 @@
-# Tests End-to-End — Critical Fail
+# Tests End-to-End — DM Toolkit
 
 Tests Playwright couvrant les 22 fonctionnalités principales de l'application (auth, joueurs, HP, dés, votes, marchand, battlemap, etc.).
 

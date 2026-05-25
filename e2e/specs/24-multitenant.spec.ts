@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures'
-import { getAdminToken, loginAs } from '../helpers/auth'
+import { loginAs } from '../helpers/auth'
 import { createSession, createSessionFull, listSessions } from '../helpers/session'
 import { createTestAdmin } from '../fixtures/db'
 
@@ -47,10 +47,11 @@ const TENANT_URL_RE = /^\/uploads\/(\d+)\/[^/]+$/
 
 // ── Isolation DB ──────────────────────────────────────────────────────────────
 
-test('chaque admin ne voit que ses propres sessions', async () => {
-  const token1 = await getAdminToken()
-  await createTestAdmin('admin2', 'admin2')
-  const token2 = await loginAs('admin2', 'admin2')
+test('chaque admin ne voit que ses propres sessions', async ({ adminToken }, testInfo) => {
+  const token1 = adminToken
+  const admin2name = `admin2_w${testInfo.workerIndex}`
+  await createTestAdmin(admin2name, 'admin2')
+  const token2 = await loginAs(admin2name, 'admin2')
 
   await createSession(token1, 'Session Admin1')
   await createSession(token2, 'Session Admin2')
@@ -64,10 +65,11 @@ test('chaque admin ne voit que ses propres sessions', async () => {
   expect(sessions2.some((s) => s.name === 'Session Admin1')).toBe(false)
 })
 
-test("un admin ne peut pas supprimer la session d'un autre admin", async () => {
-  const token1 = await getAdminToken()
-  await createTestAdmin('admin2', 'admin2')
-  const token2 = await loginAs('admin2', 'admin2')
+test("un admin ne peut pas supprimer la session d'un autre admin", async ({ adminToken }, testInfo) => {
+  const token1 = adminToken
+  const admin2name = `admin2_w${testInfo.workerIndex}`
+  await createTestAdmin(admin2name, 'admin2')
+  const token2 = await loginAs(admin2name, 'admin2')
 
   const session = await createSessionFull(token1, 'Cible')
 
@@ -84,10 +86,11 @@ test("un admin ne peut pas supprimer la session d'un autre admin", async () => {
 
 // ── Isolation fichiers ────────────────────────────────────────────────────────
 
-test("l'upload d'image crée un sous-dossier par tenant", async () => {
-  const token1 = await getAdminToken()
-  const { id: admin2Id } = await createTestAdmin('admin2', 'admin2')
-  const token2 = await loginAs('admin2', 'admin2')
+test("l'upload d'image crée un sous-dossier par tenant", async ({ adminToken }, testInfo) => {
+  const token1 = adminToken
+  const admin2name = `admin2_w${testInfo.workerIndex}`
+  const { id: admin2Id } = await createTestAdmin(admin2name, 'admin2')
+  const token2 = await loginAs(admin2name, 'admin2')
 
   const session1 = await createSessionFull(token1, 'S1')
   const session2 = await createSessionFull(token2, 'S2')
@@ -108,8 +111,8 @@ test("l'upload d'image crée un sous-dossier par tenant", async () => {
   expect(tenantId2).toBe(String(admin2Id))
 })
 
-test("les fichiers uploadés sont accessibles via leur URL", async () => {
-  const token = await getAdminToken()
+test("les fichiers uploadés sont accessibles via leur URL", async ({ adminToken }) => {
+  const token = adminToken
   const session = await createSessionFull(token, 'AccessTest')
   const url = await uploadSessionImage(token, session.id)
 
@@ -118,10 +121,11 @@ test("les fichiers uploadés sont accessibles via leur URL", async () => {
   expect(res.headers.get('content-type')).toContain('image/')
 })
 
-test("l'upload avatar utilise le dossier tenant de la session", async () => {
-  const token1 = await getAdminToken()
-  const { id: admin2Id } = await createTestAdmin('admin2', 'admin2')
-  const token2 = await loginAs('admin2', 'admin2')
+test("l'upload avatar utilise le dossier tenant de la session", async ({ adminToken }, testInfo) => {
+  const token1 = adminToken
+  const admin2name = `admin2_w${testInfo.workerIndex}`
+  const { id: admin2Id } = await createTestAdmin(admin2name, 'admin2')
+  const token2 = await loginAs(admin2name, 'admin2')
 
   const session1 = await createSessionFull(token1, 'AvatarS1')
   const session2 = await createSessionFull(token2, 'AvatarS2')
@@ -138,13 +142,13 @@ test("l'upload avatar utilise le dossier tenant de la session", async () => {
   expect(tenantId2).toBe(String(admin2Id))
 })
 
-test("l'upload avatar sans sessionCode va dans le dossier public", async () => {
+test("l'upload avatar sans sessionCode va dans le dossier public", async ({}) => {
   const url = await uploadAvatar()
   expect(url).toMatch(/^\/uploads\/public\/[^/]+$/)
 })
 
-test('supprimer une session efface les fichiers du tenant', async () => {
-  const token = await getAdminToken()
+test('supprimer une session efface les fichiers du tenant', async ({ adminToken }) => {
+  const token = adminToken
   const session = await createSessionFull(token, 'DeleteTest')
   const imageUrl = await uploadSessionImage(token, session.id)
 

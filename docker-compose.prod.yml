@@ -9,7 +9,7 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   dmtoolkit-backend:
-    image: ghcr.io/kynesilverhide/critical-fail-backend:latest
+    image: ghcr.io/kynesilverhide/dmtoolkit-backend:latest
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET}
@@ -25,12 +25,11 @@ services:
       - uploads:/app/uploads
 
   dmtoolkit-frontend:
-    image: ghcr.io/kynesilverhide/critical-fail-frontend:latest
+    image: ghcr.io/kynesilverhide/dmtoolkit-frontend:latest
     ports:
       - "8080:80"
     depends_on:
       - dmtoolkit-backend
-      -
 volumes:
   pgdata:
   uploads:

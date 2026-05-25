@@ -1,10 +1,10 @@
 import { test, expect } from '../fixtures'
-import { getAdminToken, loginAsAdmin } from '../helpers/auth'
+import { loginAsAdmin } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 
-test('admin can toggle theme and preference persists', async ({ page }) => {
-  const token = await getAdminToken()
+test('admin can toggle theme and preference persists', async ({ page, adminToken }) => {
+  const token = adminToken
   await loginAsAdmin(page, token)
 
   const toggleBtn = page.getByTestId('theme-toggle')
@@ -24,8 +24,8 @@ test('admin can toggle theme and preference persists', async ({ page }) => {
   expect(newTheme).not.toBe(initialTheme)
 })
 
-test('theme persists after page reload', async ({ page }) => {
-  const token = await getAdminToken()
+test('theme persists after page reload', async ({ page, adminToken }) => {
+  const token = adminToken
   await loginAsAdmin(page, token)
 
   // Toggle to light
@@ -62,8 +62,8 @@ test('home page uses last used theme from any scope', async ({ page }) => {
   expect(htmlClass).toBe('light')
 })
 
-test('player theme toggle works', async ({ page }) => {
-  const token = await getAdminToken()
+test('player theme toggle works', async ({ page, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
   await joinAsPlayer(page, code, { name: 'Themed', hp: 20 })
 

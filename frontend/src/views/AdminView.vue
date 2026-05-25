@@ -12,6 +12,7 @@ import SessionJournal from '../components/admin/SessionJournal.vue'
 import TvControls from '../components/admin/TvControls.vue'
 import VoteManager from '../components/admin/VoteManager.vue'
 import ImageManager from '../components/admin/ImageManager.vue'
+import AudioManager from '../components/admin/AudioManager.vue'
 import MerchantManager from '../components/admin/MerchantManager.vue'
 import SearchTool from '../components/admin/SearchTool.vue'
 import MapManager from '../components/admin/MapManager.vue'
@@ -30,7 +31,7 @@ import {
 } from '../socket-events.js'
 
 const router = useRouter()
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
 // __APP_VERSION__ is injected at build time by Vite from frontend/package.json
 const appVersion = __APP_VERSION__
 const activeTab = ref('players')
@@ -66,6 +67,7 @@ const tabComponents = {
   tension: TvControls,
   vote: VoteManager,
   images: ImageManager,
+  audio: AudioManager,
   map: MapManager,
   merchants: MerchantManager,
   tresor: GoldDividerTool,
@@ -139,6 +141,7 @@ const tabs = [
   { key: 'tension',   label: 'Rythme',         icon: 'lucide:timer' },
   { key: 'vote',      label: 'Vote',           icon: 'lucide:check-square' },
   { key: 'images',    label: 'Images',         icon: 'lucide:image' },
+  { key: 'audio',     label: 'Audio',          icon: 'lucide:music-2' },
   { key: 'map',       label: 'Carte',          icon: 'lucide:map' },
   { key: 'merchants', label: 'Marchands',      icon: 'game-icons:shop' },
   { key: 'tresor',    label: 'Trésor',         icon: 'game-icons:coins' },
@@ -154,7 +157,7 @@ const navGroups = [
   },
   {
     label: 'Scène',
-    items: ['tension', 'vote', 'images', 'map', 'merchants'],
+    items: ['tension', 'vote', 'images', 'audio', 'map', 'merchants'],
   },
   {
     label: 'Outils',

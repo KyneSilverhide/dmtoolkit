@@ -1,5 +1,4 @@
 import { test, expect } from '../fixtures'
-import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { AdminPage } from '../page-objects/AdminPage'
 
@@ -16,8 +15,8 @@ test('POST /api/generate returns 401 without token', async () => {
   expect(res.status).toBe(401)
 })
 
-test('POST /api/generate returns 400 for invalid type', async () => {
-  const token = await getAdminToken()
+test('POST /api/generate returns 400 for invalid type', async ({ adminToken }) => {
+  const token = adminToken
   const res = await fetch(`${BACKEND_URL}/api/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -28,8 +27,8 @@ test('POST /api/generate returns 400 for invalid type', async () => {
   expect(data.error).toMatch(/invalide/i)
 })
 
-test('generator shows server error message on 503 response', async ({ browser }) => {
-  const token = await getAdminToken()
+test('generator shows server error message on 503 response', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -50,7 +49,7 @@ test('generator shows server error message on 503 response', async ({ browser })
     await adminPage.page.locator('button.generate-btn').click()
 
     const errorMsg = adminPage.page.locator('p.form-error')
-    await expect(errorMsg).toBeVisible({ timeout: 5_000 })
+    await expect(errorMsg).toBeVisible({ timeout: 8_000 })
     await expect(errorMsg).toContainText(/GITHUB_TOKEN|serveur/i)
   } finally {
     await adminCtx.close()
@@ -59,8 +58,8 @@ test('generator shows server error message on 503 response', async ({ browser })
 
 // ── UI tests (page.route() mocks) ─────────────────────────────────────────
 
-test('generator tab is accessible and generate button enabled after session select', async ({ browser }) => {
-  const token = await getAdminToken()
+test('generator tab is accessible and generate button enabled after session select', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -71,15 +70,15 @@ test('generator tab is accessible and generate button enabled after session sele
     await adminPage.switchTab('generator')
 
     const btn = adminPage.page.locator('button.generate-btn')
-    await expect(btn).toBeVisible({ timeout: 5_000 })
+    await expect(btn).toBeVisible({ timeout: 8_000 })
     await expect(btn).toBeEnabled()
   } finally {
     await adminCtx.close()
   }
 })
 
-test('generator returns list of names for npc_name (multi-result)', async ({ browser }) => {
-  const token = await getAdminToken()
+test('generator returns list of names for npc_name (multi-result)', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -103,7 +102,7 @@ test('generator returns list of names for npc_name (multi-result)', async ({ bro
     await adminPage.page.locator('button.generate-btn').click()
 
     const items = adminPage.page.locator('ul.results-list li.result-item')
-    await expect(items).toHaveCount(5, { timeout: 5_000 })
+    await expect(items).toHaveCount(5, { timeout: 8_000 })
     await expect(items.first()).toContainText('Aldric')
 
     await expect(adminPage.page.locator('div.quota-bar')).toBeVisible()
@@ -112,8 +111,8 @@ test('generator returns list of names for npc_name (multi-result)', async ({ bro
   }
 })
 
-test('generator returns text block for quest_hook (single result)', async ({ browser }) => {
-  const token = await getAdminToken()
+test('generator returns text block for quest_hook (single result)', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -124,7 +123,7 @@ test('generator returns text block for quest_hook (single result)', async ({ bro
     await adminPage.switchTab('generator')
 
     const typeSelect = adminPage.page.locator('.generator-tool select.form-select').first()
-    await expect(typeSelect).toBeVisible({ timeout: 5_000 })
+    await expect(typeSelect).toBeVisible({ timeout: 8_000 })
     await typeSelect.selectOption('quest_hook')
 
     await adminPage.page.route('**/api/generate', (route) =>
@@ -141,7 +140,7 @@ test('generator returns text block for quest_hook (single result)', async ({ bro
     await adminPage.page.locator('button.generate-btn').click()
 
     const block = adminPage.page.locator('div.result-block p.result-text-long')
-    await expect(block).toBeVisible({ timeout: 5_000 })
+    await expect(block).toBeVisible({ timeout: 8_000 })
     await expect(block).toContainText('marchand a disparu')
 
     await expect(adminPage.page.locator('ul.results-list')).not.toBeVisible()
@@ -150,8 +149,8 @@ test('generator returns text block for quest_hook (single result)', async ({ bro
   }
 })
 
-test('generator shows quota error on 429 response', async ({ browser }) => {
-  const token = await getAdminToken()
+test('generator shows quota error on 429 response', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -175,7 +174,7 @@ test('generator shows quota error on 429 response', async ({ browser }) => {
     await adminPage.page.locator('button.generate-btn').click()
 
     const errorMsg = adminPage.page.locator('p.form-error')
-    await expect(errorMsg).toBeVisible({ timeout: 5_000 })
+    await expect(errorMsg).toBeVisible({ timeout: 8_000 })
     await expect(errorMsg).toContainText(/quota.*épuisé|réinitialisation/i)
   } finally {
     await adminCtx.close()

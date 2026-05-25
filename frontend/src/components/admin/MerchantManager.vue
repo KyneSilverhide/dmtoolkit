@@ -6,7 +6,7 @@ import { getSocket } from '../../socket.js'
 import AppIcon from '../AppIcon.vue'
 import MERCHANT_PRESETS from '../../assets/merchantPresets.js'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
 
 // ── State ───────────────────────────────────────────────────────────────
 const merchants = ref([])

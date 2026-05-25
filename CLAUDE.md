@@ -6,7 +6,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 
 ## Résumé du projet
 
-**Critical Fail** est une application web de gestion de sessions de jeu de rôle D&D 5e (en français), destinée au Maître du Jeu (MJ). Elle permet :
+**DM Toolkit** est une application web de gestion de sessions de jeu de rôle D&D 5e (en français), destinée au Maître du Jeu (MJ). Elle permet :
 
 - La gestion en temps réel des joueurs (PV, CA, conditions, concentration, initiative)
 - L'affichage sur un écran TV dédié (vue spectateur)
@@ -17,8 +17,9 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 - La recherche de sorts D&D 5e (477 sorts FR depuis `aidedd_spells.json`)
 - La recherche d'équipement standard et d'objets magiques D&D 5e
 - Un générateur IA de noms (PNJ, lieux, auberges), accroches de quêtes et descriptions via GitHub Models (gpt-4o-mini)
+- Un gestionnaire audio côté admin : upload de fichiers audio (MP3/WAV/OGG/FLAC/M4A), organisés par catégorie (ambiance/musique/effets/autre), lecture multi-piste simultanée avec volume et boucle par piste, renommage inline
 - Une isolation multi-tenant : chaque admin ne voit que ses propres sessions, et les fichiers uploadés sont stockés par tenant (`/uploads/<adminId>/`)
-- Un plugin Obsidian pour synchroniser l'Initiative Tracker avec Critical Fail
+- Un plugin Obsidian pour synchroniser l'Initiative Tracker avec DM Toolkit
 
 ---
 
@@ -29,7 +30,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 ├── frontend/          # Vue 3 + Vite + Pinia (port 5173 en dev)
 │   ├── src/
 │   │   ├── views/     # HomeView, AdminView, TvView, PlayerInboxView, PlayerJoinView
-│   │   ├── components/admin/  # Composants admin (MapManager, MerchantManager, GeneratorTool, etc.)
+│   │   ├── components/admin/  # Composants admin (MapManager, MerchantManager, GeneratorTool, AudioManager, etc.)
 │   │   ├── components/player/ # Composants joueur (SpellSearchTool, MagicItemSearchTool, PlayerDiceTool, etc.)
 │   │   ├── components/AppIcon.vue  # Composant icônes dynamiques (remplace les emojis statiques)
 │   │   ├── stores/    # Pinia stores (auth.js, session.js)
@@ -49,8 +50,10 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │   │   ├── aidedd_magic_items.json   # Objets magiques D&D 5e
 │   │   │   └── aidedd_standard_items.json # 147 objets standard D&D 5e
 │   │   └── routes/        # auth, sessions, uploads, spells, magic-items, equipment, generate
+│   │                      # uploads: POST /api/uploads (images, 50MB), POST /api/uploads/audio (audio, 150MB)
+│   │                      # sessions: GET/DELETE/PATCH /api/sessions/:id/images/:imageId
 │   │                      # (+ GET /api/sessions/:id/players pour sync Obsidian)
-├── obsidian-plugin/   # Plugin Obsidian (TypeScript) — sync Initiative Tracker ↔ Critical Fail
+├── obsidian-plugin/   # Plugin Obsidian (TypeScript) — sync Initiative Tracker ↔ DM Toolkit
 ├── docker-compose.yml     # Postgres 16 + backend + frontend
 └── docker-compose.prod.yml
 ```
@@ -108,6 +111,7 @@ cd frontend && npm run dev  # vite dev server
 - La DB est PostgreSQL 16. Les requêtes utilisent le driver `pg` (pool de connexions dans `db.js`).
 - Tables principales : `admins`, `sessions`, `players`, `messages`, `dice_results`, `votes`, `vote_responses`, `session_events`, `merchants`, `merchant_items`, `purchase_requests`, `session_images`.
 - Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/vote/image/map/merchant), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`, `combat_round` (entier), `timer_label` (VARCHAR 200), `timer_end_at` (TIMESTAMP), `lobby_bg_url` (VARCHAR 500, image de fond du lobby TV à 15 % d'opacité).
+- Colonnes clés de `session_images` : `url`, `original_name` (nom d'affichage, renommable), `type` (`image` / `map` / `audio`), `audio_category` (VARCHAR 50 : catégorie libre assignée par l'IA (GPT-4o-mini via GitHub Models) au moment de l'upload ; défaut `Général` si GITHUB_TOKEN absent ou si l'IA échoue ; l'admin peut saisir/modifier librement depuis l'AudioManager).
 - Colonnes clés de `players` : `ac`, `max_hp`, `current_hp`, `initiative`, `conditions` (JSON array), `is_concentrating`, `dnd_class`, `avatar_url`, `socket_id`.
 - Les joueurs sont supprimés de la DB à la déconnexion socket (`disconnect`/`leave-session`).
 - Les codes de session sont sur **4 chiffres numériques** (migration automatique des anciens codes).

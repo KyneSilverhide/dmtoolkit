@@ -5,7 +5,7 @@ import { authStore } from '../../stores/auth.js'
 import { getSocket } from '../../socket.js'
 import AppIcon from '../AppIcon.vue'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
 
 const selectedPlayerId = ref('all')
 const messageText = ref('')

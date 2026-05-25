@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: dmtoolkit-backend
+    runtime: image
+    image:
+      url: ghcr.io/kynesilverhide/dmtoolkit-backend:latest
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dmtoolkit-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 10000
+      - key: FRONTEND_URL
+        value: "https://REMPLACER-PAR-URL-FRONTEND.onrender.com"
+        description: "OBLIGATOIRE après déploiement : remplacer cette valeur par l'URL du service dmtoolkit-frontend visible dans le dashboard Render. Utilisé pour le CORS et les QR codes. Redémarrer le backend ensuite."
+      - key: ADMIN_DEFAULT_USERNAME
+        value: admin
+        description: "Nom d'utilisateur du compte administrateur créé au premier démarrage."
+      - key: ADMIN_DEFAULT_PASSWORD
+        generateValue: true
+        description: "Mot de passe admin généré automatiquement. À noter depuis l'onglet Environment après déploiement."
+      - key: DEMO_ENABLED
+        value: "false"
+        description: "Mettre à true pour activer un compte de démonstration (code session 0000, reset automatique chaque nuit)."
+      - key: GITHUB_TOKEN
+        value: ""
+        description: "OPTIONNEL : token GitHub classic (aucun scope requis) pour activer le générateur IA de noms, accroches de quêtes et descriptions via GitHub Models (gpt-4o-mini). Sans ce token, le générateur retourne une erreur 503."
+
+  - type: web
+    name: dmtoolkit-frontend
+    runtime: image
+    image:
+      url: ghcr.io/kynesilverhide/dmtoolkit-frontend:latest
+    plan: free
+    envVars:
+      - key: BACKEND_URL
+        value: "https://REMPLACER-PAR-URL-BACKEND.onrender.com"
+        description: "OBLIGATOIRE : remplacer par l'URL publique du service dmtoolkit-backend visible dans le dashboard Render (ex: https://dmtoolkit-backend-xxxx.onrender.com). Le navigateur utilise cette URL pour se connecter au backend."
+
+databases:
+  - name: dmtoolkit-db
+    databaseName: criticalfail
+    user: criticalfail
+    plan: free

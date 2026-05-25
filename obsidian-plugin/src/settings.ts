@@ -1,24 +1,24 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
-import CriticalFailSync from './main';
+import DmToolkitSync from './main';
 
-export interface CriticalFailSettings {
+export interface DmToolkitSettings {
 	backendUrl: string;
 	jwtToken: string;
 	sessionId: number;
 	autoSync: boolean;
 }
 
-export const DEFAULT_SETTINGS: CriticalFailSettings = {
+export const DEFAULT_SETTINGS: DmToolkitSettings = {
 	backendUrl: 'http://localhost:3000',
 	jwtToken: '',
 	sessionId: 0,
 	autoSync: true,
 };
 
-export class CriticalFailSettingTab extends PluginSettingTab {
-	plugin: CriticalFailSync;
+export class DmToolkitSettingTab extends PluginSettingTab {
+	plugin: DmToolkitSync;
 
-	constructor(app: App, plugin: CriticalFailSync) {
+	constructor(app: App, plugin: DmToolkitSync) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -28,7 +28,7 @@ export class CriticalFailSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('URL du backend Critical Fail')
+			.setName('URL du backend DM Toolkit')
 			.setDesc('Ex : http://localhost:3000 ou https://monserveur.example.com')
 			.addText(text => text
 				.setPlaceholder('http://localhost:3000')
@@ -40,7 +40,7 @@ export class CriticalFailSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Token JWT admin')
-			.setDesc('Récupère-le en te connectant à l\'interface admin Critical Fail (localStorage → token).')
+			.setDesc('Récupère-le en te connectant à l\'interface admin DM Toolkit (localStorage → token).')
 			.addText(text => text
 				.setPlaceholder('eyJhbGciOiJIUzI1NiIsInR5cCI6...')
 				.setValue(this.plugin.settings.jwtToken)
@@ -51,7 +51,7 @@ export class CriticalFailSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('ID de session')
-			.setDesc('L\'identifiant numérique de la session active Critical Fail.')
+			.setDesc('L\'identifiant numérique de la session active DM Toolkit.')
 			.addText(text => text
 				.setPlaceholder('1')
 				.setValue(String(this.plugin.settings.sessionId || ''))
@@ -83,10 +83,9 @@ export class CriticalFailSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Import joueurs')
-			.setDesc('Récupère les joueurs CF via REST et les injecte dans l\'Initiative Tracker.')
+			.setDesc('Récupère les joueurs via REST et les injecte dans l\'Initiative Tracker.')
 			.addButton(btn => btn
 				.setButtonText('Importer maintenant')
 				.onClick(() => this.plugin.syncPlayersFromCF()));
 	}
 }
-

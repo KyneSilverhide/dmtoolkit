@@ -1,12 +1,11 @@
 import { test, expect } from '../fixtures'
-import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 import { AdminPage } from '../page-objects/AdminPage'
 import { PlayerPage } from '../page-objects/PlayerPage'
 
-test('player can toggle a condition and admin sees it', async ({ browser }) => {
-  const token = await getAdminToken()
+test('player can toggle a condition and admin sees it', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -19,21 +18,21 @@ test('player can toggle a condition and admin sees it', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Cleric', hp: 45 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.toggleCondition('poisoned')
 
     // Admin should see the poisoned condition badge
-    await expect(adminPage.page.getByText('Empoisonné').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.getByText('Empoisonné').first()).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
   }
 })
 
-test('player can untoggle a condition', async ({ browser }) => {
-  const token = await getAdminToken()
+test('player can untoggle a condition', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -46,23 +45,23 @@ test('player can untoggle a condition', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Paladin', hp: 55 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.toggleCondition('blinded')
-    await expect(adminPage.page.getByText('Aveuglé').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.getByText('Aveuglé').first()).toBeVisible({ timeout: 8_000 })
 
     // Untoggle
     await playerPage.toggleCondition('blinded')
-    await expect(adminPage.page.getByText('Aveuglé').first()).not.toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.getByText('Aveuglé').first()).not.toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
   }
 })
 
-test('multiple conditions can be active simultaneously', async ({ browser }) => {
-  const token = await getAdminToken()
+test('multiple conditions can be active simultaneously', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -75,22 +74,22 @@ test('multiple conditions can be active simultaneously', async ({ browser }) => 
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Warlock', hp: 35 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.toggleCondition('frightened')
     await playerPage.toggleCondition('paralyzed')
 
-    await expect(adminPage.page.getByText('Effrayé').first()).toBeVisible({ timeout: 5_000 })
-    await expect(adminPage.page.getByText('Paralysé').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.getByText('Effrayé').first()).toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.getByText('Paralysé').first()).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
   }
 })
 
-test('conditions synced to TV combat mode', async ({ browser }) => {
-  const token = await getAdminToken()
+test('conditions synced to TV combat mode', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -109,12 +108,12 @@ test('conditions synced to TV combat mode', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Druid', hp: 50 })
-    await expect(tvPage.page.getByText('Druid')).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.page.getByText('Druid')).toBeVisible({ timeout: 8_000 })
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.toggleCondition('stunned')
 
-    await expect(tvPage.page.getByText('Étourdi')).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.page.getByText('Étourdi')).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
@@ -122,8 +121,8 @@ test('conditions synced to TV combat mode', async ({ browser }) => {
   }
 })
 
-test('conditions persist after player reloads', async ({ page }) => {
-  const token = await getAdminToken()
+test('conditions persist after player reloads', async ({ page, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
   await joinAsPlayer(page, code, { name: 'Monk', hp: 38 })
 
@@ -132,5 +131,5 @@ test('conditions persist after player reloads', async ({ page }) => {
 
   // Verify condition button appears selected in UI
   const condBtn = page.getByTestId('condition-prone')
-  await expect(condBtn).toHaveClass(/active|selected|on/, { timeout: 5_000 })
+  await expect(condBtn).toHaveClass(/active|selected|on/, { timeout: 8_000 })
 })

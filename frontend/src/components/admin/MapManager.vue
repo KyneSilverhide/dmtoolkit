@@ -5,7 +5,7 @@ import { sessionStore } from '../../stores/session.js'
 import { getSocket } from '../../socket.js'
 import AppIcon from '../AppIcon.vue'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
 const MAX_BRUSH_RADIUS = 100
 const MIN_BRUSH_RADIUS = 5
 const DEFAULT_BRUSH_RADIUS = 30
@@ -763,21 +763,23 @@ watch(fogEnabled, () => render())
     <h3 class="section-title"><AppIcon icon="lucide:map" size="0.9em" /> Gestionnaire de Carte</h3>
 
     <!-- Upload -->
-    <div class="upload-area">
-      <label class="upload-btn" data-testid="map-upload-btn" :class="{ disabled: uploading }">
-        <span>{{ uploading ? `Envoi… ${uploadProgress}%` : 'Téléverser des images' }}</span>
-        <input type="file" accept="image/*" multiple class="file-input" :disabled="uploading" @change="handleFileUpload" />
+    <div class="upload-card">
+      <label class="upload-btn" data-testid="map-upload-btn" :class="{ disabled: uploading || !sessionStore.activeSession }">
+        <AppIcon icon="lucide:upload" size="0.8em" />
+        {{ uploading ? `Envoi… ${uploadProgress}%` : 'Téléverser des cartes' }}
+        <input type="file" accept="image/*" multiple class="file-input" :disabled="uploading || !sessionStore.activeSession" @change="handleFileUpload" />
       </label>
       <div v-if="uploading" class="progress-track">
         <div class="progress-fill" :style="{ width: uploadProgress + '%' }" />
-        <span class="progress-label">{{ uploadProgress }}%</span>
       </div>
       <p v-if="uploadError" class="upload-error">{{ uploadError }}</p>
     </div>
 
     <!-- Gallery -->
-    <div v-if="images.length === 0" class="empty-gallery">
-      <p>Aucune image téléversée pour cette session.</p>
+    <div v-if="images.length === 0" class="empty-state">
+      <AppIcon icon="lucide:map" size="1.4em" />
+      <p>Aucune carte téléversée pour cette session.</p>
+      <p class="empty-hint">Utilisez le bouton ci-dessus pour en ajouter.</p>
     </div>
     <div v-else class="gallery">
       <div
@@ -946,44 +948,61 @@ watch(fogEnabled, () => render())
   margin: 0 0 0.4rem;
 }
 
-.upload-area { display: flex; flex-direction: column; gap: 0.4rem; }
-
-.upload-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 0.5rem 1rem;
-  background: var(--gradient-accent-action);
+.upload-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 0.75rem;
+  background: var(--surface-gold-soft);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
+}
+
+.upload-btn {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.3rem 0.8rem;
+  background: var(--gradient-accent-action);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 6px;
   color: var(--color-gold-bright);
   font-family: var(--font-heading);
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+  letter-spacing: 0.07em;
   cursor: pointer;
-  transition: all 0.2s;
-  width: fit-content;
+  transition: background 0.2s;
 }
 .upload-btn:hover { background: var(--gradient-accent-action-hover); }
 .upload-btn.disabled { opacity: 0.65; cursor: not-allowed; pointer-events: none; }
 .file-input { display: none; }
 
 .upload-error { color: var(--color-danger); font-family: var(--font-body); font-size: 0.8rem; }
-.empty-gallery { font-family: var(--font-body); color: var(--color-text-dim); font-size: 0.85rem; }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 2rem 1rem;
+  color: var(--color-text-dim);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  text-align: center;
+}
+.empty-hint { font-size: 0.75rem; opacity: 0.7; }
 
 .progress-track {
-  position: relative; height: 10px;
+  flex: 1;
+  min-width: 6rem;
+  height: 5px;
   background: var(--surface-track);
-  border: 1px solid var(--color-border);
-  border-radius: 6px; overflow: hidden;
+  border-radius: 4px;
+  overflow: hidden;
 }
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--color-gold-dark), var(--color-gold-bright));
-  border-radius: 6px; transition: width 0.15s ease;
-}
-.progress-label {
-  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-  font-family: var(--font-heading); font-size: 0.6rem;
-  color: var(--color-text-dim); pointer-events: none;
+  transition: width 0.15s ease;
 }
 
 .gallery {

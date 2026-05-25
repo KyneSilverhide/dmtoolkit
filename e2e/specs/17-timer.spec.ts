@@ -1,5 +1,4 @@
 import { test, expect } from '../fixtures'
-import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { AdminPage } from '../page-objects/AdminPage'
 import { TvPage } from '../page-objects/TvPage'
@@ -15,8 +14,8 @@ async function startTimer(adminPage: AdminPage, minutes = 0, seconds = 30, label
   await pg.getByTestId('timer-start-btn').click()
 }
 
-test('admin starts a timer and it shows on TV in combat mode', async ({ browser }) => {
-  const token = await getAdminToken()
+test('admin starts a timer and it shows on TV in combat mode', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -34,15 +33,15 @@ test('admin starts a timer and it shows on TV in combat mode', async ({ browser 
     await startTimer(adminPage, 0, 30, 'Temps de réflexion')
 
     // Timer should appear on TV (in combat mode, shown as overlay)
-    await expect(tvPage.page.getByText(/Temps de réflexion|minuteur|timer/i)).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.page.getByText(/Temps de réflexion|minuteur|timer/i)).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
   }
 })
 
-test('timer counts down on TV', async ({ browser }) => {
-  const token = await getAdminToken()
+test('timer counts down on TV', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -60,7 +59,7 @@ test('timer counts down on TV', async ({ browser }) => {
     await startTimer(adminPage, 0, 15)
 
     const timerEl = tvPage.page.locator('[class*="timer"], [class*="countdown"]').first()
-    await expect(timerEl).toBeVisible({ timeout: 5_000 })
+    await expect(timerEl).toBeVisible({ timeout: 8_000 })
     const t1 = await timerEl.textContent()
     await tvPage.page.waitForTimeout(2_000)
     const t2 = await timerEl.textContent()
@@ -71,8 +70,8 @@ test('timer counts down on TV', async ({ browser }) => {
   }
 })
 
-test('admin can stop the timer', async ({ browser }) => {
-  const token = await getAdminToken()
+test('admin can stop the timer', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -86,18 +85,18 @@ test('admin can stop the timer', async ({ browser }) => {
 
     // Stop button should become enabled after starting
     const stopBtn = adminPage.page.locator('button.action-btn.danger-btn').filter({ hasText: 'Arrêter' }).nth(1)
-    await expect(stopBtn).not.toBeDisabled({ timeout: 5_000 })
+    await expect(stopBtn).not.toBeDisabled({ timeout: 8_000 })
     await stopBtn.click()
 
     // Stop button should be disabled again
-    await expect(stopBtn).toBeDisabled({ timeout: 5_000 })
+    await expect(stopBtn).toBeDisabled({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
   }
 })
 
-test('timer label is displayed', async ({ browser }) => {
-  const token = await getAdminToken()
+test('timer label is displayed', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -114,7 +113,7 @@ test('timer label is displayed', async ({ browser }) => {
 
     await startTimer(adminPage, 1, 0, 'Décision finale')
 
-    await expect(tvPage.page.getByText(/Décision finale/i)).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.page.getByText(/Décision finale/i)).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()

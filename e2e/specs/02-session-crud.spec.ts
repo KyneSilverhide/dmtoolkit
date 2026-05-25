@@ -1,29 +1,29 @@
 import { test, expect } from '../fixtures'
-import { getAdminToken, loginAsAdmin } from '../helpers/auth'
+import { loginAsAdmin } from '../helpers/auth'
 import { createSession, listSessions } from '../helpers/session'
 
-test('creates a session via API', async () => {
-  const token = await getAdminToken()
+test('creates a session via API', async ({ adminToken }) => {
+  const token = adminToken
   const code = await createSession(token, 'Session Alpha')
   expect(code).toMatch(/^\d{4}$/)
 })
 
-test('lists created sessions via API', async () => {
-  const token = await getAdminToken()
+test('lists created sessions via API', async ({ adminToken }) => {
+  const token = adminToken
   await createSession(token, 'Session Beta')
   const sessions = await listSessions(token)
   expect(sessions.some((s) => s.name === 'Session Beta')).toBe(true)
 })
 
-test('session appears in admin UI after creation', async ({ page }) => {
-  const token = await getAdminToken()
+test('session appears in admin UI after creation', async ({ page, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token, 'Session Gamma')
   await loginAsAdmin(page, token)
   await expect(page.getByText(code)).toBeVisible()
 })
 
-test('can select a session in the admin UI', async ({ page }) => {
-  const token = await getAdminToken()
+test('can select a session in the admin UI', async ({ page, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token, 'Session Delta')
   await loginAsAdmin(page, token)
   await page.getByText(code).first().click()
@@ -31,8 +31,8 @@ test('can select a session in the admin UI', async ({ page }) => {
   await expect(page.getByTestId('tab-players')).toBeVisible()
 })
 
-test('can delete a session via API', async () => {
-  const token = await getAdminToken()
+test('can delete a session via API', async ({ adminToken }) => {
+  const token = adminToken
   await createSession(token, 'Session Epsilon')
   const before = await listSessions(token)
   const session = before.find((s) => s.name === 'Session Epsilon')!
@@ -45,15 +45,15 @@ test('can delete a session via API', async () => {
   expect(after.some((s) => s.name === 'Session Epsilon')).toBe(false)
 })
 
-test('session code is 4 digits', async () => {
-  const token = await getAdminToken()
+test('session code is 4 digits', async ({ adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
   expect(code.length).toBe(4)
   expect(Number(code)).toBeGreaterThanOrEqual(0)
 })
 
-test('two sessions have different codes', async () => {
-  const token = await getAdminToken()
+test('two sessions have different codes', async ({ adminToken }) => {
+  const token = adminToken
   const code1 = await createSession(token, 'Session One')
   const code2 = await createSession(token, 'Session Two')
   expect(code1).not.toBe(code2)

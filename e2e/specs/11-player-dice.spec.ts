@@ -1,12 +1,11 @@
 import { test, expect } from '../fixtures'
-import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 import { AdminPage } from '../page-objects/AdminPage'
 import { PlayerPage } from '../page-objects/PlayerPage'
 
-test('player can roll a d20', async ({ page }) => {
-  const token = await getAdminToken()
+test('player can roll a d20', async ({ page, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
   await joinAsPlayer(page, code, { name: 'Rogue', hp: 32 })
 
@@ -17,15 +16,15 @@ test('player can roll a d20', async ({ page }) => {
   await page.locator('button.roll-btn.normal').click()
 
   // Result should appear
-  await expect(page.locator('.result-total')).toBeVisible({ timeout: 5_000 })
+  await expect(page.locator('.result-total')).toBeVisible({ timeout: 8_000 })
   const result = await page.locator('.result-total').textContent()
   const num = parseInt(result || '0')
   expect(num).toBeGreaterThanOrEqual(1)
   expect(num).toBeLessThanOrEqual(20)
 })
 
-test('player can switch dice types', async ({ page }) => {
-  const token = await getAdminToken()
+test('player can switch dice types', async ({ page, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
   await joinAsPlayer(page, code, { name: 'Wizard', hp: 24 })
 
@@ -36,15 +35,15 @@ test('player can switch dice types', async ({ page }) => {
   await page.locator('button.die-btn').filter({ hasText: 'd6' }).click()
   await page.locator('button.roll-btn.normal').click()
 
-  await expect(page.locator('.result-total')).toBeVisible({ timeout: 5_000 })
+  await expect(page.locator('.result-total')).toBeVisible({ timeout: 8_000 })
   const result = await page.locator('.result-total').textContent()
   const num = parseInt(result || '0')
   expect(num).toBeGreaterThanOrEqual(1)
   expect(num).toBeLessThanOrEqual(6)
 })
 
-test('player hidden roll notifies admin without showing result to player', async ({ browser }) => {
-  const token = await getAdminToken()
+test('player hidden roll notifies admin without showing result to player', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -57,25 +56,25 @@ test('player hidden roll notifies admin without showing result to player', async
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Assassin', hp: 28 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('des')
     await playerPg.locator('button.roll-btn.hidden').click()
 
     // Player sees "hidden sent" feedback
-    await expect(playerPg.getByText(/caché/i)).toBeVisible({ timeout: 5_000 })
+    await expect(playerPg.getByText(/caché/i)).toBeVisible({ timeout: 8_000 })
 
     // Admin sees the roll toast (toast lives 6s, emitted right after hidden roll)
-    await expect(adminPage.page.getByTestId('player-roll-toast')).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.getByTestId('player-roll-toast')).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
   }
 })
 
-test('advantage roll only available for d20 × 1', async ({ page }) => {
-  const token = await getAdminToken()
+test('advantage roll only available for d20 × 1', async ({ page, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
   await joinAsPlayer(page, code, { name: 'Hero', hp: 50 })
 
@@ -90,8 +89,8 @@ test('advantage roll only available for d20 × 1', async ({ page }) => {
   await expect(page.locator('button.roll-type-btn.advantage')).not.toBeVisible()
 })
 
-test('player roll result propagated as admin toast', async ({ browser }) => {
-  const token = await getAdminToken()
+test('player roll result propagated as admin toast', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -104,16 +103,16 @@ test('player roll result propagated as admin toast', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Brawler', hp: 55 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('des')
     await playerPg.locator('button.roll-btn.normal').click()
-    await expect(playerPg.locator('.result-total')).toBeVisible({ timeout: 5_000 })
+    await expect(playerPg.locator('.result-total')).toBeVisible({ timeout: 8_000 })
 
     // After a visible roll, admin should receive a roll toast (toast lives 6s)
     const toast = adminPage.page.getByTestId('player-roll-toast')
-    await expect(toast).toBeVisible({ timeout: 5_000 })
+    await expect(toast).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()

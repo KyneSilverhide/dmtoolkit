@@ -1,7 +1,7 @@
 {
-	"name": "critical-fail-sync",
+	"name": "dmtoolkit-sync",
 	"version": "0.1.0",
-	"description": "Synchronise l'Initiative Tracker avec l'écran admin Critical Fail (D&D 5e session manager).",
+	"description": "Synchronise l'Initiative Tracker avec l'écran admin DM Toolkit (D&D 5e session manager).",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {

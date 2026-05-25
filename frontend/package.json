@@ -1,7 +1,7 @@
 {
-  "name": "critical-fail-frontend",
+  "name": "dmtoolkit-frontend",
   "private": true,
-  "version": "1.0.28",
+  "version": "1.0.38",
   "type": "module",
   "scripts": {
     "dev": "vite",

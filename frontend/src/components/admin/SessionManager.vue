@@ -1,10 +1,10 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { authStore } from '../../stores/auth.js'
 import { sessionStore } from '../../stores/session.js'
 import AppIcon from '../AppIcon.vue'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
 
 const sessionName = ref('')
 const loading = ref(false)
@@ -13,6 +13,11 @@ const qrCodeUrl = ref(null)
 const joinUrl = ref('')
 const tvUrl = ref('')
 const tvCopied = ref(false)
+const joinCopied = ref(false)
+
+const otherSessions = computed(() =>
+  sessionStore.sessions.filter(s => s.id !== sessionStore.activeSession?.id)
+)
 
 const renamingId = ref(null)
 const renameValue = ref('')
@@ -187,6 +192,14 @@ async function copyTvUrl() {
   } catch {}
 }
 
+async function copyJoinUrl() {
+  try {
+    await navigator.clipboard.writeText(joinUrl.value)
+    joinCopied.value = true
+    setTimeout(() => { joinCopied.value = false }, 2000)
+  } catch {}
+}
+
 watch(
   () => sessionStore.activeSession,
   (session) => {
@@ -229,69 +242,89 @@ onMounted(loadSessions)
     <section v-if="sessionStore.activeSession" class="active-session">
       <h2 class="section-title">✦ Session Active</h2>
       <div class="session-card active">
-        <div class="session-name-row">
-          <template v-if="renamingId === sessionStore.activeSession.id">
-            <input
-              v-model="renameValue"
-              class="rename-input"
-              @keyup.enter="saveRename(sessionStore.activeSession.id)"
-              @keyup.escape="cancelRename"
-              autofocus
-            />
-            <button class="rename-save-btn" :disabled="renameLoading" @click="saveRename(sessionStore.activeSession.id)">
-              <AppIcon icon="lucide:check" size="0.85em" />
-            </button>
-            <button class="rename-cancel-btn" @click="cancelRename">
-              <AppIcon icon="lucide:x" size="0.85em" />
-            </button>
-          </template>
-          <template v-else>
-            <p class="session-name">{{ sessionStore.activeSession.name }}</p>
-            <button class="rename-icon-btn" @click="startRename(sessionStore.activeSession)" title="Renommer">
-              <AppIcon icon="lucide:pencil" size="0.8em" />
-            </button>
-          </template>
-        </div>
-        <div class="big-code">{{ sessionStore.activeSession.code }}</div>
-        <p class="join-url">
-          <a :href="joinUrl" target="_blank">{{ joinUrl }}</a>
-        </p>
-        <div v-if="qrCodeUrl" class="qr-section">
-          <img :src="qrCodeUrl" alt="QR Code" class="qr-code" />
-          <p class="qr-hint">Scannez pour rejoindre</p>
+        <!-- En-tête : nom + badge code -->
+        <div class="session-header-row">
+          <div class="session-name-area">
+            <template v-if="renamingId === sessionStore.activeSession.id">
+              <input
+                v-model="renameValue"
+                class="rename-input"
+                @keyup.enter="saveRename(sessionStore.activeSession.id)"
+                @keyup.escape="cancelRename"
+                autofocus
+              />
+              <button class="rename-save-btn" :disabled="renameLoading" @click="saveRename(sessionStore.activeSession.id)">
+                <AppIcon icon="lucide:check" size="0.85em" />
+              </button>
+              <button class="rename-cancel-btn" @click="cancelRename">
+                <AppIcon icon="lucide:x" size="0.85em" />
+              </button>
+            </template>
+            <template v-else>
+              <p class="session-name">{{ sessionStore.activeSession.name }}</p>
+              <button class="rename-icon-btn" @click="startRename(sessionStore.activeSession)" title="Renommer">
+                <AppIcon icon="lucide:pencil" size="0.8em" />
+              </button>
+            </template>
+          </div>
+          <div class="code-badge">{{ sessionStore.activeSession.code }}</div>
         </div>
 
-        <!-- TV Screen link -->
-        <div class="tv-section">
-          <div class="tv-header">
-            <span class="tv-label"><AppIcon icon="lucide:monitor" size="0.85em" /> Écran TV</span>
-            <a :href="tvUrl" target="_blank" class="tv-open-btn">Ouvrir →</a>
-          </div>
-          <div class="tv-url-row">
-            <span class="tv-url">{{ tvUrl }}</span>
-            <button class="tv-copy-btn" @click="copyTvUrl">
-              {{ tvCopied ? '✓ Copié' : '' }}<AppIcon v-if="!tvCopied" icon="lucide:clipboard" size="0.85em" /> {{ tvCopied ? '' : 'Copier' }}
+        <!-- Corps à deux colonnes -->
+        <div class="session-two-col">
+          <!-- Colonne Joueurs -->
+          <div class="session-col">
+            <p class="col-label"><AppIcon icon="game-icons:wizard-staff" size="0.8em" /> Joueurs</p>
+            <div v-if="qrCodeUrl" class="col-qr">
+              <img :src="qrCodeUrl" alt="QR Code" class="qr-code" />
+            </div>
+            <div class="col-url-row">
+              <a :href="joinUrl" target="_blank" class="col-url">{{ joinUrl }}</a>
+            </div>
+            <button class="col-copy-btn" @click="copyJoinUrl">
+              <AppIcon v-if="!joinCopied" icon="lucide:clipboard" size="0.8em" />
+              {{ joinCopied ? '✓ Copié' : 'Copier le lien' }}
             </button>
           </div>
-          <p class="tv-hint">Ouvrez ce lien sur votre TV ou second écran.</p>
+
+          <!-- Colonne TV -->
+          <div class="session-col">
+            <p class="col-label"><AppIcon icon="lucide:monitor" size="0.8em" /> Écran TV</p>
+            <div class="col-url-row">
+              <span class="col-url">{{ tvUrl }}</span>
+            </div>
+            <div class="col-tv-actions">
+              <button class="col-copy-btn" @click="copyTvUrl">
+                <AppIcon v-if="!tvCopied" icon="lucide:clipboard" size="0.8em" />
+                {{ tvCopied ? '✓ Copié' : 'Copier' }}
+              </button>
+              <a :href="tvUrl" target="_blank" class="col-open-btn">
+                <AppIcon icon="lucide:external-link" size="0.8em" /> Ouvrir
+              </a>
+            </div>
+            <p class="col-hint">Ouvrez sur votre TV ou second écran.</p>
+          </div>
         </div>
 
-        <button class="close-btn" @click="closeSession(sessionStore.activeSession.id)">
-          Fermer la session
-        </button>
-        <button class="delete-btn" @click="deleteSession(sessionStore.activeSession.id)">
-          <AppIcon icon="lucide:trash-2" size="0.85em" /> Supprimer définitivement
-        </button>
+        <!-- Pied : actions destructives -->
+        <div class="session-danger-footer">
+          <button class="close-btn" @click="closeSession(sessionStore.activeSession.id)">
+            Fermer la session
+          </button>
+          <button class="delete-btn" @click="deleteSession(sessionStore.activeSession.id)">
+            <AppIcon icon="lucide:trash-2" size="0.85em" /> Supprimer
+          </button>
+        </div>
       </div>
     </section>
 
-    <section v-if="sessionStore.sessions.length" class="sessions-list">
+    <section v-if="otherSessions.length" class="sessions-list">
       <h2 class="section-title">✦ Sessions</h2>
       <div
-        v-for="s in sessionStore.sessions"
+        v-for="s in otherSessions"
         :key="s.id"
         class="session-card"
-        :class="{ active: sessionStore.activeSession?.id === s.id, closed: s.status === 'closed' }"
+        :class="{ closed: s.status === 'closed' }"
         @click="s.status === 'active' && selectSession(s)"
       >
         <div class="session-card-inner">
@@ -413,6 +446,158 @@ onMounted(loadSessions)
   border-color: var(--color-gold-dark);
 }
 
+/* ── En-tête session active ────────────────────────────────── */
+.session-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.session-name-area {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.code-badge {
+  font-family: var(--font-title);
+  font-size: 1.25rem;
+  color: var(--color-gold-bright);
+  letter-spacing: 0.15em;
+  background: var(--admin-gold-bg, var(--surface-gold-soft));
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 8px;
+  padding: 0.2rem 0.75rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Corps deux colonnes ────────────────────────────────────── */
+.session-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+@media (max-width: 480px) {
+  .session-two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+.session-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.col-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+  margin: 0 0 0.25rem;
+}
+
+.col-qr {
+  display: flex;
+  justify-content: center;
+}
+
+.col-url-row {
+  overflow: hidden;
+}
+
+.col-url {
+  display: block;
+  font-family: monospace;
+  font-size: 0.7rem;
+  color: var(--color-gold);
+  word-break: break-all;
+  line-height: 1.4;
+  text-decoration: none;
+}
+.col-url:hover {
+  text-decoration: underline;
+}
+
+.col-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  background: var(--admin-gold-bg, var(--surface-gold-soft));
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 6px;
+  color: var(--color-gold);
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.col-copy-btn:hover {
+  background: var(--admin-gold-bg-strong, var(--surface-gold-soft-strong));
+  color: var(--color-gold-bright);
+}
+
+.col-tv-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.col-open-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  color: var(--color-gold);
+  text-decoration: none;
+  border: 1px solid var(--color-gold-dark);
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.col-open-btn:hover {
+  background: var(--admin-gold-bg, var(--surface-gold-soft));
+  color: var(--color-gold-bright);
+}
+
+.col-hint {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  color: var(--color-text-dim);
+  margin: 0;
+  margin-top: auto;
+}
+
+/* ── Pied danger ──────────────────────────────────────────── */
+.session-danger-footer {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+  margin-top: 0.25rem;
+}
+
 .session-card-inner {
   display: flex;
   align-items: center;
@@ -423,16 +608,7 @@ onMounted(loadSessions)
   font-family: var(--font-heading);
   font-size: 0.95rem;
   color: var(--color-parchment);
-}
-
-.big-code {
-  font-family: var(--font-title);
-  font-size: 2.5rem;
-  color: var(--color-gold-bright);
-  text-shadow: var(--text-shadow-accent);
-  letter-spacing: 0.2em;
-  text-align: center;
-  padding: 0.5rem 0;
+  margin: 0;
 }
 
 .session-code {
@@ -463,44 +639,17 @@ onMounted(loadSessions)
   border: 1px solid var(--color-border);
 }
 
-.join-url {
-  font-family: monospace;
-  font-size: 0.75rem;
-  color: var(--color-gold);
-  margin: 0.5rem 0;
-  word-break: break-all;
-}
-
-.join-url a { color: var(--color-gold); }
-
-.qr-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 1rem 0;
-  gap: 0.5rem;
-}
-
 .qr-code {
-  width: 180px;
-  height: 180px;
-  border: 3px solid var(--color-gold-dark);
-  border-radius: 8px;
+  width: 130px;
+  height: 130px;
+  border: 2px solid var(--color-gold-dark);
+  border-radius: 6px;
   background: white;
-  padding: 4px;
-}
-
-.qr-hint {
-  font-family: var(--font-heading);
-  font-size: 0.65rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--color-text-dim);
+  padding: 3px;
 }
 
 .close-btn {
-  width: 100%;
-  margin-top: 0.75rem;
+  flex: 1;
   padding: 0.6rem;
   background: none;
   border: 1px solid var(--admin-danger-border, var(--color-danger-border));
@@ -516,85 +665,6 @@ onMounted(loadSessions)
 
 .close-btn:hover {
   background: var(--admin-danger-bg, var(--color-danger-soft));
-}
-
-.tv-section {
-  margin-top: 0.75rem;
-  background: var(--admin-panel-highlight-bg, var(--gradient-panel-soft));
-  border: 1px solid var(--color-gold-dark);
-  border-radius: 8px;
-  padding: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.tv-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.tv-label {
-  font-family: var(--font-heading);
-  font-size: 0.7rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--color-gold);
-}
-
-.tv-open-btn {
-  font-family: var(--font-heading);
-  font-size: 0.65rem;
-  color: var(--color-gold);
-  text-decoration: none;
-  border: 1px solid var(--color-gold-dark);
-  padding: 0.15rem 0.5rem;
-  border-radius: 20px;
-  transition: all 0.2s;
-}
-.tv-open-btn:hover { background: var(--admin-gold-bg, var(--surface-gold-soft)); color: var(--color-gold-bright); }
-
-.tv-url-row {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.tv-url {
-  flex: 1;
-  font-family: monospace;
-  font-size: 0.7rem;
-  color: var(--color-text-dim);
-  word-break: break-all;
-}
-
-.tv-copy-btn {
-  padding: 0.2rem 0.55rem;
-  background: var(--admin-gold-bg, var(--surface-gold-soft));
-  border: 1px solid var(--color-gold-dark);
-  border-radius: 6px;
-  color: var(--color-gold);
-  font-family: var(--font-heading);
-  font-size: 0.6rem;
-  letter-spacing: 0.05em;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s;
-}
-.tv-copy-btn:hover { background: var(--admin-gold-bg-strong, var(--surface-gold-soft-strong)); color: var(--color-gold-bright); }
-
-.tv-hint {
-  font-family: var(--font-body);
-  font-size: 0.7rem;
-  color: var(--color-text-dim);
-}
-
-.session-name-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.25rem;
 }
 
 .session-info { flex: 1; min-width: 0; }
@@ -657,9 +727,7 @@ onMounted(loadSessions)
 }
 
 .delete-btn {
-  width: 100%;
-  margin-top: 0.5rem;
-  padding: 0.6rem;
+  padding: 0.6rem 0.9rem;
   background: var(--admin-danger-bg, var(--color-danger-soft));
   border: 1px solid var(--admin-danger-border, var(--color-danger-border));
   border-radius: 6px;
@@ -669,7 +737,11 @@ onMounted(loadSessions)
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   transition: opacity 0.2s;
+  white-space: nowrap;
 }
 .delete-btn:hover { opacity: 0.8; }
 

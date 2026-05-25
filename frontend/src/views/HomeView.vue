@@ -1,11 +1,21 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { authStore } from '../stores/auth.js'
 import AppIcon from '../components/AppIcon.vue'
+import { applyTheme, getLastUsedTheme, setThemePreference } from '../utils/themePreferences.js'
 
 const router = useRouter()
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
+const theme = ref(getLastUsedTheme('dark'))
+const isLightTheme = computed(() => theme.value === 'light')
+
+function toggleTheme() {
+  theme.value = theme.value === 'light' ? 'dark' : 'light'
+  setThemePreference('admin', theme.value)
+  setThemePreference('tv', theme.value)
+  applyTheme(theme.value)
+}
 
 const showModal = ref(false)
 const username = ref('')
@@ -83,6 +93,10 @@ async function login() {
 <template>
   <div class="home-wrapper">
     <header class="home-header">
+      <button class="theme-toggle-btn" @click="toggleTheme">
+        <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.9em" />
+        {{ isLightTheme ? 'Sombre' : 'Clair' }}
+      </button>
       <h1 class="app-title">DM <span class="title-accent">Toolkit</span></h1>
       <p class="app-subtitle">Votre compagnon pour vos sessions de JDR !</p>
     </header>
@@ -210,6 +224,7 @@ async function login() {
 .home-header {
   text-align: center;
   padding: 3rem 1.5rem 2rem;
+  position: relative;
 }
 
 .app-title {
@@ -476,4 +491,24 @@ async function login() {
 
 .error-fade-enter-active, .error-fade-leave-active { transition: all 0.2s ease; }
 .error-fade-enter-from, .error-fade-leave-to { opacity: 0; transform: translateY(-4px); }
+
+.theme-toggle-btn {
+  position: absolute;
+  top: 1.25rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.theme-toggle-btn:hover { border-color: var(--color-gold-dark); color: var(--color-gold-bright); }
 </style>

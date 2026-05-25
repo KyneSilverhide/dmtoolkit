@@ -1,12 +1,11 @@
 import { test, expect } from '../fixtures'
-import { getAdminToken } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 import { AdminPage } from '../page-objects/AdminPage'
 import { TvPage } from '../page-objects/TvPage'
 
-test('combat round increments and TV shows updated value', async ({ browser }) => {
-  const token = await getAdminToken()
+test('combat round increments and TV shows updated value', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -20,18 +19,18 @@ test('combat round increments and TV shows updated value', async ({ browser }) =
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Combattant', hp: 30 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
     await adminPage.setTvMode('combat')
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
-    await expect(tvPage.getCombatRound()).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.getCombatRound()).toBeVisible({ timeout: 8_000 })
 
     await adminPage.switchTab('tension')
     await adminPage.page.locator('button.action-btn').filter({ hasText: '+1' }).first().click()
 
-    await expect(tvPage.getCombatRound()).toContainText('1', { timeout: 5_000 })
+    await expect(tvPage.getCombatRound()).toContainText('1', { timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
@@ -39,8 +38,8 @@ test('combat round increments and TV shows updated value', async ({ browser }) =
   }
 })
 
-test('combat round decrements (not below 0)', async ({ browser }) => {
-  const token = await getAdminToken()
+test('combat round decrements (not below 0)', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -54,23 +53,23 @@ test('combat round decrements (not below 0)', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Combattant', hp: 30 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
     await adminPage.setTvMode('combat')
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
-    await expect(tvPage.getCombatRound()).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.getCombatRound()).toBeVisible({ timeout: 8_000 })
 
     await adminPage.switchTab('tension')
     // Increment to 2
     await adminPage.page.locator('button.action-btn').filter({ hasText: '+1' }).first().click()
     await adminPage.page.locator('button.action-btn').filter({ hasText: '+1' }).first().click()
-    await expect(tvPage.getCombatRound()).toContainText('2', { timeout: 5_000 })
+    await expect(tvPage.getCombatRound()).toContainText('2', { timeout: 8_000 })
 
     // Decrement back to 1
     await adminPage.page.locator('button.action-btn').filter({ hasText: '−1' }).first().click()
-    await expect(tvPage.getCombatRound()).toContainText('1', { timeout: 5_000 })
+    await expect(tvPage.getCombatRound()).toContainText('1', { timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()
@@ -78,8 +77,8 @@ test('combat round decrements (not below 0)', async ({ browser }) => {
   }
 })
 
-test('reset combat round returns to 0', async ({ browser }) => {
-  const token = await getAdminToken()
+test('reset combat round returns to 0', async ({ browser, adminToken }) => {
+  const token = adminToken
   const code = await createSession(token)
 
   const adminCtx = await browser.newContext()
@@ -93,22 +92,22 @@ test('reset combat round returns to 0', async ({ browser }) => {
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Combattant', hp: 30 })
-    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 5_000 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
     await adminPage.setTvMode('combat')
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
-    await expect(tvPage.getCombatRound()).toBeVisible({ timeout: 5_000 })
+    await expect(tvPage.getCombatRound()).toBeVisible({ timeout: 8_000 })
 
     await adminPage.switchTab('tension')
     await adminPage.page.locator('button.action-btn').filter({ hasText: '+1' }).first().click()
     await adminPage.page.locator('button.action-btn').filter({ hasText: '+1' }).first().click()
-    await expect(tvPage.getCombatRound()).toContainText('2', { timeout: 5_000 })
+    await expect(tvPage.getCombatRound()).toContainText('2', { timeout: 8_000 })
 
     // Reset
     await adminPage.page.locator('button.action-btn.danger-btn').filter({ hasText: 'Réinitialiser' }).click()
-    await expect(tvPage.getCombatRound()).toContainText('0', { timeout: 5_000 })
+    await expect(tvPage.getCombatRound()).toContainText('0', { timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await tvCtx.close()

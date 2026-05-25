@@ -34,7 +34,7 @@ const messages = ref([])
 const unreadMessages = ref(0)
 const playerInfo = ref(sessionStore.playerInfo || { name: 'Aventurier', hp: 20, maxHp: 20, ac: 10 })
 const sessionName = ref(sessionStore.activeSession?.name || 'Session')
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
 const INITIATIVE_MIN = -10
 const INITIATIVE_MAX = 99
 const TEMP_HP_COLOR = 'var(--player-info-text)'
