@@ -712,11 +712,13 @@ function setupSocket(io) {
     socket.on('end-tension-scale', async ({ sessionId }) => {
       if (!socket.admin) return
       try {
+        // Fetch the current title before clearing it (RETURNING would give NULL after the update)
         const current = await pool.query(
           'SELECT tension_title FROM sessions WHERE id = $1 AND created_by = $2',
           [sessionId, socket.admin.id]
         )
-        const tensionTitle = current.rows[0]?.tension_title || 'Échelle de tension'
+        if (!current.rows[0]) return
+        const tensionTitle = current.rows[0].tension_title || 'Échelle de tension'
         await pool.query(
           `UPDATE sessions
            SET tension_title = NULL, tension_steps = NULL, tension_level = 0, tension_direction = 'ascending', tension_vibration = FALSE, tv_mode = 'lobby'
@@ -1285,7 +1287,7 @@ function setupSocket(io) {
           socket.emit('merchant-updated', merchantData)
           io.to(`tv:${req.session_id}`).emit('merchant-items-updated', merchantData)
           io.to(`session:${req.session_id}`).emit('merchant-items-updated', merchantData)
-          const purchaseDesc = `Achat accepté : ${req.quantity}× ${req.item_name} (${req.base_price} po) — ${req.player_name}`
+          const purchaseDesc = `Achat accepté : ${req.quantity}× ${req.item_name} (${req.base_price} po) — ${req.player_name}`.slice(0, 200)
           await pool.query(
             'INSERT INTO session_events (session_id, event_type, description, player_name, value) VALUES ($1, $2, $3, $4, $5)',
             [req.session_id, 'purchase_accepted', purchaseDesc, req.player_name, req.base_price]
@@ -1299,7 +1301,7 @@ function setupSocket(io) {
           await pool.query('UPDATE purchase_requests SET status = $1 WHERE id = $2', ['rejected', requestId])
           const items = [{ item_name: req.item_name, quantity: req.quantity, total_price: req.base_price }]
           if (playerSocketId) io.to(playerSocketId).emit('batch-rejected', { items })
-          const rejectDesc = `Achat refusé : ${req.quantity}× ${req.item_name} — ${req.player_name}`
+          const rejectDesc = `Achat refusé : ${req.quantity}× ${req.item_name} — ${req.player_name}`.slice(0, 200)
           await pool.query(
             'INSERT INTO session_events (session_id, event_type, description, player_name) VALUES ($1, $2, $3, $4)',
             [req.session_id, 'purchase_rejected', rejectDesc, req.player_name]
@@ -1356,7 +1358,7 @@ function setupSocket(io) {
           io.to(`tv:${reqs[0].session_id}`).emit('merchant-items-updated', merchantData)
           io.to(`session:${reqs[0].session_id}`).emit('merchant-items-updated', merchantData)
           socket.emit('purchase-responded', { batchId, action, totalPrice: finalTotal })
-          const batchDesc = `Achat accepté : ${items.map(i => `${i.quantity}× ${i.item_name}`).join(', ')} (${finalTotal} po) — ${reqs[0].player_name}`
+          const batchDesc = `Achat accepté : ${items.map(i => `${i.quantity}× ${i.item_name}`).join(', ')} (${finalTotal} po) — ${reqs[0].player_name}`.slice(0, 200)
           await pool.query(
             'INSERT INTO session_events (session_id, event_type, description, player_name, value) VALUES ($1, $2, $3, $4, $5)',
             [reqs[0].session_id, 'purchase_accepted', batchDesc, reqs[0].player_name, finalTotal]
@@ -1369,7 +1371,7 @@ function setupSocket(io) {
           const items = reqs.map(r => ({ item_name: r.item_name, quantity: r.quantity, total_price: r.base_price }))
           if (playerSocketId) io.to(playerSocketId).emit('batch-rejected', { batchId, items })
           socket.emit('purchase-responded', { batchId, action })
-          const batchRejectDesc = `Achat refusé : ${items.map(i => `${i.quantity}× ${i.item_name}`).join(', ')} — ${reqs[0].player_name}`
+          const batchRejectDesc = `Achat refusé : ${items.map(i => `${i.quantity}× ${i.item_name}`).join(', ')} — ${reqs[0].player_name}`.slice(0, 200)
           await pool.query(
             'INSERT INTO session_events (session_id, event_type, description, player_name) VALUES ($1, $2, $3, $4)',
             [reqs[0].session_id, 'purchase_rejected', batchRejectDesc, reqs[0].player_name]
@@ -1466,13 +1468,12 @@ function setupSocket(io) {
         )
         io.to(`tv:${sessionId}`).emit('round-updated', { round: safeRound })
         io.to(`admin:${sessionId}`).emit('round-updated', { round: safeRound })
-        if (safeRound > 0) {
-          await pool.query(
-            'INSERT INTO session_events (session_id, event_type, description, value) VALUES ($1, $2, $3, $4)',
-            [sessionId, 'combat_round', `Round de combat : ${safeRound}`, safeRound]
-          )
-          io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'combat_round', description: `Round de combat : ${safeRound}`, value: safeRound, createdAt: new Date() })
-        }
+        const roundDesc = safeRound === 0 ? 'Réinitialisation du round de combat' : `Round de combat : ${safeRound}`
+        await pool.query(
+          'INSERT INTO session_events (session_id, event_type, description, value) VALUES ($1, $2, $3, $4)',
+          [sessionId, 'combat_round', roundDesc, safeRound]
+        )
+        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'combat_round', description: roundDesc, value: safeRound, createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
