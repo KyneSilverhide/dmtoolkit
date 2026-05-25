@@ -307,21 +307,21 @@ async function sendMessage() {
 .feedback.error { color: var(--admin-danger-text, var(--color-danger)); }
 
 .send-btn {
-  padding: 0.85rem;
-  background: var(--gradient-info-action);
-  border: 1px solid var(--admin-info-border, var(--color-info-border));
+  padding: 0.6rem 1rem;
+  background: var(--gradient-accent-action);
+  border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
-  color: var(--color-parchment);
+  color: var(--color-gold-bright);
   font-family: var(--font-heading);
-  font-size: 0.9rem;
-  letter-spacing: 0.1em;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .send-btn:hover:not(:disabled) {
-  background: var(--gradient-info-action-hover);
+  background: var(--gradient-accent-action-hover);
   box-shadow: var(--shadow-soft);
 }
 

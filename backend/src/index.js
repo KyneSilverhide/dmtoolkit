@@ -91,6 +91,7 @@ app.get('/api/config', (req, res) => {
   const demoEnabled = process.env.DEMO_ENABLED !== 'false'
   res.json({
     demoEnabled,
+    generatorEnabled: !!process.env.GITHUB_TOKEN,
     ...(demoEnabled && {
       demoUsername: 'demo',
       demoPassword: process.env.DEMO_PASSWORD || 'demo',

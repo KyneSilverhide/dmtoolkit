@@ -34,6 +34,24 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 // __APP_VERSION__ is injected at build time by Vite from frontend/package.json
 const appVersion = __APP_VERSION__
 const activeTab = ref('players')
+const generatorEnabled = ref(true) // optimistic default — updated by loadConfig()
+
+// Tooltip fixe pour l'onglet Générateur grisé (échappe à overflow:hidden de la sidebar)
+const lockedTooltipVisible = ref(false)
+const lockedTooltipPos = ref({ top: 0, left: 0 })
+
+function showLockedTooltip(event) {
+  const rect = event.currentTarget.getBoundingClientRect()
+  lockedTooltipPos.value = {
+    top: rect.top + rect.height / 2,
+    left: rect.right + 10,
+  }
+  lockedTooltipVisible.value = true
+}
+
+function hideLockedTooltip() {
+  lockedTooltipVisible.value = false
+}
 const isSessionPanelCollapsed = ref(false)
 const tvMode = ref('lobby')
 const theme = ref(getThemePreference('admin', 'dark'))
@@ -221,6 +239,16 @@ async function loadSessions() {
   }
 }
 
+async function loadConfig() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/config`)
+    if (res.ok) {
+      const cfg = await res.json()
+      generatorEnabled.value = cfg.generatorEnabled !== false
+    }
+  } catch { /* silently ignore */ }
+}
+
 function logout() {
   resetSocket()
   authStore.logout()
@@ -235,6 +263,7 @@ function toggleTheme() {
 
 onMounted(() => {
   loadSessions()
+  loadConfig()
   _socket = getSocket(authStore.token)
 
   // Re-join admin room after socket reconnects so we don't miss events
@@ -415,10 +444,14 @@ onUnmounted(() => {
               v-for="key in group.items"
               :key="key"
               class="sidebar-item"
-              :class="{ active: activeTab === key }"
+              :class="{
+                active: activeTab === key,
+                'tab-locked': key === 'generator' && !generatorEnabled,
+              }"
               :data-testid="`tab-${key}`"
-              :title="tabs.find(t => t.key === key)?.label"
-              @click="activeTab = key"
+              @click="(key === 'generator' && !generatorEnabled) ? null : (activeTab = key)"
+              @mouseenter="(key === 'generator' && !generatorEnabled) ? showLockedTooltip($event) : null"
+              @mouseleave="hideLockedTooltip"
             >
               <span class="sidebar-item-icon">
                 <AppIcon :icon="tabs.find(t => t.key === key)?.icon" size="1.3rem" />
@@ -454,9 +487,14 @@ onUnmounted(() => {
             v-for="tab in tabs"
             :key="tab.key"
             class="mobile-nav-btn"
-            :class="{ active: activeTab === tab.key }"
+            :class="{
+              active: activeTab === tab.key,
+              'tab-locked': tab.key === 'generator' && !generatorEnabled,
+            }"
             :title="tab.label"
-            @click="activeTab = tab.key"
+            @click="(tab.key === 'generator' && !generatorEnabled) ? null : (activeTab = tab.key)"
+            @mouseenter="(tab.key === 'generator' && !generatorEnabled) ? showLockedTooltip($event) : null"
+            @mouseleave="hideLockedTooltip"
           >
             <span class="mobile-nav-icon-wrap">
               <AppIcon :icon="tab.icon" size="1.3rem" />
@@ -537,6 +575,23 @@ onUnmounted(() => {
         </div>
       </div>
     </TransitionGroup>
+
+    <!-- ── Tooltip fixe pour l'onglet Générateur grisé ──────────────────── -->
+    <Teleport to="body">
+      <Transition name="locked-tooltip">
+        <div
+          v-if="lockedTooltipVisible"
+          class="generator-locked-tooltip"
+          :style="{ top: lockedTooltipPos.top + 'px', left: lockedTooltipPos.left + 'px' }"
+        >
+          <span class="glt-icon"><AppIcon icon="lucide:key" size="0.9em" /></span>
+          <div class="glt-body">
+            <span class="glt-title">Générateur IA non activé</span>
+            <span class="glt-text">Configurez <code>GITHUB_TOKEN</code> dans le <code>.env</code> backend</span>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -957,6 +1012,83 @@ onUnmounted(() => {
 
 /* â”€â”€ Ã‰tats vides â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .no-session-msg { font-size: 0.88rem; color: var(--color-text-dim); padding: 1rem 0; }
+
+/* ── Tab locked (ex: générateur sans GITHUB_TOKEN) ──────────────────────── */
+.sidebar-item.tab-locked {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+.sidebar-item.tab-locked:hover {
+  background: none !important;
+  color: var(--color-text-dim) !important;
+  transform: none !important;
+}
+
+/* Mobile nav locked */
+.mobile-nav-btn.tab-locked {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+.mobile-nav-btn.tab-locked:hover {
+  background: none !important;
+  color: var(--color-text-dim) !important;
+  transform: none !important;
+}
+
+/* Tooltip fixe rendu via Teleport (échappe à overflow:hidden de la sidebar) */
+.generator-locked-tooltip {
+  position: fixed;
+  z-index: 9999;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-medium);
+  pointer-events: none;
+  max-width: 240px;
+}
+.glt-icon {
+  color: var(--color-warning);
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+.glt-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.glt-title {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-warning);
+  white-space: nowrap;
+}
+.glt-text {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  color: var(--color-text-dim);
+  line-height: 1.4;
+}
+.glt-text code {
+  font-family: monospace;
+  background: var(--surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  padding: 0 0.3rem;
+  font-size: 0.65rem;
+  color: var(--color-gold-bright);
+}
+.locked-tooltip-enter-active { transition: opacity 0.15s ease, transform 0.15s ease; }
+.locked-tooltip-leave-active { transition: opacity 0.1s ease; }
+.locked-tooltip-enter-from { opacity: 0; transform: translateY(-50%) translateX(-4px); }
+.locked-tooltip-leave-to { opacity: 0; }
 
 /* â”€â”€ Player roll toasts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .player-roll-toasts {
