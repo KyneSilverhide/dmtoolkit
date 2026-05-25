@@ -29,12 +29,15 @@ const DEMO_ITEMS = [
   { name: 'Parchemin de Soin des Blessures', description: 'Permet de lancer le sort Soin des Blessures une seule fois.',  price:  75, stock:   3, category: 'Parchemins'  },
 ]
 
-// Demo assets: { srcFile, destFile, sessionImageType, originalName }
+// Demo assets: { srcFile, destFile, sessionImageType, originalName, audioCategory? }
 const DEMO_ASSETS = [
   { srcFile: 'carte_donjon_demo.png', destFile: 'demo_carte_donjon.png', sessionImageType: 'map',   originalName: 'Carte donjon démo.png' },
   { srcFile: 'pnj1.png',             destFile: 'demo_pnj1.png',          sessionImageType: 'image', originalName: 'PNJ1.png' },
   { srcFile: 'pnj2.png',             destFile: 'demo_pnj2.png',          sessionImageType: 'image', originalName: 'PNJ2.png' },
   { srcFile: 'pnj3.png',             destFile: 'demo_pnj3.png',          sessionImageType: 'image', originalName: 'PNJ3.png' },
+  { srcFile: 'campfire.mp3',         destFile: 'demo_campfire.mp3',       sessionImageType: 'audio', originalName: 'Campfire.mp3',    audioCategory: 'Ambiance' },
+  { srcFile: 'growl.mp3',            destFile: 'demo_growl.mp3',          sessionImageType: 'audio', originalName: 'Growl.mp3',       audioCategory: 'Effet'    },
+  { srcFile: 'town-music.mp3',       destFile: 'demo_town-music.mp3',     sessionImageType: 'audio', originalName: 'Town Music.mp3',  audioCategory: 'Musique'  },
 ]
 
 /**
@@ -82,10 +85,17 @@ async function seedDemoContent(demoAdminId) {
   // Register all assets in session_images
   for (const asset of DEMO_ASSETS) {
     const url = urlMap[asset.destFile]
-    await pool.query(
-      'INSERT INTO session_images (session_id, url, original_name, type) VALUES ($1, $2, $3, $4)',
-      [sessionId, url, asset.originalName, asset.sessionImageType]
-    )
+    if (asset.audioCategory) {
+      await pool.query(
+        'INSERT INTO session_images (session_id, url, original_name, type, audio_category) VALUES ($1, $2, $3, $4, $5)',
+        [sessionId, url, asset.originalName, asset.sessionImageType, asset.audioCategory]
+      )
+    } else {
+      await pool.query(
+        'INSERT INTO session_images (session_id, url, original_name, type) VALUES ($1, $2, $3, $4)',
+        [sessionId, url, asset.originalName, asset.sessionImageType]
+      )
+    }
   }
 
   // Create demo merchant
