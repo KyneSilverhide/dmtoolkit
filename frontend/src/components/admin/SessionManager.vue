@@ -4,7 +4,7 @@ import { authStore } from '../../stores/auth.js'
 import { sessionStore } from '../../stores/session.js'
 import AppIcon from '../AppIcon.vue'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
 
 const sessionName = ref('')
 const loading = ref(false)

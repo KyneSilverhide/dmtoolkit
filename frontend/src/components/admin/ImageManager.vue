@@ -5,7 +5,7 @@ import { authStore } from '../../stores/auth.js'
 import { sessionStore } from '../../stores/session.js'
 import { getSocket } from '../../socket.js'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
 
 const images = ref([])
 const selectedImageUrl = ref(null)

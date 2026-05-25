@@ -16,7 +16,7 @@ function descriptionHtml(spell) {
   return `<p>${escaped}</p>`
 }
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
 
 const query = ref('')
 const results = ref([])

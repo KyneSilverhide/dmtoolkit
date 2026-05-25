@@ -16,7 +16,7 @@ const TEMP_HP_COLOR = 'var(--tv-info-text)'
 const TIMER_DANGER_THRESHOLD_SECONDS = 10
 
 const route = useRoute()
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
 
 const session = ref(null)
 const players = ref([])

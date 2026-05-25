@@ -31,7 +31,7 @@ import {
 } from '../socket-events.js'
 
 const router = useRouter()
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
 // __APP_VERSION__ is injected at build time by Vite from frontend/package.json
 const appVersion = __APP_VERSION__
 const activeTab = ref('players')

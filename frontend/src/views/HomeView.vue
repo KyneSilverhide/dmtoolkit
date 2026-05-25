@@ -6,7 +6,7 @@ import AppIcon from '../components/AppIcon.vue'
 import { applyTheme, getLastUsedTheme, setThemePreference } from '../utils/themePreferences.js'
 
 const router = useRouter()
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
 const theme = ref(getLastUsedTheme('dark'))
 const isLightTheme = computed(() => theme.value === 'light')
 

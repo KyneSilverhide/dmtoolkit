@@ -5,7 +5,7 @@ import { sessionStore } from '../../stores/session.js'
 import { getSocket } from '../../socket.js'
 import AppIcon from '../AppIcon.vue'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
 const MAX_BRUSH_RADIUS = 100
 const MIN_BRUSH_RADIUS = 5
 const DEFAULT_BRUSH_RADIUS = 30

@@ -2,6 +2,19 @@
 
 Application web temps réel pour le Maître du Jeu, permettant de gérer des sessions de jeu de rôle D&D 5e en français. Conçue pour fonctionner avec un écran TV dédié (vue spectateur) et les appareils des joueurs.
 
+## Déploiement en un clic
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/KyneSilverhide/dmtoolkit)
+
+Déploie automatiquement le backend, le frontend et une base de données PostgreSQL sur [Render](https://render.com). Après le déploiement :
+
+1. Dans le dashboard Render, aller dans le service **critical-fail-backend** > **Environment**
+2. Copier l'URL du service **critical-fail-frontend** dans la variable `FRONTEND_URL` (nécessaire pour le CORS)
+3. Redémarrer le service backend
+4. Récupérer le mot de passe admin généré automatiquement dans la variable `ADMIN_DEFAULT_PASSWORD`
+
+> **Tier gratuit** : les services se mettent en veille après 15 minutes d'inactivité (réveil en ~30 secondes). Passer en plan **Starter** ($7/mois par service) pour éviter la mise en veille lors des sessions de jeu.
+
 ## Fonctionnalités
 
 - **Gestion des joueurs** : PV, CA, classe, avatar, conditions, concentration, initiative

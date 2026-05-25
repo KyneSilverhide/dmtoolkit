@@ -13,7 +13,7 @@ import {
   parseGeneratorResult,
 } from '../../utils/generatorUtils.js'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+import { BACKEND_URL } from '@/config.js'
 
 const selectedType = ref(GENERATOR_TYPES[0].key)
 const options = ref(getDefaultOptions(GENERATOR_TYPES[0].key))
