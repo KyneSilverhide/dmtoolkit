@@ -86,6 +86,10 @@ test('vote_started event appears in journal when admin creates a vote', async ({
     // Open journal tab first so the socket listener catches the event
     await adminPage.switchTab('journal')
     const pg = adminPage.page
+    // Wait for journal to be fully mounted (ensures the socket listener is registered
+    // before navigating away — the Transition mode="out-in" leave-animation takes ~150ms
+    // and onMounted only fires once that animation completes)
+    await expect(pg.locator('.journal')).toBeVisible({ timeout: 5_000 })
 
     // Create a vote
     await adminPage.switchTab('vote')
@@ -118,6 +122,8 @@ test('doom_clock_started event appears in journal', async ({ browser, adminToken
     // Open journal tab first
     await adminPage.switchTab('journal')
     const pg = adminPage.page
+    // Wait for journal to be fully mounted before leaving (see note in vote test)
+    await expect(pg.locator('.journal')).toBeVisible({ timeout: 5_000 })
 
     // Start doom clock (TvControls tab)
     await adminPage.switchTab('tension')
@@ -152,6 +158,8 @@ test('combat_round event appears in journal', async ({ browser, adminToken }) =>
     // Open journal tab so socket listener is active
     await adminPage.switchTab('journal')
     const pg = adminPage.page
+    // Wait for journal to be fully mounted before leaving (see note in vote test)
+    await expect(pg.locator('.journal')).toBeVisible({ timeout: 5_000 })
 
     // The combat round control is in the tension/TvControls tab
     await adminPage.switchTab('tension')
@@ -208,7 +216,7 @@ test('journal loads past events from API via summary button', async ({ browser, 
     await expect(pg.locator('.timeline-item')).not.toHaveCount(0, { timeout: 10_000 })
 
     // There should be a join event for Legolas
-    await expect(pg.locator('.tl-desc').filter({ hasText: /Legolas/ })).toBeVisible({ timeout: 8_000 })
+    await expect(pg.locator('.tl-desc').filter({ hasText: /Legolas.*rejoint/i })).toBeVisible({ timeout: 8_000 })
 
     // There should be a damage/PV event
     await expect(pg.locator('.tl-desc').filter({ hasText: /dégâts|PV/i })).toBeVisible({ timeout: 8_000 })
@@ -235,6 +243,8 @@ test('tension_started event appears in journal', async ({ browser, adminToken })
 
     await adminPage.switchTab('journal')
     const pg = adminPage.page
+    // Wait for journal to be fully mounted before leaving (see note in vote test)
+    await expect(pg.locator('.journal')).toBeVisible({ timeout: 5_000 })
 
     // Create a tension scale (form is in the tension/TvControls tab)
     await adminPage.switchTab('tension')
