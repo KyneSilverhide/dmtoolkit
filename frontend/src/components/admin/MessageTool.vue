@@ -7,15 +7,27 @@ import AppIcon from '../AppIcon.vue'
 
 import { BACKEND_URL } from '@/config.js'
 
+const COLOR_PALETTE = [
+  { value: '#d4af37', label: 'Or' },
+  { value: '#60a5fa', label: 'Azur' },
+  { value: '#f87171', label: 'Sang' },
+  { value: '#34d399', label: 'Émeraude' },
+  { value: '#c084fc', label: 'Arcane' },
+  { value: '#fb923c', label: 'Braise' },
+  { value: '#e2e8f0', label: 'Argent' },
+]
+
 const selectedPlayerId = ref('all')
 const messageText = ref('')
 const authorName = ref('')
+const authorColor = ref('#d4af37')
 const imageFile = ref(null)
 const messageType = ref('text')
-const voiceStyle = ref('normal')
 const textEffect = ref('none')
 const sending = ref(false)
 const feedback = ref('')
+
+const isCustomColor = computed(() => !COLOR_PALETTE.some(c => c.value === authorColor.value))
 
 const hasSession = computed(() => !!sessionStore.activeSession)
 const hasConnectedPlayers = computed(() => sessionStore.players.length > 0)
@@ -86,9 +98,9 @@ async function sendMessage() {
       toPlayerId: selectedPlayerId.value === 'all' ? null : parseInt(selectedPlayerId.value),
       type: messageType.value,
       content,
-      voiceStyle: voiceStyle.value,
       textEffect: textEffect.value,
       authorName: authorName.value.trim() || null,
+      authorColor: authorColor.value,
     })
 
     feedback.value = 'Message envoyé !'
@@ -113,13 +125,35 @@ async function sendMessage() {
 
     <template v-else>
       <div class="form-group">
-        <label class="form-label">Auteur (affiché aux joueurs)</label>
-        <input
-          v-model="authorName"
-          type="text"
-          class="form-select"
-          placeholder="Laisser vide pour utiliser votre login"
-        />
+        <label class="form-label">Auteur</label>
+        <div class="author-row">
+          <input
+            v-model="authorName"
+            type="text"
+            class="form-select author-input"
+            placeholder="Laisser vide pour utiliser votre login"
+          />
+          <div class="color-palette">
+            <button
+              v-for="c in COLOR_PALETTE"
+              :key="c.value"
+              class="color-swatch"
+              :class="{ active: authorColor === c.value }"
+              :style="{ background: c.value }"
+              :title="c.label"
+              @click="authorColor = c.value"
+            />
+            <div
+              class="color-swatch custom-swatch"
+              :class="{ active: isCustomColor }"
+              :style="isCustomColor ? { background: authorColor } : {}"
+              title="Couleur personnalisée"
+            >
+              <input type="color" v-model="authorColor" class="hidden-color" />
+              <span v-if="!isCustomColor" class="custom-icon">✦</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="form-group">
@@ -150,22 +184,14 @@ async function sendMessage() {
       </div>
 
       <div class="form-group" v-if="messageType === 'text'">
-        <label class="form-label">Voix</label>
-        <div class="type-toggle">
-          <button class="toggle-btn" :class="{ active: voiceStyle === 'normal' }" @click="voiceStyle = 'normal'">Normale</button>
-          <button class="toggle-btn voice-god" :class="{ active: voiceStyle === 'god' }" @click="voiceStyle = 'god'"><AppIcon icon="lucide:zap" size="0.85em" /> Dieu</button>
-          <button class="toggle-btn voice-whisper" :class="{ active: voiceStyle === 'whisper' }" @click="voiceStyle = 'whisper'"><AppIcon icon="lucide:wind" size="0.85em" /> Murmure</button>
-          <button class="toggle-btn voice-demon" :class="{ active: voiceStyle === 'demon' }" @click="voiceStyle = 'demon'"><AppIcon icon="game-icons:imp" size="0.85em" /> Démon</button>
-        </div>
-      </div>
-
-      <div class="form-group" v-if="messageType === 'text'">
         <label class="form-label">Effet</label>
-        <div class="type-toggle">
+        <div class="type-toggle effects-toggle">
           <button class="toggle-btn" :class="{ active: textEffect === 'none' }" @click="textEffect = 'none'">Aucun</button>
           <button class="toggle-btn" :class="{ active: textEffect === 'slow' }" @click="textEffect = 'slow'"><AppIcon icon="lucide:hourglass" size="0.85em" /> Lent</button>
           <button class="toggle-btn" :class="{ active: textEffect === 'glitch' }" @click="textEffect = 'glitch'"><AppIcon icon="lucide:activity" size="0.85em" /> Glitch</button>
           <button class="toggle-btn" :class="{ active: textEffect === 'typewriter' }" @click="textEffect = 'typewriter'">⌨ Frappe</button>
+          <button class="toggle-btn" :class="{ active: textEffect === 'shake' }" @click="textEffect = 'shake'"><AppIcon icon="lucide:move" size="0.85em" /> Tremblement</button>
+          <button class="toggle-btn" :class="{ active: textEffect === 'glow' }" @click="textEffect = 'glow'"><AppIcon icon="lucide:sparkles" size="0.85em" /> Lueur</button>
         </div>
       </div>
 
@@ -256,9 +282,85 @@ async function sendMessage() {
   font-size: 0.9rem;
 }
 
+/* ── Author row with color palette ───────────────────── */
+.author-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.author-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.color-palette {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+}
+
+.color-swatch:hover {
+  transform: scale(1.2);
+}
+
+.color-swatch.active {
+  border-color: var(--color-parchment);
+  box-shadow: 0 0 0 1px var(--color-gold-dark);
+}
+
+.custom-swatch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  overflow: hidden;
+}
+
+.custom-swatch.active {
+  border-color: var(--color-parchment);
+}
+
+.hidden-color {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  padding: 0;
+  border: none;
+}
+
+.custom-icon {
+  font-size: 0.65rem;
+  color: var(--color-text-dim);
+  pointer-events: none;
+  line-height: 1;
+}
+
+/* ── Toggles ─────────────────────────────────────────── */
 .type-toggle {
   display: flex;
   gap: 0.5rem;
+}
+
+.effects-toggle {
+  flex-wrap: wrap;
 }
 
 .toggle-btn {
@@ -273,28 +375,13 @@ async function sendMessage() {
   letter-spacing: 0.1em;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .toggle-btn.active {
   border-color: var(--color-gold-dark);
   color: var(--color-gold-bright);
   background: var(--admin-gold-bg, var(--surface-gold-soft));
-}
-
-.toggle-btn.voice-god.active {
-  border-color: var(--color-gold-dark);
-  color: var(--color-gold-bright);
-  background: var(--admin-gold-bg, var(--surface-gold-soft));
-}
-.toggle-btn.voice-whisper.active {
-  border-color: var(--admin-info-border, var(--color-info-border));
-  color: var(--admin-info-text, var(--color-info-bright));
-  background: var(--admin-info-bg, var(--color-info-soft));
-}
-.toggle-btn.voice-demon.active {
-  border-color: var(--admin-danger-border, var(--color-danger-border));
-  color: var(--admin-danger-text, var(--color-danger));
-  background: var(--admin-danger-bg, var(--color-danger-soft));
 }
 
 .feedback {

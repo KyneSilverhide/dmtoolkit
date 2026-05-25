@@ -992,7 +992,7 @@ function setupSocket(io) {
     })
 
     // ── Admin: send message ─────────────────────────────────────────────────
-    socket.on('send-message', async ({ sessionId, toPlayerId, type, content, voiceStyle, textEffect, authorName }) => {
+    socket.on('send-message', async ({ sessionId, toPlayerId, type, content, voiceStyle, textEffect, authorName, authorColor }) => {
       if (!socket.admin) return
       try {
         const sessionCheck = await pool.query(
@@ -1007,9 +1007,10 @@ function setupSocket(io) {
         const fromName = (authorName && authorName.trim()) ? authorName.trim() : socket.admin.username
         const vStyle = voiceStyle || 'normal'
         const tEffect = textEffect || 'none'
-        await pool.query('INSERT INTO messages (session_id, from_name, to_player_id, type, content, voice_style, text_effect) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-          [sessionId, fromName, toPlayerId || null, type, content, vStyle, tEffect])
-        const msg = { fromName, type, content, voiceStyle: vStyle, textEffect: tEffect, sentAt: new Date() }
+        const aColor = authorColor || '#d4af37'
+        await pool.query('INSERT INTO messages (session_id, from_name, to_player_id, type, content, voice_style, text_effect, author_color) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+          [sessionId, fromName, toPlayerId || null, type, content, vStyle, tEffect, aColor])
+        const msg = { fromName, type, content, voiceStyle: vStyle, textEffect: tEffect, authorColor: aColor, sentAt: new Date() }
         if (toPlayerId) {
           const pr = await pool.query('SELECT socket_id FROM players WHERE id = $1', [toPlayerId])
           if (pr.rows[0]?.socket_id) io.to(pr.rows[0].socket_id).emit('new-message', msg)

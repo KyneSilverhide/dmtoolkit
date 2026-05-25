@@ -212,6 +212,9 @@ ALTER TABLE session_images ADD COLUMN IF NOT EXISTS audio_category VARCHAR(50) D
 
 -- File size tracking (used for demo storage quota enforcement)
 ALTER TABLE session_images ADD COLUMN IF NOT EXISTS file_size BIGINT DEFAULT 0;
+
+-- Author color for messages (replaces voice style in the UI)
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS author_color VARCHAR(20) DEFAULT '#d4af37';
 `
 
 async function runMigrations() {

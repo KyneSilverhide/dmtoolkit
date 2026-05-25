@@ -98,12 +98,10 @@ function resolvedText() {
       <img :src="getImageUrl(message.content)" alt="Image du MJ" class="message-image" />
     </div>
 
-    <div v-else class="text-card" :class="[
-      'voice-' + (message.voiceStyle || 'normal'),
-      'effect-' + (message.textEffect || 'none'),
-    ]">
+    <div v-else class="text-card" :class="'effect-' + (message.textEffect || 'none')"
+      :style="{ '--msg-color': message.authorColor || '#d4af37' }">
       <div class="card-header">
-        <span class="from-name voice-label">{{ message.fromName || 'MJ' }}</span>
+        <span class="from-name">{{ message.fromName || 'MJ' }}</span>
         <span class="card-time">{{ formatTime(message.sentAt) }}</span>
       </div>
       <p class="message-text">{{ resolvedText() }}</p>
@@ -239,42 +237,13 @@ function resolvedText() {
   white-space: pre-wrap;
 }
 
-/* ── Voice styles ───────────────────────────────────────────── */
-.voice-god .message-text {
-  font-family: var(--font-title);
-  font-size: 1.1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--color-gold-bright);
-  text-shadow: var(--text-shadow-accent);
-}
-.voice-god {
-  border-left: 3px solid var(--color-gold-dark);
-  background: var(--gradient-panel-soft);
+/* ── Text card color theming ────────────────────────────────── */
+.text-card {
+  border-left: 3px solid var(--msg-color, var(--color-gold-dark));
 }
 
-.voice-whisper .message-text {
-  font-style: italic;
-  font-size: 0.85rem;
-  color: var(--color-info-bright);
-  opacity: 0.8;
-  letter-spacing: 0.06em;
-}
-.voice-whisper {
-  border-left: 3px solid var(--color-info-border);
-  background: var(--gradient-panel-soft);
-}
-
-.voice-demon .message-text {
-  font-family: var(--font-heading);
-  font-size: 1rem;
-  color: var(--color-danger);
-  text-shadow: 0 0 12px var(--color-danger-soft), 0 2px 4px var(--color-shadow);
-  letter-spacing: 0.08em;
-}
-.voice-demon {
-  border-left: 3px solid var(--color-danger-border);
-  background: var(--gradient-panel-soft);
+.text-card .from-name {
+  color: var(--msg-color, var(--color-gold-dark));
 }
 
 /* ── Text effects ───────────────────────────────────────────── */
@@ -296,6 +265,29 @@ function resolvedText() {
   60%  { clip-path: inset(10% 0 80% 0); transform: translate(2px, 0); }
   80%  { clip-path: inset(70% 0 5% 0); transform: translate(-1px, 0); }
   100% { clip-path: inset(0 0 0 0); transform: translate(0, 0); }
+}
+
+.effect-shake .message-text {
+  animation: shakeText 0.55s ease-in-out;
+}
+@keyframes shakeText {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  15%, 45%, 75% { transform: translateX(-5px) rotate(-0.4deg); }
+  30%, 60%, 90% { transform: translateX(5px) rotate(0.4deg); }
+}
+
+.effect-glow .message-text {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+@keyframes pulseGlow {
+  0%, 100% {
+    text-shadow: 0 0 4px var(--msg-color, var(--color-gold-bright));
+    opacity: 1;
+  }
+  50% {
+    text-shadow: 0 0 14px var(--msg-color, var(--color-gold-bright)), 0 0 28px var(--msg-color, var(--color-gold-bright));
+    opacity: 0.88;
+  }
 }
 
 .message-image {
