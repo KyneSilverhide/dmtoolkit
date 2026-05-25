@@ -36,7 +36,7 @@ services:
         fromService:
           name: critical-fail-backend
           type: web
-          property: url
+          property: host
 
 databases:
   - name: critical-fail-db
