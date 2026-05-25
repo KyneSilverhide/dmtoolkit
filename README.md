@@ -8,11 +8,11 @@ Application web temps réel pour le Maître du Jeu, permettant de gérer des ses
 
 Déploie automatiquement le backend, le frontend et une base de données PostgreSQL sur [Render](https://render.com). Après le déploiement :
 
-1. Dans le dashboard Render, aller dans le service **critical-fail-backend** > **Environment**
-2. Copier l'URL du service **critical-fail-frontend** dans la variable `FRONTEND_URL` (nécessaire pour le CORS)
-3. *(Optionnel)* Renseigner `GITHUB_TOKEN` avec un token GitHub classic (aucun scope requis) pour activer le générateur IA de noms et accroches de quêtes
-4. Redémarrer le service backend
-5. Récupérer le mot de passe admin généré automatiquement dans la variable `ADMIN_DEFAULT_PASSWORD`
+1. Dans le dashboard Render, noter les URLs publiques des deux services (visibles dans l'onglet **Settings** de chaque service)
+2. Service **critical-fail-backend** > **Environment** : remplacer `FRONTEND_URL` par l'URL du frontend, puis redémarrer le backend
+3. Service **critical-fail-frontend** > **Environment** : remplacer `BACKEND_URL` par l'URL du backend, puis redémarrer le frontend
+4. *(Optionnel)* Dans le backend, renseigner `GITHUB_TOKEN` avec un token GitHub classic (aucun scope requis) pour activer le générateur IA
+5. Récupérer le mot de passe admin dans la variable `ADMIN_DEFAULT_PASSWORD` du backend
 
 > **Tier gratuit** : les services se mettent en veille après 15 minutes d'inactivité (réveil en ~30 secondes). Passer en plan **Starter** ($7/mois par service) pour éviter la mise en veille lors des sessions de jeu.
 

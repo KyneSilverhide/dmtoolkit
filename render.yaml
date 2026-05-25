@@ -38,10 +38,8 @@ services:
     plan: free
     envVars:
       - key: BACKEND_URL
-        fromService:
-          name: critical-fail-backend
-          type: web
-          property: host
+        value: "https://REMPLACER-PAR-URL-BACKEND.onrender.com"
+        description: "OBLIGATOIRE : remplacer par l'URL publique du service critical-fail-backend visible dans le dashboard Render (ex: https://critical-fail-backend-xxxx.onrender.com). Le navigateur utilise cette URL pour se connecter au backend."
 
 databases:
   - name: critical-fail-db
