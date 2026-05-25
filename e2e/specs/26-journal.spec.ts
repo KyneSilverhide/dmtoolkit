@@ -249,9 +249,10 @@ test('tension_started event appears in journal', async ({ browser, adminToken })
     // Create a tension scale (form is in the tension/TvControls tab)
     await adminPage.switchTab('tension')
     const titleInput = pg.locator('input[placeholder*="Titre de l\'échelle"]').first()
-    if (await titleInput.count()) await titleInput.fill('Tension des négociations')
+    await expect(titleInput).toBeVisible({ timeout: 5_000 })
+    await titleInput.fill('Tension des négociations')
     const stepsInput = pg.locator('input[placeholder*="Étapes"]').first()
-    if (await stepsInput.count()) await stepsInput.fill('5')
+    await stepsInput.fill('5')
     await pg.locator('button.action-btn').filter({ hasText: /Créer|Recréer/i }).click()
 
     // Switch to journal and verify tension_started event
