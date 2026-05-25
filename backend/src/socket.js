@@ -604,6 +604,11 @@ function setupSocket(io) {
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'doom' })
         io.to(`tv:${sessionId}`).emit('doom-clock-started', payload)
         io.to(`admin:${sessionId}`).emit('doom-clock-started', payload)
+        await pool.query(
+          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
+          [sessionId, 'doom_clock_started', `Doom Clock lancée : "${safeTitle}"`]
+        )
+        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'doom_clock_started', description: `Doom Clock lancée : "${safeTitle}"`, createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
@@ -621,6 +626,11 @@ function setupSocket(io) {
         io.to(`admin:${sessionId}`).emit('doom-clock-stopped')
         io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
+        await pool.query(
+          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
+          [sessionId, 'doom_clock_stopped', 'Doom Clock arrêtée']
+        )
+        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'doom_clock_stopped', description: 'Doom Clock arrêtée', createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
@@ -657,6 +667,11 @@ function setupSocket(io) {
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'tension' })
         io.to(`tv:${sessionId}`).emit('tension-scale-updated', payload)
         io.to(`admin:${sessionId}`).emit('tension-scale-updated', payload)
+        await pool.query(
+          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
+          [sessionId, 'tension_started', `Tension lancée : "${safeTitle}" (${safeSteps} étapes)`]
+        )
+        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'tension_started', description: `Tension lancée : "${safeTitle}" (${safeSteps} étapes)`, createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
@@ -685,6 +700,11 @@ function setupSocket(io) {
         }
         io.to(`tv:${sessionId}`).emit('tension-scale-updated', payload)
         io.to(`admin:${sessionId}`).emit('tension-scale-updated', payload)
+        await pool.query(
+          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
+          [sessionId, 'tension_updated', `Tension : niveau ${row.tension_level}/${row.tension_steps} — "${row.tension_title}"`]
+        )
+        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'tension_updated', description: `Tension : niveau ${row.tension_level}/${row.tension_steps} — "${row.tension_title}"`, createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
@@ -692,6 +712,11 @@ function setupSocket(io) {
     socket.on('end-tension-scale', async ({ sessionId }) => {
       if (!socket.admin) return
       try {
+        const current = await pool.query(
+          'SELECT tension_title FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        const tensionTitle = current.rows[0]?.tension_title || 'Échelle de tension'
         await pool.query(
           `UPDATE sessions
            SET tension_title = NULL, tension_steps = NULL, tension_level = 0, tension_direction = 'ascending', tension_vibration = FALSE, tv_mode = 'lobby'
@@ -702,6 +727,11 @@ function setupSocket(io) {
         io.to(`admin:${sessionId}`).emit('tension-scale-ended')
         io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
+        await pool.query(
+          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
+          [sessionId, 'tension_ended', `Tension terminée : "${tensionTitle}"`]
+        )
+        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'tension_ended', description: `Tension terminée : "${tensionTitle}"`, createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
@@ -726,6 +756,12 @@ function setupSocket(io) {
         io.to(`session:${sessionId}`).emit('vote-started', voteData)
         io.to(`admin:${sessionId}`).emit('vote-started', voteData)
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'vote' })
+        const safeQuestion = (question || '').slice(0, 200)
+        await pool.query(
+          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
+          [sessionId, 'vote_started', `Vote lancé : "${safeQuestion}"`]
+        )
+        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'vote_started', description: `Vote lancé : "${safeQuestion}"`, createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
@@ -760,6 +796,12 @@ function setupSocket(io) {
             io.to(`tv:${socket.sessionId}`).emit('vote-closed', voteUpdate)
             io.to(`session:${socket.sessionId}`).emit('vote-closed', voteUpdate)
             io.to(`admin:${socket.sessionId}`).emit('vote-closed', voteUpdate)
+            const closedQuestion = (voteUpdate.question || '').slice(0, 200)
+            await pool.query(
+              'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
+              [socket.sessionId, 'vote_closed', `Vote clôturé : "${closedQuestion}"`]
+            )
+            io.to(`admin:${socket.sessionId}`).emit('session-event', { eventType: 'vote_closed', description: `Vote clôturé : "${closedQuestion}"`, createdAt: new Date() })
           }
         }
       } catch (err) { console.error(err) }
@@ -781,6 +823,12 @@ function setupSocket(io) {
         io.to(`tv:${sessionId}`).emit('vote-closed', voteUpdate)
         io.to(`session:${sessionId}`).emit('vote-closed', voteUpdate)
         io.to(`admin:${sessionId}`).emit('vote-closed', voteUpdate)
+        const closedQuestion = (voteUpdate.question || '').slice(0, 200)
+        await pool.query(
+          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
+          [sessionId, 'vote_closed', `Vote clôturé : "${closedQuestion}"`]
+        )
+        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'vote_closed', description: `Vote clôturé : "${closedQuestion}"`, createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
@@ -1237,6 +1285,12 @@ function setupSocket(io) {
           socket.emit('merchant-updated', merchantData)
           io.to(`tv:${req.session_id}`).emit('merchant-items-updated', merchantData)
           io.to(`session:${req.session_id}`).emit('merchant-items-updated', merchantData)
+          const purchaseDesc = `Achat accepté : ${req.quantity}× ${req.item_name} (${req.base_price} po) — ${req.player_name}`
+          await pool.query(
+            'INSERT INTO session_events (session_id, event_type, description, player_name, value) VALUES ($1, $2, $3, $4, $5)',
+            [req.session_id, 'purchase_accepted', purchaseDesc, req.player_name, req.base_price]
+          )
+          io.to(`admin:${req.session_id}`).emit('session-event', { eventType: 'purchase_accepted', description: purchaseDesc, playerName: req.player_name, value: req.base_price, createdAt: new Date() })
         } else if (action === 'discount' || action === 'increase') {
           const fp = Math.max(0, parseInt(finalPrice) || req.base_price)
           await pool.query('UPDATE purchase_requests SET status = $1, final_price = $2 WHERE id = $3', [action, fp, requestId])
@@ -1245,6 +1299,12 @@ function setupSocket(io) {
           await pool.query('UPDATE purchase_requests SET status = $1 WHERE id = $2', ['rejected', requestId])
           const items = [{ item_name: req.item_name, quantity: req.quantity, total_price: req.base_price }]
           if (playerSocketId) io.to(playerSocketId).emit('batch-rejected', { items })
+          const rejectDesc = `Achat refusé : ${req.quantity}× ${req.item_name} — ${req.player_name}`
+          await pool.query(
+            'INSERT INTO session_events (session_id, event_type, description, player_name) VALUES ($1, $2, $3, $4)',
+            [req.session_id, 'purchase_rejected', rejectDesc, req.player_name]
+          )
+          io.to(`admin:${req.session_id}`).emit('session-event', { eventType: 'purchase_rejected', description: rejectDesc, playerName: req.player_name, createdAt: new Date() })
         }
         socket.emit('purchase-responded', { requestId, action })
       } catch (err) { console.error(err) }
@@ -1296,6 +1356,12 @@ function setupSocket(io) {
           io.to(`tv:${reqs[0].session_id}`).emit('merchant-items-updated', merchantData)
           io.to(`session:${reqs[0].session_id}`).emit('merchant-items-updated', merchantData)
           socket.emit('purchase-responded', { batchId, action, totalPrice: finalTotal })
+          const batchDesc = `Achat accepté : ${items.map(i => `${i.quantity}× ${i.item_name}`).join(', ')} (${finalTotal} po) — ${reqs[0].player_name}`
+          await pool.query(
+            'INSERT INTO session_events (session_id, event_type, description, player_name, value) VALUES ($1, $2, $3, $4, $5)',
+            [reqs[0].session_id, 'purchase_accepted', batchDesc, reqs[0].player_name, finalTotal]
+          )
+          io.to(`admin:${reqs[0].session_id}`).emit('session-event', { eventType: 'purchase_accepted', description: batchDesc, playerName: reqs[0].player_name, value: finalTotal, createdAt: new Date() })
         } else if (action === 'reject') {
           for (const req of reqs) {
             await pool.query('UPDATE purchase_requests SET status = $1 WHERE id = $2', ['rejected', req.id])
@@ -1303,6 +1369,12 @@ function setupSocket(io) {
           const items = reqs.map(r => ({ item_name: r.item_name, quantity: r.quantity, total_price: r.base_price }))
           if (playerSocketId) io.to(playerSocketId).emit('batch-rejected', { batchId, items })
           socket.emit('purchase-responded', { batchId, action })
+          const batchRejectDesc = `Achat refusé : ${items.map(i => `${i.quantity}× ${i.item_name}`).join(', ')} — ${reqs[0].player_name}`
+          await pool.query(
+            'INSERT INTO session_events (session_id, event_type, description, player_name) VALUES ($1, $2, $3, $4)',
+            [reqs[0].session_id, 'purchase_rejected', batchRejectDesc, reqs[0].player_name]
+          )
+          io.to(`admin:${reqs[0].session_id}`).emit('session-event', { eventType: 'purchase_rejected', description: batchRejectDesc, playerName: reqs[0].player_name, createdAt: new Date() })
         }
       } catch (err) { console.error(err) }
     })
@@ -1394,6 +1466,13 @@ function setupSocket(io) {
         )
         io.to(`tv:${sessionId}`).emit('round-updated', { round: safeRound })
         io.to(`admin:${sessionId}`).emit('round-updated', { round: safeRound })
+        if (safeRound > 0) {
+          await pool.query(
+            'INSERT INTO session_events (session_id, event_type, description, value) VALUES ($1, $2, $3, $4)',
+            [sessionId, 'combat_round', `Round de combat : ${safeRound}`, safeRound]
+          )
+          io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'combat_round', description: `Round de combat : ${safeRound}`, value: safeRound, createdAt: new Date() })
+        }
       } catch (err) { console.error(err) }
     })
 
