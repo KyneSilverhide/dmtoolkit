@@ -1,4 +1,4 @@
-# Critical Fail — Outil de gestion de sessions D&D 5e
+# DM Toolkit — Outil de gestion de sessions D&D 5e
 
 Application web temps réel pour le Maître du Jeu, permettant de gérer des sessions de jeu de rôle D&D 5e en français. Conçue pour fonctionner avec un écran TV dédié (vue spectateur) et les appareils des joueurs.
 
@@ -9,8 +9,8 @@ Application web temps réel pour le Maître du Jeu, permettant de gérer des ses
 Déploie automatiquement le backend, le frontend et une base de données PostgreSQL sur [Render](https://render.com). Après le déploiement :
 
 1. Dans le dashboard Render, noter les URLs publiques des deux services (visibles dans l'onglet **Settings** de chaque service)
-2. Service **critical-fail-backend** > **Environment** : remplacer `FRONTEND_URL` par l'URL du frontend, puis redémarrer le backend
-3. Service **critical-fail-frontend** > **Environment** : remplacer `BACKEND_URL` par l'URL du backend, puis redémarrer le frontend
+2. Service **dmtoolkit-backend** > **Environment** : remplacer `FRONTEND_URL` par l'URL du frontend, puis redémarrer le backend
+3. Service **dmtoolkit-frontend** > **Environment** : remplacer `BACKEND_URL` par l'URL du backend, puis redémarrer le frontend
 4. *(Optionnel)* Dans le backend, renseigner `GITHUB_TOKEN` avec un token GitHub classic (aucun scope requis) pour activer le générateur IA
 5. Récupérer le mot de passe admin dans la variable `ADMIN_DEFAULT_PASSWORD` du backend
 

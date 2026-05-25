@@ -6,7 +6,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 
 ## Résumé du projet
 
-**Critical Fail** est une application web de gestion de sessions de jeu de rôle D&D 5e (en français), destinée au Maître du Jeu (MJ). Elle permet :
+**DM Toolkit** est une application web de gestion de sessions de jeu de rôle D&D 5e (en français), destinée au Maître du Jeu (MJ). Elle permet :
 
 - La gestion en temps réel des joueurs (PV, CA, conditions, concentration, initiative)
 - L'affichage sur un écran TV dédié (vue spectateur)
@@ -19,7 +19,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 - Un générateur IA de noms (PNJ, lieux, auberges), accroches de quêtes et descriptions via GitHub Models (gpt-4o-mini)
 - Un gestionnaire audio côté admin : upload de fichiers audio (MP3/WAV/OGG/FLAC/M4A), organisés par catégorie (ambiance/musique/effets/autre), lecture multi-piste simultanée avec volume et boucle par piste, renommage inline
 - Une isolation multi-tenant : chaque admin ne voit que ses propres sessions, et les fichiers uploadés sont stockés par tenant (`/uploads/<adminId>/`)
-- Un plugin Obsidian pour synchroniser l'Initiative Tracker avec Critical Fail
+- Un plugin Obsidian pour synchroniser l'Initiative Tracker avec DM Toolkit
 
 ---
 
@@ -53,7 +53,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │                      # uploads: POST /api/uploads (images, 50MB), POST /api/uploads/audio (audio, 150MB)
 │   │                      # sessions: GET/DELETE/PATCH /api/sessions/:id/images/:imageId
 │   │                      # (+ GET /api/sessions/:id/players pour sync Obsidian)
-├── obsidian-plugin/   # Plugin Obsidian (TypeScript) — sync Initiative Tracker ↔ Critical Fail
+├── obsidian-plugin/   # Plugin Obsidian (TypeScript) — sync Initiative Tracker ↔ DM Toolkit
 ├── docker-compose.yml     # Postgres 16 + backend + frontend
 └── docker-compose.prod.yml
 ```

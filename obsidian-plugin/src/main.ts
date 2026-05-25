@@ -1,8 +1,8 @@
 import { Notice, Plugin } from 'obsidian';
 import { io, Socket } from 'socket.io-client';
-import { CriticalFailSettings, CriticalFailSettingTab, DEFAULT_SETTINGS } from './settings';
+import { DmToolkitSettings, DmToolkitSettingTab, DEFAULT_SETTINGS } from './settings';
 
-// Shape of a player as returned by Critical Fail
+// Shape of a player as returned by DM Toolkit
 interface CFPlayer {
 	id: number;
 	player_name: string;
@@ -16,8 +16,8 @@ interface CFPlayer {
 	avatar_url: string;
 }
 
-export default class CriticalFailSync extends Plugin {
-	settings!: CriticalFailSettings;
+export default class DmToolkitSync extends Plugin {
+	settings!: DmToolkitSettings;
 	private socket: Socket | null = null;
 	// plugin.api  → addCreatures / newEncounter
 	// plugin.tracker → updateCreatureByName
@@ -30,17 +30,17 @@ export default class CriticalFailSync extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
-		this.addSettingTab(new CriticalFailSettingTab(this.app, this));
+		this.addSettingTab(new DmToolkitSettingTab(this.app, this));
 
 		this.addCommand({
 			id: 'connect',
-			name: 'Connecter à Critical Fail',
+			name: 'Connecter à DM Toolkit',
 			callback: () => this.connect(),
 		});
 
 		this.addCommand({
 			id: 'disconnect',
-			name: 'Déconnecter de Critical Fail',
+			name: 'Déconnecter de DM Toolkit',
 			callback: () => this.disconnect(),
 		});
 
@@ -63,13 +63,13 @@ export default class CriticalFailSync extends Plugin {
 
 	connect() {
 		if (this.socket?.connected) {
-			new Notice('Critical Fail Sync: déjà connecté.');
+			new Notice('DM Toolkit Sync: déjà connecté.');
 			return;
 		}
 
 		const { backendUrl, jwtToken, sessionId } = this.settings;
 		if (!jwtToken || !sessionId) {
-			new Notice('Critical Fail Sync: configure l\'URL, le token JWT et l\'ID de session d\'abord.');
+			new Notice('DM Toolkit Sync: configure l\'URL, le token JWT et l\'ID de session d\'abord.');
 			return;
 		}
 
@@ -79,42 +79,42 @@ export default class CriticalFailSync extends Plugin {
 		});
 
 		this.socket.on('connect', () => {
-			new Notice('Critical Fail Sync: connecté ✓');
+			new Notice('DM Toolkit Sync: connecté ✓');
 			this.socket!.emit('admin-join', sessionId);
 		});
 
 		this.socket.on('connect_error', (err: Error) => {
-			new Notice(`Critical Fail Sync: erreur de connexion — ${err.message}`);
+			new Notice(`DM Toolkit Sync: erreur de connexion — ${err.message}`);
 		});
 
 		this.socket.on('disconnect', () => {
-			new Notice('Critical Fail Sync: déconnecté.');
+			new Notice('DM Toolkit Sync: déconnecté.');
 		});
 
-		// CF → IT: initial snapshot
+		// DM Toolkit → IT: initial snapshot
 		this.socket.on('players-snapshot', ({ players }: { players: CFPlayer[] }) => {
 			this.populateIT(players);
 		});
 
-		// CF → IT: player joined (new or reconnect)
+		// DM Toolkit → IT: player joined (new or reconnect)
 		this.socket.on('player-joined', (player: CFPlayer) => {
 			this.upsertITCreature(player);
 		});
 
-		// CF → IT: player left
+		// DM Toolkit → IT: player left
 		this.socket.on('player-left', ({ playerId }: { playerId: number }) => {
 			this.playerIdToName.delete(playerId);
 			this.playerIdToMaxHp.delete(playerId);
 			// removeCreature is not exposed in the current IT API — no-op.
 		});
 
-		// CF → IT: HP updated — fast path
+		// DM Toolkit → IT: HP updated — fast path
 		this.socket.on('hp-updated', ({ playerId, newHp }: { playerId: number; newHp: number }) => {
 			const name = this.playerIdToName.get(playerId);
 			if (name) this.applyITUpdate(name, { hp: newHp });
 		});
 
-		// CF → IT: initiative updated — fast path
+		// DM Toolkit → IT: initiative updated — fast path
 		this.socket.on('initiative-updated', ({ playerId, initiative }: { playerId: number; initiative: number | null }) => {
 			const name = this.playerIdToName.get(playerId);
 			if (name && initiative !== null) {
@@ -143,7 +143,7 @@ export default class CriticalFailSync extends Plugin {
 	private populateIT(players: CFPlayer[]) {
 		const it = this.getITPlugin();
 		if (!it) {
-			new Notice('Critical Fail Sync: Initiative Tracker introuvable. Installe et active le plugin.');
+			new Notice('DM Toolkit Sync: Initiative Tracker introuvable. Installe et active le plugin.');
 			return;
 		}
 		this.playerIdToName.clear();
@@ -164,9 +164,9 @@ export default class CriticalFailSync extends Plugin {
 			if (typeof it.api?.newEncounter === 'function') it.api.newEncounter();
 			if (typeof it.api?.addCreatures === 'function') it.api.addCreatures(creatures);
 		} catch (err) {
-			console.error('[CF Sync] populateIT error:', err);
+			console.error('[DM Toolkit Sync] populateIT error:', err);
 		}
-		new Notice(`Critical Fail Sync: ${players.length} joueur(s) importé(s) dans l'Initiative Tracker.`);
+		new Notice(`DM Toolkit Sync: ${players.length} joueur(s) importé(s) dans l'Initiative Tracker.`);
 	}
 
 	private upsertITCreature(player: CFPlayer) {
@@ -203,7 +203,7 @@ export default class CriticalFailSync extends Plugin {
 				}]);
 			}
 		} catch (err) {
-			console.warn('[CF Sync] upsertITCreature error:', err);
+			console.warn('[DM Toolkit Sync] upsertITCreature error:', err);
 		}
 	}
 
@@ -218,11 +218,11 @@ export default class CriticalFailSync extends Plugin {
 				it.tracker.updateCreatureByName(name, data);
 			}
 		} catch (err) {
-			console.warn('[CF Sync] applyITUpdate error:', err);
+			console.warn('[DM Toolkit Sync] applyITUpdate error:', err);
 		}
 	}
 
-	// ── IT → CF pushes ──────────────────────────────────────────────────────────
+	// ── IT → DM Toolkit pushes ──────────────────────────────────────────────────
 
 	private pushInitiativeToCF(playerName: string, initiative: number) {
 		if (!this.socket?.connected || !this.settings.sessionId) return;
@@ -246,7 +246,7 @@ export default class CriticalFailSync extends Plugin {
 	async syncPlayersFromCF() {
 		const { backendUrl, jwtToken, sessionId } = this.settings;
 		if (!jwtToken || !sessionId) {
-			new Notice('Critical Fail Sync: token JWT et ID de session requis.');
+			new Notice('DM Toolkit Sync: token JWT et ID de session requis.');
 			return;
 		}
 		try {
@@ -257,14 +257,14 @@ export default class CriticalFailSync extends Plugin {
 			const players = await res.json() as CFPlayer[];
 			this.populateIT(players);
 		} catch (err) {
-			new Notice(`Critical Fail Sync: erreur lors de la récupération des joueurs — ${err}`);
+			new Notice(`DM Toolkit Sync: erreur lors de la récupération des joueurs — ${err}`);
 		}
 	}
 
 	// ── Settings persistence ────────────────────────────────────────────────────
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<CriticalFailSettings>);
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<DmToolkitSettings>);
 	}
 
 	async saveSettings() {

@@ -1,14 +1,14 @@
 services:
   - type: web
-    name: critical-fail-backend
+    name: dmtoolkit-backend
     runtime: image
     image:
-      url: ghcr.io/kynesilverhide/critical-fail-backend:latest
+      url: ghcr.io/kynesilverhide/dmtoolkit-backend:latest
     plan: free
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: critical-fail-db
+          name: dmtoolkit-db
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
@@ -16,7 +16,7 @@ services:
         value: 10000
       - key: FRONTEND_URL
         value: "https://REMPLACER-PAR-URL-FRONTEND.onrender.com"
-        description: "OBLIGATOIRE après déploiement : remplacer cette valeur par l'URL du service critical-fail-frontend visible dans le dashboard Render. Utilisé pour le CORS et les QR codes. Redémarrer le backend ensuite."
+        description: "OBLIGATOIRE après déploiement : remplacer cette valeur par l'URL du service dmtoolkit-frontend visible dans le dashboard Render. Utilisé pour le CORS et les QR codes. Redémarrer le backend ensuite."
       - key: ADMIN_DEFAULT_USERNAME
         value: admin
         description: "Nom d'utilisateur du compte administrateur créé au premier démarrage."
@@ -31,18 +31,18 @@ services:
         description: "OPTIONNEL : token GitHub classic (aucun scope requis) pour activer le générateur IA de noms, accroches de quêtes et descriptions via GitHub Models (gpt-4o-mini). Sans ce token, le générateur retourne une erreur 503."
 
   - type: web
-    name: critical-fail-frontend
+    name: dmtoolkit-frontend
     runtime: image
     image:
-      url: ghcr.io/kynesilverhide/critical-fail-frontend:latest
+      url: ghcr.io/kynesilverhide/dmtoolkit-frontend:latest
     plan: free
     envVars:
       - key: BACKEND_URL
         value: "https://REMPLACER-PAR-URL-BACKEND.onrender.com"
-        description: "OBLIGATOIRE : remplacer par l'URL publique du service critical-fail-backend visible dans le dashboard Render (ex: https://critical-fail-backend-xxxx.onrender.com). Le navigateur utilise cette URL pour se connecter au backend."
+        description: "OBLIGATOIRE : remplacer par l'URL publique du service dmtoolkit-backend visible dans le dashboard Render (ex: https://dmtoolkit-backend-xxxx.onrender.com). Le navigateur utilise cette URL pour se connecter au backend."
 
 databases:
-  - name: critical-fail-db
+  - name: dmtoolkit-db
     databaseName: criticalfail
     user: criticalfail
     plan: free
