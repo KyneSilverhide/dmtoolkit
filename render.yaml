@@ -16,14 +16,19 @@ services:
         value: 10000
       - key: FRONTEND_URL
         sync: false
+        description: "OBLIGATOIRE après déploiement : coller ici l'URL du service critical-fail-frontend (ex: https://critical-fail-frontend-xxxx.onrender.com). Utilisé pour le CORS et les QR codes. Redémarrer le backend ensuite."
       - key: ADMIN_DEFAULT_USERNAME
         value: admin
+        description: "Nom d'utilisateur du compte administrateur créé au premier démarrage."
       - key: ADMIN_DEFAULT_PASSWORD
         generateValue: true
+        description: "Mot de passe admin généré automatiquement. À noter depuis l'onglet Environment après déploiement."
       - key: DEMO_ENABLED
         value: "false"
+        description: "Mettre à true pour activer un compte de démonstration (code session 0000, reset automatique chaque nuit)."
       - key: GITHUB_TOKEN
         sync: false
+        description: "OPTIONNEL : token GitHub classic (aucun scope requis) pour activer le générateur IA de noms, accroches de quêtes et descriptions via GitHub Models (gpt-4o-mini). Sans ce token, le générateur retourne une erreur 503."
 
   - type: web
     name: critical-fail-frontend

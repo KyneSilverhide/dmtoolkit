@@ -10,8 +10,9 @@ Déploie automatiquement le backend, le frontend et une base de données Postgre
 
 1. Dans le dashboard Render, aller dans le service **critical-fail-backend** > **Environment**
 2. Copier l'URL du service **critical-fail-frontend** dans la variable `FRONTEND_URL` (nécessaire pour le CORS)
-3. Redémarrer le service backend
-4. Récupérer le mot de passe admin généré automatiquement dans la variable `ADMIN_DEFAULT_PASSWORD`
+3. *(Optionnel)* Renseigner `GITHUB_TOKEN` avec un token GitHub classic (aucun scope requis) pour activer le générateur IA de noms et accroches de quêtes
+4. Redémarrer le service backend
+5. Récupérer le mot de passe admin généré automatiquement dans la variable `ADMIN_DEFAULT_PASSWORD`
 
 > **Tier gratuit** : les services se mettent en veille après 15 minutes d'inactivité (réveil en ~30 secondes). Passer en plan **Starter** ($7/mois par service) pour éviter la mise en veille lors des sessions de jeu.
 
