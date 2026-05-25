@@ -13,14 +13,14 @@ export default defineConfig({
     video: 'retain-on-failure',
     navigationTimeout: 15_000,
   },
-  projects: [
-    {
-      name: 'firefox',
-      use: {
-        ...devices['Desktop Firefox'],
-      },
-    },
-  ],
+  // projects: [
+  //   {
+  //     name: 'firefox',
+  //     use: {
+  //       ...devices['Desktop Firefox'],
+  //     },
+  //   },
+  // ],
   globalSetup: './global-setup.ts',
   reporter: [
     ['html', { open: 'never' }],

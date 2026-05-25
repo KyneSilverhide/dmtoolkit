@@ -528,16 +528,16 @@ onUnmounted(() => {
 
     <!-- Main TV display -->
     <template v-else>
-      <!-- Doom clock overlay: shown on top of any mode other than doom full-screen -->
-      <div v-if="activeDoomClock && tvMode !== 'doom'" class="doom-overlay" :class="{ danger: doomRemaining <= DOOM_DANGER_THRESHOLD_SECONDS }">
-        <span class="doom-overlay-title">{{ activeDoomClock.title }}</span>
-        <span class="doom-overlay-timer">{{ doomRemainingLabel }}</span>
-      </div>
-
-      <!-- Free timer overlay -->
-      <div v-if="activeTimer && timerRemaining > 0" class="timer-overlay" :class="{ danger: timerRemaining <= TIMER_DANGER_THRESHOLD_SECONDS }">
-        <span class="timer-overlay-label">{{ activeTimer.label }}</span>
-        <span class="timer-overlay-time">{{ timerRemainingLabel }}</span>
+      <!-- Overlays: doom clock + free timer, stacked top-right -->
+      <div class="overlays-container">
+        <div v-if="activeDoomClock && tvMode !== 'doom'" class="doom-overlay" :class="{ danger: doomRemaining <= DOOM_DANGER_THRESHOLD_SECONDS }">
+          <span class="doom-overlay-title">{{ activeDoomClock.title }}</span>
+          <span class="doom-overlay-timer">{{ doomRemainingLabel }}</span>
+        </div>
+        <div v-if="activeTimer && timerRemaining > 0" class="timer-overlay" :class="{ danger: timerRemaining <= TIMER_DANGER_THRESHOLD_SECONDS }">
+          <span class="timer-overlay-label">{{ activeTimer.label }}</span>
+          <span class="timer-overlay-time">{{ timerRemainingLabel }}</span>
+        </div>
       </div>
       <Transition name="tv-mode" mode="out-in">
       <div :key="tvMode" class="tv-mode-container" data-testid="tv-container" :data-tv-mode="tvMode">
@@ -946,14 +946,21 @@ onUnmounted(() => {
 .empty-text { font-family: var(--font-heading); font-size: 1.5rem; color: var(--color-text-dim); letter-spacing: 0.2em; }
 
 /* ── Overlays (doom clock + free timer) ───────────────────────────────── */
-.doom-overlay {
+.overlays-container {
   position: fixed;
   top: 1rem;
-  left: 1rem;
+  right: 1rem;
   z-index: 30;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.doom-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   gap: 0.15rem;
   background: rgba(0, 0, 0, 0.75);
   border: 1px solid var(--tv-danger-border);
@@ -975,17 +982,13 @@ onUnmounted(() => {
 }
 .doom-overlay-timer {
   font-family: var(--font-title);
-  font-size: 1.6rem;
+  font-size: 2rem;
   color: var(--tv-danger-text);
   line-height: 1;
   letter-spacing: 0.05em;
 }
 
 .timer-overlay {
-  position: fixed;
-  top: 1rem;
-  right: 4rem;
-  z-index: 30;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -1010,7 +1013,7 @@ onUnmounted(() => {
 }
 .timer-overlay-time {
   font-family: var(--font-title);
-  font-size: 3rem;
+  font-size: 2rem;
   color: var(--tv-info-text);
   line-height: 1;
   letter-spacing: 0.05em;
@@ -1019,7 +1022,9 @@ onUnmounted(() => {
 /* In light theme the overlays always have a dark (black) background, so force
    light text colors to ensure readability regardless of theme. */
 :root[data-theme='light'] .timer-overlay-label,
-:root[data-theme='light'] .timer-overlay-time {
+:root[data-theme='light'] .timer-overlay-time,
+:root[data-theme='light'] .doom-overlay-title,
+:root[data-theme='light'] .doom-overlay-timer {
   color: #9ed3ff;
 }
 
