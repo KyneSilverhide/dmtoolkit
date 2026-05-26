@@ -42,11 +42,21 @@ onMounted(async () => {
   } catch { /* silently ignore */ }
 })
 
-function openModal() {
+async function openModal() {
   showModal.value = true
   error.value = ''
   username.value = ''
   password.value = ''
+
+  if (window.PasswordCredential && navigator.credentials) {
+    try {
+      const cred = await navigator.credentials.get({ password: true, mediation: 'optional' })
+      if (cred) {
+        username.value = cred.id
+        password.value = cred.password
+      }
+    } catch { /* silently ignore */ }
+  }
 }
 
 function closeModal() {
@@ -82,6 +92,12 @@ async function login() {
       error.value = data.error || 'Identifiants incorrects.'
       loading.value = false
       return
+    }
+    if (window.PasswordCredential && navigator.credentials) {
+      try {
+        const cred = new PasswordCredential({ id: username.value, password: password.value, name: username.value })
+        await navigator.credentials.store(cred)
+      } catch { /* silently ignore */ }
     }
     authStore.login(data.token, data.admin)
     window.location.href = '/admin'
