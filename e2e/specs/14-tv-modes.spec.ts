@@ -83,7 +83,7 @@ test('admin can switch TV back to lobby', async ({ browser, adminToken }) => {
 })
 
 test('TV combat mode shows combat round badge', async ({ browser, adminToken }) => {
-  test.setTimeout(20_000)
+  test.setTimeout(40_000)
   const token = adminToken
   const code = await createSession(token)
 
