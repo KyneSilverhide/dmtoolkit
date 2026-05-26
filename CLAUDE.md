@@ -19,6 +19,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 - Un générateur IA de noms (PNJ, lieux, auberges), accroches de quêtes et descriptions via GitHub Models (gpt-4o-mini)
 - Un gestionnaire audio côté admin : upload de fichiers audio (MP3/WAV/OGG/FLAC/M4A), organisés par catégorie (ambiance/musique/effets/autre), lecture multi-piste simultanée avec volume et boucle par piste, renommage inline
 - Une isolation multi-tenant : chaque admin ne voit que ses propres sessions, et les fichiers uploadés sont stockés par tenant (`/uploads/<adminId>/`)
+- Un système de release notes intégré : cloche de notification dans l'en-tête (MJ et joueur), modal filtré par rôle (`admin`/`player`/`all`), dernier numéro de version vu en localStorage (`rn-last-viewed`)
 - Un plugin Obsidian pour synchroniser l'Initiative Tracker avec DM Toolkit
 
 ---
@@ -33,7 +34,9 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │   ├── components/admin/  # Composants admin (MapManager, MerchantManager, GeneratorTool, AudioManager, etc.)
 │   │   ├── components/player/ # Composants joueur (SpellSearchTool, MagicItemSearchTool, PlayerDiceTool, etc.)
 │   │   ├── components/AppIcon.vue  # Composant icônes dynamiques (remplace les emojis statiques)
-│   │   ├── stores/    # Pinia stores (auth.js, session.js)
+│   │   ├── components/ReleaseNotesBell.vue  # Cloche de notification (prop role="admin"|"player")
+│   │   ├── components/ReleaseNotesModal.vue # Modal release notes (Teleport+Transition, filtre par rôle)
+│   │   ├── stores/    # Pinia stores (auth.js, session.js, releaseNotes.js)
 │   │   ├── router/    # Vue Router (toutes les vues importées statiquement)
 │   │   ├── utils/     # Utilitaires (conditions.js, playerProfiles.js, playerSessionMemory.js, themePreferences.js, generatorUtils.js)
 │   │   └── socket.js  # Singleton Socket.IO client
@@ -48,9 +51,11 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │   ├── data/          # Fichiers JSON de données statiques
 │   │   │   ├── aidedd_spells.json        # 477 sorts D&D 5e en français
 │   │   │   ├── aidedd_magic_items.json   # Objets magiques D&D 5e
+│   │   │   ├── release-notes.json        # Notes de version (triées plus récentes en premier)
 │   │   │   └── aidedd_standard_items.json # 147 objets standard D&D 5e
-│   │   └── routes/        # auth, sessions, uploads, spells, magic-items, equipment, generate
+│   │   └── routes/        # auth, sessions, uploads, spells, magic-items, equipment, generate, release-notes
 │   │                      # uploads: POST /api/uploads (images, 50MB), POST /api/uploads/audio (audio, 150MB)
+│   │                      # release-notes: GET /api/release-notes (public, sans auth)
 │   │                      # sessions: GET/DELETE/PATCH /api/sessions/:id/images/:imageId
 │   │                      # (+ GET /api/sessions/:id/players pour sync Obsidian)
 ├── obsidian-plugin/   # Plugin Obsidian (TypeScript) — sync Initiative Tracker ↔ DM Toolkit
@@ -67,7 +72,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 cd frontend && npm test && npm run build
 
 # Backend — vérification syntaxique Node.js (pas de tests automatisés)
-cd backend && node --check src/index.js src/socket.js src/routes/spells.js src/routes/sessions.js src/routes/equipment.js src/routes/generate.js src/demo.js src/migrations.js
+cd backend && node --check src/index.js src/socket.js src/routes/spells.js src/routes/sessions.js src/routes/equipment.js src/routes/generate.js src/routes/release-notes.js src/demo.js src/migrations.js
 
 # Dev local (sans Docker)
 cd backend && npm run dev   # node --watch src/index.js

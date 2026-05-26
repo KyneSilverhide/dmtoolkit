@@ -12,6 +12,8 @@ import { getLastKnownPlayer, saveLastKnownPlayer, removeLastKnownPlayer } from '
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
 import DemoBanner from '../components/DemoBanner.vue'
+import ReleaseNotesBell from '../components/ReleaseNotesBell.vue'
+import { releaseNotesStore } from '../stores/releaseNotes.js'
 import { DND_CONDITIONS } from '../utils/conditions.js'
 import {
   JOIN_SESSION, LEAVE_SESSION, SESSION_JOINED, ERROR,
@@ -667,6 +669,7 @@ async function handleSocketReconnect() {
 }
 
 onMounted(async () => {
+  releaseNotesStore.load()
   const routeCode = String(route.params.code || '').trim()
 
   if (!sessionStore.activeSession) {
@@ -840,6 +843,7 @@ onUnmounted(() => {
         <span v-if="unreadMessages > 0" class="msg-chip" @click="switchTab('messages')">
           <AppIcon icon="lucide:inbox" size="0.85rem" />{{ unreadMessages }}
         </span>
+        <ReleaseNotesBell role="player" />
         <!-- Menu secondaire -->
         <div class="header-menu-wrap">
           <button

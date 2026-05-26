@@ -16,6 +16,7 @@ const spellRoutes = require('./routes/spells')
 const magicItemRoutes = require('./routes/magic-items')
 const equipmentRoutes = require('./routes/equipment')
 const generateRoutes = require('./routes/generate')
+const releaseNotesRoutes = require('./routes/release-notes')
 const setupSocket = require('./socket')
 
 const app = express()
@@ -86,6 +87,7 @@ app.use('/api/spells', isTest ? spellRoutes : [apiLimiter, spellRoutes])
 app.use('/api/magic-items', isTest ? magicItemRoutes : [apiLimiter, magicItemRoutes])
 app.use('/api/equipment', isTest ? equipmentRoutes : [apiLimiter, equipmentRoutes])
 app.use('/api/generate', isTest ? generateRoutes : [apiLimiter, generateRoutes])
+app.use('/api/release-notes', releaseNotesRoutes)
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
 app.get('/api/config', (req, res) => {
   const demoEnabled = process.env.DEMO_ENABLED !== 'false'

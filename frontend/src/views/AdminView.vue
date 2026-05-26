@@ -21,6 +21,8 @@ import GeneratorTool from '../components/admin/GeneratorTool.vue'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
 import DemoBanner from '../components/DemoBanner.vue'
+import ReleaseNotesBell from '../components/ReleaseNotesBell.vue'
+import { releaseNotesStore } from '../stores/releaseNotes.js'
 import {
   PLAYER_JOINED, PLAYER_LEFT, PLAYERS_SNAPSHOT, HP_UPDATED,
   CONDITIONS_UPDATED, CONCENTRATION_UPDATED, INITIATIVE_UPDATED,
@@ -267,6 +269,7 @@ function toggleTheme() {
 onMounted(() => {
   loadSessions()
   loadConfig()
+  releaseNotesStore.load()
   _socket = getSocket(authStore.token)
 
   // Re-join admin room after socket reconnects so we don't miss events
@@ -398,6 +401,7 @@ onUnmounted(() => {
             {{ authStore.admin.username }}
             <span class="app-version">v{{ appVersion }}</span>
           </p>
+          <ReleaseNotesBell role="admin" />
           <button class="theme-toggle-btn" @click="toggleTheme" data-testid="theme-toggle">
             <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.9em" />
             {{ isLightTheme ? 'Sombre' : 'Clair' }}
