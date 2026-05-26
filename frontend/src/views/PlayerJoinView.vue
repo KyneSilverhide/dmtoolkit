@@ -7,6 +7,7 @@ import { getProfile, saveProfile } from '../utils/playerProfiles.js'
 import { saveLastKnownPlayer } from '../utils/playerSessionMemory.js'
 import AppIcon from '../components/AppIcon.vue'
 import { JOIN_SESSION, SESSION_JOINED, ERROR } from '../socket-events.js'
+import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -23,6 +24,15 @@ const avatarFile = ref(null)
 const avatarPreview = ref(null)
 const error = ref('')
 const loading = ref(false)
+
+const theme = ref(getThemePreference('player', 'dark'))
+const isLightTheme = computed(() => theme.value === 'light')
+
+function toggleTheme() {
+  theme.value = theme.value === 'light' ? 'dark' : 'light'
+  setThemePreference('player', theme.value)
+  applyTheme(theme.value)
+}
 
 import { BACKEND_URL } from '@/config.js'
 
@@ -203,6 +213,10 @@ async function joinSession() {
     <header class="join-header">
       <button class="back-btn" @click="router.push('/')">← Retour</button>
       <h1 class="page-title">Rejoindre <span class="title-accent">une Session</span></h1>
+      <button class="theme-toggle-btn" @click="toggleTheme">
+        <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.9em" />
+        {{ isLightTheme ? 'Sombre' : 'Clair' }}
+      </button>
     </header>
 
     <main class="join-main">
@@ -320,6 +334,26 @@ async function joinSession() {
 }
 .back-btn:hover { color: var(--color-gold); }
 
+.theme-toggle-btn {
+  position: absolute;
+  top: 1.5rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.theme-toggle-btn:hover { border-color: var(--color-gold-dark); color: var(--color-gold-bright); }
+
 .skull-ornament { font-size: 2rem; }
 
 .page-title {
@@ -393,7 +427,7 @@ async function joinSession() {
 }
 .form-select option { background: var(--color-surface); color: var(--color-parchment); }
 .form-input:focus { border-color: var(--color-gold-dark); }
-.form-input::placeholder { color: var(--color-border); }
+.form-input::placeholder { color: var(--color-text-dim); font-style: italic; }
 
 .form-hint {
   font-family: var(--font-body);
