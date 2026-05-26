@@ -32,6 +32,15 @@
             "command": "bash \"$(git rev-parse --show-toplevel 2>/dev/null || echo .)/.claude/hooks/check-docs.sh\""
           }
         ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel 2>/dev/null || echo .)/.claude/hooks/update-release-note.sh\""
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -74,15 +83,6 @@
             "type": "command",
             "command": "git rev-parse --git-dir >/dev/null 2>&1 && code-review-graph status --repo \"/home/kyne/dev/dmtoolkit\" || echo 'Not a git repo, skipping'",
             "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel 2>/dev/null || echo .)/.claude/hooks/update-release-notes.sh\""
           }
         ]
       }

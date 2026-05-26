@@ -3,8 +3,32 @@ const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
 const { OpenAI } = require('openai')
+const sharp = require('sharp')
 const { authenticateToken } = require('../middleware/auth')
 const pool = require('../db')
+
+const THUMB_WIDTH = 400
+const THUMB_SUFFIX = '_thumb.webp'
+
+/**
+ * Generates a WebP thumbnail for an image file.
+ * Returns the thumbnail URL path (relative to UPLOADS_DIR root) or null on failure.
+ */
+async function generateThumbnail(filePath, uploadsDir) {
+  try {
+    const ext = path.extname(filePath)
+    const thumbPath = filePath.slice(0, -ext.length) + THUMB_SUFFIX
+    await sharp(filePath)
+      .resize({ width: THUMB_WIDTH, withoutEnlargement: true })
+      .webp({ quality: 75 })
+      .toFile(thumbPath)
+    const relPath = path.relative(uploadsDir, thumbPath).replace(/\\/g, '/')
+    return `/uploads/${relPath}`
+  } catch (err) {
+    console.error('[upload] thumbnail generation failed:', err.message)
+    return null
+  }
+}
 
 const DEFAULT_AUDIO_CATEGORY = 'Général'
 
@@ -234,9 +258,10 @@ router.post('/',
 
           const type = req.body.type || 'image'
           for (let i = 0; i < uploadedFiles.length; i++) {
+            const thumbUrl = await generateThumbnail(uploadedFiles[i].path, UPLOADS_DIR)
             await pool.query(
-              'INSERT INTO session_images (session_id, url, original_name, type, file_size) VALUES ($1, $2, $3, $4, $5)',
-              [sessionId, urls[i], uploadedFiles[i].originalname, type, uploadedFiles[i].size]
+              'INSERT INTO session_images (session_id, url, original_name, type, file_size, thumbnail_url) VALUES ($1, $2, $3, $4, $5, $6)',
+              [sessionId, urls[i], uploadedFiles[i].originalname, type, uploadedFiles[i].size, thumbUrl]
             )
           }
         }

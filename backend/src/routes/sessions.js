@@ -115,15 +115,13 @@ router.patch('/:id/close', authenticateToken, async (req, res) => {
 
     // Clean up session images: delete files and DB records
     try {
-      const imagesRes = await pool.query('SELECT url FROM session_images WHERE session_id = $1', [req.params.id])
+      const imagesRes = await pool.query('SELECT url, thumbnail_url FROM session_images WHERE session_id = $1', [req.params.id])
+      const unlinkAll = []
       for (const img of imagesRes.rows) {
-        const filename = path.basename(img.url)
-        const filePath = path.join(__dirname, '../../uploads', filename)
-        // Silently ignore missing files (may have been manually deleted)
-        await fs.unlink(filePath).catch((err) => {
-          console.error('Could not delete image file (may already be missing):', filePath, err.code)
-        })
+        if (img.url) unlinkAll.push(path.join(__dirname, '../../uploads', img.url.replace(/^\/uploads\//, '')))
+        if (img.thumbnail_url) unlinkAll.push(path.join(__dirname, '../../uploads', img.thumbnail_url.replace(/^\/uploads\//, '')))
       }
+      await Promise.allSettled(unlinkAll.map(p => fs.unlink(p)))
       await pool.query('DELETE FROM session_images WHERE session_id = $1', [req.params.id])
     } catch (cleanErr) {
       console.error('Error cleaning session images:', cleanErr)
@@ -178,13 +176,14 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Session not found.' })
     }
 
-    // Collecter les URLs d'images session
+    // Collecter les URLs d'images session (et leurs thumbnails)
     const imgRows = await client.query(
-        'SELECT url FROM session_images WHERE session_id = $1',
+        'SELECT url, thumbnail_url FROM session_images WHERE session_id = $1',
         [sessionId]
     )
     for (const row of imgRows.rows) {
       if (row.url) filesToDelete.push(path.join(__dirname, '../../uploads', row.url.replace(/^\/uploads\//, '')))
+      if (row.thumbnail_url) filesToDelete.push(path.join(__dirname, '../../uploads', row.thumbnail_url.replace(/^\/uploads\//, '')))
     }
 
     // Collecter les avatars joueurs
@@ -329,8 +328,8 @@ router.get('/:id/images', authenticateToken, async (req, res) => {
 
     const { type } = req.query  // ?type=image ou ?type=map
     const query = type
-        ? 'SELECT id, url, original_name, type, audio_category, uploaded_at FROM session_images WHERE session_id = $1 AND type = $2 ORDER BY uploaded_at DESC'
-        : 'SELECT id, url, original_name, type, audio_category, uploaded_at FROM session_images WHERE session_id = $1 ORDER BY uploaded_at DESC'
+        ? 'SELECT id, url, original_name, type, audio_category, thumbnail_url, uploaded_at FROM session_images WHERE session_id = $1 AND type = $2 ORDER BY uploaded_at DESC'
+        : 'SELECT id, url, original_name, type, audio_category, thumbnail_url, uploaded_at FROM session_images WHERE session_id = $1 ORDER BY uploaded_at DESC'
     const params = type ? [req.params.id, type] : [req.params.id]
     const result = await pool.query(query, params)
     res.json(result.rows)
@@ -385,7 +384,7 @@ router.delete('/:id/images/:imageId', authenticateToken, async (req, res) => {
 
     // Récupérer l'URL pour supprimer le fichier
     const imgRes = await pool.query(
-        'SELECT url FROM session_images WHERE id = $1 AND session_id = $2',
+        'SELECT url, thumbnail_url FROM session_images WHERE id = $1 AND session_id = $2',
         [req.params.imageId, req.params.id]
     )
     if (!imgRes.rows[0]) return res.status(404).json({ error: 'Image not found.' })
@@ -393,11 +392,14 @@ router.delete('/:id/images/:imageId', authenticateToken, async (req, res) => {
     // Supprimer en base
     await pool.query('DELETE FROM session_images WHERE id = $1', [req.params.imageId])
 
-    // Supprimer le fichier sur le disque
+    // Supprimer le fichier et sa thumbnail sur le disque
     const fs = require('fs').promises
     const path = require('path')
-    const filePath = path.join(__dirname, '../../uploads', imgRes.rows[0].url.replace('/uploads/', ''))
-    await fs.unlink(filePath).catch(() => {}) // ignorer si déjà absent
+    const { url, thumbnail_url } = imgRes.rows[0]
+    await fs.unlink(path.join(__dirname, '../../uploads', url.replace('/uploads/', ''))).catch(() => {})
+    if (thumbnail_url) {
+      await fs.unlink(path.join(__dirname, '../../uploads', thumbnail_url.replace('/uploads/', ''))).catch(() => {})
+    }
 
     res.json({ success: true })
   } catch (err) {

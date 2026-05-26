@@ -215,6 +215,9 @@ ALTER TABLE session_images ADD COLUMN IF NOT EXISTS file_size BIGINT DEFAULT 0;
 
 -- Author color for messages (replaces voice style in the UI)
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS author_color VARCHAR(20) DEFAULT '#d4af37';
+
+-- Thumbnail URL for image/map assets (generated server-side after upload)
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS thumbnail_url VARCHAR(500);
 `
 
 async function runMigrations() {

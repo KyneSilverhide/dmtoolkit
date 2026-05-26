@@ -790,7 +790,7 @@ watch(fogEnabled, () => render())
           @click="selectedImageUrl = img.url; loadMapImage(img.url)"
       >
         <div class="thumb-wrapper">
-          <img :src="imageFullUrl(img.url)" :alt="img.original_name || img.url" class="gallery-thumb" />
+          <img :src="imageFullUrl(img.thumbnail_url || img.url)" :alt="img.original_name || img.url" class="gallery-thumb" />
           <button class="delete-btn" @click="deleteImage(img, $event)" title="Supprimer">✕</button>
         </div>
         <button class="show-btn" @click.stop="selectedImageUrl = img.url; loadMapImage(img.url); showMapOnTv()">

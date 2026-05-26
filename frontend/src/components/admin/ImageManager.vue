@@ -177,7 +177,7 @@ onUnmounted(() => {
           class="gallery-item"
           :class="{ selected: selectedImageUrl === img.url }">
         <div class="thumb-wrapper">
-          <img :src="imageFullUrl(img.url)" :alt="img.original_name || img.url" class="gallery-thumb" />
+          <img :src="imageFullUrl(img.thumbnail_url || img.url)" :alt="img.original_name || img.url" class="gallery-thumb" />
           <button class="delete-btn" @click="deleteImage(img, $event)" title="Supprimer">✕</button>
         </div>
         <p class="img-name">{{ img.original_name || img.url.split('/').pop() }}</p>

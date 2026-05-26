@@ -14,6 +14,25 @@
 const pool = require('./db')
 const path = require('path')
 const fs = require('fs')
+const sharp = require('sharp')
+
+const THUMB_WIDTH = 400
+const THUMB_SUFFIX = '_thumb.webp'
+
+async function generateThumbnail(filePath) {
+  try {
+    const ext = path.extname(filePath)
+    const thumbPath = filePath.slice(0, -ext.length) + THUMB_SUFFIX
+    await sharp(filePath)
+      .resize({ width: THUMB_WIDTH, withoutEnlargement: true })
+      .webp({ quality: 75 })
+      .toFile(thumbPath)
+    return thumbPath
+  } catch (err) {
+    console.error('[demo] thumbnail generation failed:', err.message)
+    return null
+  }
+}
 
 const DEMO_SESSION_CODE = '0000'
 const DATA_DEMO_DIR = path.join(__dirname, 'data', 'demo')
@@ -82,7 +101,7 @@ async function seedDemoContent(demoAdminId) {
   )
   const sessionId = sessionResult.rows[0].id
 
-  // Register all assets in session_images
+  // Register all assets in session_images (generate thumbnails for image/map assets)
   for (const asset of DEMO_ASSETS) {
     const url = urlMap[asset.destFile]
     if (asset.audioCategory) {
@@ -91,9 +110,16 @@ async function seedDemoContent(demoAdminId) {
         [sessionId, url, asset.originalName, asset.sessionImageType, asset.audioCategory]
       )
     } else {
+      const destPath = path.join(UPLOADS_DIR, String(demoAdminId), asset.destFile)
+      const thumbPath = await generateThumbnail(destPath)
+      let thumbUrl = null
+      if (thumbPath) {
+        const relThumb = path.relative(path.join(UPLOADS_DIR, String(demoAdminId)), thumbPath).replace(/\\/g, '/')
+        thumbUrl = `/uploads/${demoAdminId}/${relThumb}`
+      }
       await pool.query(
-        'INSERT INTO session_images (session_id, url, original_name, type) VALUES ($1, $2, $3, $4)',
-        [sessionId, url, asset.originalName, asset.sessionImageType]
+        'INSERT INTO session_images (session_id, url, original_name, type, thumbnail_url) VALUES ($1, $2, $3, $4, $5)',
+        [sessionId, url, asset.originalName, asset.sessionImageType, thumbUrl]
       )
     }
   }
