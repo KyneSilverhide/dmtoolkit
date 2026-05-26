@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSocket } from '../socket.js'
 import { sessionStore } from '../stores/session.js'
@@ -15,7 +15,10 @@ const sessionCode = ref(route.params.code || '')
 const playerName = ref('')
 const hp = ref(20)
 const ac = ref(10)
-const dndClass = ref('')
+const selectedClass = ref('')
+const customClass = ref('')
+const isCustomClass = computed(() => selectedClass.value === '__custom__')
+const dndClass = computed(() => isCustomClass.value ? customClass.value.trim() : selectedClass.value)
 const avatarFile = ref(null)
 const avatarPreview = ref(null)
 const error = ref('')
@@ -55,15 +58,25 @@ onUnmounted(() => {
 })
 
 // Auto-fill from localStorage when playerName changes
-watch(playerName, (name) => {
+watch(playerName, (name, prevName) => {
   const profile = getProfile(name)
   if (profile) {
-    if (profile.dndClass) dndClass.value = profile.dndClass
+    if (profile.dndClass) {
+      if (DND_CLASSES.includes(profile.dndClass)) {
+        selectedClass.value = profile.dndClass
+        customClass.value = ''
+      } else {
+        selectedClass.value = '__custom__'
+        customClass.value = profile.dndClass
+      }
+    }
     if (profile.avatarUrl) avatarPreview.value = profile.avatarUrl
     if (profile.hp != null) hp.value = profile.hp
     if (profile.ac != null) ac.value = profile.ac
-  } else {
-    dndClass.value = ''
+  } else if (getProfile(prevName)) {
+    // Leaving a profile-loaded name → reset to defaults
+    selectedClass.value = ''
+    customClass.value = ''
     avatarPreview.value = null
     avatarFile.value = null
     hp.value = 20
@@ -212,12 +225,22 @@ async function joinSession() {
 
         <div class="form-group">
           <label class="form-label">
-            <AppIcon icon="game-icons:wizard-staff" size="0.9rem" /> Classe D&amp;D
+            <AppIcon icon="game-icons:wizard-staff" size="0.9rem" /> Classe
           </label>
-          <select v-model="dndClass" class="form-input form-select" data-testid="class-select">
+          <select v-model="selectedClass" class="form-input form-select" data-testid="class-select">
             <option value="">— Choisir une classe —</option>
             <option v-for="cls in DND_CLASSES" :key="cls" :value="cls">{{ cls }}</option>
+            <option value="__custom__">Autre (saisie libre)…</option>
           </select>
+          <input
+            v-if="isCustomClass"
+            v-model="customClass"
+            type="text"
+            class="form-input"
+            placeholder="Nom de votre classe…"
+            data-testid="class-custom-input"
+            autocomplete="off"
+          />
         </div>
 
         <div class="form-group">
@@ -359,6 +382,7 @@ async function joinSession() {
   outline: none;
   transition: border-color 0.2s;
 }
+.stat-input { text-align: center; font-size: 1.3rem; font-weight: 700; padding: 0.75rem 0.5rem; }
 .form-select {
   cursor: pointer;
   appearance: none;
@@ -368,7 +392,6 @@ async function joinSession() {
   padding-right: 2.5rem;
 }
 .form-select option { background: var(--color-surface); color: var(--color-parchment); }
-.stat-input { text-align: center; font-size: 1.3rem; font-weight: 700; padding: 0.75rem 0.5rem; }
 .form-input:focus { border-color: var(--color-gold-dark); }
 .form-input::placeholder { color: var(--color-border); }
 
