@@ -18,9 +18,8 @@ export const releaseNotesStore = reactive({
   lastViewed: localStorage.getItem(STORAGE_KEY) || '0.0.0',
   isOpen: false,
 
-  unreadFor(role) {
+  allFor(role) {
     return this.notes.filter(note => {
-      if (compareSemver(note.version, this.lastViewed) <= 0) return false
       const relevant = note.changes.filter(c => c.role === 'all' || c.role === role)
       return relevant.length > 0
     }).map(note => ({
@@ -29,8 +28,18 @@ export const releaseNotesStore = reactive({
     }))
   },
 
+  unreadFor(role) {
+    return this.allFor(role).filter(note =>
+      compareSemver(note.version, this.lastViewed) > 0
+    )
+  },
+
   hasUnreadFor(role) {
     return this.unreadFor(role).length > 0
+  },
+
+  isRead(version) {
+    return compareSemver(version, this.lastViewed) <= 0
   },
 
   latestVersion() {

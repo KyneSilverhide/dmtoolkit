@@ -3,6 +3,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { authStore } from '../stores/auth.js'
 import AppIcon from '../components/AppIcon.vue'
+import ReleaseNotesBell from '../components/ReleaseNotesBell.vue'
+import { releaseNotesStore } from '../stores/releaseNotes.js'
 import { applyTheme, getLastUsedTheme, setThemePreference } from '../utils/themePreferences.js'
 
 const router = useRouter()
@@ -28,6 +30,7 @@ const demoPassword = ref('')
 
 onMounted(async () => {
   window.addEventListener('keydown', onKeydown)
+  releaseNotesStore.load()
   try {
     const res = await fetch(`${BACKEND_URL}/api/config`)
     if (res.ok) {
@@ -121,6 +124,7 @@ async function login() {
     </main>
 
     <footer class="home-footer">
+      <ReleaseNotesBell variant="banner" role="admin" />
       <a href="/docs/" class="docs-link" target="_blank" rel="noopener">
         <AppIcon icon="lucide:book-open" size="0.85em" />
         Documentation
@@ -203,8 +207,14 @@ async function login() {
 }
 
 .home-footer {
-  text-align: center;
-  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  max-width: 340px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .docs-link {

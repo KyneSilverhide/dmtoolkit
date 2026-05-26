@@ -6,6 +6,8 @@ import { sessionStore } from '../stores/session.js'
 import { getProfile, saveProfile } from '../utils/playerProfiles.js'
 import { saveLastKnownPlayer } from '../utils/playerSessionMemory.js'
 import AppIcon from '../components/AppIcon.vue'
+import ReleaseNotesBell from '../components/ReleaseNotesBell.vue'
+import { releaseNotesStore } from '../stores/releaseNotes.js'
 import { JOIN_SESSION, SESSION_JOINED, ERROR } from '../socket-events.js'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 
@@ -48,6 +50,7 @@ let _pendingJoinedHandler = null
 let _pendingErrorHandler = null
 
 onMounted(() => {
+  releaseNotesStore.load()
   if (sessionStore.activeSession && sessionStore.playerInfo) {
     const code = sessionStore.activeSession.code
     router.replace(code ? `/view/${code}` : '/player')
@@ -294,6 +297,8 @@ async function joinSession() {
             <input v-model.number="ac" type="number" min="1" max="30" class="form-input stat-input" data-testid="ac-input" />
           </div>
         </div>
+
+        <ReleaseNotesBell variant="banner" role="player" />
 
         <p v-if="error" class="form-error" data-testid="join-error">{{ error }}</p>
 

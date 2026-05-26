@@ -1,11 +1,23 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { releaseNotesStore } from '../stores/releaseNotes.js'
 import AppIcon from './AppIcon.vue'
 
 const props = defineProps({
   role: { type: String, required: true },
 })
+
+const showAll = ref(false)
+
+watch(() => releaseNotesStore.isOpen, open => {
+  if (open) showAll.value = false
+})
+
+const displayedNotes = computed(() =>
+  showAll.value
+    ? releaseNotesStore.allFor(props.role)
+    : releaseNotesStore.unreadFor(props.role)
+)
 
 const TYPE_ICONS = {
   feature: { icon: 'lucide:sparkles', color: 'var(--color-gold-bright)' },
@@ -57,15 +69,19 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
           </div>
 
           <div class="rn-body">
-            <template v-if="releaseNotesStore.unreadFor(props.role).length > 0">
+            <template v-if="displayedNotes.length > 0">
               <article
-                v-for="note in releaseNotesStore.unreadFor(props.role)"
+                v-for="note in displayedNotes"
                 :key="note.version"
                 class="rn-version"
+                :class="{ 'is-read': showAll && releaseNotesStore.isRead(note.version) }"
               >
                 <div class="rn-version-header">
                   <span class="rn-version-tag">v{{ note.version }}</span>
                   <span class="rn-version-date">{{ note.date }}</span>
+                  <span v-if="showAll && releaseNotesStore.isRead(note.version)" class="rn-read-badge">
+                    <AppIcon icon="lucide:check" size="0.7rem" /> déjà lu
+                  </span>
                 </div>
                 <ul class="rn-changes">
                   <li v-for="(change, i) in note.changes" :key="i" class="rn-change">
@@ -83,7 +99,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
           </div>
 
           <div class="rn-footer">
-            <button class="rn-btn-close" @click="close">Tout marquer comme lu</button>
+            <button class="rn-btn-history" @click="showAll = !showAll">
+              <AppIcon :icon="showAll ? 'lucide:eye-off' : 'lucide:history'" size="0.85rem" />
+              {{ showAll ? 'Masquer l\'historique' : 'Voir tout l\'historique' }}
+            </button>
+            <button class="rn-btn-close" @click="close">Fermer</button>
           </div>
         </div>
       </div>
@@ -212,11 +232,49 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   padding: 1rem 0;
 }
 
+.rn-version.is-read {
+  opacity: 0.45;
+}
+
+.rn-read-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  color: var(--color-success);
+  background: rgba(47, 184, 150, 0.1);
+  border: 1px solid rgba(47, 184, 150, 0.2);
+  border-radius: 4px;
+  padding: 0.05rem 0.35rem;
+}
+
 .rn-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
   padding-top: 0.25rem;
   border-top: 1px solid rgba(201, 162, 39, 0.15);
+}
+
+.rn-btn-history {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  border-radius: 8px;
+  color: var(--color-text-dim);
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.rn-btn-history:hover {
+  color: var(--color-parchment);
+  border-color: rgba(201, 162, 39, 0.45);
 }
 
 .rn-btn-close {
