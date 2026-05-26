@@ -11,7 +11,43 @@ const events = ref([])
 const summary = ref('')
 const loadingSummary = ref(false)
 const hasSession = computed(() => !!sessionStore.activeSession)
-const reversedEvents = computed(() => events.value.slice().reverse())
+
+const MERGE_WINDOW_MS = 1000
+const MERGEABLE_TYPES = new Set(['damage', 'heal'])
+
+const groupedEvents = computed(() => {
+  if (events.value.length === 0) return []
+  const result = []
+  for (const evt of events.value) {
+    const eventType = evt.eventType || evt.event_type
+    const playerName = evt.playerName || evt.player_name
+    const createdAt = new Date(evt.createdAt || evt.created_at).getTime()
+
+    if (MERGEABLE_TYPES.has(eventType) && result.length > 0) {
+      const last = result[result.length - 1]
+      const lastType = last.eventType || last.event_type
+      const lastPlayer = last.playerName || last.player_name
+      const lastTime = last._lastEventTime || new Date(last.createdAt || last.created_at).getTime()
+
+      if (lastType === eventType && lastPlayer === playerName && createdAt - lastTime <= MERGE_WINDOW_MS) {
+        const totalValue = (last.value || 0) + (evt.value || 0)
+        const count = (last._mergeCount || 1) + 1
+        last.value = totalValue
+        last._mergeCount = count
+        last._lastEventTime = createdAt
+        if (eventType === 'damage') {
+          last.description = `${playerName} subit ${Math.abs(totalValue)} dégâts (×${count})`
+        } else {
+          last.description = `${playerName} récupère ${totalValue} PV (×${count})`
+        }
+        continue
+      }
+    }
+
+    result.push({ ...evt })
+  }
+  return result.slice().reverse()
+})
 
 const EVENT_ICONS = {
   join:              { icon: 'lucide:log-in',                 color: 'var(--color-gold-dark)' },
@@ -130,7 +166,7 @@ onUnmounted(() => {
 
       <div v-else class="timeline">
         <div
-          v-for="(evt, idx) in reversedEvents"
+          v-for="(evt, idx) in groupedEvents"
           :key="idx"
           class="timeline-item"
         >
@@ -141,7 +177,7 @@ onUnmounted(() => {
             <AppIcon
               :icon="getIcon(evt).icon"
               :color="getIcon(evt).color"
-              size="0.6rem"
+              size="0.9rem"
             />
           </div>
           <div class="timeline-content">
@@ -236,13 +272,13 @@ onUnmounted(() => {
 /* ── Timeline ── */
 .timeline {
   position: relative;
-  padding-left: 1.8rem;
+  padding-left: 2.2rem;
 }
 
 .timeline::before {
   content: '';
   position: absolute;
-  left: 0.6rem;
+  left: 0.7rem;
   top: 0.55rem;
   bottom: 0.55rem;
   width: 2px;
@@ -260,10 +296,10 @@ onUnmounted(() => {
 
 .timeline-dot {
   position: absolute;
-  left: -1.8rem;
-  top: 0.1rem;
-  width: 1rem;
-  height: 1rem;
+  left: -2.1rem;
+  top: 0;
+  width: 1.4rem;
+  height: 1.4rem;
   border-radius: 50%;
   background: var(--color-surface);
   border: 2px solid var(--color-border);
