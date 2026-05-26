@@ -339,21 +339,21 @@ function reset() {
 
 .send-btn {
   width: 100%;
-  padding: 0.75rem 1rem;
-  background: var(--gradient-success-action, linear-gradient(135deg, #14532d, #052e16));
-  border: 1px solid var(--color-success-border);
-  border-radius: 10px;
-  color: var(--color-parchment);
+  padding: 0.6rem 1rem;
+  background: var(--gradient-accent-action);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 8px;
+  color: var(--color-gold-bright);
   font-family: var(--font-heading);
-  font-size: 0.82rem;
-  letter-spacing: 0.1em;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .send-btn:hover:not(:disabled) {
-  background: var(--gradient-success-action-hover, linear-gradient(135deg, #166534, #14532d));
+  background: var(--gradient-accent-action-hover);
 }
 
 .send-btn:disabled {

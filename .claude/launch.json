@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "frontend",
+      "port": 5174
+    },
+    {
+      "name": "docs",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "docs", "--no-clipboard", "-p", "8080"],
+      "port": 8080
+    }
+  ]
+}

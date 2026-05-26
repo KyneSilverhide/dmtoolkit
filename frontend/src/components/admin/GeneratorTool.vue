@@ -23,6 +23,7 @@ const error = ref('')
 const quota = ref(null)
 const sessionRequestCount = ref(0)
 const copiedIndex = ref(null)
+const unavailable = ref(false)
 
 const currentTypeDef = computed(() => getGeneratorType(selectedType.value))
 
@@ -55,6 +56,11 @@ async function generate() {
     const data = await res.json()
 
     if (data.quota) quota.value = data.quota
+
+    if (res.status === 503) {
+      unavailable.value = true
+      return
+    }
 
     if (res.status === 429) {
       error.value = quota.value?.resetAt
@@ -95,79 +101,93 @@ async function copyResult(text, index) {
       Générateur D&D
     </h2>
 
-    <div class="generator-form">
-      <div class="form-row">
-        <label class="form-label">Type</label>
-        <select v-model="selectedType" class="form-select">
-          <option v-for="t in GENERATOR_TYPES" :key="t.key" :value="t.key">
-            {{ t.label }}
-          </option>
-        </select>
+    <!-- État : GITHUB_TOKEN absent côté serveur (détecté après premier appel 503) -->
+    <div v-if="unavailable" class="unavailable-banner">
+      <AppIcon icon="lucide:key" size="1.4rem" class="unavailable-icon" />
+      <div class="unavailable-body">
+        <p class="unavailable-title">Générateur IA non activé</p>
+        <p class="unavailable-text">
+          La variable d'environnement <code>GITHUB_TOKEN</code> n'est pas configurée sur le serveur.
+          Ajoutez-la au fichier <code>.env</code> backend avec un token GitHub (aucun scope requis) pour activer ce générateur.
+        </p>
       </div>
+    </div>
 
-      <template v-if="currentTypeDef?.options?.length">
-        <div v-for="opt in currentTypeDef.options" :key="opt.key" class="form-row">
-          <label class="form-label">{{ opt.label }}</label>
-          <select v-model="options[opt.key]" class="form-select">
-            <option v-for="choice in opt.choices" :key="choice" :value="choice">
-              {{ choice }}
+    <template v-else>
+      <div class="generator-form">
+        <div class="form-row">
+          <label class="form-label">Type</label>
+          <select v-model="selectedType" class="form-select">
+            <option v-for="t in GENERATOR_TYPES" :key="t.key" :value="t.key">
+              {{ t.label }}
             </option>
           </select>
         </div>
-      </template>
 
-      <button
-        class="generate-btn"
-        :disabled="loading || !sessionStore.activeSession"
-        @click="generate"
-      >
-        <AppIcon v-if="loading" icon="lucide:loader-circle" size="1em" class="spin" />
-        <AppIcon v-else icon="lucide:sparkles" size="1em" />
-        {{ loading ? 'Génération...' : 'Générer' }}
-      </button>
-    </div>
+        <template v-if="currentTypeDef?.options?.length">
+          <div v-for="opt in currentTypeDef.options" :key="opt.key" class="form-row">
+            <label class="form-label">{{ opt.label }}</label>
+            <select v-model="options[opt.key]" class="form-select">
+              <option v-for="choice in opt.choices" :key="choice" :value="choice">
+                {{ choice }}
+              </option>
+            </select>
+          </div>
+        </template>
 
-    <p v-if="error" class="form-error">{{ error }}</p>
+        <button
+          class="generate-btn"
+          :disabled="loading || !sessionStore.activeSession"
+          @click="generate"
+        >
+          <AppIcon v-if="loading" icon="lucide:loader-circle" size="1em" class="spin" />
+          <AppIcon v-else icon="lucide:sparkles" size="1em" />
+          {{ loading ? 'Génération...' : 'Générer' }}
+        </button>
+      </div>
 
-    <div v-if="results.length" class="results-section">
-      <template v-if="currentTypeDef?.multiResult">
-        <ul class="results-list">
-          <li
-            v-for="(item, i) in results"
-            :key="i"
-            class="result-item"
-            @click="copyResult(item, i)"
-          >
-            <span class="result-text">{{ item }}</span>
-            <span class="copy-hint">
-              <AppIcon :icon="copiedIndex === i ? 'lucide:check' : 'lucide:copy'" size="0.9em" />
+      <p v-if="error" class="form-error">{{ error }}</p>
+
+      <div v-if="results.length" class="results-section">
+        <template v-if="currentTypeDef?.multiResult">
+          <ul class="results-list">
+            <li
+              v-for="(item, i) in results"
+              :key="i"
+              class="result-item"
+              @click="copyResult(item, i)"
+            >
+              <span class="result-text">{{ item }}</span>
+              <span class="copy-hint">
+                <AppIcon :icon="copiedIndex === i ? 'lucide:check' : 'lucide:copy'" size="0.9em" />
+              </span>
+            </li>
+          </ul>
+          <p class="results-hint">Cliquer sur un résultat pour le copier.</p>
+        </template>
+        <template v-else>
+          <div class="result-block" @click="copyResult(results[0], 0)">
+            <p class="result-text-long">{{ results[0] }}</p>
+            <span class="copy-hint-block">
+              <AppIcon :icon="copiedIndex === 0 ? 'lucide:check' : 'lucide:copy'" size="0.9em" />
+              {{ copiedIndex === 0 ? 'Copié !' : 'Copier' }}
             </span>
-          </li>
-        </ul>
-        <p class="results-hint">Cliquer sur un résultat pour le copier.</p>
-      </template>
-      <template v-else>
-        <div class="result-block" @click="copyResult(results[0], 0)">
-          <p class="result-text-long">{{ results[0] }}</p>
-          <span class="copy-hint-block">
-            <AppIcon :icon="copiedIndex === 0 ? 'lucide:check' : 'lucide:copy'" size="0.9em" />
-            {{ copiedIndex === 0 ? 'Copié !' : 'Copier' }}
-          </span>
-        </div>
-      </template>
-    </div>
+          </div>
+        </template>
+      </div>
 
-    <div
-      v-if="sessionRequestCount > 0 || quotaEmpty"
-      class="quota-bar"
-      :class="{ 'quota-low': quotaLow, 'quota-empty': quotaEmpty }"
-    >
-      <AppIcon icon="lucide:gauge" size="0.85em" />
-      <span>{{ sessionRequestCount }} génération{{ sessionRequestCount > 1 ? 's' : '' }} cette session</span>
-      <span v-if="quota?.limit" class="quota-api">
-        — quota API : {{ quota.remaining }} / {{ quota.limit }}
-      </span>
-    </div>
+      <div
+        v-if="sessionRequestCount > 0 || quotaEmpty"
+        class="quota-bar"
+        :class="{ 'quota-low': quotaLow, 'quota-empty': quotaEmpty }"
+      >
+        <AppIcon icon="lucide:gauge" size="0.85em" />
+        <span>{{ sessionRequestCount }} génération{{ sessionRequestCount > 1 ? 's' : '' }} cette session</span>
+        <span v-if="quota?.limit" class="quota-api">
+          — quota API : {{ quota.remaining }} / {{ quota.limit }}
+        </span>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -177,6 +197,52 @@ async function copyResult(text, index) {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+/* Bannière "générateur non disponible" */
+.unavailable-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  padding: 0.9rem 1rem;
+  background: var(--admin-warning-bg, var(--color-warning-soft));
+  border: 1px solid var(--admin-warning-border, var(--color-warning-border));
+  border-radius: 10px;
+}
+.unavailable-icon {
+  color: var(--color-warning, #f0a500);
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+.unavailable-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.unavailable-title {
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--admin-warning-text, var(--color-warning));
+  margin: 0;
+}
+.unavailable-text {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--color-text-dim);
+  margin: 0;
+  line-height: 1.55;
+}
+.unavailable-text code {
+  font-family: monospace;
+  background: var(--surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.78rem;
+  color: var(--color-gold-bright);
 }
 
 /* Matches `.section-title` from TvControls / VoteManager */

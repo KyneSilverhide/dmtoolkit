@@ -377,14 +377,14 @@ onUnmounted(() => {
 .roll-btn {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 2.5rem;
+  gap: 0.65rem;
+  padding: 0.75rem 1.75rem;
   background: var(--gradient-danger-action);
   border: 1px solid var(--color-danger-border);
-  border-radius: 50px;
+  border-radius: 10px;
   color: var(--color-parchment);
   font-family: var(--font-heading);
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
@@ -502,17 +502,23 @@ onUnmounted(() => {
 .recipient-select:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .send-btn {
-  padding: 0.75rem 2rem;
-  background: var(--gradient-success-action);
-  border: 1px solid var(--color-success-border);
+  padding: 0.5rem 1.1rem;
+  background: var(--gradient-accent-action);
+  border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
-  color: var(--color-parchment);
+  color: var(--color-gold-bright);
   font-family: var(--font-heading);
-  font-size: 0.9rem;
-  letter-spacing: 0.1em;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.send-btn:hover:not(:disabled) {
+  background: var(--gradient-accent-action-hover);
+  box-shadow: var(--shadow-soft);
 }
 
 .send-btn:hover:not(:disabled) {

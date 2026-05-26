@@ -221,20 +221,20 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.5rem 1rem;
-  background: var(--gradient-info-action);
-  border: 1px solid var(--color-info-border);
+  padding: 0.45rem 0.85rem;
+  background: var(--gradient-accent-action);
+  border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
-  color: var(--color-parchment);
+  color: var(--color-gold-bright);
   font-family: var(--font-heading);
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.summary-btn:hover:not(:disabled) { background: var(--gradient-info-action-hover); }
+.summary-btn:hover:not(:disabled) { background: var(--gradient-accent-action-hover); }
 .summary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .summary-box {

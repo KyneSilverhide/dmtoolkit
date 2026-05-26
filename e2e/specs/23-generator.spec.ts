@@ -48,9 +48,9 @@ test('generator shows server error message on 503 response', async ({ browser, a
 
     await adminPage.page.locator('button.generate-btn').click()
 
-    const errorMsg = adminPage.page.locator('p.form-error')
-    await expect(errorMsg).toBeVisible({ timeout: 8_000 })
-    await expect(errorMsg).toContainText(/GITHUB_TOKEN|serveur/i)
+    const banner = adminPage.page.locator('div.unavailable-banner')
+    await expect(banner).toBeVisible({ timeout: 8_000 })
+    await expect(banner).toContainText(/GITHUB_TOKEN|serveur/i)
   } finally {
     await adminCtx.close()
   }

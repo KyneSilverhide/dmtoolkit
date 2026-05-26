@@ -227,15 +227,15 @@ onUnmounted(() => {
 .upload-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.8rem;
+  justify-content: center;
+  padding: 0.45rem 0.85rem;
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-gold-bright);
   font-family: var(--font-heading);
-  font-size: 0.7rem;
-  letter-spacing: 0.07em;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
   cursor: pointer;
   transition: background 0.2s;
 }

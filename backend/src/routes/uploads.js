@@ -305,6 +305,10 @@ router.post('/audio/reclassify', authenticateToken, async (req, res) => {
   if (!sessionId || !Array.isArray(ids) || ids.length === 0) {
     return res.status(400).json({ error: 'session_id et ids[] requis.' })
   }
+  const parsedIds = ids.map(id => Number(id))
+  if (parsedIds.some(id => !Number.isInteger(id) || id <= 0)) {
+    return res.status(400).json({ error: 'ids[] doit contenir uniquement des identifiants numériques valides.' })
+  }
 
   try {
     const sessionCheck = await pool.query(
@@ -313,10 +317,9 @@ router.post('/audio/reclassify', authenticateToken, async (req, res) => {
     )
     if (!sessionCheck.rows[0]) return res.status(403).json({ error: 'Session introuvable.' })
 
-    const placeholders = ids.map((_, i) => `$${i + 1}`).join(',')
     const { rows: tracks } = await pool.query(
-      `SELECT id, original_name FROM session_images WHERE id IN (${placeholders}) AND session_id = $${ids.length + 1} AND type = 'audio'`,
-      [...ids, sessionId]
+      "SELECT id, original_name FROM session_images WHERE id = ANY($1::int[]) AND session_id = $2 AND type = 'audio'",
+      [parsedIds, sessionId]
     )
     if (tracks.length === 0) return res.json({ updated: 0, categories: {} })
 

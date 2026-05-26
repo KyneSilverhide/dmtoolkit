@@ -120,6 +120,13 @@ async function login() {
       </div>
     </main>
 
+    <footer class="home-footer">
+      <a href="/docs/" class="docs-link" target="_blank" rel="noopener">
+        <AppIcon icon="lucide:book-open" size="0.85em" />
+        Documentation
+      </a>
+    </footer>
+
     <!-- Login modal -->
     <Teleport to="body">
       <Transition name="modal">
@@ -193,8 +200,26 @@ async function login() {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding-bottom: 2rem;
 }
+
+.home-footer {
+  text-align: center;
+  padding: 1.25rem;
+}
+
+.docs-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.docs-link:hover { color: var(--color-gold); }
 
 .home-header {
   text-align: center;
