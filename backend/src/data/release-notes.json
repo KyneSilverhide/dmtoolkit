@@ -1,6 +1,13 @@
 {
   "notes": [
     {
+      "version": "1.0.43",
+      "date": "2026-05-26",
+      "changes": [
+        { "type": "feature", "role": "all", "text": "Cloche des nouveautés accessible directement depuis la page d'accueil (MJ et joueurs)" }
+      ]
+    },
+    {
       "version": "1.0.42",
       "date": "2026-05-25",
       "changes": [
