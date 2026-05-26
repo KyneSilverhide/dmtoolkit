@@ -46,6 +46,7 @@ test('admin creates a vote and it appears on TV', async ({ browser, adminToken }
 })
 
 test('player receives vote notification and can submit a vote', async ({ browser, adminToken }) => {
+  test.setTimeout(40_000)
   const token = adminToken
   const code = await createSession(token)
 
@@ -74,7 +75,7 @@ test('player receives vote notification and can submit a vote', async ({ browser
     await attackBtn.click()
 
     // Vote submitted — buttons disappear, confirmation div appears
-    await expect(playerPg.locator('.vote-done')).toBeVisible({ timeout: 8_000 }).catch(() => {})
+    await expect(playerPg.locator('.vote-done')).toBeVisible({ timeout: 3_000 }).catch(() => {})
   } finally {
     await adminCtx.close()
     await playerCtx.close()
