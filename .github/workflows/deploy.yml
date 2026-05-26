@@ -38,7 +38,7 @@ jobs:
           timeout 30 bash -c 'until curl -sf http://localhost:5173 2>/dev/null; do sleep 2; done' || echo "Frontend ready"
 
       - name: Install E2E deps & browsers
-        run: cd e2e && npm ci && npx playwright install --with-deps firefox
+        run: cd e2e && npm ci && npx playwright install --with-deps chromium
 
       - name: Run E2E tests
         run: cd e2e && npx playwright test
