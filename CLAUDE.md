@@ -57,6 +57,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │                      # uploads: POST /api/uploads (images, 50MB), POST /api/uploads/audio (audio, 150MB)
 │   │                      # release-notes: GET /api/release-notes (public, sans auth)
 │   │                      # sessions: GET/DELETE/PATCH /api/sessions/:id/images/:imageId
+│   │                      # sessions: DELETE /api/sessions/:id/journal (efface tous les session_events)
 │   │                      # (+ GET /api/sessions/:id/players pour sync Obsidian)
 ├── obsidian-plugin/   # Plugin Obsidian (TypeScript) — sync Initiative Tracker ↔ DM Toolkit
 ├── docker-compose.yml     # Postgres 16 + backend + frontend

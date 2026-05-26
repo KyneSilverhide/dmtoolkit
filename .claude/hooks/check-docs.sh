@@ -18,7 +18,8 @@ DOC_CHANGED=$(echo "$ALL" | grep -E '^(CLAUDE\.md|README\.md)$')
 
 if [ -z "$DOC_CHANGED" ]; then
   FILE_LIST=$(echo "$SOURCE_CHANGED" | tr '\n' ',' | sed 's/,$//')
-  echo "{\"systemMessage\": \"[check-docs] ATTENTION : fichiers source modifiés sans mise à jour de la documentation.\\n\\nFichiers source : $FILE_LIST\\n\\nVérifiez si CLAUDE.md ou README.md doivent être mis à jour :\\n  - CLAUDE.md : architecture, événements socket, tables DB, conventions\\n  - README.md : fonctionnalités, variables d'environnement, stack\"}"
-fi
+  echo "{\"decision\": \"block\", \"reason\": \"[check-docs] Fichiers source modifiés sans mise à jour de la documentation.\\n\\nFichiers source : $FILE_LIST\\n\\nVérifiez si CLAUDE.md ou README.md doivent être mis à jour et faites-le maintenant si nécessaire :\\n  - CLAUDE.md : architecture, événements socket, tables DB, conventions\\n  - README.md : fonctionnalités, variables d'environnement, stack\"}"
+    exit 2
+  fi
 
 exit 0
