@@ -1,0 +1,77 @@
+{
+  "notes": [
+    {
+      "version": "1.0.42",
+      "date": "2026-05-25",
+      "changes": [
+        { "type": "improvement", "role": "admin", "text": "Amélioration de la lisibilité de la timeline dans le journal de session" }
+      ]
+    },
+    {
+      "version": "1.0.40",
+      "date": "2026-05-25",
+      "changes": [
+        { "type": "feature", "role": "all", "text": "Nouveaux effets visuels et couleurs pour les messages du MJ" },
+        { "type": "improvement", "role": "admin", "text": "Amélioration du centrage vertical sur l'affichage TV" },
+        { "type": "improvement", "role": "admin", "text": "Uniformisation de l'overlay pour le timer et l'horloge doom" }
+      ]
+    },
+    {
+      "version": "1.0.39",
+      "date": "2026-05-25",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Le journal de session enregistre automatiquement les votes, achats marchands, changements d'horloge doom, variations de tension et rounds de combat" }
+      ]
+    },
+    {
+      "version": "1.0.38",
+      "date": "2026-05-25",
+      "changes": [
+        { "type": "improvement", "role": "admin", "text": "Refonte du panneau de détail de session" }
+      ]
+    },
+    {
+      "version": "1.0.37",
+      "date": "2026-05-25",
+      "changes": [
+        { "type": "change", "role": "all", "text": "L'application s'appelle désormais \"DM Toolkit\"" }
+      ]
+    },
+    {
+      "version": "1.0.35",
+      "date": "2026-05-25",
+      "changes": [
+        { "type": "improvement", "role": "admin", "text": "Bascule clair/obscur disponible directement sur la page de connexion" }
+      ]
+    },
+    {
+      "version": "1.0.33",
+      "date": "2026-05-24",
+      "changes": [
+        { "type": "improvement", "role": "admin", "text": "Corrections et retouches mineures de l'interface du gestionnaire audio" }
+      ]
+    },
+    {
+      "version": "1.0.32",
+      "date": "2026-05-24",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Possibilité de changer son mot de passe depuis le tableau de bord" }
+      ]
+    },
+    {
+      "version": "1.0.30",
+      "date": "2026-05-22",
+      "changes": [
+        { "type": "improvement", "role": "admin", "text": "Reclassification automatique des fichiers audio par IA" },
+        { "type": "improvement", "role": "admin", "text": "Améliorations de l'interface du gestionnaire audio" }
+      ]
+    },
+    {
+      "version": "1.0.29",
+      "date": "2026-05-20",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Nouveau gestionnaire audio : upload MP3/WAV/OGG/FLAC/M4A, organisé par catégorie (ambiance, musique, effets), lecture multi-piste avec volume et boucle individuelle" }
+      ]
+    }
+  ]
+}
