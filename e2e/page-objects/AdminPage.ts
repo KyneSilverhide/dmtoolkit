@@ -9,6 +9,15 @@ export class AdminPage {
   }
 
   async login(token: string) {
+    // Ensure generatorEnabled is true regardless of server GITHUB_TOKEN setting,
+    // so tests don't depend on an environment variable that is absent in CI.
+    await this.page.route('**/api/config', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ generatorEnabled: true, demoEnabled: false }),
+      })
+    )
     await loginAsAdmin(this.page, token)
   }
 
