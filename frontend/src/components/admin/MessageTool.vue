@@ -394,6 +394,7 @@ async function sendMessage() {
 .feedback.error { color: var(--admin-danger-text, var(--color-danger)); }
 
 .send-btn {
+  width: 100%;
   padding: 0.6rem 1rem;
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);

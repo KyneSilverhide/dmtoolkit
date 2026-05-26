@@ -271,6 +271,7 @@ cd frontend && npm run dev  # vite dev server
 - Vue Router 4 — toutes les vues sont importées **statiquement** dans `router/index.js` (pas de lazy-loading), ce qui inclut leur CSS globalement dans le bundle
 - Socket.IO via le singleton `getSocket(token)` — **ne jamais créer un `io()` directement**, toujours utiliser `getSocket()` et `resetSocket()` de `frontend/src/socket.js`
 - L'URL du backend vient de `import.meta.env.VITE_BACKEND_URL` (fallback `http://localhost:3000`)
+- **Bouton d'action primaire** (form-commit standalone en bas de formulaire) : `width: 100%`, `padding: 0.6rem 1rem`, `font-size: 0.8rem`, `background: var(--gradient-accent-action)`, `border: 1px solid var(--color-gold-dark)`. Ne pas appliquer aux boutons inline avec un input (search, select+send), ni aux grilles de contrôles compacts (TvControls, MapManager).
 
 ### Backend
 - CommonJS (`require`/`module.exports`), pas d'ESM

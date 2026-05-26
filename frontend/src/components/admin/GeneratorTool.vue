@@ -297,17 +297,18 @@ async function copyResult(text, index) {
 
 /* Generate button — matches `.action-btn` from TvControls / VoteManager */
 .generate-btn {
-  align-self: flex-start;
+  width: 100%;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
-  padding: 0.45rem 1rem;
+  padding: 0.6rem 1rem;
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-gold-bright);
   font-family: var(--font-heading);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   letter-spacing: 0.08em;
   cursor: pointer;
   transition: background 0.15s;

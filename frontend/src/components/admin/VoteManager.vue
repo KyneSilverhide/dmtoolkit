@@ -253,13 +253,14 @@ onUnmounted(() => {
 }
 
 .action-btn {
-  padding: 0.45rem 0.85rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-gold-bright);
   font-family: var(--font-heading);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   letter-spacing: 0.08em;
   cursor: pointer;
   transition: all 0.2s;
