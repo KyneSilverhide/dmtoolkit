@@ -407,7 +407,7 @@ async function login() {
   box-sizing: border-box;
 }
 .form-input:focus { border-color: var(--color-gold-dark); }
-.form-input::placeholder { color: var(--color-border); }
+.form-input::placeholder { color: var(--color-text-dim); font-style: italic; }
 
 .form-error {
   display: flex;

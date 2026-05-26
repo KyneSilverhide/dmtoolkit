@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSocket } from '../socket.js'
 import { sessionStore } from '../stores/session.js'
@@ -7,6 +7,7 @@ import { getProfile, saveProfile } from '../utils/playerProfiles.js'
 import { saveLastKnownPlayer } from '../utils/playerSessionMemory.js'
 import AppIcon from '../components/AppIcon.vue'
 import { JOIN_SESSION, SESSION_JOINED, ERROR } from '../socket-events.js'
+import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -15,11 +16,23 @@ const sessionCode = ref(route.params.code || '')
 const playerName = ref('')
 const hp = ref(20)
 const ac = ref(10)
-const dndClass = ref('')
+const selectedClass = ref('')
+const customClass = ref('')
+const isCustomClass = computed(() => selectedClass.value === '__custom__')
+const dndClass = computed(() => isCustomClass.value ? customClass.value.trim() : selectedClass.value)
 const avatarFile = ref(null)
 const avatarPreview = ref(null)
 const error = ref('')
 const loading = ref(false)
+
+const theme = ref(getThemePreference('player', 'dark'))
+const isLightTheme = computed(() => theme.value === 'light')
+
+function toggleTheme() {
+  theme.value = theme.value === 'light' ? 'dark' : 'light'
+  setThemePreference('player', theme.value)
+  applyTheme(theme.value)
+}
 
 import { BACKEND_URL } from '@/config.js'
 
@@ -55,15 +68,25 @@ onUnmounted(() => {
 })
 
 // Auto-fill from localStorage when playerName changes
-watch(playerName, (name) => {
+watch(playerName, (name, prevName) => {
   const profile = getProfile(name)
   if (profile) {
-    if (profile.dndClass) dndClass.value = profile.dndClass
+    if (profile.dndClass) {
+      if (DND_CLASSES.includes(profile.dndClass)) {
+        selectedClass.value = profile.dndClass
+        customClass.value = ''
+      } else {
+        selectedClass.value = '__custom__'
+        customClass.value = profile.dndClass
+      }
+    }
     if (profile.avatarUrl) avatarPreview.value = profile.avatarUrl
     if (profile.hp != null) hp.value = profile.hp
     if (profile.ac != null) ac.value = profile.ac
-  } else {
-    dndClass.value = ''
+  } else if (getProfile(prevName)) {
+    // Leaving a profile-loaded name → reset to defaults
+    selectedClass.value = ''
+    customClass.value = ''
     avatarPreview.value = null
     avatarFile.value = null
     hp.value = 20
@@ -190,6 +213,10 @@ async function joinSession() {
     <header class="join-header">
       <button class="back-btn" @click="router.push('/')">← Retour</button>
       <h1 class="page-title">Rejoindre <span class="title-accent">une Session</span></h1>
+      <button class="theme-toggle-btn" @click="toggleTheme">
+        <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.9em" />
+        {{ isLightTheme ? 'Sombre' : 'Clair' }}
+      </button>
     </header>
 
     <main class="join-main">
@@ -212,12 +239,22 @@ async function joinSession() {
 
         <div class="form-group">
           <label class="form-label">
-            <AppIcon icon="game-icons:wizard-staff" size="0.9rem" /> Classe D&amp;D
+            <AppIcon icon="game-icons:wizard-staff" size="0.9rem" /> Classe
           </label>
-          <select v-model="dndClass" class="form-input form-select" data-testid="class-select">
+          <select v-model="selectedClass" class="form-input form-select" data-testid="class-select">
             <option value="">— Choisir une classe —</option>
             <option v-for="cls in DND_CLASSES" :key="cls" :value="cls">{{ cls }}</option>
+            <option value="__custom__">Autre (saisie libre)…</option>
           </select>
+          <input
+            v-if="isCustomClass"
+            v-model="customClass"
+            type="text"
+            class="form-input"
+            placeholder="Nom de votre classe…"
+            data-testid="class-custom-input"
+            autocomplete="off"
+          />
         </div>
 
         <div class="form-group">
@@ -297,6 +334,26 @@ async function joinSession() {
 }
 .back-btn:hover { color: var(--color-gold); }
 
+.theme-toggle-btn {
+  position: absolute;
+  top: 1.5rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.theme-toggle-btn:hover { border-color: var(--color-gold-dark); color: var(--color-gold-bright); }
+
 .skull-ornament { font-size: 2rem; }
 
 .page-title {
@@ -359,6 +416,7 @@ async function joinSession() {
   outline: none;
   transition: border-color 0.2s;
 }
+.stat-input { text-align: center; font-size: 1.3rem; font-weight: 700; padding: 0.75rem 0.5rem; }
 .form-select {
   cursor: pointer;
   appearance: none;
@@ -368,9 +426,8 @@ async function joinSession() {
   padding-right: 2.5rem;
 }
 .form-select option { background: var(--color-surface); color: var(--color-parchment); }
-.stat-input { text-align: center; font-size: 1.3rem; font-weight: 700; padding: 0.75rem 0.5rem; }
 .form-input:focus { border-color: var(--color-gold-dark); }
-.form-input::placeholder { color: var(--color-border); }
+.form-input::placeholder { color: var(--color-text-dim); font-style: italic; }
 
 .form-hint {
   font-family: var(--font-body);
