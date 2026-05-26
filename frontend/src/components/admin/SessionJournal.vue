@@ -10,6 +10,8 @@ import { BACKEND_URL } from '@/config.js'
 const events = ref([])
 const summary = ref('')
 const loadingSummary = ref(false)
+const clearConfirm = ref(false)
+const clearingJournal = ref(false)
 const hasSession = computed(() => !!sessionStore.activeSession)
 
 const MERGE_WINDOW_MS = 1000
@@ -108,6 +110,24 @@ function handleSessionEvent(event) {
   events.value.push({ ...event, createdAt: event.createdAt || new Date() })
 }
 
+async function clearJournal() {
+  if (!hasSession.value) return
+  clearingJournal.value = true
+  try {
+    await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/journal`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    events.value = []
+    summary.value = ''
+  } catch {
+    // ignore
+  } finally {
+    clearingJournal.value = false
+    clearConfirm.value = false
+  }
+}
+
 async function generateSummary() {
   if (!hasSession.value) return
   loadingSummary.value = true
@@ -149,6 +169,16 @@ onUnmounted(() => {
 
     <template v-else>
       <div class="journal-actions">
+        <div v-if="clearConfirm" class="clear-confirm">
+          <span class="clear-confirm-text">Effacer tout le journal ?</span>
+          <button class="confirm-btn" @click="clearJournal" :disabled="clearingJournal">
+            {{ clearingJournal ? '…' : 'Confirmer' }}
+          </button>
+          <button class="cancel-btn" @click="clearConfirm = false" :disabled="clearingJournal">Annuler</button>
+        </div>
+        <button v-else class="clear-btn" @click="clearConfirm = true" :title="'Effacer le journal'">
+          <AppIcon icon="lucide:trash-2" size="0.85em" />
+        </button>
         <button class="summary-btn" @click="generateSummary" :disabled="loadingSummary">
           <AppIcon v-if="!loadingSummary" icon="lucide:file-text" size="0.85em" />
           {{ loadingSummary ? 'Génération…' : 'Générer le résumé' }}
@@ -215,7 +245,70 @@ onUnmounted(() => {
 .journal-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
 }
+
+.clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 0.55rem;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.clear-btn:hover { border-color: var(--color-danger); color: var(--color-danger); }
+
+.clear-confirm {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.clear-confirm-text {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--color-danger);
+}
+
+.confirm-btn {
+  padding: 0.35rem 0.7rem;
+  background: transparent;
+  border: 1px solid var(--color-danger);
+  border-radius: 6px;
+  color: var(--color-danger);
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.confirm-btn:hover:not(:disabled) { background: rgba(var(--color-danger-rgb, 180,50,50), 0.15); }
+.confirm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.cancel-btn {
+  padding: 0.35rem 0.7rem;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.cancel-btn:hover:not(:disabled) { border-color: var(--color-text-dim); color: var(--color-parchment); }
+.cancel-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .summary-btn {
   display: flex;
