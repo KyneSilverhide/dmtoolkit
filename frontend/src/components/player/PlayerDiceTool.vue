@@ -7,6 +7,16 @@ const DICE_TYPES = [4, 6, 8, 10, 12, 20, 100]
 const MAX_COUNT = 20
 const MAX_MODIFIER = 99
 const ANIMATION_STEPS = 12
+// baseline total ≈ 744ms (sum of 40+i*4 for i=0..11) + 200ms settle = 944ms
+const ANIM_BASELINE_MS = 944
+
+const ANIM_DURATION_KEY = 'playerDice-animDuration'
+const _storedDuration = parseFloat(localStorage.getItem(ANIM_DURATION_KEY) ?? '1')
+const animDuration = ref(isNaN(_storedDuration) ? 1 : _storedDuration)
+
+function saveAnimDuration() {
+  localStorage.setItem(ANIM_DURATION_KEY, String(animDuration.value))
+}
 
 const selectedDie = ref(20)
 const diceCount = ref(1)
@@ -59,14 +69,15 @@ async function roll() {
   const total = rolls.reduce((a, b) => a + b, 0) + modifier.value
 
   // Animate total count-up
+  const speedFactor = (animDuration.value * 1000) / ANIM_BASELINE_MS
   animatedTotal.value = 1
   for (let i = 0; i < ANIMATION_STEPS; i++) {
     animatedTotal.value = Math.floor(Math.random() * (selectedDie.value * diceCount.value)) + 1
-    await new Promise(r => setTimeout(r, 40 + i * 4))
+    await new Promise(r => setTimeout(r, (40 + i * 4) * speedFactor))
   }
   animatedTotal.value = total
 
-  await new Promise(r => setTimeout(r, 200))
+  await new Promise(r => setTimeout(r, 200 * speedFactor))
 
   lastRoll.value = {
     rolls,
@@ -150,6 +161,24 @@ const totalColor = computed(() => {
           d{{ d }}
         </button>
       </div>
+    </div>
+
+    <!-- Animation duration -->
+    <div class="section anim-settings">
+      <label class="anim-label">
+        <span class="section-label">Durée de l'animation</span>
+        <span class="anim-value">{{ animDuration.toFixed(1) }}s</span>
+      </label>
+      <input
+        type="range"
+        class="anim-slider"
+        v-model.number="animDuration"
+        min="0"
+        max="3"
+        step="0.1"
+        :disabled="rolling"
+        @change="saveAnimDuration"
+      />
     </div>
 
     <!-- Count + Modifier -->
@@ -471,5 +500,36 @@ const totalColor = computed(() => {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+.anim-settings {
+  padding: 0;
+}
+
+.anim-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.anim-value {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  color: var(--color-gold-bright);
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+.anim-slider {
+  width: 100%;
+  accent-color: var(--color-gold-dark);
+  cursor: pointer;
+  height: 4px;
+}
+
+.anim-slider:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 </style>
