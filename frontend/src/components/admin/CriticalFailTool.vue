@@ -68,12 +68,12 @@ async function rollDice() {
   animatedDice.value = finalRoll
   diceValue.value = finalRoll
 
-  await new Promise(r => setTimeout(r, 400))
+  await new Promise(r => setTimeout(r, 400 * speedFactor))
 
   const found = getResult(finalRoll, tables[combatType.value])
   result.value = found ? found.result : 'Résultat introuvable.'
 
-  await new Promise(r => setTimeout(r, 100))
+  await new Promise(r => setTimeout(r, 100 * speedFactor))
   showResult.value = true
   isRolling.value = false
 }
