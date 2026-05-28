@@ -311,6 +311,9 @@ export const DEMO_RESET = 'demo-reset'
 /** Sent to a player when they are kicked from the session */
 export const KICKED = 'kicked'
 
+/** Server notifies admin to play an audio track: { trackId } */
+export const AUDIO_PLAY_REQUESTED = 'audio-play-requested'
+
 /** Generic error event: { message } */
 export const ERROR = 'error'
 
@@ -421,6 +424,7 @@ export default {
   PLAYER_ROLL_HIDDEN_SENT,
   DEMO_RESET,
   KICKED,
+  AUDIO_PLAY_REQUESTED,
   ERROR,
   TV_CONTROL_ERROR,
   SEND_ERROR,

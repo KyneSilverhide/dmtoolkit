@@ -18,6 +18,13 @@ const sendFeedback = ref('')
 const selectedPlayerId = ref('all')
 const hasConnectedPlayers = computed(() => sessionStore.players.length > 0)
 
+const ANIM_DURATION_KEY = 'criticalFail-animDuration'
+const animDuration = ref(parseFloat(localStorage.getItem(ANIM_DURATION_KEY) ?? '2'))
+
+function saveAnimDuration() {
+  localStorage.setItem(ANIM_DURATION_KEY, String(animDuration.value))
+}
+
 const tables = {
   melee: meleeTable,
   distance: distanceTable,
@@ -50,10 +57,12 @@ async function rollDice() {
 
   const finalRoll = Math.floor(Math.random() * 100) + 1
 
+  // baseline total ≈ 1770ms (sum of 30+i*2 for i=0..29)
+  const speedFactor = (animDuration.value * 1000) / 1770
   let steps = 30
   for (let i = 0; i < steps; i++) {
     animatedDice.value = Math.floor(Math.random() * 100) + 1
-    await new Promise(r => setTimeout(r, 30 + i * 2))
+    await new Promise(r => setTimeout(r, (30 + i * 2) * speedFactor))
   }
 
   animatedDice.value = finalRoll
@@ -139,6 +148,23 @@ onUnmounted(() => {
           <span class="type-name">{{ type.label }}</span>
         </button>
       </div>
+    </section>
+
+    <section class="anim-settings">
+      <label class="anim-label">
+        <span class="anim-label-text">Durée de l'animation</span>
+        <span class="anim-value">{{ animDuration.toFixed(1) }}s</span>
+      </label>
+      <input
+        type="range"
+        class="anim-slider"
+        v-model.number="animDuration"
+        min="0.5"
+        max="5"
+        step="0.5"
+        :disabled="isRolling"
+        @change="saveAnimDuration"
+      />
     </section>
 
     <section class="dice-section">
@@ -275,6 +301,45 @@ onUnmounted(() => {
   font-size: 0.75rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.anim-settings {
+  padding: 0 0 1rem;
+}
+
+.anim-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.anim-label-text {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+
+.anim-value {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  color: var(--color-gold-bright);
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+.anim-slider {
+  width: 100%;
+  accent-color: var(--theme-accent, var(--color-gold-dark));
+  cursor: pointer;
+  height: 4px;
+}
+
+.anim-slider:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .dice-section {

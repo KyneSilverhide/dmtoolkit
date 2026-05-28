@@ -193,6 +193,7 @@ cd frontend && npm run dev  # vite dev server
 | `kick-player` | Expulser un joueur |
 | `obsidian-sync-initiatives` | Sync depuis Obsidian Initiative Tracker — met à jour les initiatives en masse par nom de joueur (`{ sessionId, updates: [{playerName, initiative}] }`) |
 | `admin-update-hp` | Met à jour les PV d'un joueur par nom (pour sync Obsidian) — `{ sessionId, playerName, currentHp }` |
+| `obsidian-play-audio` | Déclenche la lecture d'une piste audio depuis Obsidian — `{ sessionId, trackId }` — relayé à l'admin via `audio-play-requested` |
 
 ### Événements sortants (serveur → client)
 
@@ -256,6 +257,7 @@ cd frontend && npm run dev  # vite dev server
 | `batch-accepted` | joueur | Panier accepté |
 | `batch-rejected` | joueur | Panier refusé |
 | `kicked` | joueur | Joueur expulsé |
+| `audio-play-requested` | admin | Demande de lecture d'une piste audio déclenchée depuis Obsidian — `{ trackId }` |
 | `demo-reset` | session + admin + TV | Réinitialisation du compte démo — déclenche `window.location.reload()` côté client |
 | `error` | émetteur | Erreur générique |
 | `tv-control-error` | admin | Erreur de contrôle TV |

@@ -3,6 +3,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
 import { authStore } from '../../stores/auth.js'
 import { sessionStore } from '../../stores/session.js'
+import { getSocket } from '../../socket.js'
+import { AUDIO_PLAY_REQUESTED } from '../../socket-events.js'
 
 import { BACKEND_URL } from '@/config.js'
 
@@ -350,8 +352,17 @@ async function reclassifyAll() {
   reclassifyProgress.value = 0
 }
 
-onMounted(() => loadTracks())
+function onAudioPlayRequested({ trackId }) {
+  const track = tracks.value.find(t => t.id === trackId)
+  if (track && !playing.value.has(track.id)) togglePlay(track)
+}
+
+onMounted(() => {
+  loadTracks()
+  getSocket().on(AUDIO_PLAY_REQUESTED, onAudioPlayRequested)
+})
 onUnmounted(() => {
+  getSocket().off(AUDIO_PLAY_REQUESTED, onAudioPlayRequested)
   for (const [, audio] of audioObjects) { audio.pause() }
   audioObjects.clear()
   gainNodes.clear()
