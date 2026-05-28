@@ -11,7 +11,8 @@ const ANIMATION_STEPS = 12
 const ANIM_BASELINE_MS = 944
 
 const ANIM_DURATION_KEY = 'playerDice-animDuration'
-const animDuration = ref(parseFloat(localStorage.getItem(ANIM_DURATION_KEY) ?? '1'))
+const _storedDuration = parseFloat(localStorage.getItem(ANIM_DURATION_KEY) ?? '1')
+const animDuration = ref(isNaN(_storedDuration) ? 1 : _storedDuration)
 
 function saveAnimDuration() {
   localStorage.setItem(ANIM_DURATION_KEY, String(animDuration.value))
