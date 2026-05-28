@@ -159,9 +159,9 @@ onUnmounted(() => {
         type="range"
         class="anim-slider"
         v-model.number="animDuration"
-        min="0.5"
-        max="5"
-        step="0.5"
+        min="0"
+        max="3"
+        step="0.1"
         :disabled="isRolling"
         @change="saveAnimDuration"
       />

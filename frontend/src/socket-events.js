@@ -314,6 +314,15 @@ export const KICKED = 'kicked'
 /** Server notifies admin to play an audio track: { trackId } */
 export const AUDIO_PLAY_REQUESTED = 'audio-play-requested'
 
+/** Server notifies admin to stop an audio track: { trackId } */
+export const AUDIO_STOP_REQUESTED = 'audio-stop-requested'
+
+/** Server notifies admin to set loop on an audio track: { trackId, loop: boolean } */
+export const AUDIO_LOOP_REQUESTED = 'audio-loop-requested'
+
+/** Server notifies admin to set volume on an audio track: { trackId, volume: 0..1 } */
+export const AUDIO_VOLUME_REQUESTED = 'audio-volume-requested'
+
 /** Generic error event: { message } */
 export const ERROR = 'error'
 
@@ -425,6 +434,9 @@ export default {
   DEMO_RESET,
   KICKED,
   AUDIO_PLAY_REQUESTED,
+  AUDIO_STOP_REQUESTED,
+  AUDIO_LOOP_REQUESTED,
+  AUDIO_VOLUME_REQUESTED,
   ERROR,
   TV_CONTROL_ERROR,
   SEND_ERROR,

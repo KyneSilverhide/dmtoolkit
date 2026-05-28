@@ -194,6 +194,9 @@ cd frontend && npm run dev  # vite dev server
 | `obsidian-sync-initiatives` | Sync depuis Obsidian Initiative Tracker — met à jour les initiatives en masse par nom de joueur (`{ sessionId, updates: [{playerName, initiative}] }`) |
 | `admin-update-hp` | Met à jour les PV d'un joueur par nom (pour sync Obsidian) — `{ sessionId, playerName, currentHp }` |
 | `obsidian-play-audio` | Déclenche la lecture d'une piste audio depuis Obsidian — `{ sessionId, trackId }` — relayé à l'admin via `audio-play-requested` |
+| `obsidian-stop-audio` | Arrête une piste audio depuis Obsidian — `{ sessionId, trackId }` — relayé via `audio-stop-requested` |
+| `obsidian-loop-audio` | Active/désactive la boucle d'une piste depuis Obsidian — `{ sessionId, trackId, loop: boolean }` — relayé via `audio-loop-requested` |
+| `obsidian-volume-audio` | Règle le volume d'une piste depuis Obsidian — `{ sessionId, trackId, volume: 0..1 }` — relayé via `audio-volume-requested` |
 
 ### Événements sortants (serveur → client)
 
@@ -257,7 +260,10 @@ cd frontend && npm run dev  # vite dev server
 | `batch-accepted` | joueur | Panier accepté |
 | `batch-rejected` | joueur | Panier refusé |
 | `kicked` | joueur | Joueur expulsé |
-| `audio-play-requested` | admin | Demande de lecture d'une piste audio déclenchée depuis Obsidian — `{ trackId }` |
+| `audio-play-requested` | admin | Lecture d'une piste audio déclenchée depuis Obsidian — `{ trackId }` |
+| `audio-stop-requested` | admin | Arrêt d'une piste audio déclenché depuis Obsidian — `{ trackId }` |
+| `audio-loop-requested` | admin | Changement de boucle déclenché depuis Obsidian — `{ trackId, loop: boolean }` |
+| `audio-volume-requested` | admin | Changement de volume déclenché depuis Obsidian — `{ trackId, volume: 0..1 }` |
 | `demo-reset` | session + admin + TV | Réinitialisation du compte démo — déclenche `window.location.reload()` côté client |
 | `error` | émetteur | Erreur générique |
 | `tv-control-error` | admin | Erreur de contrôle TV |

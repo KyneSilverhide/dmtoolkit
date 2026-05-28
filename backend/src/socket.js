@@ -1598,6 +1598,82 @@ function setupSocket(io) {
       } catch (err) { console.error(err) }
     })
 
+    // ── Admin: audio control from Obsidian ──────────────────────────────────
+    socket.on('obsidian-play-audio', ({ sessionId, trackId }) => {
+      if (!socket.admin) return
+      if (!Number.isInteger(trackId) || trackId <= 0) return
+      const adminRoom = io.sockets.adapter.rooms.get(`admin:${sessionId}`)
+      const otherAdmins = adminRoom ? [...adminRoom].filter(id => id !== socket.id) : []
+      if (otherAdmins.length === 0) {
+        socket.emit('obsidian-audio-error', { message: 'Aucun client DM Toolkit connecté pour relayer la commande audio.' })
+        return
+      }
+      io.to(`admin:${sessionId}`).emit('audio-play-requested', { trackId })
+    })
+
+    socket.on('obsidian-stop-audio', ({ sessionId, trackId }) => {
+      if (!socket.admin) return
+      if (!Number.isInteger(trackId) || trackId <= 0) return
+      const adminRoom = io.sockets.adapter.rooms.get(`admin:${sessionId}`)
+      const otherAdmins = adminRoom ? [...adminRoom].filter(id => id !== socket.id) : []
+      if (otherAdmins.length === 0) {
+        socket.emit('obsidian-audio-error', { message: 'Aucun client DM Toolkit connecté pour relayer la commande audio.' })
+        return
+      }
+      io.to(`admin:${sessionId}`).emit('audio-stop-requested', { trackId })
+    })
+
+    socket.on('obsidian-loop-audio', ({ sessionId, trackId, loop }) => {
+      if (!socket.admin) return
+      if (!Number.isInteger(trackId) || trackId <= 0) return
+      const adminRoom = io.sockets.adapter.rooms.get(`admin:${sessionId}`)
+      const otherAdmins = adminRoom ? [...adminRoom].filter(id => id !== socket.id) : []
+      if (otherAdmins.length === 0) {
+        socket.emit('obsidian-audio-error', { message: 'Aucun client DM Toolkit connecté pour relayer la commande audio.' })
+        return
+      }
+      io.to(`admin:${sessionId}`).emit('audio-loop-requested', { trackId, loop: !!loop })
+    })
+
+    socket.on('obsidian-volume-audio', ({ sessionId, trackId, volume }) => {
+      if (!socket.admin) return
+      if (!Number.isInteger(trackId) || trackId <= 0) return
+      const adminRoom = io.sockets.adapter.rooms.get(`admin:${sessionId}`)
+      const otherAdmins = adminRoom ? [...adminRoom].filter(id => id !== socket.id) : []
+      if (otherAdmins.length === 0) {
+        socket.emit('obsidian-audio-error', { message: 'Aucun client DM Toolkit connecté pour relayer la commande audio.' })
+        return
+      }
+      const vol = Math.max(0, Math.min(1, Number(volume))) || 0
+      io.to(`admin:${sessionId}`).emit('audio-volume-requested', { trackId, volume: vol })
+    })
+
+    // ── Admin: Obsidian → show image on TV by name ───────────────────────────
+    socket.on('obsidian-show-image', async ({ sessionId, imageName }) => {
+      if (!socket.admin) return
+      if (!imageName || typeof imageName !== 'string' || !Number.isInteger(sessionId)) return
+      try {
+        const { rows } = await pool.query(
+          `SELECT url FROM session_images
+           WHERE session_id = $1 AND type IN ('image', 'map')
+             AND LOWER(original_name) = LOWER($2)`,
+          [sessionId, imageName.trim()]
+        )
+        if (!rows.length) {
+          socket.emit('obsidian-image-error', { message: `Image "${imageName}" introuvable dans la session.` })
+          return
+        }
+        const imageUrl = rows[0].url
+        await pool.query(
+          'UPDATE sessions SET tv_mode = $1, current_image_url = $2 WHERE id = $3 AND created_by = $4',
+          ['image', imageUrl, sessionId, socket.admin.id]
+        )
+        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl })
+        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl })
+        socket.emit('obsidian-image-shown', { imageName: imageName.trim() })
+      } catch (err) { console.error(err) }
+    })
+
     // ── Admin: kick player ───────────────────────────────────────────────────
     socket.on('kick-player', async ({ playerId }) => {
       if (!socket.admin) return

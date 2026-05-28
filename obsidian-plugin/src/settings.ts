@@ -3,14 +3,16 @@ import DmToolkitSync from './main';
 
 export interface DmToolkitSettings {
 	backendUrl: string;
-	jwtToken: string;
+	username: string;
+	password: string;
 	sessionId: number;
 	autoSync: boolean;
 }
 
 export const DEFAULT_SETTINGS: DmToolkitSettings = {
 	backendUrl: 'http://localhost:3000',
-	jwtToken: '',
+	username: '',
+	password: '',
 	sessionId: 0,
 	autoSync: true,
 };
@@ -39,19 +41,33 @@ export class DmToolkitSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('Token JWT admin')
-			.setDesc('Récupère-le en te connectant à l\'interface admin DM Toolkit (localStorage → token).')
+			.setName('Nom d\'utilisateur')
+			.setDesc('Identifiant du compte admin DM Toolkit.')
 			.addText(text => text
-				.setPlaceholder('eyJhbGciOiJIUzI1NiIsInR5cCI6...')
-				.setValue(this.plugin.settings.jwtToken)
+				.setPlaceholder('admin')
+				.setValue(this.plugin.settings.username)
 				.onChange(async (value) => {
-					this.plugin.settings.jwtToken = value.trim();
+					this.plugin.settings.username = value.trim();
 					await this.plugin.saveSettings();
 				}));
 
 		new Setting(containerEl)
+			.setName('Mot de passe')
+			.setDesc('Mot de passe du compte admin DM Toolkit.')
+			.addText(text => {
+				text.inputEl.type = 'password';
+				text
+					.setPlaceholder('••••••••')
+					.setValue(this.plugin.settings.password)
+					.onChange(async (value) => {
+						this.plugin.settings.password = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		new Setting(containerEl)
 			.setName('ID de session')
-			.setDesc('L\'identifiant numérique de la session active DM Toolkit.')
+			.setDesc('Rempli automatiquement lors de la connexion. Peut être forcé manuellement si nécessaire.')
 			.addText(text => text
 				.setPlaceholder('1')
 				.setValue(String(this.plugin.settings.sessionId || ''))
@@ -62,7 +78,7 @@ export class DmToolkitSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Connexion automatique au démarrage')
-			.setDesc('Se connecter automatiquement à l\'ouverture d\'Obsidian si le token et l\'ID sont configurés.')
+			.setDesc('Se connecter automatiquement à l\'ouverture d\'Obsidian si les identifiants sont configurés.')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.autoSync)
 				.onChange(async (value) => {

@@ -1,6 +1,63 @@
-import { Notice, Plugin } from 'obsidian';
+import { FuzzySuggestModal, Notice, Plugin } from 'obsidian';
 import { io, Socket } from 'socket.io-client';
 import { DmToolkitSettings, DmToolkitSettingTab, DEFAULT_SETTINGS } from './settings';
+
+interface AudioTrack {
+	id: number;
+	original_name: string;
+	audio_category: string | null;
+	url: string;
+}
+
+interface DMTSession {
+	id: number;
+	code: string;
+	name: string;
+	is_open?: boolean;
+}
+
+class SessionPickerModal extends FuzzySuggestModal<DMTSession> {
+	private sessions: DMTSession[];
+	private onChoose: (session: DMTSession) => void;
+
+	constructor(app: import('obsidian').App, sessions: DMTSession[], onChoose: (s: DMTSession) => void) {
+		super(app);
+		this.sessions = sessions;
+		this.onChoose = onChoose;
+		this.setPlaceholder('Choisir une session…');
+	}
+
+	getItems(): DMTSession[] { return this.sessions; }
+
+	getItemText(s: DMTSession): string {
+		return `[${s.code}] ${s.name}`;
+	}
+
+	onChooseItem(s: DMTSession): void {
+		this.onChoose(s);
+	}
+}
+
+class AudioTrackModal extends FuzzySuggestModal<AudioTrack> {
+	private tracks: AudioTrack[];
+	private onChoose: (track: AudioTrack) => void;
+
+	constructor(app: import('obsidian').App, tracks: AudioTrack[], onChoose: (track: AudioTrack) => void) {
+		super(app);
+		this.tracks = tracks;
+		this.onChoose = onChoose;
+		this.setPlaceholder('Rechercher une piste audio…');
+	}
+
+	getItems(): AudioTrack[] { return this.tracks; }
+
+	getItemText(track: AudioTrack): string {
+		const cat = track.audio_category || 'Général';
+		return `[${cat}] ${track.original_name || track.url}`;
+	}
+
+	onChooseItem(track: AudioTrack): void { this.onChoose(track); }
+}
 
 // Shape of a player as returned by DM Toolkit
 interface CFPlayer {
@@ -19,6 +76,7 @@ interface CFPlayer {
 export default class DmToolkitSync extends Plugin {
 	settings!: DmToolkitSettings;
 	private socket: Socket | null = null;
+	private jwtToken: string | null = null;
 	// plugin.api  → addCreatures / newEncounter
 	// plugin.tracker → updateCreatureByName
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -50,8 +108,125 @@ export default class DmToolkitSync extends Plugin {
 			callback: () => this.syncPlayersFromCF(),
 		});
 
-		if (this.settings.autoSync && this.settings.jwtToken && this.settings.sessionId) {
-			this.app.workspace.onLayoutReady(() => this.connect());
+		this.addCommand({
+			id: 'insert-audio-link',
+			name: 'Insérer un lien audio DM Toolkit',
+			editorCallback: async (editor) => {
+				const { backendUrl, sessionId } = this.settings;
+				if (!this.jwtToken) {
+					new Notice('DM Toolkit Sync: non connecté. Lance la connexion d\'abord.');
+					return;
+				}
+				if (!sessionId) {
+					new Notice('DM Toolkit Sync: configure l\'ID de session d\'abord.');
+					return;
+				}
+				try {
+					const res = await fetch(
+						`${backendUrl}/api/sessions/${sessionId}/images?type=audio`,
+						{ headers: { Authorization: `Bearer ${this.jwtToken}` } }
+					);
+					if (!res.ok) throw new Error(`HTTP ${res.status}`);
+					const tracks = await res.json() as AudioTrack[];
+					if (!tracks.length) {
+						new Notice('DM Toolkit Sync: aucune piste audio dans cette session.');
+						return;
+					}
+					new AudioTrackModal(this.app, tracks, (track) => {
+						const name = track.original_name || track.url;
+						editor.replaceSelection(`[${name}](dmt-audio://${track.id})`);
+					}).open();
+				} catch (err) {
+					new Notice(`DM Toolkit Sync: impossible de charger les pistes — ${err}`);
+				}
+			},
+		});
+
+		this.registerMarkdownPostProcessor((el) => {
+			el.querySelectorAll<HTMLAnchorElement>('a[href^="dmt-audio://"]').forEach(a => {
+				const trackId = parseInt(a.getAttribute('href')!.replace('dmt-audio://', ''), 10);
+				if (!Number.isFinite(trackId) || trackId <= 0) return;
+				const label = a.textContent || 'Piste audio';
+
+				const container = document.createElement('span');
+				container.className = 'dmt-audio-player';
+				container.style.cssText = 'display:inline-flex;align-items:center;gap:4px;background:var(--background-secondary);border:1px solid var(--background-modifier-border);border-radius:6px;padding:2px 6px;font-size:0.85em;vertical-align:middle;';
+
+				const playBtn = document.createElement('button');
+				playBtn.className = 'dmt-audio-btn';
+				playBtn.textContent = `▶ ${label}`;
+				playBtn.title = 'Lecture';
+				playBtn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--text-accent);padding:0 4px;font-size:inherit;';
+				playBtn.addEventListener('click', () => this.controlAudio('play', trackId));
+
+				const stopBtn = document.createElement('button');
+				stopBtn.textContent = '⏹';
+				stopBtn.title = 'Arrêter';
+				stopBtn.style.cssText = 'background:none;border:none;cursor:pointer;padding:0 4px;font-size:1.1em;opacity:0.7;line-height:1;';
+				stopBtn.addEventListener('click', () => this.controlAudio('stop', trackId));
+
+				let loopActive = false;
+				const loopBtn = document.createElement('button');
+				loopBtn.textContent = '🔁';
+				loopBtn.title = 'Boucle';
+				loopBtn.style.cssText = 'background:none;border:none;cursor:pointer;padding:0 2px;font-size:inherit;opacity:0.35;transition:opacity 0.15s;';
+				loopBtn.addEventListener('click', () => {
+					loopActive = !loopActive;
+					loopBtn.style.opacity = loopActive ? '1' : '0.35';
+					this.controlAudio('loop', trackId, { loop: loopActive });
+				});
+
+				const volSlider = document.createElement('input');
+				volSlider.type = 'range';
+				volSlider.min = '0';
+				volSlider.max = '1';
+				volSlider.step = '0.05';
+				volSlider.value = '1';
+				volSlider.title = 'Volume';
+				volSlider.style.cssText = 'width:60px;cursor:pointer;accent-color:var(--text-accent);vertical-align:middle;';
+				let volTimer: ReturnType<typeof setTimeout> | null = null;
+				const sendVolume = () => this.controlAudio('volume', trackId, { volume: parseFloat(volSlider.value) });
+				volSlider.addEventListener('input', () => {
+					if (volTimer) clearTimeout(volTimer);
+					volTimer = setTimeout(() => { sendVolume(); volTimer = null; }, 150);
+				});
+				volSlider.addEventListener('change', () => {
+					if (volTimer) { clearTimeout(volTimer); volTimer = null; }
+					sendVolume();
+				});
+
+				container.appendChild(playBtn);
+				container.appendChild(stopBtn);
+				container.appendChild(loopBtn);
+				container.appendChild(volSlider);
+				a.replaceWith(container);
+			});
+		});
+
+		// Click on a rendered ![[image.jpg]] or Meta Bind imageSuggester → show on TV
+		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
+			if (!this.socket?.connected || !this.settings.sessionId) return;
+			const target = evt.target as HTMLElement;
+
+			// Case 1: standard ![[image.jpg]] embed
+			const embed = target.closest('.internal-embed.image-embed') as HTMLElement | null;
+			if (embed) {
+				const src = embed.getAttribute('src');
+				if (src) this.sendImageToTV(src.split('/').pop() ?? src);
+				return;
+			}
+
+			// Case 2: Meta Bind imageSuggester — img.mb-image-card-image
+			// alt = vault-relative path, e.g. "Images/Frere Halven Draak.png"
+			const img = (target.tagName === 'IMG' ? target : target.closest('img')) as HTMLImageElement | null;
+			if (img?.classList.contains('mb-image-card-image')) {
+				const filename = (img.alt || '').split('/').pop() ?? '';
+				if (filename) this.sendImageToTV(filename);
+			}
+		});
+
+		if (this.settings.autoSync && this.settings.username && this.settings.password && this.settings.sessionId) {
+			this.app.workspace.onLayoutReady(() => this.connect({ skipPicker: true }));
 		}
 	}
 
@@ -59,22 +234,61 @@ export default class DmToolkitSync extends Plugin {
 		this.disconnect();
 	}
 
+	// ── Auth ────────────────────────────────────────────────────────────────────
+
+	private async login(): Promise<boolean> {
+		const { backendUrl, username, password } = this.settings;
+		if (!username || !password) {
+			new Notice('DM Toolkit Sync: configure le nom d\'utilisateur et le mot de passe d\'abord.');
+			return false;
+		}
+		try {
+			const res = await fetch(`${backendUrl}/api/auth/login`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ username, password }),
+			});
+			if (!res.ok) {
+				const data = await res.json().catch(() => ({})) as { error?: string };
+				new Notice(`DM Toolkit Sync: connexion échouée — ${data.error ?? res.status}`);
+				return false;
+			}
+			const { token } = await res.json() as { token: string };
+			this.jwtToken = token;
+			return true;
+		} catch (err) {
+			new Notice(`DM Toolkit Sync: impossible de contacter le serveur — ${err}`);
+			return false;
+		}
+	}
+
 	// ── Connection ──────────────────────────────────────────────────────────────
 
-	connect() {
+	async connect({ skipPicker = false } = {}) {
 		if (this.socket?.connected) {
 			new Notice('DM Toolkit Sync: déjà connecté.');
 			return;
 		}
 
-		const { backendUrl, jwtToken, sessionId } = this.settings;
-		if (!jwtToken || !sessionId) {
-			new Notice('DM Toolkit Sync: configure l\'URL, le token JWT et l\'ID de session d\'abord.');
+		if (!this.settings.username || !this.settings.password) {
+			new Notice('DM Toolkit Sync: configure le nom d\'utilisateur et le mot de passe d\'abord.');
 			return;
 		}
 
+		const loggedIn = await this.login();
+		if (!loggedIn) return;
+
+		if (!skipPicker || !this.settings.sessionId) {
+			const chosenId = await this.fetchAndPickSession();
+			if (!chosenId) return;
+			this.settings.sessionId = chosenId;
+			await this.saveSettings();
+		}
+
+		const { backendUrl, sessionId } = this.settings;
+
 		this.socket = io(backendUrl, {
-			auth: { token: jwtToken },
+			auth: { token: this.jwtToken },
 			reconnection: true,
 		});
 
@@ -121,6 +335,72 @@ export default class DmToolkitSync extends Plugin {
 				this.applyITUpdate(name, { initiative });
 			}
 		});
+
+		this.socket.on('obsidian-audio-error', ({ message }: { message: string }) => {
+			new Notice(`DM Toolkit Audio : ${message}`);
+		});
+
+		this.socket.on('obsidian-image-error', ({ message }: { message: string }) => {
+			new Notice(`DM Toolkit Image : ${message}`);
+		});
+
+		this.socket.on('obsidian-image-shown', ({ imageName }: { imageName: string }) => {
+			new Notice(`Sur TV : ${imageName}`);
+		});
+	}
+
+	private async fetchAndPickSession(): Promise<number | null> {
+		try {
+			const res = await fetch(`${this.settings.backendUrl}/api/sessions`, {
+				headers: { Authorization: `Bearer ${this.jwtToken}` },
+			});
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const sessions = await res.json() as DMTSession[];
+			if (!sessions.length) {
+				new Notice('DM Toolkit Sync: aucune session trouvée sur ce compte.');
+				return null;
+			}
+			if (sessions.length === 1) return sessions[0].id;
+			return new Promise(resolve => {
+				new SessionPickerModal(
+					this.app, sessions,
+					(s) => resolve(s.id),
+				).open();
+			});
+		} catch (err) {
+			new Notice(`DM Toolkit Sync: impossible de charger les sessions — ${err}`);
+			return null;
+		}
+	}
+
+	private sendImageToTV(filename: string) {
+		if (!this.socket?.connected || !this.settings.sessionId) return;
+		this.socket.emit('obsidian-show-image', {
+			sessionId: this.settings.sessionId,
+			imageName: filename,
+		});
+	}
+
+	private controlAudio(action: 'play' | 'stop' | 'loop' | 'volume', trackId: number, params?: { loop?: boolean; volume?: number }) {
+		if (!this.socket?.connected || !this.settings.sessionId) {
+			new Notice('DM Toolkit Sync: non connecté. Lance la connexion d\'abord.');
+			return;
+		}
+		const sessionId = this.settings.sessionId;
+		switch (action) {
+			case 'play':
+				this.socket.emit('obsidian-play-audio', { sessionId, trackId });
+				break;
+			case 'stop':
+				this.socket.emit('obsidian-stop-audio', { sessionId, trackId });
+				break;
+			case 'loop':
+				this.socket.emit('obsidian-loop-audio', { sessionId, trackId, loop: params?.loop ?? false });
+				break;
+			case 'volume':
+				this.socket.emit('obsidian-volume-audio', { sessionId, trackId, volume: params?.volume ?? 1 });
+				break;
+		}
 	}
 
 	disconnect() {
@@ -128,6 +408,7 @@ export default class DmToolkitSync extends Plugin {
 			this.socket.disconnect();
 			this.socket = null;
 		}
+		this.jwtToken = null;
 	}
 
 	// ── IT helpers ──────────────────────────────────────────────────────────────
@@ -244,14 +525,18 @@ export default class DmToolkitSync extends Plugin {
 	// ── Manual sync via REST ────────────────────────────────────────────────────
 
 	async syncPlayersFromCF() {
-		const { backendUrl, jwtToken, sessionId } = this.settings;
-		if (!jwtToken || !sessionId) {
-			new Notice('DM Toolkit Sync: token JWT et ID de session requis.');
+		if (!this.jwtToken) {
+			new Notice('DM Toolkit Sync: non connecté. Lance la connexion d\'abord.');
+			return;
+		}
+		const { backendUrl, sessionId } = this.settings;
+		if (!sessionId) {
+			new Notice('DM Toolkit Sync: ID de session requis.');
 			return;
 		}
 		try {
 			const res = await fetch(`${backendUrl}/api/sessions/${sessionId}/players`, {
-				headers: { Authorization: `Bearer ${jwtToken}` },
+				headers: { Authorization: `Bearer ${this.jwtToken}` },
 			});
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const players = await res.json() as CFPlayer[];

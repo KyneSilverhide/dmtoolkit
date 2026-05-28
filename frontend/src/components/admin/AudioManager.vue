@@ -4,7 +4,7 @@ import AppIcon from '../AppIcon.vue'
 import { authStore } from '../../stores/auth.js'
 import { sessionStore } from '../../stores/session.js'
 import { getSocket } from '../../socket.js'
-import { AUDIO_PLAY_REQUESTED } from '../../socket-events.js'
+import { AUDIO_PLAY_REQUESTED, AUDIO_STOP_REQUESTED, AUDIO_LOOP_REQUESTED, AUDIO_VOLUME_REQUESTED } from '../../socket-events.js'
 
 import { BACKEND_URL } from '@/config.js'
 
@@ -354,15 +354,48 @@ async function reclassifyAll() {
 
 function onAudioPlayRequested({ trackId }) {
   const track = tracks.value.find(t => t.id === trackId)
-  if (track && !playing.value.has(track.id)) togglePlay(track)
+  if (!track) return
+  // Restart from beginning if already playing
+  const audio = audioObjects.get(track.id)
+  if (audio && playing.value.has(track.id)) {
+    audio.currentTime = 0
+    return
+  }
+  togglePlay(track)
+}
+
+function onAudioStopRequested({ trackId }) {
+  const audio = audioObjects.get(trackId)
+  if (audio) { audio.pause(); audio.currentTime = 0 }
+  playing.value = new Set([...playing.value].filter(id => id !== trackId))
+  currentTimes.value = { ...currentTimes.value, [trackId]: 0 }
+}
+
+function onAudioLoopRequested({ trackId, loop }) {
+  loops.value = { ...loops.value, [trackId]: loop }
+  const audio = audioObjects.get(trackId)
+  if (audio) audio.loop = loop
+}
+
+function onAudioVolumeRequested({ trackId, volume }) {
+  const track = tracks.value.find(t => t.id === trackId)
+  if (track) setVolume(track, volume)
 }
 
 onMounted(() => {
   loadTracks()
-  getSocket().on(AUDIO_PLAY_REQUESTED, onAudioPlayRequested)
+  const socket = getSocket()
+  socket.on(AUDIO_PLAY_REQUESTED, onAudioPlayRequested)
+  socket.on(AUDIO_STOP_REQUESTED, onAudioStopRequested)
+  socket.on(AUDIO_LOOP_REQUESTED, onAudioLoopRequested)
+  socket.on(AUDIO_VOLUME_REQUESTED, onAudioVolumeRequested)
 })
 onUnmounted(() => {
-  getSocket().off(AUDIO_PLAY_REQUESTED, onAudioPlayRequested)
+  const socket = getSocket()
+  socket.off(AUDIO_PLAY_REQUESTED, onAudioPlayRequested)
+  socket.off(AUDIO_STOP_REQUESTED, onAudioStopRequested)
+  socket.off(AUDIO_LOOP_REQUESTED, onAudioLoopRequested)
+  socket.off(AUDIO_VOLUME_REQUESTED, onAudioVolumeRequested)
   for (const [, audio] of audioObjects) { audio.pause() }
   audioObjects.clear()
   gainNodes.clear()

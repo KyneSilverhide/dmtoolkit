@@ -275,6 +275,39 @@ const COUNTER_OFFER_RESPONSE = 'counter-offer-response'
 /** Sent to a player when they are kicked from the session */
 const KICKED = 'kicked'
 
+/** Obsidian requests playback of an audio track: { sessionId, trackId } */
+const OBSIDIAN_PLAY_AUDIO = 'obsidian-play-audio'
+
+/** Obsidian requests stopping an audio track: { sessionId, trackId } */
+const OBSIDIAN_STOP_AUDIO = 'obsidian-stop-audio'
+
+/** Obsidian requests toggling loop on an audio track: { sessionId, trackId, loop: boolean } */
+const OBSIDIAN_LOOP_AUDIO = 'obsidian-loop-audio'
+
+/** Obsidian requests setting volume on an audio track: { sessionId, trackId, volume: 0..1 } */
+const OBSIDIAN_VOLUME_AUDIO = 'obsidian-volume-audio'
+
+/** Server notifies admin to play an audio track: { trackId } */
+const AUDIO_PLAY_REQUESTED = 'audio-play-requested'
+
+/** Server notifies admin to stop an audio track: { trackId } */
+const AUDIO_STOP_REQUESTED = 'audio-stop-requested'
+
+/** Server notifies admin to set loop on an audio track: { trackId, loop: boolean } */
+const AUDIO_LOOP_REQUESTED = 'audio-loop-requested'
+
+/** Server notifies admin to set volume on an audio track: { trackId, volume: 0..1 } */
+const AUDIO_VOLUME_REQUESTED = 'audio-volume-requested'
+
+/** Sent to Obsidian when no admin browser client is connected to relay the audio command: { message } */
+const OBSIDIAN_AUDIO_ERROR = 'obsidian-audio-error'
+
+/** Obsidian requests displaying an image on the TV by name: { sessionId, imageName } */
+const OBSIDIAN_SHOW_IMAGE = 'obsidian-show-image'
+
+/** Sent to Obsidian when the requested image is not found in the session: { message } */
+const OBSIDIAN_IMAGE_ERROR = 'obsidian-image-error'
+
 /** Generic error event: { message } */
 const ERROR = 'error'
 
@@ -373,6 +406,17 @@ module.exports = {
   COUNTER_OFFER_RESULT,
   COUNTER_OFFER_RESPONSE,
   KICKED,
+  OBSIDIAN_PLAY_AUDIO,
+  OBSIDIAN_STOP_AUDIO,
+  OBSIDIAN_LOOP_AUDIO,
+  OBSIDIAN_VOLUME_AUDIO,
+  AUDIO_PLAY_REQUESTED,
+  AUDIO_STOP_REQUESTED,
+  AUDIO_LOOP_REQUESTED,
+  AUDIO_VOLUME_REQUESTED,
+  OBSIDIAN_AUDIO_ERROR,
+  OBSIDIAN_SHOW_IMAGE,
+  OBSIDIAN_IMAGE_ERROR,
   ERROR,
   TV_CONTROL_ERROR,
   SEND_ERROR,
