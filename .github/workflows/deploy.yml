@@ -6,8 +6,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ghcr.io/kynesilverhide/critical-fail-backend
-  FRONTEND_IMAGE: ghcr.io/kynesilverhide/critical-fail-frontend
+  BACKEND_IMAGE: ghcr.io/kynesilverhide/dmtoolkit-backend
+  FRONTEND_IMAGE: ghcr.io/kynesilverhide/dmtoolkit-frontend
 
 jobs:
   e2e:
