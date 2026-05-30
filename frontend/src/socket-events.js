@@ -323,6 +323,26 @@ export const AUDIO_LOOP_REQUESTED = 'audio-loop-requested'
 /** Server notifies admin to set volume on an audio track: { trackId, volume: 0..1 } */
 export const AUDIO_VOLUME_REQUESTED = 'audio-volume-requested'
 
+// ── Puzzle events ────────────────────────────────────────────────────────────
+
+/** Admin shows a puzzle: { sessionId, imageId } */
+export const SHOW_PUZZLE = 'show-puzzle'
+
+/** Admin closes the active puzzle: { sessionId } */
+export const CLOSE_PUZZLE = 'close-puzzle'
+
+/** Player relays a puzzle click: { path } */
+export const PUZZLE_CLICK = 'puzzle-click'
+
+/** Sent to players when a puzzle starts: { puzzleImageId, puzzleSeed, puzzleClicks } */
+export const PUZZLE_STARTED = 'puzzle-started'
+
+/** Sent to players when the puzzle is closed */
+export const PUZZLE_CLOSED = 'puzzle-closed'
+
+/** Sent to TV + admin + other players when a puzzle cell is clicked: { path } */
+export const PUZZLE_CELL_CLICKED = 'puzzle-cell-clicked'
+
 /** Generic error event: { message } */
 export const ERROR = 'error'
 

@@ -166,6 +166,19 @@ const demoUploadAudio = multer({
   fileFilter: audioFilter,
 })
 
+const HTML_SIZE_LIMIT = 5 * 1024 * 1024
+
+const htmlFilter = (req, file, cb) => {
+  const ext = path.extname(file.originalname).toLowerCase()
+  if (ext !== '.html' && ext !== '.htm') {
+    return cb(new Error('Seul le format HTML est accepté pour les puzzles.'))
+  }
+  cb(null, true)
+}
+
+const puzzleUploadAdmin = multer({ storage: adminStorage, limits: { fileSize: HTML_SIZE_LIMIT }, fileFilter: htmlFilter })
+const demoPuzzleUpload = multer({ storage: adminStorage, limits: { fileSize: DEMO_MAX_FILE_BYTES }, fileFilter: htmlFilter })
+
 const AVATAR_ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const AVATAR_ALLOWED_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
 
@@ -374,5 +387,40 @@ router.post('/avatar', avatarUpload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded.' })
   res.json({ url: fileToUrl(req.file) })
 })
+
+// HTML puzzle upload — admin only
+router.post('/puzzle',
+  authenticateToken,
+  (req, res, next) => {
+    const instance = req.admin?.is_demo ? demoPuzzleUpload : puzzleUploadAdmin
+    instance.single('file')(req, res, err => {
+      if (!err) return next()
+      if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'Le fichier dépasse 5 Mo.' })
+      if (err.message) return res.status(400).json({ error: err.message })
+      next(err)
+    })
+  },
+  async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Aucun fichier envoyé.' })
+    const sessionId = req.body.session_id
+    const url = fileToUrl(req.file)
+    if (sessionId) {
+      try {
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, req.admin.id]
+        )
+        if (sessionCheck.rows[0]) {
+          const { rows } = await pool.query(
+            "INSERT INTO session_images (session_id, url, original_name, type, file_size) VALUES ($1, $2, $3, 'puzzle', $4) RETURNING id",
+            [sessionId, url, req.file.originalname, req.file.size]
+          )
+          return res.json({ url, id: rows[0].id })
+        }
+      } catch (err) { console.error(err) }
+    }
+    res.json({ url })
+  }
+)
 
 module.exports = router

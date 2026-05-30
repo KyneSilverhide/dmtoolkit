@@ -5,6 +5,10 @@ const pool = require('./db')
 const INITIATIVE_MIN = -10
 const INITIATIVE_MAX = 99
 
+// In-memory click history per session for the active puzzle.
+// Cleared when a new puzzle is shown or puzzle is closed.
+const puzzleClicks = new Map() // sessionId (number) → Array<number[]>
+
 // Valid D&D 5e condition ids — mirrors frontend/src/utils/conditions.js
 const VALID_CONDITIONS = new Set([
   'blinded', 'charmed', 'deafened', 'exhaustion', 'frightened', 'grappled',
@@ -368,6 +372,11 @@ function setupSocket(io) {
           activeMerchant: (session.current_merchant_id && session.tv_mode === 'merchant')
             ? await getMerchantData(session.current_merchant_id)
             : null,
+          activePuzzle: session.tv_mode === 'puzzle' && session.current_puzzle_image_id ? {
+            puzzleImageId: session.current_puzzle_image_id,
+            puzzleSeed: parseInt(session.current_puzzle_seed, 10),
+            puzzleClicks: puzzleClicks.get(session.id) || [],
+          } : null,
           isDemo: !!session.admin_is_demo,
         })
         io.to(`admin:${session.id}`).emit('player-joined', player)
@@ -508,6 +517,7 @@ function setupSocket(io) {
           `SELECT id, session_id, player_name, socket_id, joined_at, ac, max_hp, current_hp, conditions, is_concentrating, initiative
            FROM players WHERE session_id = $1 ORDER BY joined_at ASC`, [sessionId])
         socket.emit('players-snapshot', { sessionId, players: playersResult.rows })
+        socket.adminSessionId = sessionId
         socket.emit('admin-state', {
           sessionId,
           tvMode: session.tv_mode || 'lobby',
@@ -521,6 +531,11 @@ function setupSocket(io) {
           combatRound: session.combat_round || 0,
           timer: serializeTimer(session),
           lobbyBgUrl: session.lobby_bg_url || null,
+          activePuzzle: session.tv_mode === 'puzzle' && session.current_puzzle_image_id ? {
+            puzzleImageId: session.current_puzzle_image_id,
+            puzzleSeed: parseInt(session.current_puzzle_seed, 10),
+            puzzleClicks: puzzleClicks.get(sessionId) || [],
+          } : null,
           isDemo: !!socket.admin.is_demo,
         })
       } catch (err) { console.error(err) }
@@ -566,6 +581,11 @@ function setupSocket(io) {
           combatRound: session.combat_round || 0,
           timer: serializeTimer(session),
           lobbyBgUrl: session.lobby_bg_url || null,
+          activePuzzle: session.tv_mode === 'puzzle' && session.current_puzzle_image_id ? {
+            puzzleImageId: session.current_puzzle_image_id,
+            puzzleSeed: parseInt(session.current_puzzle_seed, 10),
+            puzzleClicks: puzzleClicks.get(session.id) || [],
+          } : null,
           isDemo: !!session.admin_is_demo,
         })
       } catch (err) { console.error(err) }
@@ -845,6 +865,68 @@ function setupSocket(io) {
         io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl })
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl })
       } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: show puzzle on TV and players ──────────────────────────────
+    socket.on('show-puzzle', async ({ sessionId, imageId }) => {
+      if (!socket.admin) return
+      try {
+        const sid = parseInt(sessionId, 10)
+        const iid = parseInt(imageId, 10)
+        if (!Number.isInteger(sid) || !Number.isInteger(iid)) return
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2', [sid, socket.admin.id]
+        )
+        if (!sessionCheck.rows[0]) return
+        const imageCheck = await pool.query(
+          "SELECT id, url, original_name FROM session_images WHERE id = $1 AND session_id = $2 AND type = 'puzzle'",
+          [iid, sid]
+        )
+        if (!imageCheck.rows[0]) return
+        const seed = Math.floor(Math.random() * 2147483646) + 1
+        await pool.query(
+          'UPDATE sessions SET tv_mode = $1, current_puzzle_image_id = $2, current_puzzle_url = $3, current_puzzle_seed = $4 WHERE id = $5',
+          ['puzzle', iid, imageCheck.rows[0].url, String(seed), sid]
+        )
+        puzzleClicks.set(sid, [])
+        const payload = { mode: 'puzzle', puzzleImageId: iid, puzzleSeed: seed }
+        io.to(`tv:${sid}`).emit('tv-mode-changed', payload)
+        io.to(`admin:${sid}`).emit('tv-mode-changed', payload)
+        io.to(`session:${sid}`).emit('puzzle-started', { puzzleImageId: iid, puzzleSeed: seed, puzzleClicks: [] })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: close puzzle ────────────────────────────────────────────────
+    socket.on('close-puzzle', async ({ sessionId }) => {
+      if (!socket.admin) return
+      try {
+        const sid = parseInt(sessionId, 10)
+        if (!Number.isInteger(sid)) return
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2', [sid, socket.admin.id]
+        )
+        if (!sessionCheck.rows[0]) return
+        await pool.query(
+          "UPDATE sessions SET tv_mode = 'lobby', current_puzzle_image_id = NULL, current_puzzle_url = NULL, current_puzzle_seed = NULL WHERE id = $1",
+          [sid]
+        )
+        puzzleClicks.delete(sid)
+        io.to(`tv:${sid}`).emit('tv-mode-changed', { mode: 'lobby' })
+        io.to(`admin:${sid}`).emit('tv-mode-changed', { mode: 'lobby' })
+        io.to(`session:${sid}`).emit('puzzle-closed')
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Player: relay puzzle click to other clients ────────────────────────
+    socket.on('puzzle-click', ({ path }) => {
+      const sid = socket.sessionId
+      if (!sid || !puzzleClicks.has(sid)) return
+      if (!Array.isArray(path) || path.length > 20) return
+      if (!path.every(i => Number.isInteger(i) && i >= 0 && i < 1000)) return
+      puzzleClicks.get(sid).push(path)
+      socket.to(`session:${sid}`).emit('puzzle-cell-clicked', { path })
+      socket.to(`tv:${sid}`).emit('puzzle-cell-clicked', { path })
+      socket.to(`admin:${sid}`).emit('puzzle-cell-clicked', { path })
     })
 
     // ── Admin: set lobby background image ─────────────────────────────────

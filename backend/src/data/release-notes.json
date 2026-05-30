@@ -1,6 +1,15 @@
 {
   "notes": [
     {
+      "version": "1.0.44",
+      "date": "2026-05-30",
+      "changes": [
+        { "type": "feature", "role": "all", "text": "Puzzle interactif : les joueurs voient et résolvent le puzzle sur leur téléphone, les clics sont synchronisés en temps réel sur la TV et l'écran MJ" },
+        { "type": "improvement", "role": "admin", "text": "Le puzzle de tuyaux est disponible comme contenu de démonstration" },
+        { "type": "fix", "role": "admin", "text": "La vue TV affiche une confirmation avant tout rechargement de page pendant qu'un puzzle est actif" }
+      ]
+    },
+    {
       "version": "1.0.43",
       "date": "2026-05-26",
       "changes": [

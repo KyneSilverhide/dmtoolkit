@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { io } from 'socket.io-client'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
@@ -40,6 +40,37 @@ const combatRound = ref(0)
 
 // ── Free timer ──────────────────────────────────────────────────────────────
 const activeTimer = ref(null)
+
+// ── Puzzle state ────────────────────────────────────────────────────────────
+const puzzleImageId = ref(null)
+const puzzleSeed = ref(null)
+const puzzleIframeRef = ref(null)
+const pendingPuzzleClicks = ref([])
+
+const puzzleServeUrl = computed(() => {
+  if (!puzzleImageId.value || !puzzleSeed.value) return ''
+  return `${BACKEND_URL}/api/puzzles/serve/${puzzleImageId.value}?seed=${puzzleSeed.value}`
+})
+
+function onPuzzleIframeLoad() {
+  const clicks = pendingPuzzleClicks.value
+  if (!clicks.length || !puzzleIframeRef.value) return
+  clicks.forEach(path => puzzleIframeRef.value.contentWindow?.postMessage({ type: 'puzzle-remote-click', path: Array.from(path) }, '*'))
+  pendingPuzzleClicks.value = []
+}
+
+function preventReloadDuringPuzzle(e) {
+  e.preventDefault()
+  e.returnValue = ''
+}
+
+watch(puzzleImageId, (newVal) => {
+  if (newVal) {
+    window.addEventListener('beforeunload', preventReloadDuringPuzzle)
+  } else {
+    window.removeEventListener('beforeunload', preventReloadDuringPuzzle)
+  }
+})
 
 // ── Map state ──────────────────────────────────────────────────────────────
 const currentMapUrl = ref(null)
@@ -333,13 +364,35 @@ onMounted(() => {
     isDemo.value = !!data.isDemo
     data.players.forEach(pl => { previousHp.value[pl.id] = pl.current_hp })
     if (data.mapState) applyMapState(data.mapState)
+    if (data.activePuzzle) {
+      pendingPuzzleClicks.value = Array.isArray(data.activePuzzle.puzzleClicks) ? data.activePuzzle.puzzleClicks.slice() : []
+      puzzleImageId.value = data.activePuzzle.puzzleImageId
+      puzzleSeed.value = data.activePuzzle.puzzleSeed
+    } else {
+      puzzleImageId.value = null
+      puzzleSeed.value = null
+      pendingPuzzleClicks.value = []
+    }
   })
 
-  socket.on('tv-mode-changed', ({ mode, imageUrl, merchantData }) => {
+  socket.on('tv-mode-changed', ({ mode, imageUrl, merchantData, puzzleImageId: pid, puzzleSeed: ps }) => {
     tvMode.value = mode
     if (imageUrl) currentImageUrl.value = imageUrl
     if (merchantData) activeMerchant.value = merchantData
     else if (mode === 'lobby') activeMerchant.value = null
+    if (mode === 'puzzle' && pid) {
+      pendingPuzzleClicks.value = []
+      puzzleImageId.value = pid
+      puzzleSeed.value = ps
+    } else if (mode !== 'puzzle') {
+      puzzleImageId.value = null
+      puzzleSeed.value = null
+      pendingPuzzleClicks.value = []
+    }
+  })
+
+  socket.on('puzzle-cell-clicked', ({ path }) => {
+    puzzleIframeRef.value?.contentWindow?.postMessage({ type: 'puzzle-remote-click', path: Array.from(path) }, '*')
   })
 
   socket.on('vote-started', (voteData) => {
@@ -501,6 +554,7 @@ onUnmounted(() => {
   if (clockTickInterval) window.clearInterval(clockTickInterval)
   if (socket) socket.disconnect()
   window.removeEventListener('resize', renderMapFog)
+  window.removeEventListener('beforeunload', preventReloadDuringPuzzle)
 })
 </script>
 
@@ -769,6 +823,18 @@ onUnmounted(() => {
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Puzzle mode -->
+      <div v-else-if="tvMode === 'puzzle' && puzzleServeUrl" class="puzzle-display" data-testid="tv-mode-puzzle">
+        <iframe
+          ref="puzzleIframeRef"
+          :src="puzzleServeUrl"
+          class="puzzle-iframe"
+          sandbox="allow-scripts"
+          title="Puzzle"
+          @load="onPuzzleIframeLoad"
+        />
       </div>
       </div>
       </Transition>
@@ -1745,6 +1811,21 @@ onUnmounted(() => {
 }
 .item-stock.unlimited { color: var(--color-gold-dark); border-color: var(--color-gold-dark); }
 .item-stock.empty { color: var(--tv-danger-text); border-color: var(--tv-danger-border); background: var(--tv-danger-bg); }
+
+/* ── Puzzle mode ────────────────────────────────────────────────────── */
+.puzzle-display {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #d8cfb2;
+  overflow: hidden;
+}
+.puzzle-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
 
 /* ── Mode transition ─────────────────────────────────────────────────── */
 .tv-mode-container {

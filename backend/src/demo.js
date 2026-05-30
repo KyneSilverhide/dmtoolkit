@@ -50,13 +50,14 @@ const DEMO_ITEMS = [
 
 // Demo assets: { srcFile, destFile, sessionImageType, originalName, audioCategory? }
 const DEMO_ASSETS = [
-  { srcFile: 'carte_donjon_demo.png', destFile: 'demo_carte_donjon.png', sessionImageType: 'map',   originalName: 'Carte donjon démo.png' },
-  { srcFile: 'pnj1.png',             destFile: 'demo_pnj1.png',          sessionImageType: 'image', originalName: 'PNJ1.png' },
-  { srcFile: 'pnj2.png',             destFile: 'demo_pnj2.png',          sessionImageType: 'image', originalName: 'PNJ2.png' },
-  { srcFile: 'pnj3.png',             destFile: 'demo_pnj3.png',          sessionImageType: 'image', originalName: 'PNJ3.png' },
-  { srcFile: 'campfire.mp3',         destFile: 'demo_campfire.mp3',       sessionImageType: 'audio', originalName: 'Campfire.mp3',    audioCategory: 'Ambiance' },
-  { srcFile: 'growl.mp3',            destFile: 'demo_growl.mp3',          sessionImageType: 'audio', originalName: 'Growl.mp3',       audioCategory: 'Effet'    },
-  { srcFile: 'town-music.mp3',       destFile: 'demo_town-music.mp3',     sessionImageType: 'audio', originalName: 'Town Music.mp3',  audioCategory: 'Musique'  },
+  { srcFile: 'carte_donjon_demo.png', destFile: 'demo_carte_donjon.png', sessionImageType: 'map',    originalName: 'Carte donjon démo.png' },
+  { srcFile: 'pnj1.png',             destFile: 'demo_pnj1.png',          sessionImageType: 'image',  originalName: 'PNJ1.png' },
+  { srcFile: 'pnj2.png',             destFile: 'demo_pnj2.png',          sessionImageType: 'image',  originalName: 'PNJ2.png' },
+  { srcFile: 'pnj3.png',             destFile: 'demo_pnj3.png',          sessionImageType: 'image',  originalName: 'PNJ3.png' },
+  { srcFile: 'campfire.mp3',         destFile: 'demo_campfire.mp3',       sessionImageType: 'audio',  originalName: 'Campfire.mp3',    audioCategory: 'Ambiance' },
+  { srcFile: 'growl.mp3',            destFile: 'demo_growl.mp3',          sessionImageType: 'audio',  originalName: 'Growl.mp3',       audioCategory: 'Effet'    },
+  { srcFile: 'town-music.mp3',       destFile: 'demo_town-music.mp3',     sessionImageType: 'audio',  originalName: 'Town Music.mp3',  audioCategory: 'Musique'  },
+  { srcFile: 'pipe_puzzle.html',     destFile: 'demo_pipe_puzzle.html',   sessionImageType: 'puzzle', originalName: 'Puzzle de tuyaux.html' },
 ]
 
 /**
@@ -108,6 +109,11 @@ async function seedDemoContent(demoAdminId) {
       await pool.query(
         'INSERT INTO session_images (session_id, url, original_name, type, audio_category) VALUES ($1, $2, $3, $4, $5)',
         [sessionId, url, asset.originalName, asset.sessionImageType, asset.audioCategory]
+      )
+    } else if (asset.sessionImageType === 'puzzle') {
+      await pool.query(
+        'INSERT INTO session_images (session_id, url, original_name, type) VALUES ($1, $2, $3, $4)',
+        [sessionId, url, asset.originalName, asset.sessionImageType]
       )
     } else {
       const destPath = path.join(UPLOADS_DIR, String(demoAdminId), asset.destFile)

@@ -31,7 +31,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 ├── frontend/          # Vue 3 + Vite + Pinia (port 5173 en dev)
 │   ├── src/
 │   │   ├── views/     # HomeView, AdminView, TvView, PlayerInboxView, PlayerJoinView
-│   │   ├── components/admin/  # Composants admin (MapManager, MerchantManager, GeneratorTool, AudioManager, etc.)
+│   │   ├── components/admin/  # Composants admin (MapManager, MerchantManager, GeneratorTool, AudioManager, PuzzleManager, etc.)
 │   │   ├── components/player/ # Composants joueur (SpellSearchTool, MagicItemSearchTool, PlayerDiceTool, etc.)
 │   │   ├── components/AppIcon.vue  # Composant icônes dynamiques (remplace les emojis statiques)
 │   │   ├── components/ReleaseNotesBell.vue  # Cloche de notification (prop role="admin"|"player")
@@ -53,8 +53,10 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │   │   ├── aidedd_magic_items.json   # Objets magiques D&D 5e
 │   │   │   ├── release-notes.json        # Notes de version (triées plus récentes en premier)
 │   │   │   └── aidedd_standard_items.json # 147 objets standard D&D 5e
-│   │   └── routes/        # auth, sessions, uploads, spells, magic-items, equipment, generate, release-notes
+│   │   └── routes/        # auth, sessions, uploads, spells, magic-items, equipment, generate, release-notes, puzzles
 │   │                      # uploads: POST /api/uploads (images, 50MB), POST /api/uploads/audio (audio, 150MB)
+│   │                      # uploads: POST /api/uploads/puzzle (HTML, 5MB) — enregistre type='puzzle' dans session_images
+│   │                      # puzzles: GET /api/puzzles/serve/:imageId?seed=SEED (public, sans auth) — sert le HTML avec PRNG injecté
 │   │                      # release-notes: GET /api/release-notes (public, sans auth)
 │   │                      # sessions: GET/DELETE/PATCH /api/sessions/:id/images/:imageId
 │   │                      # sessions: DELETE /api/sessions/:id/journal (efface tous les session_events)
@@ -117,7 +119,7 @@ cd frontend && npm run dev  # vite dev server
 - **Ne jamais modifier le schéma directement.** Toujours ajouter des `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...` à la fin du fichier `backend/src/migrations.js`. Les migrations sont exécutées au démarrage via `runMigrations()`.
 - La DB est PostgreSQL 16. Les requêtes utilisent le driver `pg` (pool de connexions dans `db.js`).
 - Tables principales : `admins`, `sessions`, `players`, `messages`, `dice_results`, `votes`, `vote_responses`, `session_events`, `merchants`, `merchant_items`, `purchase_requests`, `session_images`.
-- Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/vote/image/map/merchant), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`, `combat_round` (entier), `timer_label` (VARCHAR 200), `timer_end_at` (TIMESTAMP), `lobby_bg_url` (VARCHAR 500, image de fond du lobby TV à 15 % d'opacité).
+- Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/vote/image/map/merchant/puzzle), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`, `combat_round` (entier), `timer_label` (VARCHAR 200), `timer_end_at` (TIMESTAMP), `lobby_bg_url` (VARCHAR 500, image de fond du lobby TV à 15 % d'opacité), `current_puzzle_image_id` (INTEGER), `current_puzzle_url` (VARCHAR 500), `current_puzzle_seed` (VARCHAR 100).
 - Colonnes clés de `session_images` : `url`, `original_name` (nom d'affichage, renommable), `type` (`image` / `map` / `audio`), `audio_category` (VARCHAR 50 : catégorie libre assignée par l'IA (GPT-4o-mini via GitHub Models) au moment de l'upload ; défaut `Général` si GITHUB_TOKEN absent ou si l'IA échoue ; l'admin peut saisir/modifier librement depuis l'AudioManager), `thumbnail_url` (VARCHAR 500 : URL du WebP 400px généré par `sharp` après upload pour les types `image` et `map` — null pour les fichiers audio ou si la génération échoue ; les galeries admin utilisent cette URL avec fallback sur `url`).
 - Colonnes clés de `players` : `ac`, `max_hp`, `current_hp`, `initiative`, `conditions` (JSON array), `is_concentrating`, `dnd_class`, `avatar_url`, `socket_id`.
 - Les joueurs sont supprimés de la DB à la déconnexion socket (`disconnect`/`leave-session`).
@@ -197,6 +199,13 @@ cd frontend && npm run dev  # vite dev server
 | `obsidian-stop-audio` | Arrête une piste audio depuis Obsidian — `{ sessionId, trackId }` — relayé via `audio-stop-requested` |
 | `obsidian-loop-audio` | Active/désactive la boucle d'une piste depuis Obsidian — `{ sessionId, trackId, loop: boolean }` — relayé via `audio-loop-requested` |
 | `obsidian-volume-audio` | Règle le volume d'une piste depuis Obsidian — `{ sessionId, trackId, volume: 0..1 }` — relayé via `audio-volume-requested` |
+| `show-puzzle` | Afficher un puzzle HTML sur le TV et chez les joueurs (`{ sessionId, imageId }`) — génère un seed aléatoire |
+| `close-puzzle` | Fermer le puzzle actif (`{ sessionId }`) — retour en mode lobby |
+
+#### Joueurs (puzzle)
+| Événement | Description |
+|---|---|
+| `puzzle-click` | Clic d'un joueur sur le puzzle (`{ sessionId, path: number[] }`) — chemin DOM par indices enfant |
 
 ### Événements sortants (serveur → client)
 
@@ -264,6 +273,9 @@ cd frontend && npm run dev  # vite dev server
 | `audio-stop-requested` | admin | Arrêt d'une piste audio déclenché depuis Obsidian — `{ trackId }` |
 | `audio-loop-requested` | admin | Changement de boucle déclenché depuis Obsidian — `{ trackId, loop: boolean }` |
 | `audio-volume-requested` | admin | Changement de volume déclenché depuis Obsidian — `{ trackId, volume: 0..1 }` |
+| `puzzle-started` | TV + session + admin | Puzzle affiché — `{ puzzleImageId, puzzleSeed, puzzleClicks: [] }` |
+| `puzzle-closed` | TV + session + admin | Puzzle fermé |
+| `puzzle-cell-clicked` | TV + session + admin (sauf émetteur) | Clic relayé — `{ path: number[] }` |
 | `demo-reset` | session + admin + TV | Réinitialisation du compte démo — déclenche `window.location.reload()` côté client |
 | `error` | émetteur | Erreur générique |
 | `tv-control-error` | admin | Erreur de contrôle TV |

@@ -14,6 +14,7 @@ import VoteManager from '../components/admin/VoteManager.vue'
 import ImageManager from '../components/admin/ImageManager.vue'
 import AudioManager from '../components/admin/AudioManager.vue'
 import MerchantManager from '../components/admin/MerchantManager.vue'
+import PuzzleManager from '../components/admin/PuzzleManager.vue'
 import SearchTool from '../components/admin/SearchTool.vue'
 import MapManager from '../components/admin/MapManager.vue'
 import GoldDividerTool from '../components/admin/GoldDividerTool.vue'
@@ -72,6 +73,7 @@ const tabComponents = {
   audio: AudioManager,
   map: MapManager,
   merchants: MerchantManager,
+  puzzle: PuzzleManager,
   tresor: GoldDividerTool,
   search: SearchTool,
   generator: GeneratorTool,
@@ -84,6 +86,7 @@ const hasActiveMerchant = ref(false)
 const hasActiveDoom = ref(false)
 const hasActiveTension = ref(false)
 const hasActiveMap = ref(false)
+const activePuzzle = ref(null) // { puzzleImageId, puzzleSeed, puzzleClicks }
 
 // Badge d'activitÃ© par onglet (point de couleur dans la nav)
 const tabActivity = computed(() => ({
@@ -92,6 +95,7 @@ const tabActivity = computed(() => ({
   merchants: hasActiveMerchant.value,
   tension: hasActiveDoom.value || hasActiveTension.value,
   map: hasActiveMap.value,
+  puzzle: !!activePuzzle.value,
 }))
 
 // Keeps the socket instance used in onMounted so onUnmounted can clean up
@@ -146,6 +150,7 @@ const tabs = [
   { key: 'audio',     label: 'Audio',          icon: 'lucide:music-2' },
   { key: 'map',       label: 'Carte',          icon: 'lucide:map' },
   { key: 'merchants', label: 'Marchands',      icon: 'game-icons:shop' },
+  { key: 'puzzle',    label: 'Puzzles',        icon: 'lucide:puzzle' },
   { key: 'tresor',    label: 'Trésor',         icon: 'game-icons:coins' },
   { key: 'search',    label: 'Recherche',      icon: 'lucide:search' },
   { key: 'generator', label: 'Générateur',     icon: 'lucide:wand-2' },
@@ -159,7 +164,7 @@ const navGroups = [
   },
   {
     label: 'Scène',
-    items: ['tension', 'vote', 'images', 'audio', 'map', 'merchants'],
+    items: ['tension', 'vote', 'images', 'audio', 'map', 'merchants', 'puzzle'],
   },
   {
     label: 'Outils',
@@ -221,6 +226,7 @@ function handleAdminState(data) {
   hasActiveDoom.value = !!data.doomClock
   hasActiveTension.value = !!data.tensionScale
   hasActiveMap.value = !!(data.mapState?.mapUrl)
+  activePuzzle.value = data.activePuzzle || null
   if (data.isDemo !== undefined && authStore.admin) {
     authStore.admin = { ...authStore.admin, is_demo: data.isDemo }
   }
@@ -230,6 +236,11 @@ function handleTvModeChanged(payload) {
   if (payload?.mode) tvMode.value = payload.mode
   if (payload?.imageUrl !== undefined) hasActiveImage.value = !!payload.imageUrl
   if (payload?.merchantData !== undefined) hasActiveMerchant.value = !!payload.merchantData
+  if (payload?.mode === 'puzzle' && payload?.puzzleImageId) {
+    activePuzzle.value = { puzzleImageId: payload.puzzleImageId, puzzleSeed: payload.puzzleSeed, puzzleClicks: activePuzzle.value?.puzzleClicks || [] }
+  } else if (payload?.mode && payload.mode !== 'puzzle') {
+    activePuzzle.value = null
+  }
 }
 
 async function loadSessions() {
@@ -516,7 +527,10 @@ onUnmounted(() => {
             <template v-if="sessionStore.activeSession">
               <Transition name="tab-fade" mode="out-in">
                 <KeepAlive>
-                  <component :is="currentTabComponent" />
+                  <component
+                    :is="currentTabComponent"
+                    v-bind="activeTab === 'puzzle' ? { activePuzzle } : {}"
+                  />
                 </KeepAlive>
               </Transition>
             </template>

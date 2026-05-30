@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSocket, resetSocket } from '../socket.js'
 import { sessionStore } from '../stores/session.js'
@@ -28,6 +28,7 @@ import {
   PURCHASE_REQUESTED, BATCH_ACCEPTED, BATCH_REJECTED,
   PURCHASE_COUNTER_OFFER, COUNTER_OFFER_RESULT, PURCHASE_ERROR,
   KICKED, DEMO_RESET,
+  PUZZLE_STARTED, PUZZLE_CLOSED, PUZZLE_CELL_CLICKED, PUZZLE_CLICK,
 } from '../socket-events.js'
 
 const router = useRouter()
@@ -43,8 +44,13 @@ const TEMP_HP_COLOR = 'var(--player-info-text)'
 const MAX_HP_LIMIT = 9999
 
 // ── Active tab ───────────────────────────────────────────────────────────
-// Tabs: 'combat' | 'dés' | 'notes' | 'sorts' | 'objets' | 'boutique' | 'vote' | 'messages'
+// Tabs: 'combat' | 'dés' | 'notes' | 'sorts' | 'objets' | 'boutique' | 'vote' | 'messages' | 'puzzle'
 const activeTab = ref('combat')
+
+// ── Puzzle state ─────────────────────────────────────────────────────────
+const activePuzzle = ref(null) // { puzzleImageId, puzzleSeed }
+const puzzleIframeRef = ref(null)
+const pendingPuzzleClicks = ref([]) // clicks to replay after iframe loads
 // Classe d'animation CSS déclenchée à chaque changement d'onglet
 const tabAnimKey = ref(0)
 let hasRequestedNotificationPermission = false
@@ -138,6 +144,13 @@ function applyJoinedState(data) {
     avatarUrl: data.player.avatar_url,
   }
   sessionStore.activeMerchant = data.activeMerchant || null
+  if (data.activePuzzle) {
+    pendingPuzzleClicks.value = Array.isArray(data.activePuzzle.puzzleClicks) ? data.activePuzzle.puzzleClicks.slice() : []
+    activePuzzle.value = { puzzleImageId: data.activePuzzle.puzzleImageId, puzzleSeed: data.activePuzzle.puzzleSeed }
+  } else {
+    activePuzzle.value = null
+    pendingPuzzleClicks.value = []
+  }
   playerInfo.value = { ...sessionStore.playerInfo }
   sessionName.value = data.session.name
   currentHp.value = data.player.current_hp
@@ -565,7 +578,43 @@ const handleMerchantClosed = () => {
   activeMerchant.value = null
   cart.value = {}
   cartSending.value = false
-  if (activeTab.value === 'boutique') activeTab.value = 'combat'}
+  if (activeTab.value === 'boutique') activeTab.value = 'combat'
+}
+
+const handlePuzzleStarted = (data) => {
+  pendingPuzzleClicks.value = Array.isArray(data.puzzleClicks) ? data.puzzleClicks.slice() : []
+  activePuzzle.value = { puzzleImageId: data.puzzleImageId, puzzleSeed: data.puzzleSeed }
+  switchTab('puzzle')
+  notifyAttention('Un puzzle est disponible !')
+}
+
+const handlePuzzleClosed = () => {
+  activePuzzle.value = null
+  if (activeTab.value === 'puzzle') activeTab.value = 'combat'
+}
+
+const handlePuzzleCellClicked = ({ path }) => {
+  puzzleIframeRef.value?.contentWindow?.postMessage({ type: 'puzzle-remote-click', path }, '*')
+}
+
+function handlePuzzleIframeMessage(event) {
+  if (!event.data || event.data.type !== 'puzzle-click') return
+  if (!activePuzzle.value) return
+  const socket = getSocket()
+  socket.emit(PUZZLE_CLICK, { path: event.data.path })
+}
+
+function puzzleServeUrl(puzzle) {
+  if (!puzzle?.puzzleImageId || !puzzle?.puzzleSeed) return ''
+  return `${BACKEND_URL}/api/puzzles/serve/${puzzle.puzzleImageId}?seed=${puzzle.puzzleSeed}`
+}
+
+function onPuzzleIframeLoad() {
+  const clicks = pendingPuzzleClicks.value
+  if (!clicks.length || !puzzleIframeRef.value) return
+  clicks.forEach(path => puzzleIframeRef.value.contentWindow?.postMessage({ type: 'puzzle-remote-click', path }, '*'))
+  pendingPuzzleClicks.value = []
+}
 const handleMerchantItemsUpdated = (data) => {
   activeMerchant.value = data
 }
@@ -711,7 +760,11 @@ onMounted(async () => {
   socket.on(PURCHASE_ERROR, handlePurchaseError)
   socket.on(KICKED, handleKicked)
   socket.on(DEMO_RESET, () => { window.location.reload() })
+  socket.on(PUZZLE_STARTED, handlePuzzleStarted)
+  socket.on(PUZZLE_CLOSED, handlePuzzleClosed)
+  socket.on(PUZZLE_CELL_CLICKED, handlePuzzleCellClicked)
   window.addEventListener('beforeunload', handleBeforeUnload)
+  window.addEventListener('message', handlePuzzleIframeMessage)
 })
 
 onUnmounted(() => {
@@ -743,8 +796,12 @@ onUnmounted(() => {
     socket.off(PURCHASE_ERROR, handlePurchaseError)
     socket.off(KICKED, handleKicked)
     socket.off(DEMO_RESET)
+    socket.off(PUZZLE_STARTED, handlePuzzleStarted)
+    socket.off(PUZZLE_CLOSED, handlePuzzleClosed)
+    socket.off(PUZZLE_CELL_CLICKED, handlePuzzleCellClicked)
   }
   window.removeEventListener('beforeunload', handleBeforeUnload)
+  window.removeEventListener('message', handlePuzzleIframeMessage)
   if (hpDebounceTimer) { clearTimeout(hpDebounceTimer); hpDebounceTimer = null }
   if (attentionAudioContext) {
     attentionAudioContext.close().catch(() => {})
@@ -891,7 +948,19 @@ onUnmounted(() => {
     </section>
 
     <!-- ── Scrollable content ────────────────────────────────────────────── -->
-    <main v-else class="inbox-content">
+    <template v-else>
+    <!-- Puzzle overlay: fills flex space between header and tab-bar when puzzle is active -->
+    <div v-show="activeTab === 'puzzle' && activePuzzle" class="puzzle-overlay">
+      <iframe
+        ref="puzzleIframeRef"
+        :src="puzzleServeUrl(activePuzzle)"
+        class="puzzle-player-iframe"
+        sandbox="allow-scripts"
+        title="Puzzle"
+        @load="onPuzzleIframeLoad"
+      />
+    </div>
+    <main v-show="!(activeTab === 'puzzle' && activePuzzle)" class="inbox-content">
       <div :key="tabAnimKey" class="tab-anim-wrapper">
 
       <!-- ── COMBAT tab (Statut + Conditions) ───────────────────────────── -->
@@ -1156,6 +1225,15 @@ onUnmounted(() => {
         </div>
       </div>
 
+      <!-- ── PUZZLE tab ─────────────────────────────────────────────── -->
+      <!-- Only visible when activePuzzle is null (overlay handles the active puzzle) -->
+      <div v-show="activeTab === 'puzzle'" class="tab-panel">
+        <div class="panel empty-panel">
+          <p class="empty-icon"><AppIcon icon="lucide:puzzle" size="2.5rem" color="var(--color-text-dim)" /></p>
+          <p class="empty-text">Aucun puzzle en cours.</p>
+        </div>
+      </div>
+
       <!-- ── MESSAGES tab ─────────────────────────────────────────────── -->
       <div v-show="activeTab === 'messages'" class="tab-panel">
         <div v-if="messages.length === 0" class="panel empty-panel">
@@ -1170,6 +1248,7 @@ onUnmounted(() => {
 
       </div><!-- end tab-anim-wrapper -->
     </main>
+    </template>
 
     <TransitionGroup name="toast" tag="div" class="toast-stack">
       <button
@@ -1264,6 +1343,20 @@ onUnmounted(() => {
         </span>
         <span class="tab-label">Vote</span>
         <span v-if="hasNewVote && activeTab !== 'vote'" class="tab-badge tab-badge-pulse">!</span>
+      </button>
+      <button
+        v-if="activePuzzle"
+        class="tab-item"
+        :class="{ active: activeTab === 'puzzle' }"
+        @click="switchTab('puzzle')"
+        aria-label="Puzzle"
+        data-testid="player-tab-puzzle"
+      >
+        <span class="tab-icon" :class="{ 'tab-icon-notify': activeTab !== 'puzzle' }">
+          <AppIcon icon="lucide:puzzle" size="1.4rem" />
+        </span>
+        <span class="tab-label">Puzzle</span>
+        <span v-if="activeTab !== 'puzzle'" class="tab-badge tab-badge-pulse">!</span>
       </button>
       <button
         class="tab-item"
@@ -1529,6 +1622,20 @@ onUnmounted(() => {
 
 .tab-panel {
   display: contents;
+}
+
+.puzzle-overlay {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.puzzle-player-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #d8cfb2;
+  display: block;
 }
 
 /* ── Panel cards ─────────────────────────────────────────────────────── */

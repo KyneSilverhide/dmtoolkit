@@ -218,6 +218,11 @@ ALTER TABLE messages ADD COLUMN IF NOT EXISTS author_color VARCHAR(20) DEFAULT '
 
 -- Thumbnail URL for image/map assets (generated server-side after upload)
 ALTER TABLE session_images ADD COLUMN IF NOT EXISTS thumbnail_url VARCHAR(500);
+
+-- Puzzle feature: active puzzle for a session
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_puzzle_image_id INTEGER;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_puzzle_url VARCHAR(500);
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_puzzle_seed VARCHAR(100);
 `
 
 async function runMigrations() {
