@@ -52,7 +52,7 @@ test('player sorts tab has spell search', async ({ page, adminToken }) => {
   const { joinAsPlayer } = await import('../helpers/player')
   await joinAsPlayer(page, code, { name: 'Mage', hp: 24 })
 
-  await page.getByTestId('player-tab-sorts').click()
+  await page.getByTestId('player-tab-sorts').filter({ visible: true }).click()
 
   // Spell search input should be visible
   const searchInput = page.locator('input[placeholder*="sort" i], input[placeholder*="spell" i], input[placeholder*="recherche" i]').first()

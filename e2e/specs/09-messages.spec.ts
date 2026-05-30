@@ -192,7 +192,7 @@ test('messages tab icon animates on new message', async ({ browser, adminToken }
     await adminPage.page.getByTestId('message-send-btn').click()
 
     // The messages tab icon should get the notify animation class (tab-icon-notify)
-    await expect(playerPg.locator('[data-testid="player-tab-messages"] .tab-icon-notify')).toBeVisible({ timeout: 8_000 })
+    await expect(playerPg.locator('[data-testid="player-tab-messages"]').filter({ visible: true }).locator('.tab-icon-notify')).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()

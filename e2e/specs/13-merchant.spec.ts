@@ -100,7 +100,7 @@ test('player can see merchant in boutique tab', async ({ browser, adminToken }) 
     await showMerchant(adminPage)
 
     // Player boutique tab should now be enabled
-    await expect(playerPg.getByTestId('player-tab-boutique')).not.toBeDisabled({ timeout: 8_000 })
+    await expect(playerPg.getByTestId('player-tab-boutique').filter({ visible: true })).not.toBeDisabled({ timeout: 8_000 })
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('boutique')
     await expect(playerPg.getByText('Corde (15m)')).toBeVisible({ timeout: 8_000 })
@@ -129,7 +129,7 @@ test('player can add item to cart', async ({ browser, adminToken }) => {
     await createMerchant(adminPage, 'Mira la Taverniére', [{ name: 'Nourriture', price: 2 }])
     await showMerchant(adminPage)
 
-    await expect(playerPg.getByTestId('player-tab-boutique')).not.toBeDisabled({ timeout: 8_000 })
+    await expect(playerPg.getByTestId('player-tab-boutique').filter({ visible: true })).not.toBeDisabled({ timeout: 8_000 })
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('boutique')
     await expect(playerPg.getByText('Nourriture')).toBeVisible({ timeout: 8_000 })
@@ -138,7 +138,7 @@ test('player can add item to cart', async ({ browser, adminToken }) => {
     await playerPg.locator('button.qty-btn').last().click()
 
     // Cart badge should appear
-    await expect(playerPg.locator('[data-testid="player-tab-boutique"] .tab-badge')).toBeVisible({ timeout: 8_000 })
+    await expect(playerPg.locator('[data-testid="player-tab-boutique"]').filter({ visible: true }).locator('.tab-badge')).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
@@ -164,7 +164,7 @@ test('admin receives purchase request after player submits cart', async ({ brows
     await createMerchant(adminPage, 'Gorp le Marchand', [{ name: 'Torche', price: 1 }])
     await showMerchant(adminPage)
 
-    await expect(playerPg.getByTestId('player-tab-boutique')).not.toBeDisabled({ timeout: 8_000 })
+    await expect(playerPg.getByTestId('player-tab-boutique').filter({ visible: true })).not.toBeDisabled({ timeout: 8_000 })
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('boutique')
     await playerPg.locator('button.qty-btn').last().click()
@@ -200,7 +200,7 @@ test('admin can accept purchase request', async ({ browser, adminToken }) => {
     await createMerchant(adminPage, 'Voran le Sage', [{ name: 'Parchemin', price: 5 }])
     await showMerchant(adminPage)
 
-    await expect(playerPg.getByTestId('player-tab-boutique')).not.toBeDisabled({ timeout: 8_000 })
+    await expect(playerPg.getByTestId('player-tab-boutique').filter({ visible: true })).not.toBeDisabled({ timeout: 8_000 })
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('boutique')
     await playerPg.locator('button.qty-btn').last().click()
@@ -238,7 +238,7 @@ test('admin can reject purchase request', async ({ browser, adminToken }) => {
     await createMerchant(adminPage, 'Avar le Radin', [{ name: 'Gemme', price: 100 }])
     await showMerchant(adminPage)
 
-    await expect(playerPg.getByTestId('player-tab-boutique')).not.toBeDisabled({ timeout: 8_000 })
+    await expect(playerPg.getByTestId('player-tab-boutique').filter({ visible: true })).not.toBeDisabled({ timeout: 8_000 })
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('boutique')
     await playerPg.locator('button.qty-btn').last().click()
@@ -282,7 +282,7 @@ test('merchant items stock decrements after accepted purchase', async ({ browser
     await tvPage.goto(code)
     await expect(tvPage.getMerchantDisplay()).toBeVisible({ timeout: 8_000 })
 
-    await expect(playerPg.getByTestId('player-tab-boutique')).not.toBeDisabled({ timeout: 8_000 })
+    await expect(playerPg.getByTestId('player-tab-boutique').filter({ visible: true })).not.toBeDisabled({ timeout: 8_000 })
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('boutique')
     await playerPg.locator('button.qty-btn').last().click()
@@ -319,13 +319,13 @@ test('admin can close merchant', async ({ browser, adminToken }) => {
 
     await createMerchant(adminPage, 'Greta', [{ name: 'Clé', price: 3 }])
     await showMerchant(adminPage)
-    await expect(playerPg.getByTestId('player-tab-boutique')).toBeVisible({ timeout: 8_000 })
+    await expect(playerPg.getByTestId('player-tab-boutique').filter({ visible: true })).toBeVisible({ timeout: 8_000 })
 
     // Close the merchant
     await adminPage.switchTab('merchants')
     await adminPage.page.locator('.close-merchant-btn').click()
 
-    // Player boutique tab should be hidden again
+    // Player boutique tab should be hidden again (v-if removes both sidebar and tab-bar buttons)
     await expect(playerPg.getByTestId('player-tab-boutique')).not.toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()

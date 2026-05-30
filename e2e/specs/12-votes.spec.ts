@@ -65,7 +65,7 @@ test('player receives vote notification and can submit a vote', async ({ browser
     await createVoteInAdmin(adminPage, 'Attaquer ou fuir ?', ['Attaquer', 'Fuir'])
 
     // Player's vote tab badge should light up
-    await expect(playerPg.locator('[data-testid="player-tab-vote"] .tab-badge')).toBeVisible({ timeout: 8_000 })
+    await expect(playerPg.locator('[data-testid="player-tab-vote"]').filter({ visible: true }).locator('.tab-badge')).toBeVisible({ timeout: 8_000 })
 
     // Player switches to vote tab and submits
     const playerPage = new PlayerPage(playerPg)
