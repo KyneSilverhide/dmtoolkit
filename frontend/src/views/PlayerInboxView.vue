@@ -947,24 +947,100 @@ onUnmounted(() => {
       <button class="resume-action-btn" @click="router.push(`/join/${route.params.code || ''}`)">Rejoindre manuellement</button>
     </section>
 
-    <!-- ── Scrollable content ────────────────────────────────────────────── -->
-    <template v-else>
-    <!-- Puzzle overlay: fills flex space between header and tab-bar when puzzle is active -->
-    <div v-show="activeTab === 'puzzle' && activePuzzle" class="puzzle-overlay">
-      <iframe
-        ref="puzzleIframeRef"
-        :src="puzzleServeUrl(activePuzzle)"
-        class="puzzle-player-iframe"
-        sandbox="allow-scripts"
-        title="Puzzle"
-        @load="onPuzzleIframeLoad"
-      />
-    </div>
-    <main v-show="!(activeTab === 'puzzle' && activePuzzle)" class="inbox-content">
+    <!-- ── Main layout : sidebar (desktop) + contenu ───────────────────── -->
+    <div v-else class="inbox-lower">
+
+      <!-- Sidebar navigation (desktop uniquement, cachée via CSS sur mobile/tablette) -->
+      <nav class="sidebar-nav" aria-label="Navigation principale">
+        <button class="sidebar-item" :class="{ active: activeTab === 'combat' }" @click="switchTab('combat')" aria-label="Combat">
+          <span class="sidebar-icon"><AppIcon icon="game-icons:crossed-swords" size="1.2rem" /></span>
+          <span class="sidebar-label">Combat</span>
+        </button>
+        <button class="sidebar-item" :class="{ active: activeTab === 'dés' }" @click="switchTab('dés')" aria-label="Dés">
+          <span class="sidebar-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="1.2rem" /></span>
+          <span class="sidebar-label">Dés</span>
+        </button>
+        <button class="sidebar-item" :class="{ active: activeTab === 'notes' }" @click="switchTab('notes')" aria-label="Notes">
+          <span class="sidebar-icon"><AppIcon icon="lucide:notebook-pen" size="1.2rem" /></span>
+          <span class="sidebar-label">Notes</span>
+        </button>
+        <button class="sidebar-item" :class="{ active: activeTab === 'sorts' }" @click="switchTab('sorts')" aria-label="Sorts">
+          <span class="sidebar-icon"><AppIcon icon="lucide:sparkles" size="1.2rem" /></span>
+          <span class="sidebar-label">Sorts</span>
+        </button>
+        <button class="sidebar-item" :class="{ active: activeTab === 'objets' }" @click="switchTab('objets')" aria-label="Objets">
+          <span class="sidebar-icon"><AppIcon icon="lucide:gem" size="1.2rem" /></span>
+          <span class="sidebar-label">Objets</span>
+        </button>
+        <button
+          v-if="activeMerchant"
+          class="sidebar-item"
+          :class="{ active: activeTab === 'boutique' }"
+          @click="switchTab('boutique')"
+          aria-label="Boutique"
+        >
+          <span class="sidebar-icon" :class="{ 'tab-icon-notify': cartItemCount === 0 && activeTab !== 'boutique' }">
+            <AppIcon icon="game-icons:shop" size="1.2rem" />
+          </span>
+          <span class="sidebar-label">Boutique</span>
+          <span v-if="cartItemCount > 0" class="tab-badge tab-badge-urgent">{{ cartItemCount }}</span>
+          <span v-else-if="activeTab !== 'boutique'" class="tab-badge tab-badge-pulse">!</span>
+        </button>
+        <button
+          v-if="activeVote"
+          class="sidebar-item"
+          :class="{ active: activeTab === 'vote' }"
+          @click="switchTab('vote'); hasNewVote = false"
+          aria-label="Vote"
+        >
+          <span class="sidebar-icon" :class="{ 'tab-icon-notify': hasNewVote && activeTab !== 'vote' }">
+            <AppIcon icon="lucide:check-square" size="1.2rem" />
+          </span>
+          <span class="sidebar-label">Vote</span>
+          <span v-if="hasNewVote && activeTab !== 'vote'" class="tab-badge tab-badge-pulse">!</span>
+        </button>
+        <button
+          v-if="activePuzzle"
+          class="sidebar-item"
+          :class="{ active: activeTab === 'puzzle' }"
+          @click="switchTab('puzzle')"
+          aria-label="Puzzle"
+        >
+          <span class="sidebar-icon" :class="{ 'tab-icon-notify': activeTab !== 'puzzle' }">
+            <AppIcon icon="lucide:puzzle" size="1.2rem" />
+          </span>
+          <span class="sidebar-label">Puzzle</span>
+          <span v-if="activeTab !== 'puzzle'" class="tab-badge tab-badge-pulse">!</span>
+        </button>
+        <button class="sidebar-item" :class="{ active: activeTab === 'messages' }" @click="switchTab('messages')" aria-label="Messages">
+          <span class="sidebar-icon" :class="{ 'tab-icon-notify': unreadMessages > 0 }">
+            <AppIcon icon="lucide:inbox" size="1.2rem" />
+          </span>
+          <span class="sidebar-label">Messages</span>
+          <span v-if="unreadMessages > 0" class="tab-badge tab-badge-urgent">{{ unreadMessages }}</span>
+        </button>
+      </nav>
+
+      <!-- Zone de contenu principale -->
+      <div class="inbox-main">
+      <!-- Puzzle overlay: remplit l'espace entre header et tab-bar quand un puzzle est actif -->
+      <div v-show="activeTab === 'puzzle' && activePuzzle" class="puzzle-overlay">
+        <iframe
+          ref="puzzleIframeRef"
+          :src="puzzleServeUrl(activePuzzle)"
+          class="puzzle-player-iframe"
+          sandbox="allow-scripts"
+          title="Puzzle"
+          @load="onPuzzleIframeLoad"
+        />
+      </div>
+      <main v-show="!(activeTab === 'puzzle' && activePuzzle)" class="inbox-content">
       <div :key="tabAnimKey" class="tab-anim-wrapper">
 
       <!-- ── COMBAT tab (Statut + Conditions) ───────────────────────────── -->
       <div v-show="activeTab === 'combat'" class="tab-panel">
+        <div class="combat-layout">
+          <div class="combat-col-left">
           <!-- HP Panel -->
           <div class="panel hp-panel">
             <div class="panel-header">
@@ -1086,23 +1162,27 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Conditions -->
-        <div class="panel">
-          <p class="panel-label"><AppIcon icon="game-icons:lightning-trio" size="0.85rem" color="var(--color-warning)" /> États et Conditions</p>
-          <div class="conditions-grid">
-            <button
-              v-for="cond in DND_CONDITIONS"
-              :key="cond.id"
-              class="condition-btn"
-              :class="{ active: activeConditions.includes(cond.id) }"
-              :data-testid="`condition-${cond.id}`"
-              @click="toggleCondition(cond.id)"
-            >
-              <span class="cond-icon"><AppIcon :icon="cond.icon" :color="activeConditions.includes(cond.id) ? (cond.color || 'var(--player-danger-text)') : 'currentColor'" size="1.1rem" /></span>
-              <span class="cond-label">{{ cond.label }}</span>
-            </button>
+          </div><!-- end combat-col-left -->
+          <div class="combat-col-right">
+          <!-- Conditions -->
+          <div class="panel">
+            <p class="panel-label"><AppIcon icon="game-icons:lightning-trio" size="0.85rem" color="var(--color-warning)" /> États et Conditions</p>
+            <div class="conditions-grid">
+              <button
+                v-for="cond in DND_CONDITIONS"
+                :key="cond.id"
+                class="condition-btn"
+                :class="{ active: activeConditions.includes(cond.id) }"
+                :data-testid="`condition-${cond.id}`"
+                @click="toggleCondition(cond.id)"
+              >
+                <span class="cond-icon"><AppIcon :icon="cond.icon" :color="activeConditions.includes(cond.id) ? (cond.color || 'var(--player-danger-text)') : 'currentColor'" size="1.1rem" /></span>
+                <span class="cond-label">{{ cond.label }}</span>
+              </button>
+            </div>
           </div>
-        </div>
+          </div><!-- end combat-col-right -->
+        </div><!-- end combat-layout -->
       </div>
 
       <!-- ── DÉS tab (Lancer de dés joueur) ──────────────────────────────── -->
@@ -1247,8 +1327,9 @@ onUnmounted(() => {
       </div>
 
       </div><!-- end tab-anim-wrapper -->
-    </main>
-    </template>
+      </main>
+      </div><!-- end inbox-main -->
+    </div><!-- end inbox-lower -->
 
     <TransitionGroup name="toast" tag="div" class="toast-stack">
       <button
@@ -2376,6 +2457,164 @@ onUnmounted(() => {
     left: 1rem;
     right: 1rem;
     width: auto;
+  }
+}
+
+/* ── Wrappers layout (valeurs mobiles par défaut) ────────────────────── */
+.inbox-lower {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.inbox-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Sidebar (cachée sur mobile/tablette) ────────────────────────────── */
+.sidebar-nav {
+  display: none;
+}
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 1rem 0.7rem 0.85rem;
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: 0 8px 8px 0;
+  background: none;
+  color: var(--color-text-dim);
+  font-family: var(--font-ui, var(--font-heading));
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  width: 100%;
+  position: relative;
+  touch-action: manipulation;
+  min-height: 44px;
+  white-space: nowrap;
+}
+.sidebar-item:hover:not(:disabled) {
+  color: var(--color-parchment);
+  background: var(--surface-raised);
+}
+.sidebar-item.active {
+  border-left-color: var(--color-gold-bright);
+  color: var(--color-gold-bright);
+  background: var(--player-gold-bg);
+}
+.sidebar-icon {
+  flex-shrink: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s, filter 0.2s;
+}
+.sidebar-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Combat layout (mobile : flux normal) ────────────────────────────── */
+.combat-layout { display: contents; }
+.combat-col-left { display: contents; }
+.combat-col-right { display: contents; }
+
+/* ── Tablette (640px – 1023px) ───────────────────────────────────────── */
+@media (min-width: 640px) {
+  .inbox-content {
+    padding: 1rem 1.5rem;
+  }
+  /* Combat 2 colonnes */
+  .combat-layout {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 0.75rem;
+    align-items: start;
+  }
+  .combat-col-left,
+  .combat-col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  /* Conditions sur 2 colonnes dans la colonne droite */
+  .conditions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  /* Toast au-dessus de la tab bar tablette */
+  .toast-stack {
+    left: 1.5rem;
+    right: 1.5rem;
+    width: auto;
+  }
+}
+
+/* ── Desktop (≥1024px) ───────────────────────────────────────────────── */
+@media (min-width: 1024px) {
+  /* Shell : sidebar gauche + contenu */
+  .inbox-lower {
+    flex-direction: row;
+  }
+
+  /* Sidebar visible */
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    width: 160px;
+    flex-shrink: 0;
+    background: var(--player-header-bg);
+    border-right: 1px solid var(--color-border);
+    overflow-y: auto;
+    padding: 0.5rem 0.4rem 0.5rem 0;
+    gap: 0.1rem;
+    scrollbar-width: none;
+  }
+  .sidebar-nav::-webkit-scrollbar { display: none; }
+
+  /* Contenu principal côté droit */
+  .inbox-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Tab bar cachée */
+  .tab-bar {
+    display: none;
+  }
+
+  /* Contenu scrollable plus large, centré */
+  .inbox-content {
+    padding: 1.25rem 2rem;
+  }
+
+  /* Limite la largeur des panels pour les très grands écrans */
+  .tab-anim-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* Conditions sur 3 colonnes (plus d'espace dans le layout desktop) */
+  .conditions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Toast repositionné (pas de tab bar en bas) */
+  .toast-stack {
+    bottom: 1.5rem;
+    right: 1.5rem;
+    left: auto;
+    width: min(340px, calc(100vw - 3rem));
   }
 }
 </style>

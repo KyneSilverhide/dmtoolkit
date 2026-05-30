@@ -1,6 +1,13 @@
 {
   "notes": [
     {
+      "version": "1.0.45",
+      "date": "2026-05-30",
+      "changes": [
+        { "type": "improvement", "role": "player", "text": "Interface joueur entièrement responsive : navigation en sidebar sur desktop, layout 2 colonnes sur tablette et desktop (PV + Initiative à gauche, Conditions à droite)" }
+      ]
+    },
+    {
       "version": "1.0.44",
       "date": "2026-05-30",
       "changes": [

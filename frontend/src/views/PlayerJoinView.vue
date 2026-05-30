@@ -316,8 +316,20 @@ async function joinSession() {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  max-width: 480px;
+  max-width: 540px;
   margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .join-wrapper {
+    max-width: 560px;
+  }
+  .join-header {
+    padding: 2.5rem 2rem 1.5rem;
+  }
+  .join-main {
+    padding: 2rem 2rem;
+  }
 }
 
 .join-header {
