@@ -14,7 +14,7 @@ test('player view persists after page reload', async ({ page, adminToken }) => {
   await page.reload()
 
   // After reload, auto-rejoin kicks in — tab bar should appear
-  await expect(page.getByTestId('player-tab-combat')).toBeVisible({ timeout: 8_000 })
+  await expect(page.getByTestId('player-tab-combat').filter({ visible: true })).toBeVisible({ timeout: 8_000 })
 })
 
 test('player name is preserved after auto-rejoin', async ({ page, adminToken }) => {
@@ -50,7 +50,7 @@ test('navigating directly to /view/:code auto-rejoins from localStorage', async 
   )
 
   await page.goto(`/view/${code}`)
-  await expect(page.getByTestId('player-tab-combat')).toBeVisible({ timeout: 8_000 })
+  await expect(page.getByTestId('player-tab-combat').filter({ visible: true })).toBeVisible({ timeout: 8_000 })
   await expect(page.getByText('Tom Bombadil')).toBeVisible()
 })
 

@@ -58,7 +58,7 @@ test('unread messages badge increments', async ({ browser, adminToken }) => {
     await adminPage.page.getByTestId('message-send-btn').click()
 
     // The messages tab badge on player should show 1
-    await expect(playerPg.locator('[data-testid="player-tab-messages"] .tab-badge')).toBeVisible({ timeout: 8_000 })
+    await expect(playerPg.locator('[data-testid="player-tab-messages"]').filter({ visible: true }).locator('.tab-badge')).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()

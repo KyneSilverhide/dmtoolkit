@@ -45,7 +45,7 @@ export class PlayerPage {
   }
 
   async switchTab(tab: 'combat' | 'des' | 'notes' | 'sorts' | 'objets' | 'boutique' | 'vote' | 'messages') {
-    await this.page.getByTestId(`player-tab-${tab}`).click()
+    await this.page.getByTestId(`player-tab-${tab}`).filter({ visible: true }).click()
   }
 
   async leave() {
