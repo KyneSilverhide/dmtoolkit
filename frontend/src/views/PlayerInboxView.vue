@@ -952,23 +952,23 @@ onUnmounted(() => {
 
       <!-- Sidebar navigation (desktop uniquement, cachée via CSS sur mobile/tablette) -->
       <nav class="sidebar-nav" aria-label="Navigation principale">
-        <button class="sidebar-item" :class="{ active: activeTab === 'combat' }" @click="switchTab('combat')" aria-label="Combat">
+        <button class="sidebar-item" :class="{ active: activeTab === 'combat' }" @click="switchTab('combat')" aria-label="Combat" data-testid="player-tab-combat">
           <span class="sidebar-icon"><AppIcon icon="game-icons:crossed-swords" size="1.2rem" /></span>
           <span class="sidebar-label">Combat</span>
         </button>
-        <button class="sidebar-item" :class="{ active: activeTab === 'dés' }" @click="switchTab('dés')" aria-label="Dés">
+        <button class="sidebar-item" :class="{ active: activeTab === 'dés' }" @click="switchTab('dés')" aria-label="Dés" data-testid="player-tab-des">
           <span class="sidebar-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="1.2rem" /></span>
           <span class="sidebar-label">Dés</span>
         </button>
-        <button class="sidebar-item" :class="{ active: activeTab === 'notes' }" @click="switchTab('notes')" aria-label="Notes">
+        <button class="sidebar-item" :class="{ active: activeTab === 'notes' }" @click="switchTab('notes')" aria-label="Notes" data-testid="player-tab-notes">
           <span class="sidebar-icon"><AppIcon icon="lucide:notebook-pen" size="1.2rem" /></span>
           <span class="sidebar-label">Notes</span>
         </button>
-        <button class="sidebar-item" :class="{ active: activeTab === 'sorts' }" @click="switchTab('sorts')" aria-label="Sorts">
+        <button class="sidebar-item" :class="{ active: activeTab === 'sorts' }" @click="switchTab('sorts')" aria-label="Sorts" data-testid="player-tab-sorts">
           <span class="sidebar-icon"><AppIcon icon="lucide:sparkles" size="1.2rem" /></span>
           <span class="sidebar-label">Sorts</span>
         </button>
-        <button class="sidebar-item" :class="{ active: activeTab === 'objets' }" @click="switchTab('objets')" aria-label="Objets">
+        <button class="sidebar-item" :class="{ active: activeTab === 'objets' }" @click="switchTab('objets')" aria-label="Objets" data-testid="player-tab-objets">
           <span class="sidebar-icon"><AppIcon icon="lucide:gem" size="1.2rem" /></span>
           <span class="sidebar-label">Objets</span>
         </button>
@@ -978,6 +978,7 @@ onUnmounted(() => {
           :class="{ active: activeTab === 'boutique' }"
           @click="switchTab('boutique')"
           aria-label="Boutique"
+          data-testid="player-tab-boutique"
         >
           <span class="sidebar-icon" :class="{ 'tab-icon-notify': cartItemCount === 0 && activeTab !== 'boutique' }">
             <AppIcon icon="game-icons:shop" size="1.2rem" />
@@ -992,6 +993,7 @@ onUnmounted(() => {
           :class="{ active: activeTab === 'vote' }"
           @click="switchTab('vote'); hasNewVote = false"
           aria-label="Vote"
+          data-testid="player-tab-vote"
         >
           <span class="sidebar-icon" :class="{ 'tab-icon-notify': hasNewVote && activeTab !== 'vote' }">
             <AppIcon icon="lucide:check-square" size="1.2rem" />
@@ -1005,6 +1007,7 @@ onUnmounted(() => {
           :class="{ active: activeTab === 'puzzle' }"
           @click="switchTab('puzzle')"
           aria-label="Puzzle"
+          data-testid="player-tab-puzzle"
         >
           <span class="sidebar-icon" :class="{ 'tab-icon-notify': activeTab !== 'puzzle' }">
             <AppIcon icon="lucide:puzzle" size="1.2rem" />
@@ -1012,7 +1015,7 @@ onUnmounted(() => {
           <span class="sidebar-label">Puzzle</span>
           <span v-if="activeTab !== 'puzzle'" class="tab-badge tab-badge-pulse">!</span>
         </button>
-        <button class="sidebar-item" :class="{ active: activeTab === 'messages' }" @click="switchTab('messages')" aria-label="Messages">
+        <button class="sidebar-item" :class="{ active: activeTab === 'messages' }" @click="switchTab('messages')" aria-label="Messages" data-testid="player-tab-messages">
           <span class="sidebar-icon" :class="{ 'tab-icon-notify': unreadMessages > 0 }">
             <AppIcon icon="lucide:inbox" size="1.2rem" />
           </span>
