@@ -1,0 +1,39 @@
+name: Build Obsidian Plugin
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: obsidian-plugin/package-lock.json
+
+      - name: Install dependencies
+        run: cd obsidian-plugin && npm ci
+
+      - name: Build plugin
+        run: cd obsidian-plugin && npm run build
+
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmtoolkit-sync
+          path: |
+            obsidian-plugin/main.js
+            obsidian-plugin/manifest.json
+            obsidian-plugin/versions.json
+            obsidian-plugin/data.json
+          if-no-files-found: warn
+          retention-days: 90
