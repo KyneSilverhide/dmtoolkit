@@ -63,6 +63,8 @@ function disconnectTrack(id) {
   if (gain) { try { gain.disconnect() } catch (_) {} gainNodes.delete(id) }
 }
 
+const audioSearch = ref('')
+
 // rename state
 const renamingId = ref(null)
 const renameValue = ref('')
@@ -74,13 +76,19 @@ const allCategories = computed(() => {
   return [...seen].sort((a, b) => a.localeCompare(b, 'fr'))
 })
 
-const tracksByCategory = computed(() =>
-  allCategories.value.map(cat => ({
-    key: cat,
-    label: cat,
-    tracks: tracks.value.filter(t => (t.audio_category || 'Général') === cat),
-  }))
-)
+const tracksByCategory = computed(() => {
+  const q = audioSearch.value.trim().toLowerCase()
+  return allCategories.value
+    .map(cat => ({
+      key: cat,
+      label: cat,
+      tracks: tracks.value.filter(t =>
+        (t.audio_category || 'Général') === cat &&
+        (!q || (t.original_name || t.url).toLowerCase().includes(q))
+      ),
+    }))
+    .filter(g => g.tracks.length > 0)
+})
 
 async function loadTracks() {
   if (!sessionStore.activeSession) return
@@ -469,11 +477,30 @@ onUnmounted(() => {
       <p v-if="uploadError" class="upload-error">{{ uploadError }}</p>
     </div>
 
+    <!-- Recherche -->
+    <div v-if="tracks.length > 0" class="search-bar">
+      <AppIcon icon="lucide:search" size="0.8em" class="search-icon" />
+      <input
+        v-model="audioSearch"
+        class="search-input"
+        placeholder="Filtrer les pistes…"
+        type="search"
+      />
+      <span v-if="audioSearch" class="search-count">
+        {{ tracksByCategory.reduce((n, g) => n + g.tracks.length, 0) }} / {{ tracks.length }}
+      </span>
+    </div>
+
     <!-- Dashboard : toutes les catégories affichées en groupes -->
     <div v-if="tracks.length === 0" class="empty-state">
       <AppIcon icon="lucide:music-2" size="1.4em" />
       <p>Aucun fichier audio pour cette session.</p>
       <p class="empty-hint">Utilisez le bouton ci-dessus pour en ajouter.</p>
+    </div>
+
+    <div v-else-if="tracksByCategory.length === 0" class="empty-state">
+      <AppIcon icon="lucide:search-x" size="1.2em" />
+      <p>Aucune piste ne correspond à « {{ audioSearch }} ».</p>
     </div>
 
     <div v-else class="dashboard">
@@ -807,6 +834,36 @@ onUnmounted(() => {
   white-space: nowrap;
   min-width: 2.5em;
   text-align: right;
+}
+
+/* ── Search bar ──────────────────────────────────────── */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+}
+.search-icon { color: var(--color-text-dim); flex-shrink: 0; }
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--color-text);
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+.search-input::placeholder { color: var(--color-border); font-style: italic; }
+.search-input::-webkit-search-cancel-button { cursor: pointer; }
+.search-count {
+  font-family: var(--font-heading);
+  font-size: 0.58rem;
+  color: var(--color-text-dim);
+  white-space: nowrap;
 }
 
 /* ── Empty state ─────────────────────────────────────── */

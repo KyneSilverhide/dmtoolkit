@@ -13,6 +13,13 @@ const activeLobbyBgUrl = ref(null)
 const uploading = ref(false)
 const uploadError = ref('')
 const uploadProgress = ref(0)   // 0–100
+const searchQuery = ref('')
+
+const filteredImages = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return images.value
+  return images.value.filter(img => (img.original_name || img.url).toLowerCase().includes(q))
+})
 
 async function loadImages() {
   if (!sessionStore.activeSession) return
@@ -180,9 +187,26 @@ onUnmounted(() => {
       <p class="empty-hint">Utilisez le bouton ci-dessus pour en ajouter.</p>
     </div>
 
-    <div v-else class="gallery">
-      <div
-          v-for="img in images"
+    <template v-else>
+      <div class="search-bar">
+        <AppIcon icon="lucide:search" size="0.8em" class="search-icon" />
+        <input
+          v-model="searchQuery"
+          class="search-input"
+          placeholder="Filtrer les images…"
+          type="search"
+        />
+        <span v-if="searchQuery" class="search-count">{{ filteredImages.length }} / {{ images.length }}</span>
+      </div>
+
+      <div v-if="filteredImages.length === 0" class="empty-state">
+        <AppIcon icon="lucide:search-x" size="1.2em" />
+        <p>Aucune image ne correspond à « {{ searchQuery }} ».</p>
+      </div>
+
+      <div v-else class="gallery">
+        <div
+          v-for="img in filteredImages"
           :key="img.id"
           class="gallery-item"
           :class="{ selected: selectedImageUrl === img.url }">
@@ -209,8 +233,9 @@ onUnmounted(() => {
         >
           <AppIcon icon="lucide:image-play" size="0.85em" /> Fond lobby
         </button>
+        </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
@@ -298,9 +323,38 @@ onUnmounted(() => {
   display: block;
 }
 
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+}
+.search-icon { color: var(--color-text-dim); flex-shrink: 0; }
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--color-text);
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+.search-input::placeholder { color: var(--color-border); font-style: italic; }
+.search-input::-webkit-search-cancel-button { cursor: pointer; }
+.search-count {
+  font-family: var(--font-heading);
+  font-size: 0.58rem;
+  color: var(--color-text-dim);
+  white-space: nowrap;
+}
+
 .img-name {
   font-family: var(--font-heading);
-  font-size: 0.55rem;
+  font-size: 0.68rem;
   color: var(--color-text-dim);
   letter-spacing: 0.03em;
   margin: 0.2rem 0 0.15rem;
