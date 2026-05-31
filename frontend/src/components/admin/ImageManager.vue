@@ -104,6 +104,16 @@ function imageFullUrl(url) {
   return `${BACKEND_URL}${url}`
 }
 
+async function saveTvLabel(img) {
+  try {
+    await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${img.id}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tv_label: img.tv_label || null }),
+    })
+  } catch (err) { console.error(err) }
+}
+
 async function deleteImage(img, event) {
   event.stopPropagation()
   if (!confirm(`Supprimer "${img.original_name || img.url}" ?`)) return
@@ -181,6 +191,13 @@ onUnmounted(() => {
           <button class="delete-btn" @click="deleteImage(img, $event)" title="Supprimer">✕</button>
         </div>
         <p class="img-name">{{ img.original_name || img.url.split('/').pop() }}</p>
+        <input
+          v-model="img.tv_label"
+          class="tv-label-input"
+          placeholder="Label TV…"
+          @blur="saveTvLabel(img)"
+          @keydown.enter.prevent="saveTvLabel(img)"
+        />
         <button class="show-btn" @click.stop="selectedImageUrl = img.url; showImageOnTv(img.url)" title="Afficher sur la TV">
           <AppIcon icon="lucide:monitor" size="0.85em" /> Afficher TV
         </button>
@@ -287,10 +304,28 @@ onUnmounted(() => {
   font-size: 0.55rem;
   color: var(--color-text-dim);
   letter-spacing: 0.03em;
-  margin: 0.2rem 0 0.25rem;
+  margin: 0.2rem 0 0.15rem;
   word-break: break-all;
   line-height: 1.3;
 }
+
+.tv-label-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.2rem 0.4rem;
+  margin-bottom: 0.2rem;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: 4px;
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading);
+  font-size: 0.55rem;
+  letter-spacing: 0.05em;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.tv-label-input:focus { border-color: var(--color-gold-dark); border-style: solid; }
+.tv-label-input::placeholder { color: var(--color-border); font-style: italic; }
 
 .show-btn {
   width: 100%;

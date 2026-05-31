@@ -150,6 +150,20 @@ async function seedDemoContent(demoAdminId) {
     )
   }
 
+  // Create demo factions with varied reputations
+  const demoFactions = [
+    { name: 'Guilde des Marchands', min: -5, max: 5, current:  2 },
+    { name: 'Garde Royale',         min: -5, max: 5, current:  0 },
+    { name: 'Culte des Ombres',     min: -5, max: 5, current: -2 },
+    { name: 'Cercle des Druides',   min: -5, max: 5, current:  4 },
+  ]
+  for (const f of demoFactions) {
+    await pool.query(
+      'INSERT INTO factions (session_id, name, min_value, max_value, current_value) VALUES ($1, $2, $3, $4, $5)',
+      [sessionId, f.name, f.min, f.max, f.current]
+    )
+  }
+
   console.log('[Demo] Content seeded — session code: 0000')
 }
 

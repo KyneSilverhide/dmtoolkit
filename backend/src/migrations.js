@@ -234,6 +234,10 @@ CREATE TABLE IF NOT EXISTS factions (
   current_value INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+-- TV label for images (displayed top-left on TV when image is projected)
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS tv_label VARCHAR(200);
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_image_label VARCHAR(200);
 `
 
 async function runMigrations() {

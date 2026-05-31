@@ -25,6 +25,7 @@ const tvMode = ref('lobby')
 const qrCodeDataUrl = ref(null)
 const sessionCode = ref('')
 const currentImageUrl = ref(null)
+const currentImageLabel = ref(null)
 const lobbyBgUrl = ref(null)
 const activeVote = ref(null)
 const activeMerchant = ref(null)
@@ -389,6 +390,7 @@ onMounted(() => {
     qrCodeDataUrl.value = data.qrCodeDataUrl || null
     sessionCode.value = data.sessionCode || ''
     currentImageUrl.value = data.currentImageUrl || null
+    currentImageLabel.value = data.currentImageLabel || null
     lobbyBgUrl.value = data.lobbyBgUrl || null
     activeVote.value = data.activeVote || null
     activeMerchant.value = data.activeMerchant || null
@@ -411,9 +413,10 @@ onMounted(() => {
     }
   })
 
-  socket.on('tv-mode-changed', ({ mode, imageUrl, merchantData, puzzleImageId: pid, puzzleSeed: ps }) => {
+  socket.on('tv-mode-changed', ({ mode, imageUrl, imageLabel, merchantData, puzzleImageId: pid, puzzleSeed: ps }) => {
     tvMode.value = mode
     if (imageUrl) currentImageUrl.value = imageUrl
+    if (mode === 'image') currentImageLabel.value = imageLabel || null
     if (merchantData) activeMerchant.value = merchantData
     else if (mode === 'lobby') activeMerchant.value = null
     if (mode === 'puzzle' && pid) {
@@ -832,6 +835,7 @@ onUnmounted(() => {
       <!-- Image mode -->
       <div v-else-if="tvMode === 'image'" class="image-display" data-testid="tv-mode-image">
         <img :src="resolveMediaUrl(currentImageUrl)" class="tv-image" alt="Image affichée" />
+        <div v-if="currentImageLabel" class="image-label-overlay">{{ currentImageLabel }}</div>
       </div>
 
       <!-- Map mode -->
@@ -1741,12 +1745,34 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   min-height: 0;
+  position: relative;
 }
 .tv-image {
   width: 100%;
   height: 100%;
   object-fit: contain;
   border-radius: 8px;
+}
+.image-label-overlay {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 12px;
+  padding: 0.5rem 1rem;
+  backdrop-filter: blur(4px);
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  letter-spacing: 0.1em;
+  color: var(--color-gold-bright);
+  max-width: 40%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+:root[data-theme='light'] .image-label-overlay {
+  color: #f5d98a;
 }
 
 /* ── Map mode ─────────────────────────────────────────────────────────── */
@@ -2005,28 +2031,27 @@ onUnmounted(() => {
 
 .tv-faction-card {
   display: grid;
-  grid-template-columns: 220px 1fr 80px;
+  grid-template-columns: 1fr 3fr 140px;
   align-items: center;
-  gap: 1.5rem;
+  gap: 2rem;
   background: var(--tv-panel-bg);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  padding: 1.25rem 2rem;
 }
 
 .tv-faction-name {
   font-family: var(--font-heading, serif);
-  font-size: 1.25rem;
+  font-size: 2.5rem;
   font-weight: 600;
   letter-spacing: 0.03em;
   color: var(--color-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
+  line-height: 1.2;
 }
 
 .tv-faction-bar-track {
-  height: 18px;
+  height: 36px;
   background: rgba(255,255,255,0.1);
   border-radius: 99px;
   overflow: hidden;
@@ -2041,7 +2066,7 @@ onUnmounted(() => {
 
 .tv-faction-value {
   font-family: var(--font-heading, serif);
-  font-size: 1.6rem;
+  font-size: 3.2rem;
   font-weight: 700;
   text-align: right;
   letter-spacing: 0.05em;

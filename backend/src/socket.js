@@ -584,6 +584,7 @@ function setupSocket(io) {
           sessionCode: session.code,
           qrCodeDataUrl,
           currentImageUrl: session.current_image_url,
+          currentImageLabel: session.current_image_label || null,
           activeVote,
           doomClock,
           tensionScale: serializeTensionScale(session),
@@ -875,9 +876,17 @@ function setupSocket(io) {
     socket.on('show-image', async ({ sessionId, imageUrl }) => {
       if (!socket.admin) return
       try {
-        await pool.query('UPDATE sessions SET tv_mode = $1, current_image_url = $2 WHERE id = $3 AND created_by = $4', ['image', imageUrl, sessionId, socket.admin.id])
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl })
+        const imgRow = await pool.query(
+          'SELECT tv_label FROM session_images WHERE url = $1 AND session_id = $2 LIMIT 1',
+          [imageUrl, sessionId]
+        )
+        const imageLabel = imgRow.rows[0]?.tv_label || null
+        await pool.query(
+          'UPDATE sessions SET tv_mode = $1, current_image_url = $2, current_image_label = $3 WHERE id = $4 AND created_by = $5',
+          ['image', imageUrl, imageLabel, sessionId, socket.admin.id]
+        )
+        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
+        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
       } catch (err) { console.error(err) }
     })
 
@@ -1750,7 +1759,7 @@ function setupSocket(io) {
       if (!imageName || typeof imageName !== 'string' || !Number.isInteger(sessionId)) return
       try {
         const { rows } = await pool.query(
-          `SELECT url FROM session_images
+          `SELECT url, tv_label FROM session_images
            WHERE session_id = $1 AND type IN ('image', 'map')
              AND LOWER(original_name) = LOWER($2)`,
           [sessionId, imageName.trim()]
@@ -1760,12 +1769,13 @@ function setupSocket(io) {
           return
         }
         const imageUrl = rows[0].url
+        const imageLabel = rows[0].tv_label || null
         await pool.query(
-          'UPDATE sessions SET tv_mode = $1, current_image_url = $2 WHERE id = $3 AND created_by = $4',
-          ['image', imageUrl, sessionId, socket.admin.id]
+          'UPDATE sessions SET tv_mode = $1, current_image_url = $2, current_image_label = $3 WHERE id = $4 AND created_by = $5',
+          ['image', imageUrl, imageLabel, sessionId, socket.admin.id]
         )
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl })
+        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
+        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
         socket.emit('obsidian-image-shown', { imageName: imageName.trim() })
       } catch (err) { console.error(err) }
     })

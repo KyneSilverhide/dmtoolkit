@@ -1,6 +1,16 @@
 {
   "notes": [
     {
+      "version": "1.0.64",
+      "date": "2026-05-31",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Label TV pour les images : saisissez un titre optionnel par image dans le gestionnaire d'images, il s'affiche en overlay en haut à gauche de la TV lors de la projection" },
+        { "type": "improvement", "role": "admin", "text": "Formulaire de création de marchand : en-têtes de colonnes (Nom, Description, Prix, Stock, Catégorie) pour éviter toute confusion entre les champs" },
+        { "type": "improvement", "role": "admin", "text": "Vue TV Réputations : noms de factions non tronqués et taille de texte doublée pour une lisibilité optimale depuis la table de jeu" },
+        { "type": "improvement", "role": "admin", "text": "Compte de démonstration : 4 factions pré-configurées (Guilde des Marchands, Garde Royale, Culte des Ombres, Cercle des Druides) pour illustrer le système de réputation" }
+      ]
+    },
+    {
       "version": "1.0.46",
       "date": "2026-05-31",
       "changes": [

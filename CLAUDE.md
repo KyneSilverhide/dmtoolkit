@@ -127,8 +127,8 @@ cd frontend && npm run dev  # vite dev server
 - La DB est PostgreSQL 16. Les requêtes utilisent le driver `pg` (pool de connexions dans `db.js`).
 - Tables principales : `admins`, `sessions`, `players`, `messages`, `dice_results`, `votes`, `vote_responses`, `session_events`, `merchants`, `merchant_items`, `purchase_requests`, `session_images`, `factions`.
 - Table `factions` : `id`, `session_id` (FK sessions ON DELETE CASCADE), `name` (VARCHAR 200), `min_value` (INTEGER, défaut -5), `max_value` (INTEGER, défaut 5), `current_value` (INTEGER, défaut 0), `created_at`. Chaque session peut avoir N factions. Route REST : `GET /api/sessions/:id/factions`.
-- Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/vote/image/map/merchant/puzzle/reputation), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`, `combat_round` (entier), `timer_label` (VARCHAR 200), `timer_end_at` (TIMESTAMP), `lobby_bg_url` (VARCHAR 500, image de fond du lobby TV à 15 % d'opacité), `current_puzzle_image_id` (INTEGER), `current_puzzle_url` (VARCHAR 500), `current_puzzle_seed` (VARCHAR 100).
-- Colonnes clés de `session_images` : `url`, `original_name` (nom d'affichage, renommable), `type` (`image` / `map` / `audio`), `audio_category` (VARCHAR 50 : catégorie libre assignée par l'IA (GPT-4o-mini via GitHub Models) au moment de l'upload ; défaut `Général` si GITHUB_TOKEN absent ou si l'IA échoue ; l'admin peut saisir/modifier librement depuis l'AudioManager), `thumbnail_url` (VARCHAR 500 : URL du WebP 400px généré par `sharp` après upload pour les types `image` et `map` — null pour les fichiers audio ou si la génération échoue ; les galeries admin utilisent cette URL avec fallback sur `url`).
+- Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/vote/image/map/merchant/puzzle/reputation), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`, `combat_round` (entier), `timer_label` (VARCHAR 200), `timer_end_at` (TIMESTAMP), `lobby_bg_url` (VARCHAR 500, image de fond du lobby TV à 15 % d'opacité), `current_puzzle_image_id` (INTEGER), `current_puzzle_url` (VARCHAR 500), `current_puzzle_seed` (VARCHAR 100), `current_image_label` (VARCHAR 200 : label affiché en overlay top-left sur la TV quand une image est projetée).
+- Colonnes clés de `session_images` : `url`, `original_name` (nom d'affichage, renommable), `type` (`image` / `map` / `audio`), `audio_category` (VARCHAR 50 : catégorie libre assignée par l'IA (GPT-4o-mini via GitHub Models) au moment de l'upload ; défaut `Général` si GITHUB_TOKEN absent ou si l'IA échoue ; l'admin peut saisir/modifier librement depuis l'AudioManager), `thumbnail_url` (VARCHAR 500 : URL du WebP 400px généré par `sharp` après upload pour les types `image` et `map` — null pour les fichiers audio ou si la génération échoue ; les galeries admin utilisent cette URL avec fallback sur `url`), `tv_label` (VARCHAR 200 : label optionnel affiché en overlay top-left sur la TV lors de la projection — saisie inline dans l'ImageManager, sauvegardé via PATCH).
 - Colonnes clés de `players` : `ac`, `max_hp`, `current_hp`, `initiative`, `conditions` (JSON array), `is_concentrating`, `dnd_class`, `avatar_url`, `socket_id`.
 - Les joueurs sont supprimés de la DB à la déconnexion socket (`disconnect`/`leave-session`).
 - Les codes de session sont sur **4 chiffres numériques** (migration automatique des anciens codes).
@@ -226,7 +226,7 @@ cd frontend && npm run dev  # vite dev server
 | `session-joined` | joueur | Confirmation de connexion à la session |
 | `players-snapshot` | admin | Liste initiale des joueurs |
 | `admin-state` | admin | État complet de la session (TV mode, doom clock, etc.) |
-| `tv-snapshot` | TV | État complet pour l'écran TV |
+| `tv-snapshot` | TV | État complet pour l'écran TV (inclut `currentImageLabel` quand une image est active) |
 | `player-joined` | admin + TV | Un joueur a rejoint |
 | `player-left` | admin + TV | Un joueur a quitté/été expulsé |
 | `hp-updated` | admin + TV | Mise à jour des PV (courants ou max) |
@@ -241,7 +241,7 @@ cd frontend && npm run dev  # vite dev server
 | `player-roll-result` | admin | Résultat d'un jet de dé effectué côté joueur |
 | `player-roll-confirmed` | joueur | Confirmation du jet de dé (visible) |
 | `player-roll-hidden-sent` | joueur | Confirmation du jet de dé masqué envoyé à l'admin |
-| `tv-mode-changed` | TV + admin | Changement de mode TV |
+| `tv-mode-changed` | TV + admin | Changement de mode TV (pour `image` : inclut `imageUrl` et `imageLabel`) |
 | `doom-clock-started` | TV + admin | Démarrage de l'horloge doom |
 | `doom-clock-stopped` | TV + admin | Arrêt de l'horloge doom |
 | `tension-scale-updated` | TV + admin | Mise à jour de l'échelle de tension |

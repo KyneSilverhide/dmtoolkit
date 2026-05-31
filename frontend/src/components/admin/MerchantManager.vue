@@ -432,6 +432,17 @@ onUnmounted(() => {
         <p>Aucun article. Cliquez sur « Objets D&D » pour pré-remplir ou « + Ajouter » pour créer manuellement.</p>
       </div>
 
+      <div v-if="newItems.length > 0" class="item-row-header">
+        <div class="item-header-fields">
+          <span class="item-col-header col-name">Nom</span>
+          <span class="item-col-header col-desc">Description</span>
+          <span class="item-col-header col-price">🪙 Prix (po)</span>
+          <span class="item-col-header col-stock">📦 Stock</span>
+          <span class="item-col-header col-cat">Catégorie</span>
+        </div>
+        <span class="item-col-spacer" />
+      </div>
+
       <div class="items-list">
         <div v-for="(item, idx) in newItems" :key="idx" class="item-row">
           <div class="item-row-fields">
@@ -713,6 +724,35 @@ onUnmounted(() => {
   text-align: center;
   padding: 1rem 0;
 }
+
+.item-row-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0 0.1rem;
+}
+.item-header-fields {
+  display: flex;
+  gap: 0.35rem;
+  flex: 1;
+  flex-wrap: wrap;
+}
+.item-col-header {
+  font-family: var(--font-heading);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.col-name  { flex: 2; min-width: 100px; }
+.col-desc  { flex: 3; min-width: 120px; }
+.col-price { flex: 1; min-width: 60px; }
+.col-stock { flex: 1; min-width: 60px; }
+.col-cat   { flex: 1; min-width: 80px; }
+.item-col-spacer { width: 31px; flex-shrink: 0; }
 
 .items-list { display: flex; flex-direction: column; gap: 0.4rem; max-height: 300px; overflow-y: auto; }
 .item-row {
