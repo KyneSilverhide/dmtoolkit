@@ -1,8 +1,8 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { authStore } from '../../stores/auth.js'
-import { sessionStore } from '../../stores/session.js'
-import { getSocket } from '../../socket.js'
+import { authStore } from '@/stores/auth.js'
+import { sessionStore } from '@/stores/session.js'
+import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
 
 import { BACKEND_URL } from '@/config.js'
@@ -931,7 +931,7 @@ watch(fogEnabled, () => render())
 .map-manager { display: flex; flex-direction: column; gap: 1rem; }
 
 .section-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -940,7 +940,7 @@ watch(fogEnabled, () => render())
 }
 
 .subsection-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -966,7 +966,7 @@ watch(fogEnabled, () => render())
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.07em;
   cursor: pointer;
@@ -976,7 +976,7 @@ watch(fogEnabled, () => render())
 .upload-btn.disabled { opacity: 0.65; cursor: not-allowed; pointer-events: none; }
 .file-input { display: none; }
 
-.upload-error { color: var(--color-danger); font-family: var(--font-body); font-size: 0.8rem; }
+.upload-error { color: var(--color-danger); font-family: var(--font-body), sans-serif; font-size: 0.8rem; }
 
 .empty-state {
   display: flex;
@@ -985,7 +985,7 @@ watch(fogEnabled, () => render())
   gap: 0.35rem;
   padding: 2rem 1rem;
   color: var(--color-text-dim);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.85rem;
   text-align: center;
 }
@@ -1032,7 +1032,7 @@ watch(fogEnabled, () => render())
   width: 100%; padding: 0.3rem 0.25rem;
   background: var(--surface-gold-soft); border: 1px solid var(--color-gold-dark);
   border-radius: 6px; color: var(--color-gold);
-  font-family: var(--font-heading); font-size: 0.6rem;
+  font-family: var(--font-heading), sans-serif; font-size: 0.6rem;
   letter-spacing: 0.04em; cursor: pointer; transition: all 0.2s;
   text-align: center; white-space: nowrap;
 }
@@ -1049,7 +1049,7 @@ watch(fogEnabled, () => render())
   padding: 0.45rem 0.85rem;
   background: var(--gradient-accent-action); border: 1px solid var(--color-gold-dark);
   border-radius: 8px; color: var(--color-gold-bright);
-  font-family: var(--font-heading); font-size: 0.72rem; letter-spacing: 0.08em; cursor: pointer;
+  font-family: var(--font-heading), sans-serif; font-size: 0.72rem; letter-spacing: 0.08em; cursor: pointer;
 }
 .action-btn:hover:not(:disabled) { background: var(--gradient-accent-action-hover); }
 .action-btn.active { background: var(--gradient-accent-action-hover); border-color: var(--color-gold-bright); }
@@ -1057,7 +1057,7 @@ watch(fogEnabled, () => render())
 .danger-btn { border-color: var(--admin-danger-border, var(--color-danger-border)); color: var(--admin-danger-text, var(--color-danger)); background: var(--gradient-danger-action); }
 
 .brush-controls { display: flex; flex-direction: column; gap: 0.4rem; }
-.brush-label { display: flex; align-items: center; gap: 0.4rem; color: var(--color-text-dim); font-family: var(--font-heading); font-size: 0.7rem; }
+.brush-label { display: flex; align-items: center; gap: 0.4rem; color: var(--color-text-dim); font-family: var(--font-heading), sans-serif; font-size: 0.7rem; }
 .brush-slider { flex: 1; accent-color: var(--color-gold); }
 kbd {
   display: inline-block;
@@ -1102,8 +1102,8 @@ kbd {
   display: flex; align-items: center; justify-content: center;
 }
 .chip-img { width: 100%; height: 100%; object-fit: cover; }
-.chip-initial { font-family: var(--font-heading); font-size: 0.75rem; color: var(--color-gold-dark); }
-.chip-name { font-family: var(--font-heading); font-size: 0.65rem; letter-spacing: 0.05em; color: var(--color-text-dim); }
+.chip-initial { font-family: var(--font-heading), sans-serif; font-size: 0.75rem; color: var(--color-gold-dark); }
+.chip-name { font-family: var(--font-heading), sans-serif; font-size: 0.65rem; letter-spacing: 0.05em; color: var(--color-text-dim); }
 .chip-badge { font-size: 0.7rem; color: var(--color-gold-bright); font-weight: bold; }
 .pending-badge { color: #a78bfa; }
 
@@ -1112,8 +1112,8 @@ kbd {
   font-style: italic;
 }
 
-.viewport-info { font-family: var(--font-heading); font-size: 0.68rem; color: var(--color-text-dim); letter-spacing: 0.06em; margin: 0; }
-.hint-text { font-family: var(--font-body); font-size: 0.75rem; color: var(--color-text-dim); margin: 0; }
+.viewport-info { font-family: var(--font-heading), sans-serif; font-size: 0.68rem; color: var(--color-text-dim); letter-spacing: 0.06em; margin: 0; }
+.hint-text { font-family: var(--font-body), sans-serif; font-size: 0.75rem; color: var(--color-text-dim); margin: 0; }
 
 .canvas-container {
   width: 100%;
@@ -1166,7 +1166,7 @@ kbd {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text, #fff);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.72rem;
   outline: none;
 }

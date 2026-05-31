@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { computed } from 'vue'
 import { releaseNotesStore } from '../stores/releaseNotes.js'
 import AppIcon from './AppIcon.vue'
@@ -103,7 +103,7 @@ const latestUnread = computed(() => {
   cursor: pointer;
   transition: all 0.2s;
   color: var(--color-text-dim);
-  font-family: var(--font-ui);
+  font-family: var(--font-ui), sans-serif;
   font-size: 0.82rem;
   text-align: left;
   width: 100%;

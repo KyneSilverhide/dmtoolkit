@@ -1,6 +1,6 @@
-<script setup>
+﻿<script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { sessionStore } from '../../stores/session.js'
+import { sessionStore } from '@/stores/session.js'
 import AppIcon from '../AppIcon.vue'
 
 const notesText = ref('')
@@ -205,7 +205,7 @@ onUnmounted(() => {
   background: var(--player-control-bg, var(--surface-raised));
   color: var(--color-parchment);
   padding: 0.7rem;
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   line-height: 1.45;
 }
 .notes-textarea:focus { outline: none; border-color: var(--color-gold-dark); }
@@ -220,7 +220,7 @@ onUnmounted(() => {
   padding: 0.35rem 0.55rem;
   font-size: 0.68rem;
   cursor: pointer;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
 }
 .tool-btn.danger { border-color: var(--player-danger-border, var(--color-danger-border)); color: var(--player-danger-text, var(--color-danger)); }
 .notes-canvas {

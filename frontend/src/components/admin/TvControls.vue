@@ -1,7 +1,7 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { sessionStore } from '../../stores/session.js'
-import { getSocket } from '../../socket.js'
+import { sessionStore } from '@/stores/session.js'
+import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
 
 const tvMode = ref('lobby')
@@ -299,14 +299,14 @@ onUnmounted(() => {
   gap: 0.65rem;
 }
 .section-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
 }
 .mode-indicator {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.72rem;
   color: var(--color-text-dim);
   display: flex;
@@ -314,7 +314,7 @@ onUnmounted(() => {
   gap: 0.5rem;
 }
 .mode-badge {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -326,7 +326,7 @@ onUnmounted(() => {
 }
 .mode-buttons, .inline-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; }
 .round-display {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 1.1rem;
   color: var(--color-gold-bright);
   text-align: center;
@@ -345,7 +345,7 @@ onUnmounted(() => {
   border-radius: 8px;
   padding: 0.5rem 0.65rem;
   color: var(--color-parchment);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.85rem;
 }
 .checkbox-label {
@@ -353,7 +353,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.35rem;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
 }
 .action-btn {
@@ -362,7 +362,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -376,14 +376,14 @@ onUnmounted(() => {
 .danger-btn { border-color: var(--admin-danger-border, var(--color-danger-border)); color: var(--admin-danger-text, var(--color-danger)); background: var(--gradient-danger-action); }
 .status-line {
   margin: 0;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   color: var(--color-text-dim);
 }
 .error-line {
   margin: 0;
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.75rem;
   color: var(--admin-danger-text, var(--color-danger));
 }

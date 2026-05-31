@@ -1,8 +1,8 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { sessionStore } from '../../stores/session.js'
-import { authStore } from '../../stores/auth.js'
-import { getSocket } from '../../socket.js'
+import { sessionStore } from '@/stores/session.js'
+import { authStore } from '@/stores/auth.js'
+import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
 import { BACKEND_URL } from '@/config.js'
 
@@ -253,7 +253,7 @@ onUnmounted(() => {
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
   color: var(--color-text);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.85rem;
   outline: none;
   width: 100%;
@@ -273,7 +273,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   cursor: pointer;

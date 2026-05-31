@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { authStore } from '../stores/auth.js'
@@ -237,7 +237,7 @@ async function login() {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -254,7 +254,7 @@ async function login() {
 }
 
 .app-title {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: 2.8rem;
   line-height: 1.15;
   color: var(--color-parchment);
@@ -268,7 +268,7 @@ async function login() {
 }
 
 .app-subtitle {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.25em;
   color: var(--color-text-dim);
@@ -305,7 +305,7 @@ async function login() {
   border: 1px solid var(--color-border);
   background: linear-gradient(160deg, var(--color-surface-soft), var(--color-surface));
   color: var(--color-parchment);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
 }
 
 .btn-text { display: flex; flex-direction: column; }
@@ -389,13 +389,13 @@ async function login() {
   margin-bottom: 0.5rem;
 }
 .modal-title {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: 1.7rem;
   color: var(--color-parchment);
   margin: 0 0 0.2rem;
 }
 .modal-subtitle {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.25em;
   text-transform: uppercase;
@@ -412,7 +412,7 @@ async function login() {
 .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
 
 .form-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -425,7 +425,7 @@ async function login() {
   border-radius: 8px;
   padding: 0.75rem 1rem;
   color: var(--color-parchment);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 1rem;
   outline: none;
   transition: border-color 0.2s;
@@ -440,7 +440,7 @@ async function login() {
   align-items: center;
   gap: 0.4rem;
   color: var(--color-danger);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.85rem;
   background: var(--color-danger-soft);
   border: 1px solid var(--color-danger-border);
@@ -459,7 +459,7 @@ async function login() {
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.9rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -482,7 +482,7 @@ async function login() {
   border: 1px solid rgba(201, 162, 39, 0.25);
   border-radius: 8px;
   padding: 0.55rem 0.75rem;
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.8rem;
   color: var(--color-text-dim);
   line-height: 1.4;
@@ -530,7 +530,7 @@ async function login() {
   border-radius: 6px;
   padding: 0.35rem 0.65rem;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.18s;

@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSocket, resetSocket } from '../socket.js'
@@ -1527,7 +1527,7 @@ onUnmounted(() => {
 
 .header-info { min-width: 0; }
 .player-name {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.92rem;
   color: var(--color-parchment);
   letter-spacing: 0.02em;
@@ -1535,7 +1535,7 @@ onUnmounted(() => {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .session-name {
-  font-family: var(--font-ui, var(--font-heading));
+  font-family: var(--font-ui, var(--font-heading)), sans-serif;
   font-size: 0.6rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -1544,7 +1544,7 @@ onUnmounted(() => {
 }
 
 .ac-chip {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   color: var(--color-gold-bright);
@@ -1562,7 +1562,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.2rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.68rem;
   color: var(--player-danger-text);
   background: var(--player-danger-bg);
@@ -1632,7 +1632,7 @@ onUnmounted(() => {
   border: none;
   background: none;
   color: var(--color-text-dim);
-  font-family: var(--font-ui, var(--font-heading));
+  font-family: var(--font-ui, var(--font-heading)), sans-serif;
   font-size: 0.82rem;
   cursor: pointer;
   transition: all 0.15s;
@@ -1660,13 +1660,13 @@ onUnmounted(() => {
   color: var(--color-red);
 }
 .resume-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.95rem;
   letter-spacing: 0.08em;
   color: var(--color-parchment);
 }
 .resume-sub {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.9rem;
   color: var(--color-text-dim);
   max-width: 440px;
@@ -1678,7 +1678,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   background: var(--player-gold-bg);
   color: var(--color-gold);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1731,7 +1731,7 @@ onUnmounted(() => {
   box-shadow: var(--shadow-soft);
 }
 .panel-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -1748,13 +1748,13 @@ onUnmounted(() => {
 /* ── HP Panel ────────────────────────────────────────────────────────── */
 .hp-panel { display: flex; flex-direction: column; gap: 0.6rem; }
 .hp-fraction {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.85rem;
   color: var(--color-parchment);
   letter-spacing: 0.05em;
 }
 .hp-temp {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.72rem;
   color: var(--player-info-text);
   letter-spacing: 0.08em;
@@ -1774,7 +1774,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   background: var(--player-control-bg);
   color: var(--color-parchment);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.15s;
@@ -1790,7 +1790,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   border-radius: 10px;
   color: var(--color-parchment);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 1.6rem;
   font-weight: 700;
   outline: none;
@@ -1803,7 +1803,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   background: var(--player-gold-bg);
   color: var(--color-gold);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1822,7 +1822,7 @@ onUnmounted(() => {
   margin-bottom: 0.25rem;
 }
 .max-hp-hint {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.75rem;
   color: var(--color-text-dim);
 }
@@ -1845,7 +1845,7 @@ onUnmounted(() => {
   margin-bottom: 0.25rem;
 }
 .max-hp-edit-label {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.75rem;
   color: var(--color-text-dim);
   white-space: nowrap;
@@ -1858,7 +1858,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-parchment);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 1rem;
   font-weight: 700;
 }
@@ -1892,7 +1892,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-parchment);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 1.2rem;
   font-weight: 700;
   outline: none;
@@ -1903,7 +1903,7 @@ onUnmounted(() => {
   border-radius: 8px;
   background: var(--player-info-bg);
   color: var(--player-info-text);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1925,7 +1925,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   background: var(--player-control-bg-muted);
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   cursor: pointer;
   transition: all 0.2s;
   text-align: left;
@@ -1969,13 +1969,13 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 0.5rem;
 }
-.offer-text { font-family: var(--font-body); font-size: 0.85rem; color: var(--color-text-dim); margin: 0; }
+.offer-text { font-family: var(--font-body), sans-serif; font-size: 0.85rem; color: var(--color-text-dim); margin: 0; }
 .offer-text strong { color: var(--color-parchment); }
 .offer-price { color: var(--player-success-text) !important; }
 .offer-actions { display: flex; gap: 0.5rem; }
 .offer-btn {
   flex: 1; padding: 0.45rem;
-  border-radius: 6px; font-family: var(--font-heading); font-size: 0.7rem;
+  border-radius: 6px; font-family: var(--font-heading), sans-serif; font-size: 0.7rem;
   letter-spacing: 0.06em; cursor: pointer; transition: all 0.2s; border: 1px solid;
 }
 .offer-btn.accept { background: var(--player-success-bg); border-color: var(--player-success-border); color: var(--player-success-text); }
@@ -1995,7 +1995,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   background: var(--player-control-bg-muted);
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   letter-spacing: 0.05em;
   cursor: pointer;
@@ -2013,13 +2013,13 @@ onUnmounted(() => {
 /* ── Shop ────────────────────────────────────────────────────────────── */
 .merchant-header-panel { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.75rem 1rem; }
 .merchant-name {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 1rem;
   letter-spacing: 0.1em;
   color: var(--color-gold-bright);
   margin: 0;
 }
-.merchant-desc { font-family: var(--font-body); font-size: 0.8rem; color: var(--color-text-dim); margin: 0; }
+.merchant-desc { font-family: var(--font-body), sans-serif; font-size: 0.8rem; color: var(--color-text-dim); margin: 0; }
 
 .shop-panel { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem; }
 .shop-item {
@@ -2036,18 +2036,18 @@ onUnmounted(() => {
 .shop-item-info { flex: 1; min-width: 0; }
 .shop-item-cat {
   display: block;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.52rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
   margin-bottom: 0.1rem;
 }
-.shop-item-name { font-family: var(--font-heading); font-size: 0.85rem; color: var(--color-parchment); }
-.shop-item-desc { font-family: var(--font-body); font-size: 0.72rem; color: var(--color-text-dim); margin: 0.1rem 0 0; }
+.shop-item-name { font-family: var(--font-heading), sans-serif; font-size: 0.85rem; color: var(--color-parchment); }
+.shop-item-desc { font-family: var(--font-body), sans-serif; font-size: 0.72rem; color: var(--color-text-dim); margin: 0.1rem 0 0; }
 .shop-item-right { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
-.shop-item-price { font-family: var(--font-title); font-size: 0.95rem; color: var(--color-gold-bright); }
-.shop-item-stock { font-family: var(--font-heading); font-size: 0.6rem; color: var(--color-text-dim); }
+.shop-item-price { font-family: var(--font-title), sans-serif; font-size: 0.95rem; color: var(--color-gold-bright); }
+.shop-item-stock { font-family: var(--font-heading), sans-serif; font-size: 0.6rem; color: var(--color-text-dim); }
 .shop-item-stock.empty { color: var(--player-danger-text); }
 
 .qty-controls { display: flex; align-items: center; gap: 0.3rem; }
@@ -2065,7 +2065,7 @@ onUnmounted(() => {
 }
 .qty-btn:hover { border-color: var(--color-gold-dark); color: var(--color-gold-bright); }
 .qty-value {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--color-parchment);
@@ -2081,8 +2081,8 @@ onUnmounted(() => {
 }
 .cart-panel.cart-active { border-color: var(--color-gold-dark); background: var(--player-panel-highlight-bg); }
 .cart-summary { display: flex; align-items: center; justify-content: space-between; }
-.cart-label { font-family: var(--font-heading); font-size: 0.75rem; letter-spacing: 0.1em; color: var(--color-text-dim); }
-.cart-total { font-family: var(--font-title); font-size: 1.1rem; color: var(--color-gold-bright); }
+.cart-label { font-family: var(--font-heading), sans-serif; font-size: 0.75rem; letter-spacing: 0.1em; color: var(--color-text-dim); }
+.cart-total { font-family: var(--font-title), sans-serif; font-size: 1.1rem; color: var(--color-gold-bright); }
 .cart-actions { display: flex; gap: 0.5rem; }
 .cart-submit-btn {
   flex: 1;
@@ -2091,7 +2091,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   background: var(--player-gold-bg);
   color: var(--color-gold);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -2105,7 +2105,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   background: none;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -2114,7 +2114,7 @@ onUnmounted(() => {
 
 /* ── Vote ────────────────────────────────────────────────────────────── */
 .vote-panel { display: flex; flex-direction: column; gap: 0.75rem; }
-.vote-title { font-family: var(--font-heading); font-size: 1rem; color: var(--color-gold-bright); letter-spacing: 0.05em; margin: 0; }
+.vote-title { font-family: var(--font-heading), sans-serif; font-size: 1rem; color: var(--color-gold-bright); letter-spacing: 0.05em; margin: 0; }
 .vote-options { display: flex; flex-direction: column; gap: 0.5rem; }
 .vote-option-btn {
   padding: 0.7rem 1rem;
@@ -2122,17 +2122,17 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-parchment);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s;
   text-align: left;
 }
 .vote-option-btn:hover { background: var(--player-gold-bg-strong); border-color: var(--color-gold); color: var(--color-gold-bright); }
-.vote-done { font-family: var(--font-body); font-size: 0.9rem; color: var(--player-success-text); }
+.vote-done { font-family: var(--font-body), sans-serif; font-size: 0.9rem; color: var(--player-success-text); }
 .vote-done strong { color: var(--color-parchment); }
-.vote-closed-label { font-family: var(--font-heading); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-dim); margin: 0 0 0.25rem; }
-.vote-result-line { font-family: var(--font-body); font-size: 0.85rem; color: var(--color-text-dim); margin: 0.1rem 0; }
+.vote-closed-label { font-family: var(--font-heading), sans-serif; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-dim); margin: 0 0 0.25rem; }
+.vote-result-line { font-family: var(--font-body), sans-serif; font-size: 0.85rem; color: var(--color-text-dim); margin: 0.1rem 0; }
 .vote-result-line strong { color: var(--color-parchment); }
 
 /* ── Messages ────────────────────────────────────────────────────────── */
@@ -2149,8 +2149,8 @@ onUnmounted(() => {
   border-style: dashed;
 }
 .empty-icon { font-size: 2.5rem; opacity: 0.4; }
-.empty-text { font-family: var(--font-heading); font-size: 0.9rem; letter-spacing: 0.1em; color: var(--color-text-dim); }
-.empty-sub { font-family: var(--font-body); color: var(--color-border); font-size: 0.8rem; }
+.empty-text { font-family: var(--font-heading), sans-serif; font-size: 0.9rem; letter-spacing: 0.1em; color: var(--color-text-dim); }
+.empty-sub { font-family: var(--font-body), sans-serif; color: var(--color-border); font-size: 0.8rem; }
 
 /* ── Tab bar ─────────────────────────────────────────────────────────── */
 .tab-bar {
@@ -2179,7 +2179,7 @@ onUnmounted(() => {
   background: none;
   border: none;
   color: var(--color-text-dim);
-  font-family: var(--font-ui, var(--font-heading));
+  font-family: var(--font-ui, var(--font-heading)), sans-serif;
   cursor: pointer;
   transition: color 0.18s;
   position: relative;
@@ -2224,7 +2224,7 @@ onUnmounted(() => {
   min-width: 18px; height: 18px;
   padding: 0 4px;
   border-radius: 9px;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   font-weight: 700;
   color: white;
@@ -2272,7 +2272,7 @@ onUnmounted(() => {
 }
 .modal-icon { font-size: 3rem; line-height: 1; }
 .modal-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 1.1rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -2280,7 +2280,7 @@ onUnmounted(() => {
   margin: 0;
 }
 .modal-body {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.95rem;
   color: var(--color-text-dim);
   margin: 0;
@@ -2288,7 +2288,7 @@ onUnmounted(() => {
 }
 .modal-body strong { color: var(--color-parchment); }
 .modal-hint {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -2301,7 +2301,7 @@ onUnmounted(() => {
   border: 1px solid var(--player-info-border, var(--color-info-border));
   border-radius: 20px;
   padding: 0.2rem 0.7rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 1rem;
   font-weight: 700;
   color: var(--player-info-text, var(--color-info-bright));
@@ -2313,7 +2313,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   background: var(--player-gold-bg, var(--surface-gold-soft));
   color: var(--color-gold);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.85rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -2373,7 +2373,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   text-align: left;
 }
@@ -2381,7 +2381,7 @@ onUnmounted(() => {
 .pmi-qty { color: var(--color-text-dim); }
 .pmi-price { color: var(--color-gold-bright); }
 .purchase-modal-total {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.85rem;
   color: var(--color-text-dim);
   margin: 0;
@@ -2431,14 +2431,14 @@ onUnmounted(() => {
 }
 
 .toast-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .toast-message {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.88rem;
   line-height: 1.4;
   color: var(--color-text-dim);
@@ -2493,7 +2493,7 @@ onUnmounted(() => {
   border-radius: 0 8px 8px 0;
   background: none;
   color: var(--color-text-dim);
-  font-family: var(--font-ui, var(--font-heading));
+  font-family: var(--font-ui, var(--font-heading)), sans-serif;
   font-size: 0.82rem;
   letter-spacing: 0.04em;
   cursor: pointer;

@@ -1,6 +1,6 @@
-<script setup>
+﻿<script setup>
 import { computed } from 'vue'
-import { sessionStore } from '../../stores/session.js'
+import { sessionStore } from '@/stores/session.js'
 
 const emit = defineEmits(['select-session'])
 
@@ -36,7 +36,7 @@ const activeSessionId = computed({
 
 <style scoped>
 .session-context-bar { display: flex; gap: 0.6rem; align-items: center; margin: 0.8rem 0; }
-.bar-label { font-family: var(--font-heading); color: var(--color-text-dim); font-size: 0.7rem; text-transform: uppercase; }
+.bar-label { font-family: var(--font-heading), sans-serif; color: var(--color-text-dim); font-size: 0.7rem; text-transform: uppercase; }
 .bar-select { min-width: 260px; }
-.active-chip { font-family: var(--font-heading); color: var(--color-gold-bright); }
+.active-chip { font-family: var(--font-heading), sans-serif; color: var(--color-gold-bright); }
 </style>

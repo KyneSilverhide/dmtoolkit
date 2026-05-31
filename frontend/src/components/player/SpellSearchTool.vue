@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { computed, ref, watch, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
 
@@ -176,7 +176,7 @@ onUnmounted(() => {
   padding: 0.55rem 0.75rem;
   background: var(--player-gold-bg, var(--surface-gold-soft));
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   cursor: pointer;
 }
 .search-btn:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -189,8 +189,8 @@ onUnmounted(() => {
   background: var(--player-control-bg-muted, var(--surface-ghost));
 }
 .spell-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
-.spell-name { margin: 0; font-size: 0.95rem; font-family: var(--font-heading); color: var(--color-parchment); }
-.spell-level { font-size: 0.62rem; color: var(--color-gold-dark); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 0.08em; }
+.spell-name { margin: 0; font-size: 0.95rem; font-family: var(--font-heading), sans-serif; color: var(--color-parchment); }
+.spell-level { font-size: 0.62rem; color: var(--color-gold-dark); font-family: var(--font-heading), sans-serif; text-transform: uppercase; letter-spacing: 0.08em; }
 .spell-school, .spell-meta { margin: 0.15rem 0 0; color: var(--color-text-dim); font-size: 0.76rem; }
 .spell-desc {
   margin: 0.15rem 0 0;
@@ -224,11 +224,11 @@ onUnmounted(() => {
 .spell-desc :deep(th) {
   background: var(--surface-raised, rgba(255,255,255,0.05));
   color: var(--color-gold-dark);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-weight: 600;
 }
 .spell-desc :deep(tbody tr:hover) {
   background: rgba(255, 255, 255, 0.03);
 }
-.spell-link { display: inline-block; margin-top: 0.35rem; font-size: 0.65rem; color: var(--color-gold-dark); text-decoration: none; font-family: var(--font-heading); }
+.spell-link { display: inline-block; margin-top: 0.35rem; font-size: 0.65rem; color: var(--color-gold-dark); text-decoration: none; font-family: var(--font-heading), sans-serif; }
 </style>

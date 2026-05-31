@@ -1,8 +1,8 @@
-<script setup>
+﻿<script setup>
 import { ref, computed } from 'vue'
-import { sessionStore } from '../../stores/session.js'
-import { authStore } from '../../stores/auth.js'
-import { getSocket } from '../../socket.js'
+import { sessionStore } from '@/stores/session.js'
+import { authStore } from '@/stores/auth.js'
+import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
 
 const MAX_COIN_AMOUNT = 99999
@@ -175,7 +175,7 @@ function reset() {
 }
 
 .section-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.68rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -202,7 +202,7 @@ function reset() {
 }
 
 .coin-abbr {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.95rem;
   font-weight: bold;
   letter-spacing: 0.05em;
@@ -210,7 +210,7 @@ function reset() {
 
 .coin-name {
   font-size: 0.62rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.7;
@@ -245,7 +245,7 @@ function reset() {
   border-radius: 6px;
   padding: 0.4rem 0.5rem;
   color: var(--color-parchment);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.9rem;
   text-align: center;
   outline: none;
@@ -262,7 +262,7 @@ function reset() {
   color: var(--color-text-dim);
   border-radius: 6px;
   padding: 0.35rem 0.7rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -292,14 +292,14 @@ function reset() {
 }
 
 .player-name {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.78rem;
   letter-spacing: 0.08em;
   color: var(--color-parchment);
 }
 
 .player-share {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.82rem;
   color: var(--color-gold-bright);
   text-align: right;
@@ -321,7 +321,7 @@ function reset() {
   border: 1px solid;
   border-radius: 20px;
   padding: 0.2rem 0.65rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
 }
@@ -344,7 +344,7 @@ function reset() {
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -362,7 +362,7 @@ function reset() {
 }
 
 .send-feedback {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.85rem;
   color: var(--color-success);
   text-align: center;
@@ -370,7 +370,7 @@ function reset() {
 }
 
 .send-hint {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.78rem;
   color: var(--color-text-dim);
   text-align: center;
@@ -378,7 +378,7 @@ function reset() {
 }
 
 .no-session-hint {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   color: var(--color-text-dim);
   font-size: 0.9rem;
   padding: 0.5rem 0;

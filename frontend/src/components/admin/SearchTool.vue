@@ -1,6 +1,6 @@
-<script setup>
+﻿<script setup>
 import { ref, watch, onUnmounted } from 'vue'
-import { authStore } from '../../stores/auth.js'
+import { authStore } from '@/stores/auth.js'
 import AppIcon from '../AppIcon.vue'
 
 import { BACKEND_URL } from '@/config.js'
@@ -276,7 +276,7 @@ onUnmounted(() => {
 }
 
 .section-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -295,7 +295,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   border-radius: 999px;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -320,7 +320,7 @@ onUnmounted(() => {
   border-radius: 8px;
   padding: 0.6rem 0.9rem;
   color: var(--color-parchment);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.9rem;
   outline: none;
   transition: border-color 0.2s;
@@ -334,7 +334,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -366,11 +366,11 @@ onUnmounted(() => {
   padding: 2rem 0;
 }
 .no-results-icon { font-size: 2.5rem; opacity: 0.4; margin: 0; }
-.no-results-text { font-family: var(--font-heading); font-size: 0.85rem; color: var(--color-text-dim); margin: 0.5rem 0 0; }
+.no-results-text { font-family: var(--font-heading), sans-serif; font-size: 0.85rem; color: var(--color-text-dim); margin: 0.5rem 0 0; }
 
 /* Results count */
 .results-info {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -407,7 +407,7 @@ onUnmounted(() => {
 }
 
 .spell-name {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 1rem;
   letter-spacing: 0.06em;
   color: var(--color-parchment);
@@ -416,7 +416,7 @@ onUnmounted(() => {
 }
 
 .ritual-badge {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.55rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -436,7 +436,7 @@ onUnmounted(() => {
 }
 
 .school-badge {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -449,7 +449,7 @@ onUnmounted(() => {
 }
 
 .level-badge {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -461,7 +461,7 @@ onUnmounted(() => {
 }
 
 .item-type-badge {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -473,7 +473,7 @@ onUnmounted(() => {
 }
 
 .rarity-badge {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -504,7 +504,7 @@ onUnmounted(() => {
 }
 .attr-icon { font-size: 0.75rem; flex-shrink: 0; line-height: 1.4; }
 .attr-val {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.72rem;
   color: var(--color-text-dim);
   line-height: 1.35;
@@ -514,7 +514,7 @@ onUnmounted(() => {
 /* Description sorts + objets magiques (HTML riche) */
 .spell-desc,
 .item-desc {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.8rem;
   color: var(--color-text-dim);
   line-height: 1.55;
@@ -548,7 +548,7 @@ onUnmounted(() => {
 .spell-desc :deep(th), .item-desc :deep(th) {
   background: var(--surface-raised, rgba(255,255,255,0.05));
   color: var(--color-gold-dark);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-weight: 600;
 }
 .spell-desc :deep(tbody tr:hover), .item-desc :deep(tbody tr:hover) {
@@ -556,7 +556,7 @@ onUnmounted(() => {
 }
 
 .item-source {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   letter-spacing: 0.08em;
   color: var(--color-text-dim);
@@ -565,7 +565,7 @@ onUnmounted(() => {
 
 /* Link */
 .spell-link {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;

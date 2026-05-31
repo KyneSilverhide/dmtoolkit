@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { releaseNotesStore } from '../stores/releaseNotes.js'
 import AppIcon from './AppIcon.vue'
@@ -173,7 +173,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 .rn-header-icon { color: var(--color-gold-bright); }
 
 .rn-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 1.2rem;
   color: var(--color-parchment);
   margin: 0;
@@ -200,7 +200,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 }
 
 .rn-version-tag {
-  font-family: var(--font-ui);
+  font-family: var(--font-ui), sans-serif;
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--color-gold-bright);
@@ -274,7 +274,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   border: 1px solid rgba(201, 162, 39, 0.2);
   border-radius: 8px;
   color: var(--color-text-dim);
-  font-family: var(--font-ui);
+  font-family: var(--font-ui), sans-serif;
   font-size: 0.82rem;
   padding: 0.45rem 0.85rem;
   cursor: pointer;
@@ -291,7 +291,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   border: none;
   border-radius: 8px;
   color: #1a0e00;
-  font-family: var(--font-ui);
+  font-family: var(--font-ui), sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
   padding: 0.5rem 1.1rem;

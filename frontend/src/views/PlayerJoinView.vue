@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSocket } from '../socket.js'
@@ -345,7 +345,7 @@ async function joinSession() {
   background: none;
   border: none;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   cursor: pointer;
 }
@@ -363,7 +363,7 @@ async function joinSession() {
   border-radius: 6px;
   padding: 0.35rem 0.65rem;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.18s;
@@ -374,7 +374,7 @@ async function joinSession() {
 .skull-ornament { font-size: 2rem; }
 
 .page-title {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: 1.8rem;
   color: var(--color-parchment);
   margin-top: 0.5rem;
@@ -411,7 +411,7 @@ async function joinSession() {
 }
 
 .form-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -428,7 +428,7 @@ async function joinSession() {
   border-radius: 8px;
   padding: 0.75rem 1rem;
   color: var(--color-parchment);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 1rem;
   outline: none;
   transition: border-color 0.2s;
@@ -447,7 +447,7 @@ async function joinSession() {
 .form-input::placeholder { color: var(--color-text-dim); font-style: italic; }
 
 .form-hint {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.8rem;
   color: var(--color-text-dim);
 }
@@ -491,7 +491,7 @@ async function joinSession() {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -503,7 +503,7 @@ async function joinSession() {
 
 .form-error {
   color: var(--color-danger);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.9rem;
   text-align: center;
 }
@@ -514,7 +514,7 @@ async function joinSession() {
   border: 1px solid var(--color-success-border);
   border-radius: 8px;
   color: var(--color-parchment);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 1rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;

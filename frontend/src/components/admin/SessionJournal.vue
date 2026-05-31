@@ -1,8 +1,8 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { sessionStore } from '../../stores/session.js'
-import { authStore } from '../../stores/auth.js'
-import { getSocket } from '../../socket.js'
+import { sessionStore } from '@/stores/session.js'
+import { authStore } from '@/stores/auth.js'
+import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
 
 import { BACKEND_URL } from '@/config.js'
@@ -228,7 +228,7 @@ onUnmounted(() => {
 }
 
 .section-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -236,7 +236,7 @@ onUnmounted(() => {
 }
 
 .no-session {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   color: var(--color-text-dim);
   text-align: center;
   padding: 2rem 0;
@@ -272,7 +272,7 @@ onUnmounted(() => {
 }
 
 .clear-confirm-text {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   color: var(--color-danger);
@@ -284,7 +284,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-danger);
   border-radius: 6px;
   color: var(--color-danger);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -300,7 +300,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   border-radius: 6px;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -319,7 +319,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -338,7 +338,7 @@ onUnmounted(() => {
 }
 
 .summary-text {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.9rem;
   color: var(--color-parchment);
   line-height: 1.7;
@@ -356,7 +356,7 @@ onUnmounted(() => {
 
 .empty-icon { font-size: 2.5rem; opacity: 0.4; }
 .empty-text {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.85rem;
   letter-spacing: 0.1em;
   color: var(--color-text-dim);
@@ -413,7 +413,7 @@ onUnmounted(() => {
 }
 
 .tl-desc {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.85rem;
   color: var(--color-parchment);
   line-height: 1.4;
@@ -422,7 +422,7 @@ onUnmounted(() => {
 }
 
 .tl-time {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   color: var(--color-border);
   white-space: nowrap;

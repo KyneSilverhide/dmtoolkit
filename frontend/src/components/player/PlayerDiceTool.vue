@@ -1,6 +1,6 @@
-<script setup>
+﻿<script setup>
 import { ref, computed } from 'vue'
-import { getSocket } from '../../socket.js'
+import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
 
 const DICE_TYPES = [4, 6, 8, 10, 12, 20, 100]
@@ -263,7 +263,7 @@ const totalColor = computed(() => {
 }
 
 .section-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.68rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -285,7 +285,7 @@ const totalColor = computed(() => {
   border-radius: 8px;
   background: var(--player-control-bg, var(--surface-raised));
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.78rem;
   letter-spacing: 0.06em;
   cursor: pointer;
@@ -342,7 +342,7 @@ const totalColor = computed(() => {
 }
 
 .step-value {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 1.1rem;
   color: var(--color-gold-bright);
   min-width: 32px;
@@ -365,7 +365,7 @@ const totalColor = computed(() => {
   border-radius: 8px;
   background: var(--player-control-bg, var(--surface-raised));
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -393,7 +393,7 @@ const totalColor = computed(() => {
 
 .dice-preview {
   text-align: center;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.78rem;
   letter-spacing: 0.12em;
   color: var(--color-text-dim);
@@ -409,7 +409,7 @@ const totalColor = computed(() => {
 }
 
 .result-total {
-  font-family: var(--font-title, var(--font-heading));
+  font-family: var(--font-title, var(--font-heading)), sans-serif;
   font-size: 4rem;
   line-height: 1;
   transition: color 0.3s;
@@ -417,7 +417,7 @@ const totalColor = computed(() => {
 }
 
 .rolls-detail {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   color: var(--color-text-dim);
   letter-spacing: 0.08em;
@@ -425,7 +425,7 @@ const totalColor = computed(() => {
 
 .hidden-sent {
   text-align: center;
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.85rem;
   color: var(--player-info-text, var(--color-info-bright));
   background: var(--player-info-bg, var(--color-info-soft));
@@ -453,7 +453,7 @@ const totalColor = computed(() => {
   gap: 0.5rem;
   padding: 0.85rem 1rem;
   border-radius: 10px;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.85rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -514,7 +514,7 @@ const totalColor = computed(() => {
 }
 
 .anim-value {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   color: var(--color-gold-bright);
   min-width: 2.5rem;

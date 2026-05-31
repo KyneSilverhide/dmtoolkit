@@ -1,8 +1,8 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { sessionStore } from '../../stores/session.js'
-import { authStore } from '../../stores/auth.js'
-import { getSocket } from '../../socket.js'
+import { sessionStore } from '@/stores/session.js'
+import { authStore } from '@/stores/auth.js'
+import { getSocket } from '@/socket.js'
 import meleeTable from '../../assets/melee.json'
 import distanceTable from '../../assets/distance.json'
 import magiqueTable from '../../assets/magique.json'
@@ -234,7 +234,7 @@ onUnmounted(() => {
 }
 
 .selector-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -263,7 +263,7 @@ onUnmounted(() => {
   color: var(--color-text-dim);
   cursor: pointer;
   transition: all 0.25s ease;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   position: relative;
   overflow: hidden;
 }
@@ -315,7 +315,7 @@ onUnmounted(() => {
 }
 
 .anim-label-text {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -323,7 +323,7 @@ onUnmounted(() => {
 }
 
 .anim-value {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   color: var(--color-gold-bright);
   min-width: 2.5rem;
@@ -407,7 +407,7 @@ onUnmounted(() => {
 }
 
 .dice-number {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 2.6rem;
   font-weight: 900;
   color: var(--color-gold-bright);
@@ -431,7 +431,7 @@ onUnmounted(() => {
   bottom: -24px;
   left: 50%;
   transform: translateX(-50%);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.3em;
   color: var(--color-text-dim);
@@ -448,7 +448,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-danger-border);
   border-radius: 10px;
   color: var(--color-parchment);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.95rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -507,7 +507,7 @@ onUnmounted(() => {
 }
 
 .result-text {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 1.15rem;
   line-height: 1.65;
   color: var(--color-parchment);
@@ -521,7 +521,7 @@ onUnmounted(() => {
 }
 
 .result-type-badge {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -554,7 +554,7 @@ onUnmounted(() => {
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
   color: var(--color-parchment);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.9rem;
   outline: none;
   cursor: pointer;
@@ -572,7 +572,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -598,14 +598,14 @@ onUnmounted(() => {
 }
 
 .send-feedback {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.9rem;
   color: var(--color-success);
   text-align: center;
 }
 
 .no-session-hint {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.8rem;
   color: var(--color-text-dim);
   text-align: center;

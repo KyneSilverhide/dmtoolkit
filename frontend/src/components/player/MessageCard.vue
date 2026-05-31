@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import AppIcon from '../AppIcon.vue'
 
@@ -153,7 +153,7 @@ function resolvedText() {
 }
 
 .gold-text {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.95rem;
   color: #d4af37;
   letter-spacing: 0.06em;
@@ -169,7 +169,7 @@ function resolvedText() {
 .dice-icon { font-size: 1.2rem; }
 
 .dice-type {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -179,7 +179,7 @@ function resolvedText() {
 
 .dice-time,
 .card-time {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   color: var(--color-text-dim);
 }
@@ -192,7 +192,7 @@ function resolvedText() {
 }
 
 .roll-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   color: var(--color-text-dim);
@@ -200,7 +200,7 @@ function resolvedText() {
 }
 
 .roll-value {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: 2rem;
   color: var(--color-gold-bright);
   text-shadow: var(--text-shadow-accent);
@@ -208,7 +208,7 @@ function resolvedText() {
 }
 
 .dice-result-text {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.95rem;
   color: var(--color-parchment);
   line-height: 1.5;
@@ -222,7 +222,7 @@ function resolvedText() {
 }
 
 .from-name {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -230,7 +230,7 @@ function resolvedText() {
 }
 
 .message-text {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.95rem;
   color: var(--color-parchment);
   line-height: 1.6;

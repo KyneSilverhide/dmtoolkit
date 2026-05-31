@@ -1,8 +1,8 @@
-<script setup>
-import { sessionStore } from '../../stores/session.js'
-import { getSocket } from '../../socket.js'
+﻿<script setup>
+import { sessionStore } from '@/stores/session.js'
+import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
-import { DND_CONDITIONS_MAP } from '../../utils/conditions.js'
+import { DND_CONDITIONS_MAP } from '@/utils/conditions.js'
 
 import { BACKEND_URL } from '@/config.js'
 
@@ -150,7 +150,7 @@ function avatarSrc(player) {
 }
 
 .section-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.72rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -159,7 +159,7 @@ function avatarSrc(player) {
 }
 
 .player-count-badge {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.62rem;
   padding: 0.1rem 0.45rem;
   border-radius: 999px;
@@ -175,7 +175,7 @@ function avatarSrc(player) {
   gap: 0.5rem;
   padding: 2rem 0;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.1em;
 }
@@ -232,7 +232,7 @@ function avatarSrc(player) {
   gap: 0.05rem;
 }
 .card-name {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.88rem;
   color: var(--color-parchment);
   white-space: nowrap;
@@ -240,7 +240,7 @@ function avatarSrc(player) {
   text-overflow: ellipsis;
 }
 .card-class {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.58rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -258,7 +258,7 @@ function avatarSrc(player) {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.62rem;
   border-radius: 20px;
   padding: 0.1rem 0.4rem;
@@ -281,7 +281,7 @@ function avatarSrc(player) {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
 }
 .hp-icon { display: flex; }
 .hp-value { font-size: 0.95rem; font-weight: 700; transition: color 0.35s; }
@@ -310,7 +310,7 @@ function avatarSrc(player) {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.58rem;
   letter-spacing: 0.04em;
   color: var(--admin-warning-text, var(--color-warning));
@@ -322,7 +322,7 @@ function avatarSrc(player) {
 }
 
 .online-badge {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.55rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;

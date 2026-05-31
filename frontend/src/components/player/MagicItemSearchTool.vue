@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, watch, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
 
@@ -151,7 +151,7 @@ onUnmounted(() => {
   padding: 0.55rem 0.75rem;
   background: var(--player-gold-bg, var(--surface-gold-soft));
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   cursor: pointer;
 }
 .search-btn:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -164,7 +164,7 @@ onUnmounted(() => {
   background: var(--player-control-bg-muted, var(--surface-ghost));
 }
 .item-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
-.item-name { margin: 0; font-size: 0.95rem; font-family: var(--font-heading); color: var(--color-parchment); }
+.item-name { margin: 0; font-size: 0.95rem; font-family: var(--font-heading), sans-serif; color: var(--color-parchment); }
 .item-badges { display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; }
 .item-badge-standard {
   font-size: 0.6rem;
@@ -173,7 +173,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 20px;
   padding: 0.1rem 0.45rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   letter-spacing: 0.08em;
   white-space: nowrap;
 }
@@ -184,13 +184,13 @@ onUnmounted(() => {
   border: 1px solid var(--color-info-border);
   border-radius: 20px;
   padding: 0.1rem 0.45rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   letter-spacing: 0.08em;
   white-space: nowrap;
 }
 .item-meta { margin: 0.15rem 0 0; font-size: 0.76rem; }
-.item-type { color: var(--color-gold-dark); font-family: var(--font-heading); }
-.item-rarity { font-family: var(--font-heading); }
+.item-type { color: var(--color-gold-dark); font-family: var(--font-heading), sans-serif; }
+.item-rarity { font-family: var(--font-heading), sans-serif; }
 .item-desc {
   margin: 0.15rem 0 0;
   color: var(--color-text-dim);
@@ -223,11 +223,11 @@ onUnmounted(() => {
 .item-desc :deep(th) {
   background: var(--surface-raised, rgba(255,255,255,0.05));
   color: var(--color-gold-dark);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-weight: 600;
 }
 .item-desc :deep(tbody tr:hover) {
   background: rgba(255, 255, 255, 0.03);
 }
-.item-link { display: inline-block; margin-top: 0.35rem; font-size: 0.65rem; color: var(--color-gold-dark); text-decoration: none; font-family: var(--font-heading); }
+.item-link { display: inline-block; margin-top: 0.35rem; font-size: 0.65rem; color: var(--color-gold-dark); text-decoration: none; font-family: var(--font-heading), sans-serif; }
 </style>

@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { io } from 'socket.io-client'
@@ -1004,7 +1004,7 @@ onUnmounted(() => {
   border-radius: 999px;
   padding: 0.45rem 0.85rem;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1033,9 +1033,9 @@ onUnmounted(() => {
   animation: spin 1s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-family: var(--font-heading); font-size: 1rem; letter-spacing: 0.2em; color: var(--color-text-dim); }
+.loading-text { font-family: var(--font-heading), sans-serif; font-size: 1rem; letter-spacing: 0.2em; color: var(--color-text-dim); }
 .error-icon { font-size: 3rem; }
-.error-text { font-family: var(--font-heading); font-size: 1.2rem; color: var(--tv-danger-text); text-align: center; }
+.error-text { font-family: var(--font-heading), sans-serif; font-size: 1.2rem; color: var(--tv-danger-text); text-align: center; }
 
 /* ── Header (lobby only) ──────────────────────────────────────────────── */
 .tv-header {
@@ -1043,7 +1043,7 @@ onUnmounted(() => {
   margin-bottom: 0.6rem;
 }
 .session-title {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: clamp(1.2rem, 3vw, 2.4rem);
   color: var(--color-gold-bright);
   text-shadow: var(--text-shadow-accent);
@@ -1052,7 +1052,7 @@ onUnmounted(() => {
 }
 
 .lobby-divider {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: clamp(0.48rem, 0.9vw, 0.66rem);
   letter-spacing: 0.5em;
   color: var(--color-gold-dark);
@@ -1080,7 +1080,7 @@ onUnmounted(() => {
   user-select: none;
 }
 .lobby-title {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: clamp(1.08rem, 2.1vw, 1.68rem);
   color: var(--color-parchment);
   text-shadow: var(--text-shadow-emphasis);
@@ -1097,7 +1097,7 @@ onUnmounted(() => {
   box-shadow: var(--shadow-soft);
 }
 .lobby-code {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: clamp(2.4rem, 7.2vw, 4.8rem);
   color: var(--color-gold-bright);
   text-shadow: var(--text-shadow-accent);
@@ -1105,7 +1105,7 @@ onUnmounted(() => {
   line-height: 1;
 }
 .lobby-hint {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: clamp(0.42rem, 0.9vw, 0.6rem);
   letter-spacing: 0.25em;
   text-transform: uppercase;
@@ -1123,7 +1123,7 @@ onUnmounted(() => {
   gap: 1rem;
 }
 .empty-icon { font-size: 4rem; opacity: 0.4; }
-.empty-text { font-family: var(--font-heading); font-size: 1.5rem; color: var(--color-text-dim); letter-spacing: 0.2em; }
+.empty-text { font-family: var(--font-heading), sans-serif; font-size: 1.5rem; color: var(--color-text-dim); letter-spacing: 0.2em; }
 
 /* ── Overlays (doom clock + free timer) ───────────────────────────────── */
 .overlays-container {
@@ -1153,7 +1153,7 @@ onUnmounted(() => {
   border-color: var(--tv-danger-text);
 }
 .doom-overlay-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -1161,7 +1161,7 @@ onUnmounted(() => {
   opacity: 0.85;
 }
 .doom-overlay-timer {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: 2rem;
   color: var(--tv-danger-text);
   line-height: 1;
@@ -1184,7 +1184,7 @@ onUnmounted(() => {
   animation: overlayPulse 1s ease-in-out infinite;
 }
 .timer-overlay-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -1192,7 +1192,7 @@ onUnmounted(() => {
   opacity: 0.85;
 }
 .timer-overlay-time {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: 2rem;
   color: var(--tv-info-text);
   line-height: 1;
@@ -1220,7 +1220,7 @@ onUnmounted(() => {
   padding: 0.6rem 0 0.2rem;
 }
 .combat-round-badge {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 1rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -1340,7 +1340,7 @@ onUnmounted(() => {
   object-fit: cover;
 }
 .avatar-fallback {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 2.8rem;
   color: var(--color-gold-dark);
   font-weight: 700;
@@ -1355,7 +1355,7 @@ onUnmounted(() => {
   min-width: 0;
 }
 .card-name {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: clamp(1.1rem, 2.2vw, 1.6rem);
   color: var(--color-parchment);
   letter-spacing: 0.05em;
@@ -1364,7 +1364,7 @@ onUnmounted(() => {
   text-overflow: ellipsis;
 }
 .class-badge {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -1377,7 +1377,7 @@ onUnmounted(() => {
 }
 
 .initiative-badge {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   color: var(--tv-info-text);
@@ -1399,7 +1399,7 @@ onUnmounted(() => {
 }
 .ac-icon { font-size: 1rem; }
 .ac-value {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: clamp(1rem, 2vw, 1.3rem);
   font-weight: 700;
   color: var(--color-gold-bright);
@@ -1414,16 +1414,16 @@ onUnmounted(() => {
 .hp-section { display: flex; flex-direction: column; gap: 0.5rem; }
 .hp-numbers { display: flex; align-items: baseline; gap: 0.3rem; }
 .hp-current {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: clamp(2rem, 5vw, 3.5rem);
   font-weight: 900;
   line-height: 1;
   transition: color 0.4s;
 }
-.hp-separator { font-family: var(--font-heading); font-size: 1.5rem; color: var(--color-border); }
-.hp-max { font-family: var(--font-heading); font-size: 1.3rem; color: var(--color-text-dim); }
+.hp-separator { font-family: var(--font-heading), sans-serif; font-size: 1.5rem; color: var(--color-border); }
+.hp-max { font-family: var(--font-heading), sans-serif; font-size: 1.3rem; color: var(--color-text-dim); }
 .hp-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -1431,7 +1431,7 @@ onUnmounted(() => {
   margin-left: 0.25rem;
 }
 .hp-temp {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1463,7 +1463,7 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: clamp(0.75rem, 1.4vw, 1rem);
   letter-spacing: 0.05em;
   color: var(--tv-warning-text);
@@ -1480,7 +1480,7 @@ onUnmounted(() => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: clamp(2rem, 5vw, 3.5rem);
   font-weight: 900;
   pointer-events: none;
@@ -1523,7 +1523,7 @@ onUnmounted(() => {
   width: 100%;
 }
 .vote-question {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: clamp(1.5rem, 4vw, 3rem);
   color: var(--color-gold-bright);
   text-shadow: var(--text-shadow-accent);
@@ -1531,7 +1531,7 @@ onUnmounted(() => {
   margin: 0;
 }
 .vote-progress {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: clamp(0.9rem, 2vw, 1.3rem);
   letter-spacing: 0.15em;
   color: var(--color-parchment-dark);
@@ -1553,12 +1553,12 @@ onUnmounted(() => {
   align-items: center;
 }
 .vote-option-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: clamp(1rem, 2vw, 1.4rem);
   color: var(--color-parchment);
 }
 .vote-option-count {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: clamp(0.85rem, 1.5vw, 1.1rem);
   color: var(--color-gold);
 }
@@ -1577,7 +1577,7 @@ onUnmounted(() => {
   box-shadow: var(--shadow-soft);
 }
 .voter-names {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.9rem;
   color: var(--color-text-dim);
   font-style: italic;
@@ -1598,7 +1598,7 @@ onUnmounted(() => {
   box-shadow: var(--shadow-soft);
 }
 .vote-waiting p {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: clamp(1rem, 2vw, 1.4rem);
   letter-spacing: 0.2em;
   color: var(--color-parchment);
@@ -1614,7 +1614,7 @@ onUnmounted(() => {
   gap: 1.5rem;
 }
 .doom-title {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: clamp(2rem, 5vw, 4rem);
   letter-spacing: 0.12em;
   color: var(--color-gold-bright);
@@ -1622,7 +1622,7 @@ onUnmounted(() => {
   margin: 0;
 }
 .doom-timer {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: clamp(5rem, 16vw, 13rem);
   line-height: 1;
   letter-spacing: 0.08em;
@@ -1649,7 +1649,7 @@ onUnmounted(() => {
   gap: 2rem;
 }
 .tension-title {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: clamp(1.6rem, 4vw, 3rem);
   color: var(--color-gold-bright);
   margin: 0;
@@ -1665,7 +1665,7 @@ onUnmounted(() => {
   border-radius: 8px;
   text-align: center;
   padding: 0.55rem 0;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   color: var(--color-text-dim);
   background: var(--tv-control-bg-muted);
 }
@@ -1703,7 +1703,7 @@ onUnmounted(() => {
 }
 .tension-level {
   position: relative;
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: clamp(3rem, 8vw, 6rem);
   line-height: 1;
   color: var(--tension-color);
@@ -1762,7 +1762,7 @@ onUnmounted(() => {
   border-radius: 12px;
   padding: 0.5rem 1rem;
   backdrop-filter: blur(4px);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 3rem;
   letter-spacing: 0.1em;
   color: var(--color-gold-bright);
@@ -1829,14 +1829,14 @@ onUnmounted(() => {
   width: 100%; height: 100%; object-fit: cover;
 }
 .token-initial-letter {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 2.4rem;
   color: #c9a227;
   font-weight: 700;
   line-height: 1;
 }
 .token-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: clamp(0.6rem, 1.2vw, 0.85rem);
   color: #fff;
   text-shadow: 0 1px 4px #000, 0 0 8px #000;
@@ -1865,7 +1865,7 @@ onUnmounted(() => {
   margin-bottom: 0.5rem;
 }
 .merchant-name {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: clamp(2rem, 4vw, 3.5rem);
   color: var(--color-gold-bright);
   text-shadow: var(--text-shadow-accent);
@@ -1873,7 +1873,7 @@ onUnmounted(() => {
   margin: 0;
 }
 .merchant-desc {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: clamp(0.7rem, 1.5vw, 1rem);
   letter-spacing: 0.15em;
   color: var(--color-text-dim);
@@ -1902,20 +1902,20 @@ onUnmounted(() => {
   filter: grayscale(0.5);
 }
 .item-category {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
 }
 .item-name {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: clamp(1rem, 2vw, 1.3rem);
   color: var(--color-parchment);
   letter-spacing: 0.04em;
 }
 .item-desc {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: clamp(0.8rem, 1.5vw, 1rem);
   color: var(--color-text-dim);
   line-height: 1.4;
@@ -1929,13 +1929,13 @@ onUnmounted(() => {
   margin-top: 0.25rem;
 }
 .item-price {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: clamp(1.4rem, 3vw, 2rem);
   color: var(--color-gold-bright);
   text-shadow: var(--text-shadow-accent);
 }
 .item-stock {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.85rem;
   letter-spacing: 0.08em;
   color: var(--color-text-dim);
@@ -1985,7 +1985,7 @@ onUnmounted(() => {
   margin-top: 2rem;
 }
 .footer-text {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.4em;
   text-transform: uppercase;

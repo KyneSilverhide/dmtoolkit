@@ -1,10 +1,10 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
-import { authStore } from '../../stores/auth.js'
-import { sessionStore } from '../../stores/session.js'
-import { getSocket } from '../../socket.js'
-import { SHOW_PUZZLE, CLOSE_PUZZLE, PUZZLE_CELL_CLICKED } from '../../socket-events.js'
+import { authStore } from '@/stores/auth.js'
+import { sessionStore } from '@/stores/session.js'
+import { getSocket } from '@/socket.js'
+import { SHOW_PUZZLE, CLOSE_PUZZLE, PUZZLE_CELL_CLICKED } from '@/socket-events.js'
 import { BACKEND_URL } from '@/config.js'
 
 const props = defineProps({

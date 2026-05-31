@@ -1,10 +1,10 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
-import { authStore } from '../../stores/auth.js'
-import { sessionStore } from '../../stores/session.js'
-import { getSocket } from '../../socket.js'
-import { AUDIO_PLAY_REQUESTED, AUDIO_STOP_REQUESTED, AUDIO_LOOP_REQUESTED, AUDIO_VOLUME_REQUESTED } from '../../socket-events.js'
+import { authStore } from '@/stores/auth.js'
+import { sessionStore } from '@/stores/session.js'
+import { getSocket } from '@/socket.js'
+import { AUDIO_PLAY_REQUESTED, AUDIO_STOP_REQUESTED, AUDIO_LOOP_REQUESTED, AUDIO_VOLUME_REQUESTED } from '@/socket-events.js'
 
 import { BACKEND_URL } from '@/config.js'
 
@@ -626,7 +626,7 @@ onUnmounted(() => {
 }
 
 .section-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -652,7 +652,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-success-border);
   border-radius: 20px;
   color: var(--color-success);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   padding: 0.1rem 0.5rem;
   letter-spacing: 0.05em;
@@ -667,7 +667,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-danger-border);
   border-radius: 6px;
   color: var(--color-danger);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.62rem;
   letter-spacing: 0.05em;
   cursor: pointer;
@@ -684,7 +684,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-danger-border);
   border-radius: 6px;
   color: var(--color-danger);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.62rem;
   letter-spacing: 0.05em;
   cursor: pointer;
@@ -701,7 +701,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-gold);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.62rem;
   letter-spacing: 0.05em;
   cursor: pointer;
@@ -713,7 +713,7 @@ onUnmounted(() => {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .ai-badge {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.5rem;
   letter-spacing: 0.06em;
   font-weight: 700;
@@ -739,7 +739,7 @@ onUnmounted(() => {
 }
 
 .reclassify-error {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.72rem;
   color: var(--color-danger);
   width: 100%;
@@ -763,7 +763,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   border-radius: 5px;
   color: var(--color-text);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.03em;
   padding: 0.2rem 0.35rem;
@@ -783,7 +783,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.07em;
   cursor: pointer;
@@ -797,7 +797,7 @@ onUnmounted(() => {
   width: 100%;
   color: var(--color-danger);
   font-size: 0.75rem;
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   margin-top: 0.15rem;
 }
 
@@ -827,7 +827,7 @@ onUnmounted(() => {
   50% { opacity: 0.7; }
 }
 .progress-pct {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.62rem;
   color: var(--color-gold-dark);
   letter-spacing: 0.05em;
@@ -853,14 +853,14 @@ onUnmounted(() => {
   border: none;
   outline: none;
   color: var(--color-text);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.04em;
 }
 .search-input::placeholder { color: var(--color-border); font-style: italic; }
 .search-input::-webkit-search-cancel-button { cursor: pointer; }
 .search-count {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.58rem;
   color: var(--color-text-dim);
   white-space: nowrap;
@@ -874,7 +874,7 @@ onUnmounted(() => {
   gap: 0.35rem;
   padding: 2rem 1rem;
   color: var(--color-text-dim);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.85rem;
   text-align: center;
 }
@@ -897,7 +897,7 @@ onUnmounted(() => {
 }
 .cat-icon { color: var(--color-gold-dark); flex-shrink: 0; }
 .cat-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -905,7 +905,7 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 .cat-count {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.58rem;
   color: var(--color-text-dim);
   background: var(--surface-track);
@@ -992,7 +992,7 @@ onUnmounted(() => {
 .track-tile.playing .play-btn { background: var(--color-gold-dark); color: var(--color-bg); }
 
 .track-name {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.66rem;
   letter-spacing: 0.03em;
   color: var(--color-text);
@@ -1013,7 +1013,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 4px;
   color: var(--color-text);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.66rem;
   padding: 0.1rem 0.3rem;
   outline: none;
@@ -1026,7 +1026,7 @@ onUnmounted(() => {
   gap: 0.2rem;
 }
 .time-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.52rem;
   color: var(--color-text-dim);
   letter-spacing: 0.02em;

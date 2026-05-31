@@ -1,7 +1,7 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { authStore } from '../../stores/auth.js'
-import { sessionStore } from '../../stores/session.js'
+import { authStore } from '@/stores/auth.js'
+import { sessionStore } from '@/stores/session.js'
 import AppIcon from '../AppIcon.vue'
 
 import { BACKEND_URL } from '@/config.js'
@@ -368,7 +368,7 @@ onMounted(loadSessions)
 }
 
 .section-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -388,7 +388,7 @@ onMounted(loadSessions)
   border-radius: 8px;
   padding: 0.65rem 1rem;
   color: var(--color-parchment);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.95rem;
   outline: none;
 }
@@ -402,7 +402,7 @@ onMounted(loadSessions)
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.1em;
   cursor: pointer;
@@ -464,7 +464,7 @@ onMounted(loadSessions)
 }
 
 .code-badge {
-  font-family: var(--font-title);
+  font-family: var(--font-title), sans-serif;
   font-size: 1.25rem;
   color: var(--color-gold-bright);
   letter-spacing: 0.15em;
@@ -504,7 +504,7 @@ onMounted(loadSessions)
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -543,7 +543,7 @@ onMounted(loadSessions)
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-gold);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.05em;
   cursor: pointer;
@@ -565,7 +565,7 @@ onMounted(loadSessions)
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.05em;
   color: var(--color-gold);
@@ -582,7 +582,7 @@ onMounted(loadSessions)
 }
 
 .col-hint {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.68rem;
   color: var(--color-text-dim);
   margin: 0;
@@ -605,7 +605,7 @@ onMounted(loadSessions)
 }
 
 .session-name {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.95rem;
   color: var(--color-parchment);
   margin: 0;
@@ -619,7 +619,7 @@ onMounted(loadSessions)
 }
 
 .session-status {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -655,7 +655,7 @@ onMounted(loadSessions)
   border: 1px solid var(--admin-danger-border, var(--color-danger-border));
   border-radius: 6px;
   color: var(--admin-danger-text, var(--color-danger));
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -676,7 +676,7 @@ onMounted(loadSessions)
   border-radius: 6px;
   padding: 0.3rem 0.6rem;
   color: var(--color-parchment);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.9rem;
   outline: none;
   min-width: 0;
@@ -732,7 +732,7 @@ onMounted(loadSessions)
   border: 1px solid var(--admin-danger-border, var(--color-danger-border));
   border-radius: 6px;
   color: var(--admin-danger-text, var(--color-danger));
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;

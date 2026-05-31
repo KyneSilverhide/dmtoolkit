@@ -1095,7 +1095,7 @@ onUnmounted(() => {
   gap: 0.2rem;
 }
 .glt-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1104,7 +1104,7 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 .glt-text {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.68rem;
   color: var(--color-text-dim);
   line-height: 1.4;

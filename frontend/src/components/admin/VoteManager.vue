@@ -1,7 +1,7 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { sessionStore } from '../../stores/session.js'
-import { getSocket } from '../../socket.js'
+import { sessionStore } from '@/stores/session.js'
+import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
 
 const question = ref('')
@@ -165,7 +165,7 @@ onUnmounted(() => {
 }
 
 .section-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -186,7 +186,7 @@ onUnmounted(() => {
 }
 
 .form-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -199,7 +199,7 @@ onUnmounted(() => {
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
   color: var(--color-parchment);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.85rem;
   outline: none;
   width: 100%;
@@ -233,7 +233,7 @@ onUnmounted(() => {
   border-radius: 6px;
   padding: 0.4rem;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.05em;
   cursor: pointer;
@@ -246,7 +246,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   color: var(--color-text-dim);
   cursor: pointer;
@@ -259,7 +259,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -290,14 +290,14 @@ onUnmounted(() => {
 }
 
 .vote-question-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.9rem;
   color: var(--color-parchment);
   flex: 1;
 }
 
 .vote-badge {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -316,7 +316,7 @@ onUnmounted(() => {
 }
 
 .vote-progress-text {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   color: var(--color-text-dim);
   letter-spacing: 0.1em;
@@ -341,13 +341,13 @@ onUnmounted(() => {
 }
 
 .result-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   color: var(--color-parchment);
 }
 
 .result-count {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   color: var(--color-gold-dark);
 }
@@ -367,7 +367,7 @@ onUnmounted(() => {
 }
 
 .voter-names {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.7rem;
   color: var(--color-text-dim);
   font-style: italic;

@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --color-bg: #120d04;
   --color-bg2: #1a1207;
   --color-parchment: #f0e6c8;
@@ -173,7 +173,7 @@ html, body {
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-family: var(--font-ui);
+  font-family: var(--font-ui), sans-serif;
   font-size: 1rem;
   line-height: 1.6;
   font-weight: 400;

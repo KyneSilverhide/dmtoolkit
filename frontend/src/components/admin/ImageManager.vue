@@ -1,9 +1,9 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
-import { authStore } from '../../stores/auth.js'
-import { sessionStore } from '../../stores/session.js'
-import { getSocket } from '../../socket.js'
+import { authStore } from '@/stores/auth.js'
+import { sessionStore } from '@/stores/session.js'
+import { getSocket } from '@/socket.js'
 
 import { BACKEND_URL } from '@/config.js'
 
@@ -247,7 +247,7 @@ onUnmounted(() => {
 }
 
 .section-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -275,7 +275,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -289,7 +289,7 @@ onUnmounted(() => {
 
 .upload-error {
   color: var(--color-danger);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.8rem;
 }
 
@@ -300,7 +300,7 @@ onUnmounted(() => {
   gap: 0.35rem;
   padding: 2rem 1rem;
   color: var(--color-text-dim);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.85rem;
   text-align: center;
 }
@@ -339,21 +339,21 @@ onUnmounted(() => {
   border: none;
   outline: none;
   color: var(--color-text);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.04em;
 }
 .search-input::placeholder { color: var(--color-border); font-style: italic; }
 .search-input::-webkit-search-cancel-button { cursor: pointer; }
 .search-count {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.58rem;
   color: var(--color-text-dim);
   white-space: nowrap;
 }
 
 .img-name {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.68rem;
   color: var(--color-text-dim);
   letter-spacing: 0.03em;
@@ -371,7 +371,7 @@ onUnmounted(() => {
   border: 1px dashed var(--color-border);
   border-radius: 4px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.55rem;
   letter-spacing: 0.05em;
   outline: none;
@@ -387,7 +387,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-gold);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -461,7 +461,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   color: var(--color-info-bright, #7ecfff);
@@ -481,7 +481,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-danger, #e74c3c);
   border-radius: 4px;
   color: var(--color-danger, #e74c3c);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   letter-spacing: 0.05em;
   cursor: pointer;

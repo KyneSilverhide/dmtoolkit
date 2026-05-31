@@ -1,8 +1,8 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { authStore } from '../../stores/auth.js'
-import { sessionStore } from '../../stores/session.js'
-import { getSocket } from '../../socket.js'
+import { authStore } from '@/stores/auth.js'
+import { sessionStore } from '@/stores/session.js'
+import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
 import MERCHANT_PRESETS from '../../assets/merchantPresets.js'
 
@@ -569,7 +569,7 @@ onUnmounted(() => {
 }
 
 .section-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -588,7 +588,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   border-radius: 6px;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -611,7 +611,7 @@ onUnmounted(() => {
   gap: 0.6rem;
 }
 .requests-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -629,7 +629,7 @@ onUnmounted(() => {
   padding: 0.5rem 0.75rem;
 }
 .request-info {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.85rem;
   color: var(--color-parchment);
   flex: 1;
@@ -644,7 +644,7 @@ onUnmounted(() => {
 }
 .item-line-price { color: var(--color-gold-dark); }
 .request-total {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.05em;
   color: var(--color-gold-bright);
@@ -655,7 +655,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-success-border);
   border-radius: 6px;
   color: var(--color-success);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -676,7 +676,7 @@ onUnmounted(() => {
 }
 .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
 .form-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -688,7 +688,7 @@ onUnmounted(() => {
   border-radius: 6px;
   padding: 0.5rem 0.75rem;
   color: var(--color-parchment);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.85rem;
   outline: none;
   width: 100%;
@@ -709,7 +709,7 @@ onUnmounted(() => {
   border: 1px dashed var(--color-border);
   border-radius: 6px;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.05em;
   cursor: pointer;
@@ -718,7 +718,7 @@ onUnmounted(() => {
 .small-btn:hover { border-color: var(--color-gold-dark); color: var(--color-gold-dark); }
 
 .no-items {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.8rem;
   color: var(--color-text-dim);
   text-align: center;
@@ -738,7 +738,7 @@ onUnmounted(() => {
   flex-wrap: wrap;
 }
 .item-col-header {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.55rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -785,7 +785,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.1em;
   cursor: pointer;
@@ -798,7 +798,7 @@ onUnmounted(() => {
 /* Merchants list */
 .merchants-list { display: flex; flex-direction: column; gap: 1rem; }
 .loading-text, .empty-msg {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   color: var(--color-text-dim);
   font-size: 0.85rem;
   text-align: center;
@@ -821,13 +821,13 @@ onUnmounted(() => {
 }
 .merchant-actions { display: flex; gap: 0.4rem; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
 .merchant-card-name {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.9rem;
   color: var(--color-parchment);
   margin: 0;
 }
 .merchant-card-desc {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.75rem;
   color: var(--color-text-dim);
   margin: 0.2rem 0 0;
@@ -838,7 +838,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-gold);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.06em;
   cursor: pointer;
@@ -854,7 +854,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-danger-border);
   border-radius: 6px;
   color: var(--color-danger);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.06em;
   cursor: pointer;
@@ -895,7 +895,7 @@ onUnmounted(() => {
   padding: 0.25rem 0.4rem;
   background: var(--surface-ghost);
   border-radius: 4px;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
 }
 .preview-cat {
@@ -937,7 +937,7 @@ onUnmounted(() => {
   gap: 1rem;
 }
 .dialog-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.85rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -945,7 +945,7 @@ onUnmounted(() => {
   margin: 0;
 }
 .dialog-player {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.9rem;
   color: var(--color-text-dim);
   margin: 0;
@@ -967,14 +967,14 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
 }
 .dialog-item-name { flex: 1; color: var(--color-parchment); }
 .dialog-item-qty { color: var(--color-text-dim); min-width: 40px; }
 .dialog-item-price { color: var(--color-gold-bright); min-width: 60px; text-align: right; }
 .dialog-total {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.85rem;
   color: var(--color-text-dim);
   text-align: right;
@@ -989,7 +989,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.05em;
   cursor: pointer;
@@ -1012,7 +1012,7 @@ onUnmounted(() => {
   padding: 0.5rem 0.75rem;
 }
 .custom-price-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1026,7 +1026,7 @@ onUnmounted(() => {
   border-radius: 6px;
   padding: 0.4rem 0.6rem;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 1rem;
   font-weight: 700;
   text-align: center;
@@ -1043,7 +1043,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -1065,7 +1065,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-gold-dark);
   border-radius: 10px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1117,7 +1117,7 @@ onUnmounted(() => {
   transform: translateY(-1px);
 }
 .preset-card-label {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.72rem;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -1131,7 +1131,7 @@ onUnmounted(() => {
   line-height: 1.2;
 }
 .preset-card-count {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   color: var(--color-text-dim);
   background: var(--surface-ghost);
@@ -1156,7 +1156,7 @@ onUnmounted(() => {
 }
 .equip-search-input { flex: 1; }
 .equip-loading {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   color: var(--color-text-dim);
 }
@@ -1187,7 +1187,7 @@ onUnmounted(() => {
 }
 .equip-result-name {
   flex: 1;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.82rem;
   color: var(--color-parchment);
 }
@@ -1198,7 +1198,7 @@ onUnmounted(() => {
   letter-spacing: 0.05em;
 }
 .equip-result-price {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   color: var(--color-gold-bright);
   min-width: 52px;

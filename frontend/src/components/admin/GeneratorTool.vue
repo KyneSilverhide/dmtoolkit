@@ -1,7 +1,7 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, watch } from 'vue'
-import { authStore } from '../../stores/auth.js'
-import { sessionStore } from '../../stores/session.js'
+import { authStore } from '@/stores/auth.js'
+import { sessionStore } from '@/stores/session.js'
 import AppIcon from '../AppIcon.vue'
 import {
   GENERATOR_TYPES,
@@ -11,7 +11,7 @@ import {
   isQuotaLow,
   isQuotaEmpty,
   parseGeneratorResult,
-} from '../../utils/generatorUtils.js'
+} from '@/utils/generatorUtils.js'
 
 import { BACKEND_URL } from '@/config.js'
 
@@ -220,7 +220,7 @@ async function copyResult(text, index) {
   gap: 0.35rem;
 }
 .unavailable-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -229,7 +229,7 @@ async function copyResult(text, index) {
   margin: 0;
 }
 .unavailable-text {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.8rem;
   color: var(--color-text-dim);
   margin: 0;
@@ -247,7 +247,7 @@ async function copyResult(text, index) {
 
 /* Matches `.section-title` from TvControls / VoteManager */
 .tool-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -273,7 +273,7 @@ async function copyResult(text, index) {
 /* Matches form labels in VoteManager / TvControls */
 .form-label {
   min-width: 4rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -288,7 +288,7 @@ async function copyResult(text, index) {
   border: 1px solid var(--color-border);
   background: var(--admin-control-bg, var(--surface-raised));
   color: var(--color-parchment);
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.85rem;
   outline: none;
   transition: border-color 0.2s;
@@ -307,7 +307,7 @@ async function copyResult(text, index) {
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-gold-bright);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -317,7 +317,7 @@ async function copyResult(text, index) {
 .generate-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .form-error {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.8rem;
   color: var(--admin-danger-text, var(--color-danger));
   margin: 0;
@@ -352,7 +352,7 @@ async function copyResult(text, index) {
 .result-item:hover { border-color: var(--color-gold-dark); }
 
 .result-text {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.875rem;
   color: var(--color-parchment);
 }
@@ -379,7 +379,7 @@ async function copyResult(text, index) {
 .result-block:hover { border-color: var(--color-gold-dark); }
 
 .result-text-long {
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
   font-size: 0.875rem;
   line-height: 1.6;
   color: var(--color-parchment);
@@ -391,14 +391,14 @@ async function copyResult(text, index) {
   align-items: center;
   gap: 0.3rem;
   color: var(--color-text-dim);
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.08em;
   align-self: flex-end;
 }
 
 .results-hint {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.08em;
   color: var(--color-text-dim);
@@ -409,7 +409,7 @@ async function copyResult(text, index) {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.08em;
   color: var(--color-text-dim);
