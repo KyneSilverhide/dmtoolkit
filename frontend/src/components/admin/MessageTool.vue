@@ -27,15 +27,45 @@ const textEffect = ref('none')
 const sending = ref(false)
 const feedback = ref('')
 
+const imageSource = ref('gallery')   // 'gallery' | 'pc'
+const galleryImages = ref([])
+const selectedGalleryUrl = ref(null)
+
 const isCustomColor = computed(() => !COLOR_PALETTE.some(c => c.value === authorColor.value))
 
 const hasSession = computed(() => !!sessionStore.activeSession)
 const hasConnectedPlayers = computed(() => sessionStore.players.length > 0)
-const canSend = computed(() => hasSession.value && hasConnectedPlayers.value && !sending.value)
+const canSend = computed(() => {
+  if (!hasSession.value || !hasConnectedPlayers.value || sending.value) return false
+  if (messageType.value === 'text') return !!messageText.value.trim()
+  if (messageType.value === 'image') {
+    return imageSource.value === 'gallery' ? !!selectedGalleryUrl.value : !!imageFile.value
+  }
+  return false
+})
 
 function handleSendError(data) {
   feedback.value = data?.message || "Erreur lors de l'envoi."
 }
+
+async function loadGalleryImages() {
+  if (!sessionStore.activeSession) return
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images?type=image`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    if (res.ok) galleryImages.value = await res.json()
+  } catch (err) { console.error(err) }
+}
+
+function imageFullUrl(url) {
+  if (url.startsWith('http')) return url
+  return `${BACKEND_URL}${url}`
+}
+
+watch(messageType, (val) => {
+  if (val === 'image') loadGalleryImages()
+})
 
 watch(hasConnectedPlayers, (isConnected) => {
   if (!isConnected) {
@@ -80,16 +110,20 @@ async function sendMessage() {
   try {
     let content = messageText.value
 
-    if (messageType.value === 'image' && imageFile.value) {
-      const formData = new FormData()
-      formData.append('file', imageFile.value)
-      const res = await fetch(`${BACKEND_URL}/api/uploads`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${authStore.token}` },
-        body: formData,
-      })
-      const data = await res.json()
-      content = data.url
+    if (messageType.value === 'image') {
+      if (imageSource.value === 'gallery' && selectedGalleryUrl.value) {
+        content = selectedGalleryUrl.value
+      } else if (imageSource.value === 'pc' && imageFile.value) {
+        const formData = new FormData()
+        formData.append('file', imageFile.value)
+        const res = await fetch(`${BACKEND_URL}/api/uploads`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${authStore.token}` },
+          body: formData,
+        })
+        const data = await res.json()
+        content = data.url
+      }
     }
 
     const socket = getSocket(authStore.token)
@@ -106,6 +140,7 @@ async function sendMessage() {
     feedback.value = 'Message envoyé !'
     messageText.value = ''
     imageFile.value = null
+    selectedGalleryUrl.value = null
     setTimeout(() => { feedback.value = '' }, 3000)
   } catch {
     feedback.value = "Erreur lors de l'envoi."
@@ -207,7 +242,36 @@ async function sendMessage() {
 
       <div class="form-group" v-else>
         <label class="form-label">Image</label>
-        <input type="file" accept="image/*" @change="onFileChange" class="form-file" />
+        <div class="type-toggle img-source-toggle">
+          <button class="toggle-btn" :class="{ active: imageSource === 'gallery' }" @click="imageSource = 'gallery'; selectedGalleryUrl = null">
+            <AppIcon icon="lucide:images" size="0.85em" /> Galerie
+          </button>
+          <button class="toggle-btn" :class="{ active: imageSource === 'pc' }" @click="imageSource = 'pc'; imageFile = null">
+            <AppIcon icon="lucide:upload" size="0.85em" /> PC
+          </button>
+        </div>
+
+        <!-- Galerie session -->
+        <div v-if="imageSource === 'gallery'" class="gallery-picker">
+          <div v-if="galleryImages.length === 0" class="gallery-empty">
+            Aucune image dans la session — utilisez l'onglet Images.
+          </div>
+          <div v-else class="gallery-grid">
+            <div
+              v-for="img in galleryImages"
+              :key="img.id"
+              class="gallery-pick-item"
+              :class="{ selected: selectedGalleryUrl === img.url }"
+              :title="img.original_name || img.url.split('/').pop()"
+              @click="selectedGalleryUrl = img.url"
+            >
+              <img :src="imageFullUrl(img.thumbnail_url || img.url)" class="gallery-pick-thumb" :alt="img.original_name" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload PC -->
+        <input v-else type="file" accept="image/*" @change="onFileChange" class="form-file" />
       </div>
 
       <p v-if="feedback" class="feedback" :class="{ error: feedback.includes('Erreur') }">
@@ -382,6 +446,48 @@ async function sendMessage() {
   border-color: var(--color-gold-dark);
   color: var(--color-gold-bright);
   background: var(--admin-gold-bg, var(--surface-gold-soft));
+}
+
+.img-source-toggle { margin-bottom: 0.4rem; }
+
+.gallery-picker {
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.gallery-empty {
+  padding: 1rem;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--color-text-dim);
+  text-align: center;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.gallery-pick-item {
+  cursor: pointer;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.gallery-pick-item:hover { border-color: var(--color-gold-dark); }
+.gallery-pick-item.selected { border-color: var(--color-gold-bright); }
+
+.gallery-pick-thumb {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  display: block;
 }
 
 .feedback {
