@@ -282,17 +282,16 @@ onUnmounted(() => {
 .empty-hint { font-size: 0.75rem; opacity: 0.7; }
 
 .gallery {
-  columns: 5;
-  column-gap: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.6rem;
 }
 .gallery-item {
-  break-inside: avoid;
-  margin-bottom: 0.75rem;
+  min-width: 0;
 }
 .gallery-thumb {
   width: 100%;
-  height: auto;
-  aspect-ratio: unset;
+  aspect-ratio: 16/9;
   object-fit: cover;
   border-radius: 6px;
   border: 1px solid var(--color-border);
