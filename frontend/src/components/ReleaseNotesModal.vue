@@ -131,13 +131,21 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   border-radius: 18px;
   padding: 1.75rem 2rem 1.5rem;
   width: 100%;
-  max-width: 460px;
+  max-width: 480px;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(201, 162, 39, 0.1);
   overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .rn-card { max-width: 620px; }
+}
+
+@media (min-width: 1024px) {
+  .rn-card { max-width: 700px; }
 }
 
 .rn-close {
@@ -176,7 +184,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  padding-right: 0.25rem;
+  padding-right: 0.5rem;
+  scrollbar-gutter: stable;
 }
 
 .rn-body::-webkit-scrollbar { width: 4px; }
