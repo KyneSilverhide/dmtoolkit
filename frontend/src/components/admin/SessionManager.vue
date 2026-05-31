@@ -250,7 +250,7 @@ onMounted(loadSessions)
                 v-model="renameValue"
                 class="rename-input"
                 @keyup.enter="saveRename(sessionStore.activeSession.id)"
-                @keyup.escape="cancelRename"
+                @keyup.esc="cancelRename"
                 autofocus
               />
               <button class="rename-save-btn" :disabled="renameLoading" @click="saveRename(sessionStore.activeSession.id)">
@@ -334,7 +334,7 @@ onMounted(loadSessions)
                 v-model="renameValue"
                 class="rename-input"
                 @keyup.enter="saveRename(s.id)"
-                @keyup.escape="cancelRename"
+                @keyup.esc="cancelRename"
                 @click.stop
                 autofocus
               />

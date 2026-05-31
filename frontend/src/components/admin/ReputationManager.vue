@@ -447,12 +447,16 @@ onUnmounted(() => {
 }
 
 /* TransitionGroup animations */
+/* noinspection CssUnusedSymbol */
 .faction-list-enter-active,
+/* noinspection CssUnusedSymbol */
 .faction-list-leave-active {
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
+/* noinspection CssUnusedSymbol */
 .faction-list-enter-from,
+/* noinspection CssUnusedSymbol */
 .faction-list-leave-to {
   opacity: 0;
   transform: translateY(-6px);

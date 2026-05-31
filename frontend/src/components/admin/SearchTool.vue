@@ -55,15 +55,19 @@ const SCHOOL_COLORS = {
   abjuration: 'var(--school-abjuration)',
   divination: 'var(--school-divination)',
   enchantement: 'var(--school-enchantement)',
-  évocation: 'var(--school-evocation)',
+  evocation: 'var(--school-evocation)',
   illusion: 'var(--school-illusion)',
   invocation: 'var(--school-invocation)',
-  nécromancie: 'var(--school-necromancie)',
+  necromancie: 'var(--school-necromancie)',
   transmutation: 'var(--school-transmutation)',
 }
 
+function stripAccents(str) {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
 function schoolColor(school) {
-  const key = school.toLowerCase()
+  const key = stripAccents(school.toLowerCase())
   for (const [k, v] of Object.entries(SCHOOL_COLORS)) {
     if (key.includes(k)) return v
   }
@@ -93,14 +97,14 @@ const RARITY_COLORS = {
   'commun': 'var(--color-text-dim)',
   'peu commun': '#1eff00',
   'rare': '#0070dd',
-  'très rare': '#a335ee',
-  'légendaire': '#ff8000',
-  'artéfact': '#e6cc80',
+  'tres rare': '#a335ee',
+  'legendaire': '#ff8000',
+  'artefact': '#e6cc80',
 }
 
 function rarityColor(rarity) {
   if (!rarity) return 'var(--color-text-dim)'
-  const key = rarity.toLowerCase()
+  const key = stripAccents(rarity.toLowerCase())
   for (const [k, v] of Object.entries(RARITY_COLORS)) {
     if (key.includes(k)) return v
   }
@@ -436,6 +440,7 @@ onUnmounted(() => {
 }
 
 .school-badge {
+  --school-color: var(--school-default);
   font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   letter-spacing: 0.1em;
@@ -473,6 +478,7 @@ onUnmounted(() => {
 }
 
 .rarity-badge {
+  --rarity-color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   letter-spacing: 0.1em;

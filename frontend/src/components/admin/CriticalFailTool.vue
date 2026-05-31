@@ -611,19 +611,22 @@ onUnmounted(() => {
   text-align: center;
 }
 
-/* Themes */
+/* Themes — applied dynamically via :class="'theme-' + combatType" */
+/* noinspection CssUnusedSymbol */
 .critical-fail-tool.theme-melee {
   --theme-accent: var(--combat-melee-accent);
   --theme-accent-light: var(--combat-melee-accent-light);
   --theme-glow: var(--combat-melee-glow);
 }
 
+/* noinspection CssUnusedSymbol */
 .critical-fail-tool.theme-distance {
   --theme-accent: var(--combat-distance-accent);
   --theme-accent-light: var(--combat-distance-accent-light);
   --theme-glow: var(--combat-distance-glow);
 }
 
+/* noinspection CssUnusedSymbol */
 .critical-fail-tool.theme-magique {
   --theme-accent: var(--combat-magique-accent);
   --theme-accent-light: var(--combat-magique-accent-light);

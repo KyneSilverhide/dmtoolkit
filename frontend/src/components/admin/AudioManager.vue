@@ -146,7 +146,7 @@ function togglePlay(track) {
 }
 
 function stopAll() {
-  for (const [id, audio] of audioObjects) {
+  for (const [_id, audio] of audioObjects) {
     audio.pause()
     audio.currentTime = 0
   }
@@ -545,7 +545,7 @@ onUnmounted(() => {
                   v-model="renameValue"
                   class="rename-input"
                   @keydown.enter="commitRename(track)"
-                  @keydown.escape="renamingId = null"
+                  @keydown.esc="renamingId = null"
                   @blur="commitRename(track)"
                 />
               </div>

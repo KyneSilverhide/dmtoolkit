@@ -22,7 +22,6 @@ const selectedDie = ref(20)
 const diceCount = ref(1)
 const modifier = ref(0)
 const rollType = ref('normal') // 'normal' | 'advantage' | 'disadvantage'
-const isHidden = ref(false)
 
 const rolling = ref(false)
 const lastRoll = ref(null) // { rolls, total, diceType, diceCount, modifier, rollType, hidden }
@@ -33,6 +32,11 @@ const canAdvantage = computed(() => selectedDie.value === 20 && diceCount.value 
 
 function adjustCount(delta) {
   diceCount.value = Math.max(1, Math.min(MAX_COUNT, diceCount.value + delta))
+}
+
+function selectDie(d) {
+  selectedDie.value = d
+  if (!canAdvantage.value) rollType.value = 'normal'
 }
 
 function adjustModifier(delta) {
@@ -156,7 +160,7 @@ const totalColor = computed(() => {
           :key="d"
           class="die-btn"
           :class="{ active: selectedDie === d }"
-          @click="selectedDie = d; if (!canAdvantage) rollType = 'normal'"
+          @click="selectDie(d)"
         >
           d{{ d }}
         </button>

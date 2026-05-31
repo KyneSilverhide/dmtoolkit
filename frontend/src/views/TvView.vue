@@ -4,7 +4,6 @@ import { useRoute } from 'vue-router'
 import { io } from 'socket.io-client'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
-import DemoBanner from '../components/DemoBanner.vue'
 import { DND_CONDITIONS_MAP } from '../utils/conditions.js'
 
 const DOOM_DANGER_THRESHOLD_SECONDS = 10
@@ -662,7 +661,7 @@ onUnmounted(() => {
       <div :key="tvMode" class="tv-mode-container" data-testid="tv-container" :data-tv-mode="tvMode">
       <!-- Lobby mode: session title + QR code + session code -->
       <div v-if="tvMode === 'lobby'" class="lobby-display" data-testid="tv-mode-lobby">
-        <img v-if="lobbyBgUrl" :src="resolveMediaUrl(lobbyBgUrl)" class="lobby-bg-img" aria-hidden="true" />
+        <img v-if="lobbyBgUrl" :src="resolveMediaUrl(lobbyBgUrl)" class="lobby-bg-img" alt="" aria-hidden="true" />
         <header class="tv-header">
           <h1 class="session-title">{{ session.name }}</h1>
           <div class="lobby-divider" aria-hidden="true">⸻ ✦ ⸻</div>
@@ -847,7 +846,7 @@ onUnmounted(() => {
         <!-- Layer 3: player tokens — toujours au-dessus du brouillard -->
         <div class="map-tokens-layer">
           <div
-            v-for="(tokenPos, pid) in mapTokens"
+            v-for="pid in Object.keys(mapTokens)"
             :key="pid"
             class="map-token-placed"
             :style="mapTokenStyles[pid]"
@@ -956,6 +955,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* noinspection CssUnusedSymbol */
 :global(#app) {
   max-width: none !important;
   width: 100% !important;
@@ -1497,9 +1497,11 @@ onUnmounted(() => {
 }
 
 /* Transition for HP delta float-up */
+/* noinspection CssUnusedSymbol */
 .hp-float-enter-active {
   animation: floatUp 2s ease-out forwards;
 }
+/* noinspection CssUnusedSymbol */
 .hp-float-leave-active {
   display: none;
 }
@@ -1713,8 +1715,11 @@ onUnmounted(() => {
   font-size: 0.35em;
   color: var(--color-text-dim);
 }
+/* noinspection CssUnusedSymbol */
 .tension-pulse-wrap.shake-soft { animation: shakeSoft 0.32s infinite; }
+/* noinspection CssUnusedSymbol */
 .tension-pulse-wrap.shake-medium { animation: shakeMedium 0.2s infinite; }
+/* noinspection CssUnusedSymbol */
 .tension-pulse-wrap.shake-hard { animation: shakeHard 0.12s infinite; }
 @keyframes tensionPulse {
   0% { transform: scale(0.96); opacity: 0.55; }
@@ -1857,28 +1862,6 @@ onUnmounted(() => {
   padding: 2rem;
   box-sizing: border-box;
 }
-.merchant-header {
-  text-align: center;
-}
-.merchant-icon {
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
-}
-.merchant-name {
-  font-family: var(--font-title), sans-serif;
-  font-size: clamp(2rem, 4vw, 3.5rem);
-  color: var(--color-gold-bright);
-  text-shadow: var(--text-shadow-accent);
-  letter-spacing: 0.08em;
-  margin: 0;
-}
-.merchant-desc {
-  font-family: var(--font-heading), sans-serif;
-  font-size: clamp(0.7rem, 1.5vw, 1rem);
-  letter-spacing: 0.15em;
-  color: var(--color-text-dim);
-  margin-top: 0.5rem;
-}
 .merchant-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -1968,30 +1951,22 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
 }
+/* noinspection CssUnusedSymbol */
 .tv-mode-enter-active {
   transition: opacity 0.4s ease;
 }
+/* noinspection CssUnusedSymbol */
 .tv-mode-leave-active {
   transition: opacity 0.25s ease;
 }
+/* noinspection CssUnusedSymbol */
 .tv-mode-enter-from,
+/* noinspection CssUnusedSymbol */
 .tv-mode-leave-to {
   opacity: 0;
 }
 
 /* ── Footer ──────────────────────────────────────────────────────────── */
-.tv-footer {
-  text-align: center;
-  margin-top: 2rem;
-}
-.footer-text {
-  font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
-  letter-spacing: 0.4em;
-  text-transform: uppercase;
-  color: var(--color-text-dim);
-  opacity: 0.7;
-}
 
 /* ── Demo banner ─────────────────────────────────────────────────────── */
 .tv-demo-banner {
@@ -2004,7 +1979,7 @@ onUnmounted(() => {
   padding: 0.3rem 1rem;
   background: rgba(146, 64, 14, 0.75);
   color: #fef3c7;
-  font-family: var(--font-heading, sans-serif);
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -2041,7 +2016,7 @@ onUnmounted(() => {
 }
 
 .tv-faction-name {
-  font-family: var(--font-heading, serif);
+  font-family: var(--font-heading), sans-serif;
   font-size: 2.5rem;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -2065,7 +2040,7 @@ onUnmounted(() => {
 }
 
 .tv-faction-value {
-  font-family: var(--font-heading, serif);
+  font-family: var(--font-heading), sans-serif;
   font-size: 3.2rem;
   font-weight: 700;
   text-align: right;
@@ -2103,7 +2078,7 @@ onUnmounted(() => {
 }
 
 .rep-toast-faction {
-  font-family: var(--font-heading, serif);
+  font-family: var(--font-heading), sans-serif;
   font-size: 1rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.65);
@@ -2133,7 +2108,7 @@ onUnmounted(() => {
 }
 
 .rep-toast-value {
-  font-family: var(--font-heading, serif);
+  font-family: var(--font-heading), sans-serif;
   font-size: 2.5rem;
   font-weight: 800;
   line-height: 1;
@@ -2142,16 +2117,20 @@ onUnmounted(() => {
   text-align: right;
 }
 
+/* noinspection CssUnusedSymbol */
 .rep-toast-enter-active {
   transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+/* noinspection CssUnusedSymbol */
 .rep-toast-leave-active {
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
+/* noinspection CssUnusedSymbol */
 .rep-toast-enter-from {
   opacity: 0;
   transform: translateY(30px) scale(0.9);
 }
+/* noinspection CssUnusedSymbol */
 .rep-toast-leave-to {
   opacity: 0;
   transform: translateY(20px) scale(0.95);

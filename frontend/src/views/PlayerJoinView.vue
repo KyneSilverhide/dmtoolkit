@@ -371,7 +371,6 @@ async function joinSession() {
 }
 .theme-toggle-btn:hover { border-color: var(--color-gold-dark); color: var(--color-gold-bright); }
 
-.skull-ornament { font-size: 2rem; }
 
 .page-title {
   font-family: var(--font-title), sans-serif;
@@ -420,7 +419,6 @@ async function joinSession() {
   align-items: center;
   gap: 0.3rem;
 }
-.stat-icon { font-size: 0.9rem; }
 
 .form-input {
   background: var(--color-surface);

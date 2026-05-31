@@ -305,26 +305,7 @@ onUnmounted(() => {
   text-transform: uppercase;
   color: var(--color-gold-dark);
 }
-.mode-indicator {
-  font-family: var(--font-heading), sans-serif;
-  font-size: 0.72rem;
-  color: var(--color-text-dim);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.mode-badge {
-  font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-gold-bright);
-  background: var(--admin-gold-bg, var(--surface-gold-soft));
-  border: 1px solid var(--color-gold-dark);
-  border-radius: 20px;
-  padding: 0.15rem 0.5rem;
-}
-.mode-buttons, .inline-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+.inline-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; }
 .round-display {
   font-family: var(--font-heading), sans-serif;
   font-size: 1.1rem;
@@ -368,10 +349,6 @@ onUnmounted(() => {
   cursor: pointer;
 }
 .action-btn:hover:not(:disabled) { background: var(--gradient-accent-action-hover); }
-.action-btn.active {
-  background: var(--gradient-accent-action-hover);
-  border-color: var(--color-gold-bright);
-}
 .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .danger-btn { border-color: var(--admin-danger-border, var(--color-danger-border)); color: var(--admin-danger-text, var(--color-danger)); background: var(--gradient-danger-action); }
 .status-line {

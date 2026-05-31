@@ -65,7 +65,7 @@ function onEquipInput() {
 function parsePrice(raw) {
   if (!raw) return 0
   // "1 500 po" → 1500, "5 pa" → 0 (rounded down to 0 gp), "1 pc" → 0
-  const m = String(raw).replace(/\s/g, '').match(/^([\d,\.]+)\s*(po|pa|pc)?/)
+  const m = String(raw).replace(/\s/g, '').match(/^([\d,.]+)\s*(po|pa|pc)?/)
   if (!m) return 0
   const val = parseFloat(m[1].replace(',', '.'))
   if (m[2] === 'pa') return Math.ceil(val / 10)  // silver → gold (rounded)
@@ -407,7 +407,7 @@ onUnmounted(() => {
             class="form-input equip-search-input"
             placeholder="Chercher un objet D&D (ex: épée, potion, armure…)"
             @input="onEquipInput"
-            @keydown.escape="equipSearchOpen = false"
+            @keydown.esc="equipSearchOpen = false"
           />
           <span v-if="equipLoading" class="equip-loading">…</span>
         </div>
@@ -512,7 +512,7 @@ onUnmounted(() => {
           <strong>{{ respondingRequest.player_name }}</strong> souhaite acheter :
         </p>
         <ul class="dialog-items-list">
-          <li v-for="item in respondingRequest.items" :key="item.request_id" class="dialog-item-row">
+          <li v-for="item in respondingRequest?.items" :key="item.request_id" class="dialog-item-row">
             <span class="dialog-item-name">{{ item.item_name }}</span>
             <span class="dialog-item-qty">× {{ item.quantity }}</span>
             <span class="dialog-item-price">{{ item.total_price }} po</span>
@@ -954,7 +954,6 @@ onUnmounted(() => {
 .dialog-items-list {
   list-style: none;
   margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
@@ -1122,12 +1121,6 @@ onUnmounted(() => {
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--color-gold-bright);
-  line-height: 1.2;
-}
-.preset-card-name {
-  font-size: 0.68rem;
-  color: var(--color-text-dim);
-  font-style: italic;
   line-height: 1.2;
 }
 .preset-card-count {

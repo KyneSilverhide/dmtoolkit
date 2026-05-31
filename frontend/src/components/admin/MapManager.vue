@@ -461,7 +461,7 @@ function onPointerMove(event) {
   }
 }
 
-function onPointerUp(event) {
+function onPointerUp(_event) {
   if (draggingTokenId) {
     const tokenPos = mapTokens.value[draggingTokenId]
     if (tokenPos) emitTokenMove(draggingTokenId, tokenPos.nx, tokenPos.ny, tokenPos.name)

@@ -239,6 +239,7 @@ function resolvedText() {
 
 /* ── Text card color theming ────────────────────────────────── */
 .text-card {
+  --msg-color: var(--color-gold-dark);
   border-left: 3px solid var(--msg-color, var(--color-gold-dark));
 }
 

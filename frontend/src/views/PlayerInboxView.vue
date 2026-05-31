@@ -1,5 +1,5 @@
 ﻿<script setup>
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSocket, resetSocket } from '../socket.js'
 import { sessionStore } from '../stores/session.js'
@@ -1061,7 +1061,7 @@ onUnmounted(() => {
                 min="1"
                 max="9999"
                 @keyup.enter="sendMaxHpUpdate"
-                @keyup.escape="cancelMaxHpEdit"
+                @keyup.esc="cancelMaxHpEdit"
               />
               <button class="max-hp-confirm-btn" :disabled="maxHpSending" @click="sendMaxHpUpdate">
                 {{ maxHpSending ? '…' : '✓' }}
@@ -1140,10 +1140,10 @@ onUnmounted(() => {
             data-testid="concentration-toggle"
           >
             <span class="concentration-icon"><AppIcon icon="game-icons:bullseye" size="1.3rem" /></span>
-            <div class="concentration-text">
+            <span class="concentration-text">
               <span class="conc-label">Concentration</span>
               <span class="conc-state">{{ isConcentrating ? 'Active' : 'Inactive' }}</span>
-            </div>
+            </span>
             <span class="conc-toggle">{{ isConcentrating ? 'Arrêter' : 'Activer' }}</span>
           </button>
         </div>
@@ -1619,8 +1619,11 @@ onUnmounted(() => {
   min-width: 210px;
 }
 
+/* noinspection CssUnusedSymbol */
 .menu-drop-enter-active { animation: fadeUp 0.18s ease both; }
+/* noinspection CssUnusedSymbol */
 .menu-drop-leave-active { transition: opacity 0.12s ease, transform 0.12s ease; }
+/* noinspection CssUnusedSymbol */
 .menu-drop-leave-to { opacity: 0; transform: translateY(-6px); }
 
 .menu-item {
@@ -1640,8 +1643,11 @@ onUnmounted(() => {
   width: 100%;
 }
 .menu-item:hover { background: var(--surface-raised); color: var(--color-parchment); }
+/* noinspection CssUnusedSymbol */
 .menu-item.is-ready { color: var(--player-success-text); }
+/* noinspection CssUnusedSymbol */
 .menu-item.is-blocked { color: var(--player-danger-text); }
+/* noinspection CssUnusedSymbol */
 .menu-item.is-pending { color: var(--player-warning-text); }
 .menu-item-danger:hover { color: var(--player-danger-text); background: var(--player-danger-bg); }
 .menu-divider { height: 1px; background: var(--color-border); margin: 0.2rem 0.4rem; }
@@ -2011,15 +2017,6 @@ onUnmounted(() => {
 .cond-label { text-align: center; line-height: 1.2; white-space: nowrap; }
 
 /* ── Shop ────────────────────────────────────────────────────────────── */
-.merchant-header-panel { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.75rem 1rem; }
-.merchant-name {
-  font-family: var(--font-heading), sans-serif;
-  font-size: 1rem;
-  letter-spacing: 0.1em;
-  color: var(--color-gold-bright);
-  margin: 0;
-}
-.merchant-desc { font-family: var(--font-body), sans-serif; font-size: 0.8rem; color: var(--color-text-dim); margin: 0; }
 
 .shop-panel { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem; }
 .shop-item {
@@ -2354,9 +2351,13 @@ onUnmounted(() => {
 .concentration-modal .modal-title { color: var(--player-info-text, var(--color-info-bright)); }
 
 /* Purchase result modal */
+/* noinspection CssUnusedSymbol */
 .purchase-modal.accepted { border-color: var(--player-success-border, var(--color-success-border)); }
+/* noinspection CssUnusedSymbol */
 .purchase-modal.accepted .modal-title { color: var(--player-success-text, var(--color-success)); }
+/* noinspection CssUnusedSymbol */
 .purchase-modal.rejected { border-color: var(--player-danger-border, var(--color-danger-border)); }
+/* noinspection CssUnusedSymbol */
 .purchase-modal.rejected .modal-title { color: var(--player-danger-text, var(--color-danger)); }
 
 .purchase-modal-items {
@@ -2415,16 +2416,19 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
+/* noinspection CssUnusedSymbol */
 .attention-toast.tone-success {
   border-color: var(--player-success-border);
   background: linear-gradient(160deg, var(--player-panel-highlight-bg), var(--player-success-bg));
 }
 
+/* noinspection CssUnusedSymbol */
 .attention-toast.tone-warning {
   border-color: var(--player-warning-border);
   background: linear-gradient(160deg, var(--player-panel-highlight-bg), var(--player-warning-bg));
 }
 
+/* noinspection CssUnusedSymbol */
 .attention-toast.tone-danger {
   border-color: var(--player-danger-border);
   background: linear-gradient(160deg, var(--player-panel-highlight-bg), var(--player-danger-bg));
@@ -2444,12 +2448,16 @@ onUnmounted(() => {
   color: var(--color-text-dim);
 }
 
+/* noinspection CssUnusedSymbol */
 .toast-enter-active,
+/* noinspection CssUnusedSymbol */
 .toast-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
+/* noinspection CssUnusedSymbol */
 .toast-enter-from,
+/* noinspection CssUnusedSymbol */
 .toast-leave-to {
   opacity: 0;
   transform: translateY(8px);

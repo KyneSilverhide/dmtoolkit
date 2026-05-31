@@ -352,7 +352,10 @@ function avatarSrc(player) {
 }
 
 /* TransitionGroup animations (global car TransitionGroup génère des classes hors scope) */
+/* noinspection CssUnusedSymbol */
 :global(.player-card-enter-active) { animation: fadeUp 0.25s ease both; }
+/* noinspection CssUnusedSymbol */
 :global(.player-card-leave-active) { transition: opacity 0.2s ease, transform 0.2s ease; }
+/* noinspection CssUnusedSymbol */
 :global(.player-card-leave-to) { opacity: 0; transform: scale(0.95); }
 </style>

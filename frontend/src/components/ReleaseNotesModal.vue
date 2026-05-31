@@ -302,8 +302,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 .rn-btn-close:hover { opacity: 0.85; }
 
 /* Transition */
+/* noinspection CssUnusedSymbol */
 .rn-modal-enter-active { transition: opacity 0.2s ease; }
+/* noinspection CssUnusedSymbol */
 .rn-modal-leave-active { transition: opacity 0.15s ease; }
+/* noinspection CssUnusedSymbol */
 .rn-modal-enter-from, .rn-modal-leave-to { opacity: 0; }
 
 .rn-modal-enter-active .rn-card {

@@ -124,17 +124,17 @@ async function login() {
       <div class="home-buttons">
         <button class="home-btn mj-btn" @click="openModal" data-testid="dm-login-button">
           <span class="btn-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="2rem" /></span>
-          <div class="btn-text">
+          <span class="btn-text">
             <span class="btn-label">Je suis MJ</span>
             <span class="btn-sub">Accéder à l'administration</span>
-          </div>
+          </span>
         </button>
         <button class="home-btn player-btn" @click="router.push('/join')" data-testid="player-login-button">
           <span class="btn-icon"><AppIcon icon="game-icons:crossed-swords" size="2rem" /></span>
-          <div class="btn-text">
+          <span class="btn-text">
             <span class="btn-label">Je suis Joueur</span>
             <span class="btn-sub">Rejoindre une session</span>
-          </div>
+          </span>
         </button>
       </div>
     </main>
@@ -497,8 +497,11 @@ async function login() {
 }
 
 /* ── Transitions ────────────────────────────────────────────────────────── */
+/* noinspection CssUnusedSymbol */
 .modal-enter-active { transition: opacity 0.2s ease; }
+/* noinspection CssUnusedSymbol */
 .modal-leave-active { transition: opacity 0.15s ease; }
+/* noinspection CssUnusedSymbol */
 .modal-enter-from, .modal-leave-to { opacity: 0; }
 
 .modal-enter-active .modal-card {
@@ -515,7 +518,9 @@ async function login() {
   to { transform: translateY(10px) scale(0.97); opacity: 0; }
 }
 
+/* noinspection CssUnusedSymbol */
 .error-fade-enter-active, .error-fade-leave-active { transition: all 0.2s ease; }
+/* noinspection CssUnusedSymbol */
 .error-fade-enter-from, .error-fade-leave-to { opacity: 0; transform: translateY(-4px); }
 
 .theme-toggle-btn {

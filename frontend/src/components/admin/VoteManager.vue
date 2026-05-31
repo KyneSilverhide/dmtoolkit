@@ -129,14 +129,14 @@ onUnmounted(() => {
 
       <div class="form-group">
         <label class="form-label">Options</label>
-        <div v-for="(_, i) in options" :key="i" class="option-row">
+        <div v-for="i in options.length" :key="i - 1" class="option-row">
           <input
-            v-model="options[i]"
+            v-model="options[i - 1]"
             type="text"
             class="form-input"
-            :placeholder="`Option ${i + 1}`"
+            :placeholder="`Option ${i}`"
           />
-          <button v-if="options.length > 2" class="remove-option-btn" @click="removeOption(i)">✕</button>
+          <button v-if="options.length > 2" class="remove-option-btn" @click="removeOption(i - 1)">✕</button>
         </div>
         <button v-if="options.length < 5" class="add-option-btn" @click="addOption">+ Ajouter une option</button>
       </div>

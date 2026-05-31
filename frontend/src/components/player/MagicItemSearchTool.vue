@@ -29,14 +29,18 @@ const RARITY_COLORS = {
   'commun': 'var(--color-text-dim)',
   'peu commun': '#1eff00',
   'rare': '#0070dd',
-  'très rare': '#a335ee',
-  'légendaire': '#ff8000',
-  'artéfact': '#e6cc80',
+  'tres rare': '#a335ee',
+  'legendaire': '#ff8000',
+  'artefact': '#e6cc80',
+}
+
+function stripAccents(str) {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 
 function rarityColor(rarity) {
   if (!rarity) return 'var(--color-text-dim)'
-  const key = rarity.toLowerCase()
+  const key = stripAccents(rarity.toLowerCase())
   for (const [k, v] of Object.entries(RARITY_COLORS)) {
     if (key.includes(k)) return v
   }

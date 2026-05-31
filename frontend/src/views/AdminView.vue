@@ -564,12 +564,12 @@ onUnmounted(() => {
                 :data-testid="`tv-mode-btn-${mode.key}`"
                 @click="setTvMode(mode.key)"
               >
-                <div class="tv-mode-top">
+                <span class="tv-mode-top">
                   <span class="tv-mode-label">{{ mode.label }}</span>
                   <span class="tv-ready-badge" :class="mode.ready ? 'ready' : 'not-ready'">
                     {{ mode.ready ? 'prêt' : 'non prêt' }}
                   </span>
-                </div>
+                </span>
                 <span class="tv-mode-hint">{{ mode.hint }}</span>
               </button>
             </div>
@@ -1118,9 +1118,13 @@ onUnmounted(() => {
   font-size: 0.65rem;
   color: var(--color-gold-bright);
 }
+/* noinspection CssUnusedSymbol */
 .locked-tooltip-enter-active { transition: opacity 0.15s ease, transform 0.15s ease; }
+/* noinspection CssUnusedSymbol */
 .locked-tooltip-leave-active { transition: opacity 0.1s ease; }
+/* noinspection CssUnusedSymbol */
 .locked-tooltip-enter-from { opacity: 0; transform: translateY(-50%) translateX(-4px); }
+/* noinspection CssUnusedSymbol */
 .locked-tooltip-leave-to { opacity: 0; }
 
 /* â”€â”€ Player roll toasts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -1151,7 +1155,9 @@ onUnmounted(() => {
 }
 .player-roll-toast:hover { border-color: var(--color-gold-bright); box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
 .player-roll-toast.hidden { border-color: var(--admin-info-border); }
+/* noinspection CssUnusedSymbol */
 .roll-toast-enter-active, .roll-toast-leave-active { transition: opacity 0.3s, transform 0.3s; }
+/* noinspection CssUnusedSymbol */
 .roll-toast-enter-from, .roll-toast-leave-to { opacity: 0; transform: translateX(30px); }
 .prt-icon { font-size: 1.4rem; flex-shrink: 0; }
 .prt-body { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }

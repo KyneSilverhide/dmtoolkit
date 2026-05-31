@@ -11,6 +11,7 @@
   --color-crimson: #7a1010;
   --color-text: #e8dfc0;
   --color-text-dim: #9a8766;
+  --color-text-muted: #9a8766;
   --color-border: #3a2c10;
   --color-shadow: rgba(0, 0, 0, 0.7);
   --color-surface: #1e1508;
@@ -73,6 +74,9 @@
   --school-necromancie: #cc99ff;
   --school-transmutation: #f0e68c;
   --school-default: var(--color-gold);
+  --school-color: var(--school-default);
+  --rarity-color: var(--color-text-dim);
+  --msg-color: var(--color-gold-dark);
   --font-title: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-heading: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-body: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
@@ -93,6 +97,7 @@
   --color-crimson: #8d3d37;
   --color-text: #31281d;
   --color-text-dim: #665847;
+  --color-text-muted: #665847;
   --color-border: #cdbfa9;
   --color-shadow: rgba(65, 49, 24, 0.16);
   --color-surface: #fffdf9;
