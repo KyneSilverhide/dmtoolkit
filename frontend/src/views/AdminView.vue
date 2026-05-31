@@ -15,6 +15,7 @@ import ImageManager from '../components/admin/ImageManager.vue'
 import AudioManager from '../components/admin/AudioManager.vue'
 import MerchantManager from '../components/admin/MerchantManager.vue'
 import PuzzleManager from '../components/admin/PuzzleManager.vue'
+import ReputationManager from '../components/admin/ReputationManager.vue'
 import SearchTool from '../components/admin/SearchTool.vue'
 import MapManager from '../components/admin/MapManager.vue'
 import GoldDividerTool from '../components/admin/GoldDividerTool.vue'
@@ -30,7 +31,7 @@ import {
   ADMIN_STATE, TV_MODE_CHANGED, VOTE_STARTED, VOTE_CLOSED,
   MAP_STATE, MERCHANT_ITEMS_UPDATED, DOOM_CLOCK_STARTED, DOOM_CLOCK_STOPPED,
   TENSION_SCALE_UPDATED, TENSION_SCALE_ENDED, PLAYER_ROLL_RESULT, DEMO_RESET,
-  ADMIN_JOIN, SET_TV_MODE,
+  ADMIN_JOIN, SET_TV_MODE, FACTIONS_UPDATED,
 } from '../socket-events.js'
 
 const router = useRouter()
@@ -74,6 +75,7 @@ const tabComponents = {
   map: MapManager,
   merchants: MerchantManager,
   puzzle: PuzzleManager,
+  reputation: ReputationManager,
   tresor: GoldDividerTool,
   search: SearchTool,
   generator: GeneratorTool,
@@ -87,6 +89,7 @@ const hasActiveDoom = ref(false)
 const hasActiveTension = ref(false)
 const hasActiveMap = ref(false)
 const activePuzzle = ref(null) // { puzzleImageId, puzzleSeed, puzzleClicks }
+const hasActiveReputation = ref(false)
 
 // Badge d'activitÃ© par onglet (point de couleur dans la nav)
 const tabActivity = computed(() => ({
@@ -96,6 +99,7 @@ const tabActivity = computed(() => ({
   tension: hasActiveDoom.value || hasActiveTension.value,
   map: hasActiveMap.value,
   puzzle: !!activePuzzle.value,
+  reputation: hasActiveReputation.value,
 }))
 
 // Keeps the socket instance used in onMounted so onUnmounted can clean up
@@ -149,9 +153,10 @@ const tabs = [
   { key: 'images',    label: 'Images',         icon: 'lucide:image' },
   { key: 'audio',     label: 'Audio',          icon: 'lucide:music-2' },
   { key: 'map',       label: 'Carte',          icon: 'lucide:map' },
-  { key: 'merchants', label: 'Marchands',      icon: 'game-icons:shop' },
-  { key: 'puzzle',    label: 'Puzzles',        icon: 'lucide:puzzle' },
-  { key: 'tresor',    label: 'Trésor',         icon: 'game-icons:coins' },
+  { key: 'merchants',   label: 'Marchands',     icon: 'game-icons:shop' },
+  { key: 'puzzle',      label: 'Puzzles',       icon: 'lucide:puzzle' },
+  { key: 'reputation',  label: 'Réputations',   icon: 'lucide:shield' },
+  { key: 'tresor',      label: 'Trésor',        icon: 'game-icons:coins' },
   { key: 'search',    label: 'Recherche',      icon: 'lucide:search' },
   { key: 'generator', label: 'Générateur',     icon: 'lucide:wand-2' },
 ]
@@ -164,7 +169,7 @@ const navGroups = [
   },
   {
     label: 'Scène',
-    items: ['tension', 'vote', 'images', 'audio', 'map', 'merchants', 'puzzle'],
+    items: ['tension', 'vote', 'images', 'audio', 'map', 'merchants', 'puzzle', 'reputation'],
   },
   {
     label: 'Outils',
@@ -184,6 +189,7 @@ const tvModes = computed(() => ([
   { key: 'merchant', label: 'Marchand', hint: 'Affiche le marchand actif', ready: hasActiveMerchant.value },
   { key: 'doom', label: 'Doom Clock', hint: 'Depuis l onglet Rythme', ready: hasActiveDoom.value },
   { key: 'tension', label: 'Echelle tension', hint: 'Depuis l onglet Rythme', ready: hasActiveTension.value },
+  { key: 'reputation', label: 'Réputations', hint: 'Depuis l onglet Réputations', ready: hasActiveReputation.value },
 ]))
 
 const activeTvModeLabel = computed(() => {
@@ -227,6 +233,7 @@ function handleAdminState(data) {
   hasActiveTension.value = !!data.tensionScale
   hasActiveMap.value = !!(data.mapState?.mapUrl)
   activePuzzle.value = data.activePuzzle || null
+  hasActiveReputation.value = Array.isArray(data.factions) && data.factions.length > 0
   if (data.isDemo !== undefined && authStore.admin) {
     authStore.admin = { ...authStore.admin, is_demo: data.isDemo }
   }
@@ -356,6 +363,10 @@ onMounted(() => {
   _socket.on(DEMO_RESET, () => {
     window.location.reload()
   })
+
+  _socket.on(FACTIONS_UPDATED, (factions) => {
+    hasActiveReputation.value = Array.isArray(factions) && factions.length > 0
+  })
 })
 
 watch(
@@ -391,6 +402,7 @@ onUnmounted(() => {
     _socket.off(MAP_STATE)
     _socket.off(PLAYER_ROLL_RESULT)
     _socket.off(DEMO_RESET)
+    _socket.off(FACTIONS_UPDATED)
     _socket = null
   }
 })

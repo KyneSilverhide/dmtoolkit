@@ -28,6 +28,8 @@ const TENSION_DIRECTIONS = new Set(['ascending', 'descending'])
 const MAP_SCALE_MIN = 0.1
 const MAP_SCALE_MAX = 10
 const MAP_FOG_STROKES_MAX = 500
+const MAX_FACTION_VALUE = 1000
+const MIN_FACTION_VALUE = -1000
 
 /**
  * Sanitizes a player name: trims whitespace and collapses multiple spaces.
@@ -45,6 +47,16 @@ function sanitizePlayerName(name) {
  */
 function normalizePlayerName(name) {
   return sanitizePlayerName(name).toLowerCase()
+}
+
+/**
+ * Fetches all factions for a session ordered by creation date.
+ * @param {number} sessionId
+ * @returns {Promise<Array>}
+ */
+async function getFactionsBySession(sessionId) {
+  const r = await pool.query('SELECT * FROM factions WHERE session_id = $1 ORDER BY created_at ASC', [sessionId])
+  return r.rows
 }
 
 /**
@@ -537,6 +549,7 @@ function setupSocket(io) {
             puzzleClicks: puzzleClicks.get(sessionId) || [],
           } : null,
           isDemo: !!socket.admin.is_demo,
+          factions: await getFactionsBySession(session.id),
         })
       } catch (err) { console.error(err) }
     })
@@ -587,6 +600,7 @@ function setupSocket(io) {
             puzzleClicks: puzzleClicks.get(session.id) || [],
           } : null,
           isDemo: !!session.admin_is_demo,
+          factions: await getFactionsBySession(session.id),
         })
       } catch (err) { console.error(err) }
     })
@@ -1807,6 +1821,101 @@ function setupSocket(io) {
         )
         const leaveEvent = { eventType: 'leave', description: `${player.player_name} a été expulsé de la session`, playerName: player.player_name, createdAt: new Date() }
         io.to(`admin:${player.session_id}`).emit('session-event', leaveEvent)
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: create faction ────────────────────────────────────────────────
+    socket.on('create-faction', async ({ sessionId, name, minValue, maxValue, initialValue }) => {
+      if (!socket.admin) return
+      try {
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        if (!sessionCheck.rows[0]) return
+        const safeName = String(name || '').trim().slice(0, MAX_TITLE_LENGTH)
+        if (!safeName) return
+        const safeMin = Math.max(MIN_FACTION_VALUE, Math.min(-1, parseInt(minValue) || -5))
+        const safeMax = Math.min(MAX_FACTION_VALUE, Math.max(1, parseInt(maxValue) || 5))
+        const safeInit = Math.max(safeMin, Math.min(safeMax, parseInt(initialValue) || 0))
+        const r = await pool.query(
+          'INSERT INTO factions (session_id, name, min_value, max_value, current_value) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+          [sessionId, safeName, safeMin, safeMax, safeInit]
+        )
+        io.to(`admin:${sessionId}`).emit('faction-created', { faction: r.rows[0] })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: update faction reputation value ──────────────────────────────
+    socket.on('update-faction-value', async ({ sessionId, factionId, delta }) => {
+      if (!socket.admin) return
+      try {
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        if (!sessionCheck.rows[0]) return
+        const safeDelta = Math.max(-100, Math.min(100, parseInt(delta) || 0))
+        if (safeDelta === 0) return
+        const r = await pool.query(
+          `WITH prev AS (SELECT current_value AS old_val FROM factions WHERE id = $2 AND session_id = $3)
+           UPDATE factions
+           SET current_value = GREATEST(min_value, LEAST(max_value, current_value + $1))
+           WHERE id = $2 AND session_id = $3
+           RETURNING *, (SELECT old_val FROM prev) AS old_value`,
+          [safeDelta, factionId, sessionId]
+        )
+        if (!r.rows[0]) return
+        const faction = r.rows[0]
+        const oldValue = parseInt(faction.old_value)
+        const newValue = faction.current_value
+        if (oldValue === newValue) return
+        const factions = await getFactionsBySession(sessionId)
+        io.to(`admin:${sessionId}`).emit('factions-updated', factions)
+        io.to(`tv:${sessionId}`).emit('factions-updated', factions)
+        const sessionRow = await pool.query('SELECT tv_mode FROM sessions WHERE id = $1', [sessionId])
+        if (sessionRow.rows[0]?.tv_mode !== 'reputation') {
+          io.to(`tv:${sessionId}`).emit('reputation-toast', {
+            factionName: faction.name,
+            oldValue,
+            newValue,
+            delta: newValue - oldValue,
+            minValue: faction.min_value,
+            maxValue: faction.max_value,
+          })
+        }
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: delete faction ────────────────────────────────────────────────
+    socket.on('delete-faction', async ({ sessionId, factionId }) => {
+      if (!socket.admin) return
+      try {
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        if (!sessionCheck.rows[0]) return
+        await pool.query('DELETE FROM factions WHERE id = $1 AND session_id = $2', [factionId, sessionId])
+        io.to(`admin:${sessionId}`).emit('faction-deleted', { factionId })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: project faction reputations on TV ────────────────────────────
+    socket.on('show-reputation', async ({ sessionId }) => {
+      if (!socket.admin) return
+      try {
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        if (!sessionCheck.rows[0]) return
+        await pool.query('UPDATE sessions SET tv_mode = $1 WHERE id = $2', ['reputation', sessionId])
+        const factions = await getFactionsBySession(sessionId)
+        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'reputation' })
+        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'reputation' })
+        io.to(`tv:${sessionId}`).emit('factions-updated', factions)
+        io.to(`admin:${sessionId}`).emit('factions-updated', factions)
       } catch (err) { console.error(err) }
     })
   })

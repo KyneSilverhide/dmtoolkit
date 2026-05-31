@@ -477,4 +477,22 @@ router.get('/:id/purchase-requests', authenticateToken, async (req, res) => {
   }
 })
 
+router.get('/:id/factions', authenticateToken, async (req, res) => {
+  try {
+    const sessionCheck = await pool.query(
+      'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+      [req.params.id, req.admin.id]
+    )
+    if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
+    const result = await pool.query(
+      'SELECT * FROM factions WHERE session_id = $1 ORDER BY created_at ASC',
+      [req.params.id]
+    )
+    res.json(result.rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
 module.exports = router

@@ -31,7 +31,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 ├── frontend/          # Vue 3 + Vite + Pinia (port 5173 en dev)
 │   ├── src/
 │   │   ├── views/     # HomeView, AdminView, TvView, PlayerInboxView, PlayerJoinView
-│   │   ├── components/admin/  # Composants admin (MapManager, MerchantManager, GeneratorTool, AudioManager, PuzzleManager, etc.)
+│   │   ├── components/admin/  # Composants admin (MapManager, MerchantManager, GeneratorTool, AudioManager, PuzzleManager, ReputationManager, etc.)
 │   │   ├── components/player/ # Composants joueur (SpellSearchTool, MagicItemSearchTool, PlayerDiceTool, etc.)
 │   │   ├── components/AppIcon.vue  # Composant icônes dynamiques (remplace les emojis statiques)
 │   │   ├── components/ReleaseNotesBell.vue  # Cloche de notification (prop role="admin"|"player")
@@ -62,6 +62,10 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │                      # sessions: DELETE /api/sessions/:id/journal (efface tous les session_events)
 │   │                      # (+ GET /api/sessions/:id/players pour sync Obsidian)
 ├── obsidian-plugin/   # Plugin Obsidian (TypeScript) — sync Initiative Tracker ↔ DM Toolkit
+├── e2e/               # Tests Playwright (TypeScript) — specs dans e2e/specs/, page objects dans e2e/page-objects/
+│   ├── fixtures/      # Worker-level isolation : adminToken, _reset (nettoyage DB entre tests)
+│   ├── helpers/       # createSession, joinAsPlayer, loginAsAdmin
+│   └── page-objects/  # AdminPage, TvPage, PlayerPage
 ├── docker-compose.yml     # Postgres 16 + backend + frontend
 └── docker-compose.prod.yml
 ```
@@ -76,6 +80,9 @@ cd frontend && npm test && npm run build
 
 # Backend — vérification syntaxique Node.js (pas de tests automatisés)
 cd backend && node --check src/index.js src/socket.js src/routes/spells.js src/routes/sessions.js src/routes/equipment.js src/routes/generate.js src/routes/release-notes.js src/demo.js src/migrations.js
+
+# E2E — tests Playwright (nécessite stack Docker démarrée)
+cd e2e && npx playwright test
 
 # Dev local (sans Docker)
 cd backend && npm run dev   # node --watch src/index.js
@@ -118,8 +125,9 @@ cd frontend && npm run dev  # vite dev server
 
 - **Ne jamais modifier le schéma directement.** Toujours ajouter des `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...` à la fin du fichier `backend/src/migrations.js`. Les migrations sont exécutées au démarrage via `runMigrations()`.
 - La DB est PostgreSQL 16. Les requêtes utilisent le driver `pg` (pool de connexions dans `db.js`).
-- Tables principales : `admins`, `sessions`, `players`, `messages`, `dice_results`, `votes`, `vote_responses`, `session_events`, `merchants`, `merchant_items`, `purchase_requests`, `session_images`.
-- Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/vote/image/map/merchant/puzzle), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`, `combat_round` (entier), `timer_label` (VARCHAR 200), `timer_end_at` (TIMESTAMP), `lobby_bg_url` (VARCHAR 500, image de fond du lobby TV à 15 % d'opacité), `current_puzzle_image_id` (INTEGER), `current_puzzle_url` (VARCHAR 500), `current_puzzle_seed` (VARCHAR 100).
+- Tables principales : `admins`, `sessions`, `players`, `messages`, `dice_results`, `votes`, `vote_responses`, `session_events`, `merchants`, `merchant_items`, `purchase_requests`, `session_images`, `factions`.
+- Table `factions` : `id`, `session_id` (FK sessions ON DELETE CASCADE), `name` (VARCHAR 200), `min_value` (INTEGER, défaut -5), `max_value` (INTEGER, défaut 5), `current_value` (INTEGER, défaut 0), `created_at`. Chaque session peut avoir N factions. Route REST : `GET /api/sessions/:id/factions`.
+- Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/vote/image/map/merchant/puzzle/reputation), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`, `combat_round` (entier), `timer_label` (VARCHAR 200), `timer_end_at` (TIMESTAMP), `lobby_bg_url` (VARCHAR 500, image de fond du lobby TV à 15 % d'opacité), `current_puzzle_image_id` (INTEGER), `current_puzzle_url` (VARCHAR 500), `current_puzzle_seed` (VARCHAR 100).
 - Colonnes clés de `session_images` : `url`, `original_name` (nom d'affichage, renommable), `type` (`image` / `map` / `audio`), `audio_category` (VARCHAR 50 : catégorie libre assignée par l'IA (GPT-4o-mini via GitHub Models) au moment de l'upload ; défaut `Général` si GITHUB_TOKEN absent ou si l'IA échoue ; l'admin peut saisir/modifier librement depuis l'AudioManager), `thumbnail_url` (VARCHAR 500 : URL du WebP 400px généré par `sharp` après upload pour les types `image` et `map` — null pour les fichiers audio ou si la génération échoue ; les galeries admin utilisent cette URL avec fallback sur `url`).
 - Colonnes clés de `players` : `ac`, `max_hp`, `current_hp`, `initiative`, `conditions` (JSON array), `is_concentrating`, `dnd_class`, `avatar_url`, `socket_id`.
 - Les joueurs sont supprimés de la DB à la déconnexion socket (`disconnect`/`leave-session`).
@@ -201,6 +209,10 @@ cd frontend && npm run dev  # vite dev server
 | `obsidian-volume-audio` | Règle le volume d'une piste depuis Obsidian — `{ sessionId, trackId, volume: 0..1 }` — relayé via `audio-volume-requested` |
 | `show-puzzle` | Afficher un puzzle HTML sur le TV et chez les joueurs (`{ sessionId, imageId }`) — génère un seed aléatoire |
 | `close-puzzle` | Fermer le puzzle actif (`{ sessionId }`) — retour en mode lobby |
+| `create-faction` | Créer une faction (`{ sessionId, name, minValue, maxValue, initialValue }`) |
+| `update-faction-value` | Modifier la réputation d'une faction (`{ sessionId, factionId, delta }`) |
+| `delete-faction` | Supprimer une faction (`{ sessionId, factionId }`) |
+| `show-reputation` | Projeter les réputations sur la TV (`{ sessionId }`) — passe tv_mode à 'reputation' |
 
 #### Joueurs (puzzle)
 | Événement | Description |
@@ -276,6 +288,10 @@ cd frontend && npm run dev  # vite dev server
 | `puzzle-started` | TV + session + admin | Puzzle affiché — `{ puzzleImageId, puzzleSeed, puzzleClicks: [] }` |
 | `puzzle-closed` | TV + session + admin | Puzzle fermé |
 | `puzzle-cell-clicked` | TV + session + admin (sauf émetteur) | Clic relayé — `{ path: number[] }` |
+| `faction-created` | admin | Faction créée — `{ faction }` |
+| `faction-deleted` | admin | Faction supprimée — `{ factionId }` |
+| `factions-updated` | admin + TV | Liste complète des factions mise à jour — `[faction, ...]` |
+| `reputation-toast` | TV | Changement de réputation quand tv_mode ≠ 'reputation' — `{ factionName, oldValue, newValue, delta }` |
 | `demo-reset` | session + admin + TV | Réinitialisation du compte démo — déclenche `window.location.reload()` côté client |
 | `error` | émetteur | Erreur générique |
 | `tv-control-error` | admin | Erreur de contrôle TV |

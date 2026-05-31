@@ -38,6 +38,41 @@ const isLightTheme = computed(() => theme.value === 'light')
 // ── Combat round ────────────────────────────────────────────────────────────
 const combatRound = ref(0)
 
+// ── Faction reputations ──────────────────────────────────────────────────────
+const factions = ref([])
+const reputationToasts = ref([])
+let reputationToastId = 0
+
+function factionBarWidth(faction) {
+  const range = faction.max_value - faction.min_value
+  if (range === 0) return 50
+  return Math.round(((faction.current_value - faction.min_value) / range) * 100)
+}
+
+function factionBarColor(faction) {
+  const normalized = factionBarWidth(faction) / 100
+  const hue = Math.round(normalized * 120)
+  return `hsl(${hue}, 65%, 45%)`
+}
+
+function formatFactionValue(v) {
+  return v >= 0 ? `+${v}` : `${v}`
+}
+
+function toastBarWidth(toast, value) {
+  const range = toast.maxValue - toast.minValue
+  if (range === 0) return 50
+  return Math.round(((value - toast.minValue) / range) * 100)
+}
+
+function toastBarColor(toast) {
+  const range = toast.maxValue - toast.minValue
+  if (range === 0) return 'hsl(60, 65%, 50%)'
+  const normalized = (toast.newValue - toast.minValue) / range
+  const hue = Math.round(normalized * 120)
+  return `hsl(${hue}, 65%, 50%)`
+}
+
 // ── Free timer ──────────────────────────────────────────────────────────────
 const activeTimer = ref(null)
 
@@ -362,6 +397,7 @@ onMounted(() => {
     combatRound.value = data.combatRound || 0
     activeTimer.value = data.timer || null
     isDemo.value = !!data.isDemo
+    factions.value = Array.isArray(data.factions) ? data.factions : []
     data.players.forEach(pl => { previousHp.value[pl.id] = pl.current_hp })
     if (data.mapState) applyMapState(data.mapState)
     if (data.activePuzzle) {
@@ -505,6 +541,32 @@ onMounted(() => {
 
   socket.on('lobby-bg-updated', ({ url }) => {
     lobbyBgUrl.value = url || null
+  })
+
+  socket.on('factions-updated', (data) => {
+    factions.value = Array.isArray(data) ? data : []
+  })
+
+  socket.on('reputation-toast', ({ factionName, oldValue, newValue, delta, minValue, maxValue }) => {
+    if (tvMode.value === 'reputation') return
+    const id = ++reputationToastId
+    const range = maxValue - minValue || 1
+    const oldWidth = Math.round(((oldValue - minValue) / range) * 100)
+    const newWidth = Math.round(((newValue - minValue) / range) * 100)
+    reputationToasts.value = [...reputationToasts.value, {
+      id, factionName, oldValue, newValue, delta, minValue, maxValue,
+      barWidth: oldWidth,
+    }]
+    // Trigger CSS transition to new width on next frame
+    nextTick(() => {
+      const idx = reputationToasts.value.findIndex(t => t.id === id)
+      if (idx !== -1) {
+        reputationToasts.value[idx] = { ...reputationToasts.value[idx], barWidth: newWidth }
+      }
+    })
+    setTimeout(() => {
+      reputationToasts.value = reputationToasts.value.filter(t => t.id !== id)
+    }, 6000)
   })
 
   // ── Map events ─────────────────────────────────────────────────────────
@@ -836,8 +898,55 @@ onUnmounted(() => {
           @load="onPuzzleIframeLoad"
         />
       </div>
+
+      <!-- Reputation mode -->
+      <div v-else-if="tvMode === 'reputation'" class="reputation-display" data-testid="tv-mode-reputation">
+        <header class="tv-header">
+          <h1 class="session-title">Réputations</h1>
+        </header>
+        <div class="tv-faction-list">
+          <div v-for="faction in factions" :key="faction.id" class="tv-faction-card">
+            <span class="tv-faction-name">{{ faction.name }}</span>
+            <div class="tv-faction-bar-track">
+              <div
+                class="tv-faction-bar-fill"
+                :style="{
+                  width: factionBarWidth(faction) + '%',
+                  background: factionBarColor(faction),
+                }"
+              />
+            </div>
+            <span class="tv-faction-value" :style="{ color: factionBarColor(faction) }">
+              {{ formatFactionValue(faction.current_value) }}
+            </span>
+          </div>
+          <p v-if="!factions.length" class="tv-no-factions">Aucune faction enregistrée.</p>
+        </div>
+      </div>
       </div>
       </Transition>
+
+      <!-- Reputation change toasts (shown in all modes except reputation) -->
+      <TransitionGroup name="rep-toast" tag="div" class="reputation-toast-area">
+        <div v-for="toast in reputationToasts" :key="toast.id" class="rep-toast">
+          <div class="rep-toast-faction">{{ toast.factionName }}</div>
+          <div class="rep-toast-bar-row">
+            <div class="rep-toast-bar-track">
+              <div
+                class="rep-toast-bar-fill"
+                :style="{
+                  width: toast.barWidth + '%',
+                  background: toastBarColor(toast),
+                  boxShadow: `0 0 12px ${toastBarColor(toast)}`,
+                }"
+              />
+            </div>
+            <span class="rep-toast-value" :style="{ color: toastBarColor(toast) }">
+              {{ formatFactionValue(toast.newValue) }}
+            </span>
+          </div>
+        </div>
+      </TransitionGroup>
     </template>
   </div>
 </template>
@@ -1875,5 +1984,151 @@ onUnmounted(() => {
   text-transform: uppercase;
   backdrop-filter: blur(4px);
   border-top: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+/* ── Reputation TV mode ──────────────────────────────────────────────── */
+.reputation-display {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 4rem;
+  gap: 1.5rem;
+  overflow-y: auto;
+}
+
+.tv-faction-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.tv-faction-card {
+  display: grid;
+  grid-template-columns: 220px 1fr 80px;
+  align-items: center;
+  gap: 1.5rem;
+  background: var(--tv-panel-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+}
+
+.tv-faction-name {
+  font-family: var(--font-heading, serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tv-faction-bar-track {
+  height: 18px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.tv-faction-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.9s ease;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.tv-faction-value {
+  font-family: var(--font-heading, serif);
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: right;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 12px currentColor;
+}
+
+.tv-no-factions {
+  text-align: center;
+  color: var(--color-text-dim);
+  font-size: 1rem;
+  margin-top: 4rem;
+}
+
+/* ── Reputation change toasts (TV) ──────────────────────────────────── */
+.reputation-toast-area {
+  position: fixed;
+  bottom: 3rem;
+  right: 3rem;
+  z-index: 9500;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  pointer-events: none;
+}
+
+.rep-toast {
+  background: rgba(8, 6, 2, 0.93);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 18px;
+  padding: 1.1rem 1.75rem 1.25rem;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 48px rgba(0,0,0,0.7);
+  min-width: 360px;
+}
+
+.rep-toast-faction {
+  font-family: var(--font-heading, serif);
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.rep-toast-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.rep-toast-bar-track {
+  flex: 1;
+  height: 14px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.rep-toast-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 1.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.rep-toast-value {
+  font-family: var(--font-heading, serif);
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  min-width: 3.5rem;
+  text-align: right;
+}
+
+.rep-toast-enter-active {
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.rep-toast-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.rep-toast-enter-from {
+  opacity: 0;
+  transform: translateY(30px) scale(0.9);
+}
+.rep-toast-leave-to {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
 }
 </style>

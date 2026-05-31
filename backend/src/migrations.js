@@ -223,6 +223,17 @@ ALTER TABLE session_images ADD COLUMN IF NOT EXISTS thumbnail_url VARCHAR(500);
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_puzzle_image_id INTEGER;
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_puzzle_url VARCHAR(500);
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_puzzle_seed VARCHAR(100);
+
+-- Faction reputation system
+CREATE TABLE IF NOT EXISTS factions (
+  id SERIAL PRIMARY KEY,
+  session_id INTEGER REFERENCES sessions(id) ON DELETE CASCADE,
+  name VARCHAR(200) NOT NULL,
+  min_value INTEGER NOT NULL DEFAULT -5,
+  max_value INTEGER NOT NULL DEFAULT 5,
+  current_value INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW()
+);
 `
 
 async function runMigrations() {

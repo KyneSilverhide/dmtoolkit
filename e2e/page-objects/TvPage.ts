@@ -59,4 +59,12 @@ export class TvPage {
   getMerchantDisplay(): Locator {
     return this.page.getByTestId('tv-mode-merchant')
   }
+
+  getReputationDisplay(): Locator {
+    return this.page.getByTestId('tv-mode-reputation')
+  }
+
+  getReputationToast(): Locator {
+    return this.page.locator('.rep-toast').first()
+  }
 }

@@ -1,6 +1,14 @@
 {
   "notes": [
     {
+      "version": "1.0.46",
+      "date": "2026-05-31",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Gestionnaire de réputations de factions : créez des factions avec une échelle personnalisée, ajustez leur réputation en cours de partie et projetez les barres colorées animées sur la TV" },
+        { "type": "feature", "role": "admin", "text": "Toast de réputation : quand la réputation d'une faction change et que la TV n'affiche pas le mode réputations, une notification visuelle apparaît automatiquement sur l'écran TV" }
+      ]
+    },
+    {
       "version": "1.0.45",
       "date": "2026-05-30",
       "changes": [

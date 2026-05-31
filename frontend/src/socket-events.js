@@ -132,6 +132,18 @@ export const RESPOND_BATCH_PURCHASE = 'respond-batch-purchase'
 /** Admin kicks a player from the session: { playerId } */
 export const KICK_PLAYER = 'kick-player'
 
+/** Admin creates a faction: { sessionId, name, minValue, maxValue, initialValue } */
+export const CREATE_FACTION = 'create-faction'
+
+/** Admin updates a faction's reputation value: { sessionId, factionId, delta } */
+export const UPDATE_FACTION_VALUE = 'update-faction-value'
+
+/** Admin deletes a faction: { sessionId, factionId } */
+export const DELETE_FACTION = 'delete-faction'
+
+/** Admin projects faction reputations on TV: { sessionId } */
+export const SHOW_REPUTATION = 'show-reputation'
+
 // ── Outgoing events: Server → Client ────────────────────────────────────────
 
 /** Sent to player on successful join: { session, player, activeMerchant? } */
@@ -343,6 +355,20 @@ export const PUZZLE_CLOSED = 'puzzle-closed'
 /** Sent to TV + admin + other players when a puzzle cell is clicked: { path } */
 export const PUZZLE_CELL_CLICKED = 'puzzle-cell-clicked'
 
+// ── Faction reputation events ────────────────────────────────────────────────
+
+/** Sent to admin when a faction is created: { faction } */
+export const FACTION_CREATED = 'faction-created'
+
+/** Sent to admin when a faction is deleted: { factionId } */
+export const FACTION_DELETED = 'faction-deleted'
+
+/** Sent to admin + TV with full faction list: [faction, ...] */
+export const FACTIONS_UPDATED = 'factions-updated'
+
+/** Sent to TV when a reputation changes while not in reputation mode: { factionName, oldValue, newValue, delta } */
+export const REPUTATION_TOAST = 'reputation-toast'
+
 /** Generic error event: { message } */
 export const ERROR = 'error'
 
@@ -457,6 +483,15 @@ export default {
   AUDIO_STOP_REQUESTED,
   AUDIO_LOOP_REQUESTED,
   AUDIO_VOLUME_REQUESTED,
+  // Factions
+  CREATE_FACTION,
+  UPDATE_FACTION_VALUE,
+  DELETE_FACTION,
+  SHOW_REPUTATION,
+  FACTION_CREATED,
+  FACTION_DELETED,
+  FACTIONS_UPDATED,
+  REPUTATION_TOAST,
   ERROR,
   TV_CONTROL_ERROR,
   SEND_ERROR,
