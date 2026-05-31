@@ -1,6 +1,15 @@
 {
   "notes": [
     {
+      "version": "1.0.65",
+      "date": "2026-05-31",
+      "changes": [
+        { "type": "improvement", "role": "admin", "text": "Gestionnaire d'images : affichage en grille uniforme (les thumbnails ne s'empilent plus de façon irrégulière), noms d'images agrandis, barre de recherche pour filtrer par nom" },
+        { "type": "improvement", "role": "admin", "text": "Gestionnaire audio : barre de recherche pour filtrer les pistes par nom à travers toutes les catégories" },
+        { "type": "feature", "role": "admin", "text": "Messagerie : lors de l'envoi d'une image, choisissez directement depuis la galerie de la session (vignettes cliquables) ou uploadez depuis votre PC" }
+      ]
+    },
+    {
       "version": "1.0.64",
       "date": "2026-05-31",
       "changes": [
