@@ -1,6 +1,7 @@
 ﻿<script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
+import HelpTip from '../HelpTip.vue'
 import { authStore } from '@/stores/auth.js'
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
@@ -236,13 +237,16 @@ onUnmounted(() => {
           <button class="delete-btn" @click="deleteImage(img, $event)" title="Supprimer">✕</button>
         </div>
         <p class="img-name">{{ img.original_name || img.url.split('/').pop() }}</p>
-        <input
-          v-model="img.tv_label"
-          class="tv-label-input"
-          placeholder="Label TV…"
-          @blur="saveTvLabel(img)"
-          @keydown.enter.prevent="saveTvLabel(img)"
-        />
+        <div class="tv-label-row">
+          <input
+            v-model="img.tv_label"
+            class="tv-label-input"
+            placeholder="Label TV…"
+            @blur="saveTvLabel(img)"
+            @keydown.enter.prevent="saveTvLabel(img)"
+          />
+          <HelpTip id="image.tv-label" />
+        </div>
         <button class="show-btn" @click.stop="selectedImageUrl = img.url; showImageOnTv(img.url)" title="Afficher sur la TV">
           <AppIcon icon="lucide:monitor" size="0.85em" /> Afficher TV
         </button>
@@ -254,6 +258,7 @@ onUnmounted(() => {
         >
           <AppIcon icon="lucide:image-play" size="0.85em" /> Fond lobby
         </button>
+        <HelpTip id="image.lobby-bg" />
         </div>
       </div>
     </template>
@@ -406,6 +411,8 @@ onUnmounted(() => {
   line-height: 1.3;
 }
 
+.tv-label-row { display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0.2rem; }
+.tv-label-row .tv-label-input { flex: 1; margin-bottom: 0; }
 .tv-label-input {
   width: 100%;
   box-sizing: border-box;

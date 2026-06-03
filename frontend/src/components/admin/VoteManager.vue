@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
+import HelpTip from '../HelpTip.vue'
 
 const question = ref('')
 const options = ref(['', ''])
@@ -144,6 +145,7 @@ onUnmounted(() => {
       <label class="checkbox-label">
         <input v-model="isAnonymous" type="checkbox" />
         <span>Vote anonyme</span>
+        <HelpTip id="vote.anonymous" />
       </label>
 
       <button

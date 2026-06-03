@@ -2,6 +2,7 @@
 import { ref, watch, onUnmounted } from 'vue'
 import { authStore } from '@/stores/auth.js'
 import AppIcon from '../AppIcon.vue'
+import HelpTip from '../HelpTip.vue'
 
 import { BACKEND_URL } from '@/config.js'
 
@@ -213,7 +214,7 @@ onUnmounted(() => {
         <div class="spell-header">
           <div class="spell-title-row">
             <h3 class="spell-name">{{ spell.name }}</h3>
-            <span v-if="parseEcole(spell.attributes?.ecole).ritual" class="ritual-badge">Rituel</span>
+            <span v-if="parseEcole(spell.attributes?.ecole).ritual" class="ritual-badge">Rituel <HelpTip id="search.ritual" /></span>
           </div>
           <div class="spell-meta-row">
             <span
@@ -254,7 +255,7 @@ onUnmounted(() => {
         <div class="spell-header">
           <div class="spell-title-row">
             <h3 class="spell-name">{{ item.name }}</h3>
-            <span v-if="item.requires_attunement" class="ritual-badge">Harmonisation</span>
+            <span v-if="item.requires_attunement" class="ritual-badge">Harmonisation <HelpTip id="search.harmonisation" /></span>
           </div>
           <div class="spell-meta-row">
             <span class="item-type-badge">{{ item.item_type }}</span>

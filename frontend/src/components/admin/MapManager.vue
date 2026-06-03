@@ -4,6 +4,7 @@ import { authStore } from '@/stores/auth.js'
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
+import HelpTip from '../HelpTip.vue'
 
 import { BACKEND_URL } from '@/config.js'
 const MAX_BRUSH_RADIUS = 100
@@ -836,7 +837,7 @@ watch(fogEnabled, () => render())
 
       <!-- Brouillard de guerre -->
       <div class="control-section">
-        <h4 class="subsection-title"><AppIcon icon="lucide:cloud" size="0.85em" /> Brouillard de guerre</h4>
+        <h4 class="subsection-title"><AppIcon icon="lucide:cloud" size="0.85em" /> Brouillard de guerre <HelpTip id="map.fog" /></h4>
         <div class="inline-actions">
           <button class="action-btn" :class="{ active: fogEnabled }" @click="toggleFog">
             <AppIcon :icon="fogEnabled ? 'lucide:eye-off' : 'lucide:eye'" size="0.85em" />
@@ -850,7 +851,7 @@ watch(fogEnabled, () => render())
           <div class="brush-controls">
             <p class="hint-text"><AppIcon icon="lucide:brush" size="0.85em" /> Clic gauche pour révéler la carte</p>
             <label class="brush-label">
-              Rayon : {{ brushRadius }}px
+              Rayon : {{ brushRadius }}px <HelpTip id="map.fog-brush" />
               <input v-model.number="brushRadius" type="range" :min="MIN_BRUSH_RADIUS" :max="MAX_BRUSH_RADIUS" class="brush-slider" />
             </label>
           </div>
@@ -859,7 +860,7 @@ watch(fogEnabled, () => render())
 
       <!-- Jetons de joueurs -->
       <div class="control-section">
-        <h4 class="subsection-title"><AppIcon icon="game-icons:wizard-staff" size="0.85em" /> Jetons de joueurs</h4>
+        <h4 class="subsection-title"><AppIcon icon="game-icons:wizard-staff" size="0.85em" /> Jetons de joueurs <HelpTip id="map.token-place" /></h4>
         <p v-if="sessionStore.players.length === 0" class="hint-text">Aucun joueur connecté.</p>
         <div v-else class="token-tray">
           <div
@@ -920,7 +921,7 @@ watch(fogEnabled, () => render())
 
       <!-- Viewport Controls -->
       <div class="control-section">
-        <h4 class="subsection-title"><AppIcon icon="lucide:maximize-2" size="0.85em" /> Viewport TV</h4>
+        <h4 class="subsection-title"><AppIcon icon="lucide:maximize-2" size="0.85em" /> Viewport TV <HelpTip id="map.viewport" /></h4>
         <p class="viewport-info">
           x: {{ viewport.x.toFixed(0) }}, y: {{ viewport.y.toFixed(0) }}, zoom: {{ viewport.scale.toFixed(2) }}×
         </p>

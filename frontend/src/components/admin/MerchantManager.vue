@@ -1,5 +1,6 @@
 ﻿<script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import HelpTip from '../HelpTip.vue'
 import { authStore } from '@/stores/auth.js'
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
@@ -363,6 +364,7 @@ onUnmounted(() => {
           <AppIcon icon="game-icons:shop" size="0.85em" />
           {{ presetPanelOpen ? 'Masquer les modèles' : '✦ Choisir un modèle de marchand' }}
         </button>
+        <HelpTip id="merchant.preset" />
       </div>
       <div v-if="presetPanelOpen" class="preset-panel">
         <p class="preset-panel-hint">Cliquez sur un type pour pré-remplir le formulaire. Vous pourrez tout modifier ensuite.</p>
@@ -437,7 +439,7 @@ onUnmounted(() => {
           <span class="item-col-header col-name">Nom</span>
           <span class="item-col-header col-desc">Description</span>
           <span class="item-col-header col-price">🪙 Prix (po)</span>
-          <span class="item-col-header col-stock">📦 Stock</span>
+          <span class="item-col-header col-stock">📦 Stock <HelpTip id="merchant.stock" /></span>
           <span class="item-col-header col-cat">Catégorie</span>
         </div>
         <span class="item-col-spacer" />
@@ -521,6 +523,7 @@ onUnmounted(() => {
         <div class="dialog-total">Total : <strong>{{ respondingRequest.total_price }} po</strong></div>
 
         <div class="respond-actions">
+          <HelpTip id="merchant.counter-offer" />
           <button class="respond-action-btn" :class="{ active: respondAction === 'accept' }" @click="respondAction = 'accept'">
             <AppIcon icon="lucide:check-circle" size="0.85em" color="var(--color-success)" /> Accepter
           </button>

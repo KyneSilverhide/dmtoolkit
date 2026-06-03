@@ -4,6 +4,7 @@ import { sessionStore } from '@/stores/session.js'
 import { authStore } from '@/stores/auth.js'
 import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
+import HelpTip from '../HelpTip.vue'
 
 import { BACKEND_URL } from '@/config.js'
 
@@ -254,14 +255,17 @@ onUnmounted(() => {
           <button class="clear-btn" @click="clearConfirm = true" :title="'Effacer le journal'">
             <AppIcon icon="lucide:trash-2" size="0.85em" />
           </button>
+          <HelpTip id="journal.clear" />
           <button class="reset-btn" @click="resetConfirm = true" :title="'Réinitialiser la session'">
             <AppIcon icon="lucide:rotate-ccw" size="0.85em" />
             <span>Réinitialiser</span>
           </button>
+          <HelpTip id="journal.reset" />
           <button class="summary-btn" @click="generateSummary" :disabled="loadingSummary">
             <AppIcon v-if="!loadingSummary" icon="lucide:file-text" size="0.85em" />
             {{ loadingSummary ? 'Génération…' : 'Générer le résumé' }}
           </button>
+          <HelpTip id="journal.summary" />
         </template>
       </div>
 

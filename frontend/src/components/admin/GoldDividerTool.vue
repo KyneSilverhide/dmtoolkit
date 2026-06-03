@@ -4,6 +4,7 @@ import { sessionStore } from '@/stores/session.js'
 import { authStore } from '@/stores/auth.js'
 import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
+import HelpTip from '../HelpTip.vue'
 
 const MAX_COIN_AMOUNT = 99999
 
@@ -89,7 +90,7 @@ function reset() {
 
     <template v-else>
       <div class="section">
-        <p class="section-label"><AppIcon icon="game-icons:coins" size="0.85rem" color="var(--color-gold-bright)" /> Trésor à diviser</p>
+        <p class="section-label"><AppIcon icon="game-icons:coins" size="0.85rem" color="var(--color-gold-bright)" /> Trésor à diviser <HelpTip id="gold.coins" /></p>
         <div class="coin-inputs">
           <div
             v-for="coin in COINS"
@@ -127,7 +128,7 @@ function reset() {
         </div>
 
         <div class="remainders">
-          <p class="section-label" style="margin-top: 0.5rem"><AppIcon icon="game-icons:coins" size="0.85rem" /> Restes (non divisibles)</p>
+          <p class="section-label" style="margin-top: 0.5rem"><AppIcon icon="game-icons:coins" size="0.85rem" /> Restes (non divisibles) <HelpTip id="gold.remainder" /></p>
           <div class="remainder-chips">
             <template v-for="coin in COINS" :key="coin.key">
               <span

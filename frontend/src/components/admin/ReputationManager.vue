@@ -4,6 +4,7 @@ import { sessionStore } from '@/stores/session.js'
 import { authStore } from '@/stores/auth.js'
 import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
+import HelpTip from '../HelpTip.vue'
 import { BACKEND_URL } from '@/config.js'
 
 const factions = ref([])
@@ -144,6 +145,7 @@ onUnmounted(() => {
         <AppIcon icon="lucide:tv" size="1em" />
         Projeter sur TV
       </button>
+      <HelpTip id="reputation.project" />
     </div>
 
     <!-- Formulaire de création -->
@@ -162,7 +164,7 @@ onUnmounted(() => {
         </label>
       </div>
       <div class="rm-form-row rm-form-row--three">
-        <label class="rm-label">Min
+        <label class="rm-label">Min <HelpTip id="reputation.range" />
           <input v-model.number="newMin" class="form-input form-input--sm" type="number" min="-1000" max="-1" />
         </label>
         <label class="rm-label">Valeur initiale

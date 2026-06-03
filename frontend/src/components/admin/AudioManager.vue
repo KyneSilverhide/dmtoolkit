@@ -1,6 +1,7 @@
 ﻿<script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
+import HelpTip from '../HelpTip.vue'
 import { authStore } from '@/stores/auth.js'
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
@@ -477,13 +478,13 @@ onUnmounted(() => {
           class="reclassify-btn"
           :class="{ loading: reclassifying }"
           :disabled="reclassifying"
-          title="Reclassifier tous les fichiers via l'IA"
           @click="reclassifyAll"
         >
           <AppIcon :icon="reclassifying ? 'lucide:loader' : 'lucide:sparkles'" size="0.75em" />
           {{ reclassifying ? `Analyse… ${reclassifyProgress}%` : 'Reclassifier' }}
           <span class="ai-badge">IA</span>
         </button>
+        <HelpTip id="audio.reclassify" />
       </div>
       <div v-if="reclassifying" class="reclassify-progress">
         <div class="reclassify-fill" :style="{ width: reclassifyProgress + '%' }" />
@@ -620,6 +621,7 @@ onUnmounted(() => {
                   :title="loops[track.id] ? 'Désactiver boucle' : 'Activer boucle'"
                   @click="toggleLoop(track)"
                 ><AppIcon icon="lucide:repeat" size="0.75em" /></button>
+                <HelpTip id="audio.loop" />
                 <button class="icon-btn" title="Renommer" @click="startRename(track)">
                   <AppIcon icon="lucide:pencil" size="0.7em" />
                 </button>
@@ -630,14 +632,16 @@ onUnmounted(() => {
             </div>
 
             <!-- Catégorie en bas de la tile -->
-            <input
-              class="cat-input"
-              :value="track.audio_category || 'Général'"
-              list="audio-cats"
-              title="Catégorie (tapez ou choisissez)"
-              @change="changeCategory(track, $event.target.value.trim())"
-              @keydown.enter="$event.target.blur()"
-            />
+            <div class="cat-row">
+              <input
+                class="cat-input"
+                :value="track.audio_category || 'Général'"
+                list="audio-cats"
+                @change="changeCategory(track, $event.target.value.trim())"
+                @keydown.enter="$event.target.blur()"
+              />
+              <HelpTip id="audio.category" />
+            </div>
           </div>
         </div>
 
@@ -817,6 +821,8 @@ onUnmounted(() => {
   border-radius: 8px;
 }
 
+.cat-row { display: flex; align-items: center; gap: 0.25rem; }
+.cat-row .cat-input { flex: 1; width: auto; }
 .cat-input {
   width: 100%;
   background: var(--color-surface);
