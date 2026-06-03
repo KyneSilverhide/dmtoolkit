@@ -18,6 +18,7 @@ const selectedImageUrl = ref(null)
 const uploading = ref(false)
 const uploadError = ref('')
 const uploadProgress = ref(0)
+const dragOver = ref(false)
 
 const isMapActive = ref(false)
 const fogEnabled = ref(false)
@@ -64,9 +65,8 @@ async function loadImages() {
   } catch (err) { console.error(err) }
 }
 
-function handleFileUpload(event) {
-  const files = Array.from(event.target.files || [])
-  if (files.length === 0) return
+function uploadFiles(files) {
+  if (!files.length || !sessionStore.activeSession) return
   uploading.value = true
   uploadError.value = ''
   uploadProgress.value = 0
@@ -87,17 +87,38 @@ function handleFileUpload(event) {
     }
     uploading.value = false
     uploadProgress.value = 0
-    event.target.value = ''
   })
   xhr.addEventListener('error', () => {
     uploadError.value = 'Erreur de connexion.'
     uploading.value = false
     uploadProgress.value = 0
-    event.target.value = ''
   })
   xhr.open('POST', `${BACKEND_URL}/api/uploads`)
   xhr.setRequestHeader('Authorization', `Bearer ${authStore.token}`)
   xhr.send(formData)
+}
+
+function handleFileUpload(event) {
+  uploadFiles(Array.from(event.target.files || []))
+  event.target.value = ''
+}
+
+function onDragOver(e) {
+  if (uploading.value || !sessionStore.activeSession) return
+  e.preventDefault()
+  dragOver.value = true
+}
+
+function onDragLeave(e) {
+  if (!e.currentTarget.contains(e.relatedTarget)) dragOver.value = false
+}
+
+function onDrop(e) {
+  e.preventDefault()
+  dragOver.value = false
+  if (uploading.value || !sessionStore.activeSession) return
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
+  if (files.length) uploadFiles(files)
 }
 
 function imageFullUrl(url) {
@@ -759,7 +780,18 @@ watch(fogEnabled, () => render())
 </script>
 
 <template>
-  <div class="map-manager">
+  <div
+    class="map-manager"
+    @dragover="onDragOver"
+    @dragleave="onDragLeave"
+    @drop="onDrop"
+    :class="{ 'drag-active': dragOver }"
+  >
+    <div v-if="dragOver" class="drop-overlay">
+      <AppIcon icon="lucide:map-plus" size="2rem" color="var(--color-gold-bright)" />
+      <span>Déposer les cartes ici</span>
+    </div>
+
     <h3 class="section-title"><AppIcon icon="lucide:map" size="0.9em" /> Gestionnaire de Carte</h3>
 
     <!-- Upload -->
@@ -928,7 +960,29 @@ watch(fogEnabled, () => render())
 </template>
 
 <style scoped>
-.map-manager { display: flex; flex-direction: column; gap: 1rem; }
+.map-manager { position: relative; display: flex; flex-direction: column; gap: 1rem; }
+
+.drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: rgba(0, 0, 0, 0.65);
+  border: 2px dashed var(--color-gold-dark);
+  border-radius: 10px;
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.drag-active > *:not(.drop-overlay) { opacity: 0.35; pointer-events: none; }
 
 .section-title {
   font-family: var(--font-heading), sans-serif;

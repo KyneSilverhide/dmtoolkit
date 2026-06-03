@@ -12,6 +12,7 @@ const tracks = ref([])
 const uploading = ref(false)
 const uploadProgress = ref(0)
 const uploadError = ref('')
+const dragOver = ref(false)
 
 // playback state per track id
 const audioObjects = new Map()   // id -> HTMLAudioElement
@@ -184,9 +185,15 @@ function formatTime(s) {
   return `${m}:${sec}`
 }
 
-function handleFileUpload(event) {
-  const files = Array.from(event.target.files || [])
-  if (!files.length) return
+const AUDIO_MIME_TYPES = new Set(['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/flac', 'audio/mp4', 'audio/aac', 'audio/webm', 'audio/x-m4a'])
+const AUDIO_EXTS = /\.(mp3|wav|ogg|flac|m4a|aac|webm)$/i
+
+function isAudioFile(f) {
+  return AUDIO_MIME_TYPES.has(f.type) || AUDIO_EXTS.test(f.name)
+}
+
+function uploadFiles(files) {
+  if (!files.length || !sessionStore.activeSession) return
   uploading.value = true
   uploadError.value = ''
   uploadProgress.value = 0
@@ -203,23 +210,43 @@ function handleFileUpload(event) {
     if (xhr.status >= 200 && xhr.status < 300) {
       await loadTracks()
     } else {
-      try {
-        uploadError.value = JSON.parse(xhr.responseText).error || 'Erreur upload.'
-      } catch { uploadError.value = 'Erreur upload.' }
+      try { uploadError.value = JSON.parse(xhr.responseText).error || 'Erreur upload.' }
+      catch { uploadError.value = 'Erreur upload.' }
     }
     uploading.value = false
     uploadProgress.value = 0
-    event.target.value = ''
   })
   xhr.addEventListener('error', () => {
     uploadError.value = 'Erreur de connexion.'
     uploading.value = false
     uploadProgress.value = 0
-    event.target.value = ''
   })
   xhr.open('POST', `${BACKEND_URL}/api/uploads/audio`)
   xhr.setRequestHeader('Authorization', `Bearer ${authStore.token}`)
   xhr.send(formData)
+}
+
+function handleFileUpload(event) {
+  uploadFiles(Array.from(event.target.files || []))
+  event.target.value = ''
+}
+
+function onDragOver(e) {
+  if (uploading.value || !sessionStore.activeSession) return
+  e.preventDefault()
+  dragOver.value = true
+}
+
+function onDragLeave(e) {
+  if (!e.currentTarget.contains(e.relatedTarget)) dragOver.value = false
+}
+
+function onDrop(e) {
+  e.preventDefault()
+  dragOver.value = false
+  if (uploading.value || !sessionStore.activeSession) return
+  const files = Array.from(e.dataTransfer.files).filter(isAudioFile)
+  if (files.length) uploadFiles(files)
 }
 
 async function deleteAll() {
@@ -413,7 +440,17 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="audio-manager">
+  <div
+    class="audio-manager"
+    @dragover="onDragOver"
+    @dragleave="onDragLeave"
+    @drop="onDrop"
+    :class="{ 'drag-active': dragOver }"
+  >
+    <div v-if="dragOver" class="drop-overlay">
+      <AppIcon icon="lucide:music-4" size="2rem" color="var(--color-gold-bright)" />
+      <span>Déposer les fichiers audio ici</span>
+    </div>
 
     <!-- Barre supérieure : titre + lecture en cours + stop all -->
     <div class="top-bar">
@@ -612,6 +649,7 @@ onUnmounted(() => {
 
 <style scoped>
 .audio-manager {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -744,6 +782,28 @@ onUnmounted(() => {
   color: var(--color-danger);
   width: 100%;
 }
+
+.drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: rgba(0, 0, 0, 0.65);
+  border: 2px dashed var(--color-gold-dark);
+  border-radius: 10px;
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.drag-active > *:not(.drop-overlay) { opacity: 0.35; pointer-events: none; }
 
 /* ── Upload card ─────────────────────────────────────── */
 .upload-card {

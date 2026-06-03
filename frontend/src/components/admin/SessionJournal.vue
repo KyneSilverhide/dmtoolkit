@@ -12,7 +12,33 @@ const summary = ref('')
 const loadingSummary = ref(false)
 const clearConfirm = ref(false)
 const clearingJournal = ref(false)
+const resetConfirm = ref(false)
+const resettingSession = ref(false)
 const hasSession = computed(() => !!sessionStore.activeSession)
+
+const sessionStart = ref(new Date())
+const currentTime = ref(new Date())
+let ticker = null
+
+const totalDamage = computed(() =>
+  events.value.filter(e => (e.eventType || e.event_type) === 'damage')
+    .reduce((sum, e) => sum + Math.abs(e.value || 0), 0)
+)
+
+const totalHeals = computed(() =>
+  events.value.filter(e => (e.eventType || e.event_type) === 'heal')
+    .reduce((sum, e) => sum + (e.value || 0), 0)
+)
+
+const sessionDuration = computed(() => {
+  const ms = currentTime.value - sessionStart.value
+  const totalSec = Math.floor(ms / 1000)
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = totalSec % 60
+  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`
+  return `${m}m ${String(s).padStart(2, '0')}s`
+})
 
 const MERGE_WINDOW_MS = 1000
 const MERGEABLE_TYPES = new Set(['damage', 'heal'])
@@ -128,6 +154,26 @@ async function clearJournal() {
   }
 }
 
+async function resetSession() {
+  if (!hasSession.value) return
+  resettingSession.value = true
+  try {
+    await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/journal`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    events.value = []
+    summary.value = ''
+    sessionStart.value = new Date()
+    currentTime.value = new Date()
+  } catch {
+    // ignore
+  } finally {
+    resettingSession.value = false
+    resetConfirm.value = false
+  }
+}
+
 async function generateSummary() {
   if (!hasSession.value) return
   loadingSummary.value = true
@@ -151,11 +197,13 @@ async function generateSummary() {
 onMounted(() => {
   const socket = getSocket(authStore.token)
   socket.on('session-event', handleSessionEvent)
+  ticker = setInterval(() => { currentTime.value = new Date() }, 1000)
 })
 
 onUnmounted(() => {
   const socket = getSocket()
   socket.off('session-event', handleSessionEvent)
+  clearInterval(ticker)
 })
 </script>
 
@@ -168,21 +216,53 @@ onUnmounted(() => {
     </div>
 
     <template v-else>
-      <div class="journal-actions">
-        <div v-if="clearConfirm" class="clear-confirm">
-          <span class="clear-confirm-text">Effacer tout le journal ?</span>
-          <button class="confirm-btn" @click="clearJournal" :disabled="clearingJournal">
-            {{ clearingJournal ? '…' : 'Confirmer' }}
-          </button>
-          <button class="cancel-btn" @click="clearConfirm = false" :disabled="clearingJournal">Annuler</button>
+      <div class="session-stats">
+        <div class="stat-item">
+          <AppIcon icon="lucide:clock" size="0.8em" color="var(--color-text-dim)" />
+          <span class="stat-value">{{ sessionDuration }}</span>
         </div>
-        <button v-else class="clear-btn" @click="clearConfirm = true" :title="'Effacer le journal'">
-          <AppIcon icon="lucide:trash-2" size="0.85em" />
-        </button>
-        <button class="summary-btn" @click="generateSummary" :disabled="loadingSummary">
-          <AppIcon v-if="!loadingSummary" icon="lucide:file-text" size="0.85em" />
-          {{ loadingSummary ? 'Génération…' : 'Générer le résumé' }}
-        </button>
+        <div class="stat-item">
+          <AppIcon icon="game-icons:sword-wound" size="0.8em" color="var(--color-danger)" />
+          <span class="stat-value">{{ totalDamage }}</span>
+        </div>
+        <div class="stat-item">
+          <AppIcon icon="game-icons:health-increase" size="0.8em" color="var(--color-success)" />
+          <span class="stat-value">{{ totalHeals }}</span>
+        </div>
+      </div>
+
+      <div class="journal-actions">
+        <template v-if="resetConfirm">
+          <div class="clear-confirm">
+            <span class="clear-confirm-text reset-text">Réinitialiser la session ?</span>
+            <button class="confirm-btn reset-confirm-btn" @click="resetSession" :disabled="resettingSession">
+              {{ resettingSession ? '…' : 'Confirmer' }}
+            </button>
+            <button class="cancel-btn" @click="resetConfirm = false" :disabled="resettingSession">Annuler</button>
+          </div>
+        </template>
+        <template v-else-if="clearConfirm">
+          <div class="clear-confirm">
+            <span class="clear-confirm-text">Effacer tout le journal ?</span>
+            <button class="confirm-btn" @click="clearJournal" :disabled="clearingJournal">
+              {{ clearingJournal ? '…' : 'Confirmer' }}
+            </button>
+            <button class="cancel-btn" @click="clearConfirm = false" :disabled="clearingJournal">Annuler</button>
+          </div>
+        </template>
+        <template v-else>
+          <button class="clear-btn" @click="clearConfirm = true" :title="'Effacer le journal'">
+            <AppIcon icon="lucide:trash-2" size="0.85em" />
+          </button>
+          <button class="reset-btn" @click="resetConfirm = true" :title="'Réinitialiser la session'">
+            <AppIcon icon="lucide:rotate-ccw" size="0.85em" />
+            <span>Réinitialiser</span>
+          </button>
+          <button class="summary-btn" @click="generateSummary" :disabled="loadingSummary">
+            <AppIcon v-if="!loadingSummary" icon="lucide:file-text" size="0.85em" />
+            {{ loadingSummary ? 'Génération…' : 'Générer le résumé' }}
+          </button>
+        </template>
       </div>
 
       <div v-if="summary" class="summary-box">
@@ -248,6 +328,55 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
 }
+
+.session-stats {
+  display: flex;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--gradient-panel-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--color-text-dim);
+}
+
+.stat-value {
+  color: var(--color-parchment);
+}
+
+.reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.7rem;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.reset-btn:hover { border-color: var(--color-warning); color: var(--color-warning); }
+
+.reset-text { color: var(--color-warning); }
+
+.reset-confirm-btn {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+.reset-confirm-btn:hover:not(:disabled) { background: rgba(180, 120, 30, 0.15); }
 
 .clear-btn {
   display: flex;

@@ -31,7 +31,8 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 ├── frontend/          # Vue 3 + Vite + Pinia (port 5173 en dev)
 │   ├── src/
 │   │   ├── views/     # HomeView, AdminView, TvView, PlayerInboxView, PlayerJoinView
-│   │   ├── components/admin/  # Composants admin (MapManager, MerchantManager, GeneratorTool, AudioManager, PuzzleManager, ReputationManager, etc.)
+│   │   ├── components/admin/  # Composants admin (MapManager, MerchantManager, GeneratorTool, AudioManager, PuzzleManager, ReputationManager, SessionJournal, etc.)
+│   │   │                      # SessionJournal : journal des événements en temps réel, stats de session (durée, dégâts totaux, soins totaux), boutons "Effacer le journal" et "Réinitialiser session"
 │   │   ├── components/player/ # Composants joueur (SpellSearchTool, MagicItemSearchTool, PlayerDiceTool, etc.)
 │   │   ├── components/AppIcon.vue  # Composant icônes dynamiques (remplace les emojis statiques)
 │   │   ├── components/ReleaseNotesBell.vue  # Cloche de notification (prop role="admin"|"player")

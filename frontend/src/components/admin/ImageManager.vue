@@ -14,6 +14,7 @@ const uploading = ref(false)
 const uploadError = ref('')
 const uploadProgress = ref(0)   // 0–100
 const searchQuery = ref('')
+const dragOver = ref(false)
 
 const filteredImages = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
@@ -33,10 +34,8 @@ async function loadImages() {
   }
 }
 
-function handleFileUpload(event) {
-  const files = Array.from(event.target.files || [])
-  if (files.length === 0) return
-
+function uploadFiles(files) {
+  if (!files.length || !sessionStore.activeSession) return
   uploading.value = true
   uploadError.value = ''
   uploadProgress.value = 0
@@ -47,39 +46,50 @@ function handleFileUpload(event) {
   formData.append('type', 'image')
 
   const xhr = new XMLHttpRequest()
-
   xhr.upload.addEventListener('progress', (e) => {
-    if (e.lengthComputable) {
-      uploadProgress.value = Math.round((e.loaded / e.total) * 100)
-    }
+    if (e.lengthComputable) uploadProgress.value = Math.round((e.loaded / e.total) * 100)
   })
-
   xhr.addEventListener('load', async () => {
     if (xhr.status >= 200 && xhr.status < 300) {
       await loadImages()
     } else {
-      try {
-        const data = JSON.parse(xhr.responseText)
-        uploadError.value = data.error || 'Erreur lors du téléversement.'
-      } catch {
-        uploadError.value = 'Erreur lors du téléversement.'
-      }
+      try { uploadError.value = JSON.parse(xhr.responseText).error || 'Erreur lors du téléversement.' }
+      catch { uploadError.value = 'Erreur lors du téléversement.' }
     }
     uploading.value = false
     uploadProgress.value = 0
-    event.target.value = ''
   })
-
   xhr.addEventListener('error', () => {
     uploadError.value = 'Erreur de connexion.'
     uploading.value = false
     uploadProgress.value = 0
-    event.target.value = ''
   })
-
   xhr.open('POST', `${BACKEND_URL}/api/uploads`)
   xhr.setRequestHeader('Authorization', `Bearer ${authStore.token}`)
   xhr.send(formData)
+}
+
+function handleFileUpload(event) {
+  uploadFiles(Array.from(event.target.files || []))
+  event.target.value = ''
+}
+
+function onDragOver(e) {
+  if (uploading.value || !sessionStore.activeSession) return
+  e.preventDefault()
+  dragOver.value = true
+}
+
+function onDragLeave(e) {
+  if (!e.currentTarget.contains(e.relatedTarget)) dragOver.value = false
+}
+
+function onDrop(e) {
+  e.preventDefault()
+  dragOver.value = false
+  if (uploading.value || !sessionStore.activeSession) return
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
+  if (files.length) uploadFiles(files)
 }
 
 function showImageOnTv(imageUrl) {
@@ -151,7 +161,18 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="image-manager">
+  <div
+    class="image-manager"
+    @dragover="onDragOver"
+    @dragleave="onDragLeave"
+    @drop="onDrop"
+    :class="{ 'drag-active': dragOver }"
+  >
+    <div v-if="dragOver" class="drop-overlay">
+      <AppIcon icon="lucide:image-plus" size="2rem" color="var(--color-gold-bright)" />
+      <span>Déposer les images ici</span>
+    </div>
+
     <h3 class="section-title"><AppIcon icon="lucide:image" size="0.9em" /> Gestionnaire d'Images</h3>
 
     <div class="upload-card">
@@ -241,10 +262,33 @@ onUnmounted(() => {
 
 <style scoped>
 .image-manager {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
+
+.drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: rgba(0, 0, 0, 0.65);
+  border: 2px dashed var(--color-gold-dark);
+  border-radius: 10px;
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.drag-active > *:not(.drop-overlay) { opacity: 0.35; pointer-events: none; }
 
 .section-title {
   font-family: var(--font-heading), sans-serif;
