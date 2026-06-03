@@ -206,7 +206,7 @@ export const TENSION_SCALE_UPDATED = 'tension-scale-updated'
 /** Sent to TV + admin when the tension scale ends */
 export const TENSION_SCALE_ENDED = 'tension-scale-ended'
 
-/** Sent to TV + admin when the time scale is updated: { title, totalHours, slotCount, restSlots, elapsedSlots, slotHours } */
+/** Sent to TV + admin when the time scale is updated: { title, totalHours, slotCount, restSlots, elapsedSlots, slotHours, restTaken } */
 export const TIME_SCALE_UPDATED = 'time-scale-updated'
 
 /** Sent to TV + admin when the time scale ends */
