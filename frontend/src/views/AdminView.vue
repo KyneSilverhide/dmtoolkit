@@ -30,7 +30,8 @@ import {
   CONDITIONS_UPDATED, CONCENTRATION_UPDATED, INITIATIVE_UPDATED,
   ADMIN_STATE, TV_MODE_CHANGED, VOTE_STARTED, VOTE_CLOSED,
   MAP_STATE, MERCHANT_ITEMS_UPDATED, DOOM_CLOCK_STARTED, DOOM_CLOCK_STOPPED,
-  TENSION_SCALE_UPDATED, TENSION_SCALE_ENDED, PLAYER_ROLL_RESULT, DEMO_RESET,
+  TENSION_SCALE_UPDATED, TENSION_SCALE_ENDED, TIME_SCALE_UPDATED, TIME_SCALE_ENDED,
+  PLAYER_ROLL_RESULT, DEMO_RESET,
   ADMIN_JOIN, SET_TV_MODE, FACTIONS_UPDATED,
 } from '../socket-events.js'
 
@@ -87,6 +88,7 @@ const hasActiveImage = ref(false)
 const hasActiveMerchant = ref(false)
 const hasActiveDoom = ref(false)
 const hasActiveTension = ref(false)
+const hasActiveTimeScale = ref(false)
 const hasActiveMap = ref(false)
 const activePuzzle = ref(null) // { puzzleImageId, puzzleSeed, puzzleClicks }
 const hasActiveReputation = ref(false)
@@ -96,7 +98,7 @@ const tabActivity = computed(() => ({
   vote: hasActiveVote.value,
   images: hasActiveImage.value,
   merchants: hasActiveMerchant.value,
-  tension: hasActiveDoom.value || hasActiveTension.value,
+  tension: hasActiveDoom.value || hasActiveTension.value || hasActiveTimeScale.value,
   map: hasActiveMap.value,
   puzzle: !!activePuzzle.value,
   reputation: hasActiveReputation.value,
@@ -189,6 +191,7 @@ const tvModes = computed(() => ([
   { key: 'merchant', label: 'Marchand', hint: 'Affiche le marchand actif', ready: hasActiveMerchant.value },
   { key: 'doom', label: 'Doom Clock', hint: 'Depuis l onglet Rythme', ready: hasActiveDoom.value },
   { key: 'tension', label: 'Echelle tension', hint: 'Depuis l onglet Rythme', ready: hasActiveTension.value },
+  { key: 'timescale', label: 'Echelle de temps', hint: 'Depuis l onglet Rythme', ready: hasActiveTimeScale.value },
   { key: 'reputation', label: 'Réputations', hint: 'Depuis l onglet Réputations', ready: hasActiveReputation.value },
 ]))
 
@@ -231,6 +234,7 @@ function handleAdminState(data) {
   hasActiveMerchant.value = !!data.activeMerchant
   hasActiveDoom.value = !!data.doomClock
   hasActiveTension.value = !!data.tensionScale
+  hasActiveTimeScale.value = !!data.timeScale
   hasActiveMap.value = !!(data.mapState?.mapUrl)
   activePuzzle.value = data.activePuzzle || null
   hasActiveReputation.value = Array.isArray(data.factions) && data.factions.length > 0
@@ -350,6 +354,12 @@ onMounted(() => {
     if (tvMode.value === 'tension') tvMode.value = 'lobby'
   })
 
+  _socket.on(TIME_SCALE_UPDATED, () => { hasActiveTimeScale.value = true })
+  _socket.on(TIME_SCALE_ENDED, () => {
+    hasActiveTimeScale.value = false
+    if (tvMode.value === 'timescale') tvMode.value = 'lobby'
+  })
+
   _socket.on(PLAYER_ROLL_RESULT, (payload) => {
     try {
       if (payload && typeof payload === 'object') {
@@ -399,6 +409,8 @@ onUnmounted(() => {
     _socket.off(DOOM_CLOCK_STOPPED)
     _socket.off(TENSION_SCALE_UPDATED)
     _socket.off(TENSION_SCALE_ENDED)
+    _socket.off(TIME_SCALE_UPDATED)
+    _socket.off(TIME_SCALE_ENDED)
     _socket.off(MAP_STATE)
     _socket.off(PLAYER_ROLL_RESULT)
     _socket.off(DEMO_RESET)

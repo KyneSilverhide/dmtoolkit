@@ -129,7 +129,8 @@ cd frontend && npm run dev  # vite dev server
 - La DB est PostgreSQL 16. Les requêtes utilisent le driver `pg` (pool de connexions dans `db.js`).
 - Tables principales : `admins`, `sessions`, `players`, `messages`, `dice_results`, `votes`, `vote_responses`, `session_events`, `merchants`, `merchant_items`, `purchase_requests`, `session_images`, `factions`.
 - Table `factions` : `id`, `session_id` (FK sessions ON DELETE CASCADE), `name` (VARCHAR 200), `min_value` (INTEGER, défaut -5), `max_value` (INTEGER, défaut 5), `current_value` (INTEGER, défaut 0), `created_at`. Chaque session peut avoir N factions. Route REST : `GET /api/sessions/:id/factions`.
-- Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/vote/image/map/merchant/puzzle/reputation), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`, `combat_round` (entier), `timer_label` (VARCHAR 200), `timer_end_at` (TIMESTAMP), `lobby_bg_url` (VARCHAR 500, image de fond du lobby TV à 15 % d'opacité), `current_puzzle_image_id` (INTEGER), `current_puzzle_url` (VARCHAR 500), `current_puzzle_seed` (VARCHAR 100), `current_image_label` (VARCHAR 200 : label affiché en overlay top-left sur la TV quand une image est projetée).
+- Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/timescale/vote/image/map/merchant/puzzle/reputation), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`, `combat_round` (entier), `timer_label` (VARCHAR 200), `timer_end_at` (TIMESTAMP), `lobby_bg_url` (VARCHAR 500, image de fond du lobby TV à 15 % d'opacité), `current_puzzle_image_id` (INTEGER), `current_puzzle_url` (VARCHAR 500), `current_puzzle_seed` (VARCHAR 100), `current_image_label` (VARCHAR 200 : label affiché en overlay top-left sur la TV quand une image est projetée).
+- Colonnes `timescale_*` de `sessions` : `timescale_title` (VARCHAR 200), `timescale_total_hours` (INTEGER, ex: 24), `timescale_slot_count` (INTEGER, nb de paliers), `timescale_rest_slots` (INTEGER, durée du repos long en paliers), `timescale_elapsed_slots` (INTEGER, paliers écoulés). Toutes nullable ; si `timescale_title` est NULL l'échelle est inactive.
 - Colonnes clés de `session_images` : `url`, `original_name` (nom d'affichage, renommable), `type` (`image` / `map` / `audio`), `audio_category` (VARCHAR 50 : catégorie libre assignée par l'IA (GPT-4o-mini via GitHub Models) au moment de l'upload ; défaut `Général` si GITHUB_TOKEN absent ou si l'IA échoue ; l'admin peut saisir/modifier librement depuis l'AudioManager), `thumbnail_url` (VARCHAR 500 : URL du WebP 400px généré par `sharp` après upload pour les types `image` et `map` — null pour les fichiers audio ou si la génération échoue ; les galeries admin utilisent cette URL avec fallback sur `url`), `tv_label` (VARCHAR 200 : label optionnel affiché en overlay top-left sur la TV lors de la projection — saisie inline dans l'ImageManager, sauvegardé via PATCH).
 - Colonnes clés de `players` : `ac`, `max_hp`, `current_hp`, `initiative`, `conditions` (JSON array), `is_concentrating`, `dnd_class`, `avatar_url`, `socket_id`.
 - Les joueurs sont supprimés de la DB à la déconnexion socket (`disconnect`/`leave-session`).
@@ -209,6 +210,10 @@ cd frontend && npm run dev  # vite dev server
 | `obsidian-stop-audio` | Arrête une piste audio depuis Obsidian — `{ sessionId, trackId }` — relayé via `audio-stop-requested` |
 | `obsidian-loop-audio` | Active/désactive la boucle d'une piste depuis Obsidian — `{ sessionId, trackId, loop: boolean }` — relayé via `audio-loop-requested` |
 | `obsidian-volume-audio` | Règle le volume d'une piste depuis Obsidian — `{ sessionId, trackId, volume: 0..1 }` — relayé via `audio-volume-requested` |
+| `create-time-scale` | Créer une échelle temporelle (`{ sessionId, title, totalHours, slotCount, restSlots }`) — passe tv_mode à 'timescale' |
+| `advance-time-scale` | Avancer d'un palier (`{ sessionId }`) |
+| `long-rest-time-scale` | Prendre un repos long (`{ sessionId }`) — avance de restSlots paliers |
+| `end-time-scale` | Terminer l'échelle de temps (`{ sessionId }`) |
 | `show-puzzle` | Afficher un puzzle HTML sur le TV et chez les joueurs (`{ sessionId, imageId }`) — génère un seed aléatoire |
 | `close-puzzle` | Fermer le puzzle actif (`{ sessionId }`) — retour en mode lobby |
 | `create-faction` | Créer une faction (`{ sessionId, name, minValue, maxValue, initialValue }`) |
@@ -287,6 +292,8 @@ cd frontend && npm run dev  # vite dev server
 | `audio-stop-requested` | admin | Arrêt d'une piste audio déclenché depuis Obsidian — `{ trackId }` |
 | `audio-loop-requested` | admin | Changement de boucle déclenché depuis Obsidian — `{ trackId, loop: boolean }` |
 | `audio-volume-requested` | admin | Changement de volume déclenché depuis Obsidian — `{ trackId, volume: 0..1 }` |
+| `time-scale-updated` | TV + admin | Échelle de temps mise à jour — `{ title, totalHours, slotCount, restSlots, elapsedSlots, slotHours }` |
+| `time-scale-ended` | TV + admin | Échelle de temps terminée |
 | `puzzle-started` | TV + session + admin | Puzzle affiché — `{ puzzleImageId, puzzleSeed, puzzleClicks: [] }` |
 | `puzzle-closed` | TV + session + admin | Puzzle fermé |
 | `puzzle-cell-clicked` | TV + session + admin (sauf émetteur) | Clic relayé — `{ path: number[] }` |
