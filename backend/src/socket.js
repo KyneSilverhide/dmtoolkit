@@ -872,7 +872,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         const current = await pool.query(
-          'SELECT timescale_title, timescale_total_hours, timescale_slot_count, timescale_rest_slots, timescale_elapsed_slots FROM sessions WHERE id = $1 AND created_by = $2 AND timescale_title IS NOT NULL',
+          'SELECT timescale_title, timescale_total_hours, timescale_slot_count, timescale_rest_slots, timescale_elapsed_slots, timescale_rest_taken FROM sessions WHERE id = $1 AND created_by = $2 AND timescale_title IS NOT NULL',
           [sessionId, socket.admin.id]
         )
         const row = current.rows[0]
