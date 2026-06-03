@@ -50,20 +50,31 @@ function calcPos() {
   bubblePos.value = { top, left, dir }
 }
 
-function open()   { calcPos(); visible.value = true  }
-function close()  { visible.value = false }
+function attachListeners() {
+  document.addEventListener('click', onDocClick, { passive: true })
+  document.addEventListener('scroll', onScroll, { passive: true, capture: true })
+}
+function detachListeners() {
+  document.removeEventListener('click', onDocClick)
+  document.removeEventListener('scroll', onScroll, { capture: true })
+}
+
+function open() {
+  calcPos()
+  if (!visible.value) attachListeners()
+  visible.value = true
+}
+function close() {
+  if (visible.value) detachListeners()
+  visible.value = false
+}
 function toggle(e) { e.stopPropagation(); visible.value ? close() : open() }
 
 function onDocClick() { close() }
-function onScroll()   { if (visible.value) close() }
+function onScroll() { if (visible.value) close() }
 
-onMounted(() => {
-  document.addEventListener('click',  onDocClick, { passive: true })
-  document.addEventListener('scroll', onScroll,   { passive: true, capture: true })
-})
 onBeforeUnmount(() => {
-  document.removeEventListener('click',  onDocClick)
-  document.removeEventListener('scroll', onScroll, { capture: true })
+  if (visible.value) detachListeners()
 })
 
 const bubbleStyle = computed(() => ({
