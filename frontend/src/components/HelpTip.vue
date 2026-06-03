@@ -89,11 +89,12 @@ const bubbleStyle = computed(() => ({
 </script>
 
 <template>
-  <button
+<button
     ref="triggerRef"
     type="button"
     class="helptip-trigger"
     :aria-label="`Aide : ${id}`"
+    :aria-describedby="visible ? `helptip-${id}` : undefined"
     @mouseenter="open"
     @mouseleave="close"
     @focus="open"
@@ -105,6 +106,7 @@ const bubbleStyle = computed(() => ({
     <Transition name="helptip">
       <div
         v-if="visible"
+        :id="`helptip-${id}`"
         class="helptip-bubble"
         :style="bubbleStyle"
         role="tooltip"
