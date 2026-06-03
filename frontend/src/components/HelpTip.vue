@@ -178,11 +178,8 @@ const bubbleStyle = computed(() => ({
 }
 
 /* noinspection CssUnusedSymbol */
-.helptip-enter-active { transition: opacity 0.15s ease, transform 0.15s ease; }
-/* noinspection CssUnusedSymbol */
+.helptip-enter-active { transition: opacity 0.15s ease; }
 .helptip-leave-active { transition: opacity 0.1s ease; }
-/* noinspection CssUnusedSymbol */
-.helptip-enter-from  { opacity: 0; transform: translateY(calc(-50% - 4px)); }
-/* noinspection CssUnusedSymbol */
+.helptip-enter-from  { opacity: 0; }
 .helptip-leave-to    { opacity: 0; }
 </style>
