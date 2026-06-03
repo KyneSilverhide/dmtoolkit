@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
+import HelpTip from '../HelpTip.vue'
 
 const DICE_TYPES = [4, 6, 8, 10, 12, 20, 100]
 const MAX_COUNT = 20
@@ -196,7 +197,7 @@ const totalColor = computed(() => {
         </div>
       </div>
       <div class="control-group">
-        <p class="section-label">Modificateur</p>
+        <p class="section-label">Modificateur <HelpTip id="player.dice-modifier" /></p>
         <div class="stepper">
           <button class="step-btn" @click="adjustModifier(-1)">−</button>
           <span class="step-value mod-value">{{ modifier >= 0 ? '+' + modifier : modifier }}</span>
@@ -213,10 +214,10 @@ const totalColor = computed(() => {
           <AppIcon icon="game-icons:dice-six-faces-five" size="1em" /> Normal
         </button>
         <button class="roll-type-btn advantage" :class="{ active: rollType === 'advantage' }" @click="rollType = 'advantage'">
-          <AppIcon icon="lucide:sparkles" size="1em" /> Avantage
+          <AppIcon icon="lucide:sparkles" size="1em" /> Avantage <HelpTip id="player.dice-advantage" />
         </button>
         <button class="roll-type-btn disadvantage" :class="{ active: rollType === 'disadvantage' }" @click="rollType = 'disadvantage'">
-          <AppIcon icon="game-icons:skull" size="1em" /> Désavantage
+          <AppIcon icon="game-icons:skull" size="1em" /> Désavantage <HelpTip id="player.dice-disadvantage" />
         </button>
       </div>
     </div>
@@ -249,6 +250,7 @@ const totalColor = computed(() => {
       <button class="roll-btn hidden" :disabled="rolling" @click="rollHidden">
         <AppIcon icon="lucide:eye-off" size="0.9em" /> Jet caché
       </button>
+      <HelpTip id="player.hidden-roll" />
     </div>
   </div>
 </template>

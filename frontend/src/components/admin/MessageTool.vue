@@ -4,6 +4,7 @@ import { sessionStore } from '@/stores/session.js'
 import { authStore } from '@/stores/auth.js'
 import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
+import HelpTip from '../HelpTip.vue'
 
 import { BACKEND_URL } from '@/config.js'
 
@@ -160,7 +161,7 @@ async function sendMessage() {
 
     <template v-else>
       <div class="form-group">
-        <label class="form-label">Auteur</label>
+        <label class="form-label">Auteur <HelpTip id="message.author-color" /></label>
         <div class="author-row">
           <input
             v-model="authorName"
@@ -219,7 +220,7 @@ async function sendMessage() {
       </div>
 
       <div class="form-group" v-if="messageType === 'text'">
-        <label class="form-label">Effet</label>
+        <label class="form-label">Effet <HelpTip id="message.effect" /></label>
         <div class="type-toggle effects-toggle">
           <button class="toggle-btn" :class="{ active: textEffect === 'none' }" @click="textEffect = 'none'">Aucun</button>
           <button class="toggle-btn" :class="{ active: textEffect === 'slow' }" @click="textEffect = 'slow'"><AppIcon icon="lucide:hourglass" size="0.85em" /> Lent</button>

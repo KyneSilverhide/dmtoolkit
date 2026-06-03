@@ -7,6 +7,7 @@ import meleeTable from '../../assets/melee.json'
 import distanceTable from '../../assets/distance.json'
 import magiqueTable from '../../assets/magique.json'
 import AppIcon from '../AppIcon.vue'
+import HelpTip from '../HelpTip.vue'
 
 const combatType = ref('melee')
 const isRolling = ref(false)
@@ -152,7 +153,7 @@ onUnmounted(() => {
 
     <section class="anim-settings">
       <label class="anim-label">
-        <span class="anim-label-text">Durée de l'animation</span>
+        <span class="anim-label-text">Durée de l'animation <HelpTip id="critfail.duration" /></span>
         <span class="anim-value">{{ animDuration.toFixed(1) }}s</span>
       </label>
       <input

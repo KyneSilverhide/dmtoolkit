@@ -11,6 +11,7 @@ import PlayerDiceTool from '../components/player/PlayerDiceTool.vue'
 import { getLastKnownPlayer, saveLastKnownPlayer, removeLastKnownPlayer } from '../utils/playerSessionMemory.js'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
+import HelpTip from '../components/HelpTip.vue'
 import DemoBanner from '../components/DemoBanner.vue'
 import ReleaseNotesBell from '../components/ReleaseNotesBell.vue'
 import { releaseNotesStore } from '../stores/releaseNotes.js'
@@ -1047,9 +1048,9 @@ onUnmounted(() => {
           <!-- HP Panel -->
           <div class="panel hp-panel">
             <div class="panel-header">
-              <span class="panel-label"><AppIcon icon="game-icons:hearts" size="0.85rem" color="var(--color-danger)" /> Points de Vie</span>
+              <span class="panel-label"><AppIcon icon="game-icons:hearts" size="0.85rem" color="var(--color-danger)" /> Points de Vie <HelpTip id="player.hp-update" /></span>
               <span class="hp-fraction" data-testid="hp-fraction">{{ confirmedDisplayedHp }} / {{ maxHp }}</span>
-              <span v-if="confirmedTemporaryHp > 0" class="hp-temp">+{{ confirmedTemporaryHp }} TEMP</span>
+              <span v-if="confirmedTemporaryHp > 0" class="hp-temp">+{{ confirmedTemporaryHp }} TEMP <HelpTip id="player.temp-hp" /></span>
             </div>
             <!-- Max HP edit inline -->
             <div v-if="editingMaxHp" class="max-hp-edit-row">
@@ -1070,6 +1071,7 @@ onUnmounted(() => {
             </div>
             <div v-else class="max-hp-display-row">
               <span class="max-hp-hint">Max : {{ maxHp }}</span>
+              <HelpTip id="player.max-hp" />
               <button class="max-hp-edit-btn" :class="{ sent: maxHpSent }" @click="openMaxHpEdit">
                 {{ maxHpSent ? '✓' : '' }}<AppIcon v-if="!maxHpSent" icon="lucide:pencil" size="0.85rem" />
               </button>
@@ -1106,7 +1108,7 @@ onUnmounted(() => {
         <!-- Initiative -->
         <div class="panel initiative-panel">
           <div class="panel-header">
-            <span class="panel-label"><AppIcon icon="game-icons:dice-six-faces-five" size="0.85rem" /> Initiative</span>
+            <span class="panel-label"><AppIcon icon="game-icons:dice-six-faces-five" size="0.85rem" /> Initiative <HelpTip id="player.initiative" /></span>
           </div>
           <div class="initiative-controls">
             <input
@@ -1141,7 +1143,7 @@ onUnmounted(() => {
           >
             <span class="concentration-icon"><AppIcon icon="game-icons:bullseye" size="1.3rem" /></span>
             <span class="concentration-text">
-              <span class="conc-label">Concentration</span>
+              <span class="conc-label">Concentration <HelpTip id="player.concentration" /></span>
               <span class="conc-state">{{ isConcentrating ? 'Active' : 'Inactive' }}</span>
             </span>
             <span class="conc-toggle">{{ isConcentrating ? 'Arrêter' : 'Activer' }}</span>
@@ -1150,7 +1152,7 @@ onUnmounted(() => {
 
         <!-- Counter offers -->
         <div v-if="counterOffers.length > 0" class="panel counter-offers-panel">
-          <p class="panel-label"><AppIcon icon="lucide:refresh-cw" size="0.85rem" /> Contre-offres</p>
+          <p class="panel-label"><AppIcon icon="lucide:refresh-cw" size="0.85rem" /> Contre-offres <HelpTip id="player.counter-offer" /></p>
           <div v-for="offer in counterOffers" :key="offer.requestId" class="counter-offer">
             <p class="offer-text">
               <span v-if="offer.action === 'discount'"><AppIcon icon="lucide:tag" size="0.9em" color="var(--player-success-text)" /> Ristourne</span>
@@ -1170,18 +1172,20 @@ onUnmounted(() => {
           <!-- Conditions -->
           <div class="panel">
             <p class="panel-label"><AppIcon icon="game-icons:lightning-trio" size="0.85rem" color="var(--color-warning)" /> États et Conditions</p>
+
             <div class="conditions-grid">
-              <button
-                v-for="cond in DND_CONDITIONS"
-                :key="cond.id"
-                class="condition-btn"
-                :class="{ active: activeConditions.includes(cond.id) }"
-                :data-testid="`condition-${cond.id}`"
-                @click="toggleCondition(cond.id)"
-              >
-                <span class="cond-icon"><AppIcon :icon="cond.icon" :color="activeConditions.includes(cond.id) ? (cond.color || 'var(--player-danger-text)') : 'currentColor'" size="1.1rem" /></span>
-                <span class="cond-label">{{ cond.label }}</span>
-              </button>
+              <div v-for="cond in DND_CONDITIONS" :key="cond.id" class="cond-cell">
+                <button
+                  class="condition-btn"
+                  :class="{ active: activeConditions.includes(cond.id) }"
+                  :data-testid="`condition-${cond.id}`"
+                  @click="toggleCondition(cond.id)"
+                >
+                  <span class="cond-icon"><AppIcon :icon="cond.icon" :color="activeConditions.includes(cond.id) ? (cond.color || 'var(--player-danger-text)') : 'currentColor'" size="1.1rem" /></span>
+                  <span class="cond-label">{{ cond.label }}</span>
+                </button>
+                <HelpTip :id="`condition.${cond.id}`" />
+              </div>
             </div>
           </div>
           </div><!-- end combat-col-right -->
@@ -1250,6 +1254,7 @@ onUnmounted(() => {
                   <button class="qty-btn" @click="setCartQty(item.id, (cart[item.id] || 0) - 1)">−</button>
                   <span class="qty-value">{{ cart[item.id] || 0 }}</span>
                   <button class="qty-btn" @click="setCartQty(item.id, (cart[item.id] || 0) + 1)">+</button>
+                  <HelpTip id="player.shop-quantity" />
                 </div>
               </div>
             </div>
@@ -1258,7 +1263,7 @@ onUnmounted(() => {
           <!-- Cart summary + submit -->
           <div class="panel cart-panel" :class="{ 'cart-active': cartItemCount > 0 }">
             <div class="cart-summary">
-              <span class="cart-label"><AppIcon icon="lucide:shopping-cart" size="0.9em" /> Panier : {{ cartItemCount }} article(s)</span>
+              <span class="cart-label"><AppIcon icon="lucide:shopping-cart" size="0.9em" /> Panier : {{ cartItemCount }} article(s) <HelpTip id="player.shop-cart" /></span>
               <span class="cart-total">{{ cartTotal }} po</span>
             </div>
             <div class="cart-actions">
@@ -1288,6 +1293,7 @@ onUnmounted(() => {
         </div>
         <div v-else class="panel vote-panel">
           <h3 class="vote-title"><AppIcon icon="lucide:check-square" size="1em" /> {{ activeVote.question }}</h3>
+          <p v-if="activeVote.isAnonymous" class="vote-anon-hint"><AppIcon icon="lucide:eye-off" size="0.8em" /> Vote anonyme <HelpTip id="player.vote-anonymous" /></p>
           <div v-if="myVote === null && !activeVote.isClosed" class="vote-options">
             <button
               v-for="(opt, i) in activeVote.options"
@@ -1991,6 +1997,7 @@ onUnmounted(() => {
 
 /* ── Conditions ──────────────────────────────────────────────────────── */
 .conditions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
+.cond-cell { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
 .condition-btn {
   display: flex;
   flex-direction: column;
@@ -2111,6 +2118,7 @@ onUnmounted(() => {
 
 /* ── Vote ────────────────────────────────────────────────────────────── */
 .vote-panel { display: flex; flex-direction: column; gap: 0.75rem; }
+.vote-anon-hint { margin: 0; font-size: 0.72rem; color: var(--color-text-dim); display: flex; align-items: center; gap: 0.3rem; font-family: var(--font-heading), sans-serif; letter-spacing: 0.07em; }
 .vote-title { font-family: var(--font-heading), sans-serif; font-size: 1rem; color: var(--color-gold-bright); letter-spacing: 0.05em; margin: 0; }
 .vote-options { display: flex; flex-direction: column; gap: 0.5rem; }
 .vote-option-btn {

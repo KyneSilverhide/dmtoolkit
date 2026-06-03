@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { sessionStore } from '@/stores/session.js'
 import AppIcon from '../AppIcon.vue'
+import HelpTip from '../HelpTip.vue'
 
 const notesText = ref('')
 const drawColor = ref('')
@@ -176,6 +177,7 @@ onUnmounted(() => {
         <AppIcon :icon="drawEnabled ? 'lucide:lock' : 'lucide:pencil'" size="0.85em" />
         {{ drawEnabled ? 'Verrouiller dessin' : 'Activer dessin' }}
       </button>
+      <HelpTip id="player.notes-canvas" />
       <button class="tool-btn danger" @click="clearAll">
         <AppIcon icon="lucide:eraser" size="0.85em" /> Effacer
       </button>

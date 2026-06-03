@@ -2,6 +2,7 @@
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
+import HelpTip from '../HelpTip.vue'
 import { DND_CONDITIONS_MAP } from '@/utils/conditions.js'
 
 import { BACKEND_URL } from '@/config.js'
@@ -97,6 +98,7 @@ function avatarSrc(player) {
             :data-testid="`kick-button-${player.id}`">
             <AppIcon icon="lucide:x" size="0.85rem" />
           </button>
+          <HelpTip id="admin.kick" />
         </div>
 
         <!-- Barre HP -->

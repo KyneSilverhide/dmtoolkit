@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
+import HelpTip from '../HelpTip.vue'
 import { authStore } from '@/stores/auth.js'
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
@@ -112,6 +113,7 @@ onUnmounted(() => {
       <label class="upload-label">
         <AppIcon icon="lucide:upload" size="1em" />
         Importer un puzzle HTML
+        <HelpTip id="puzzle.html" />
         <input
           type="file"
           accept=".html,.htm"

@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
+import HelpTip from '../HelpTip.vue'
 
 const tvMode = ref('lobby')
 const activeDoomClock = ref(null)
@@ -287,7 +288,7 @@ onUnmounted(() => {
 <template>
   <div class="tv-controls">
     <section class="control-section">
-      <h2 class="section-title"><AppIcon icon="game-icons:crossed-swords" size="0.9em" /> Rounds de combat</h2>
+      <h2 class="section-title"><AppIcon icon="game-icons:crossed-swords" size="0.9em" /> Rounds de combat <HelpTip id="tv.combat-round" /></h2>
       <div class="round-display">Round <strong>{{ combatRound }}</strong></div>
       <div class="inline-actions">
         <button class="action-btn" @click="adjustRound(-1)" :disabled="combatRound <= 0">−1</button>
@@ -297,7 +298,7 @@ onUnmounted(() => {
     </section>
 
     <section class="control-section">
-      <h2 class="section-title"><AppIcon icon="lucide:timer" size="0.9em" /> Doom Clock</h2>
+      <h2 class="section-title"><AppIcon icon="lucide:timer" size="0.9em" /> Doom Clock <HelpTip id="tv.doom-clock" /></h2>
       <div class="form-row">
         <input v-model="doomTitle" class="form-input" type="text" placeholder="Titre du compte à rebours" />
       </div>
@@ -315,7 +316,7 @@ onUnmounted(() => {
     </section>
 
     <section class="control-section">
-      <h2 class="section-title"><AppIcon icon="lucide:hourglass" size="0.9em" /> Minuteur libre</h2>
+      <h2 class="section-title"><AppIcon icon="lucide:hourglass" size="0.9em" /> Minuteur libre <HelpTip id="tv.free-timer" /></h2>
       <div class="form-row">
         <input v-model="timerLabel" class="form-input" type="text" placeholder="Libellé du minuteur" data-testid="timer-label-input" />
       </div>
@@ -333,7 +334,7 @@ onUnmounted(() => {
     </section>
 
     <section class="control-section">
-      <h2 class="section-title"><AppIcon icon="lucide:trending-up" size="0.9em" /> Échelle de tension</h2>
+      <h2 class="section-title"><AppIcon icon="lucide:trending-up" size="0.9em" /> Échelle de tension <HelpTip id="tv.tension-scale" /></h2>
       <div class="form-row">
         <input v-model="tensionTitle" class="form-input" type="text" placeholder="Titre de l'échelle" />
       </div>
@@ -359,7 +360,7 @@ onUnmounted(() => {
     </section>
 
     <section class="control-section">
-      <h2 class="section-title"><AppIcon icon="lucide:clock" size="0.9em" /> Échelle de temps</h2>
+      <h2 class="section-title"><AppIcon icon="lucide:clock" size="0.9em" /> Échelle de temps <HelpTip id="tv.time-scale" /></h2>
       <div class="form-row">
         <input v-model="timescaleTitle" class="form-input" type="text" placeholder="Titre (ex: Journée)" />
       </div>
