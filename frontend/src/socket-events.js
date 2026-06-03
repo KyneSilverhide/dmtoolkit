@@ -206,6 +206,12 @@ export const TENSION_SCALE_UPDATED = 'tension-scale-updated'
 /** Sent to TV + admin when the tension scale ends */
 export const TENSION_SCALE_ENDED = 'tension-scale-ended'
 
+/** Sent to TV + admin when the time scale is updated: { title, totalHours, slotCount, restSlots, elapsedSlots, slotHours } */
+export const TIME_SCALE_UPDATED = 'time-scale-updated'
+
+/** Sent to TV + admin when the time scale ends */
+export const TIME_SCALE_ENDED = 'time-scale-ended'
+
 /** Sent to TV + session + admin when a vote is created: (voteState) */
 export const VOTE_STARTED = 'vote-started'
 
@@ -440,6 +446,8 @@ export default {
   DOOM_CLOCK_STOPPED,
   TENSION_SCALE_UPDATED,
   TENSION_SCALE_ENDED,
+  TIME_SCALE_UPDATED,
+  TIME_SCALE_ENDED,
   VOTE_STARTED,
   VOTE_UPDATED,
   VOTE_CLOSED,

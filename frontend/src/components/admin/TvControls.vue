@@ -18,6 +18,13 @@ const tensionDirection = ref('ascending')
 const tensionVibration = ref(false)
 let clockTickInterval = null
 
+// ── Time scale ────────────────────────────────────────────────────────────
+const activeTimeScale = ref(null)
+const timescaleTitle = ref('Journée')
+const timescaleTotalHours = ref(24)
+const timescaleSlotCount = ref(6)
+const timescaleRestSlots = ref(2)
+
 // ── Combat round ──────────────────────────────────────────────────────────
 const combatRound = ref(0)
 
@@ -67,6 +74,33 @@ function incrementTensionScale() {
 function endTensionScale() {
   const socket = getSocket()
   socket.emit('end-tension-scale', { sessionId: sessionStore.activeSession.id })
+}
+
+// ── Time scale functions ──────────────────────────────────────────────────
+function createTimeScale() {
+  const socket = getSocket()
+  socket.emit('create-time-scale', {
+    sessionId: sessionStore.activeSession.id,
+    title: timescaleTitle.value,
+    totalHours: timescaleTotalHours.value,
+    slotCount: timescaleSlotCount.value,
+    restSlots: timescaleRestSlots.value,
+  })
+}
+
+function advanceTimeScale() {
+  const socket = getSocket()
+  socket.emit('advance-time-scale', { sessionId: sessionStore.activeSession.id })
+}
+
+function longRestTimeScale() {
+  const socket = getSocket()
+  socket.emit('long-rest-time-scale', { sessionId: sessionStore.activeSession.id })
+}
+
+function endTimeScale() {
+  const socket = getSocket()
+  socket.emit('end-time-scale', { sessionId: sessionStore.activeSession.id })
 }
 
 // ── Round counter functions ───────────────────────────────────────────────
@@ -134,11 +168,38 @@ const tensionAdvanceLabel = computed(() => {
   return direction === 'descending' ? '-1' : '+1'
 })
 
+const timescaleSlotHours = computed(() => {
+  const ts = activeTimeScale.value
+  if (ts) return ts.slotHours
+  const slots = timescaleSlotCount.value || 1
+  return (timescaleTotalHours.value || 0) / slots
+})
+
+const timescaleCanRest = computed(() => {
+  const ts = activeTimeScale.value
+  if (!ts) return false
+  return !ts.restTaken && ts.elapsedSlots + ts.restSlots <= ts.slotCount
+})
+
+const timescaleRestHours = computed(() => {
+  const ts = activeTimeScale.value
+  if (ts) return ts.restSlots * ts.slotHours
+  return timescaleRestSlots.value * timescaleSlotHours.value
+})
+
+const timescaleStatusLabel = computed(() => {
+  const ts = activeTimeScale.value
+  if (!ts) return ''
+  const elapsedH = ts.elapsedSlots * ts.slotHours
+  return `${ts.title} — ${elapsedH}h / ${ts.totalHours}h (palier ${ts.elapsedSlots}/${ts.slotCount})`
+})
+
 function handleAdminState(data) {
   if (sessionStore.activeSession?.id !== data.sessionId) return
   tvMode.value = data.tvMode || 'lobby'
   activeDoomClock.value = data.doomClock || null
   activeTensionScale.value = data.tensionScale || null
+  activeTimeScale.value = data.timeScale || null
   combatRound.value = data.combatRound || 0
   activeTimer.value = data.timer || null
   if (data.tensionScale) {
@@ -182,6 +243,14 @@ function handleTimerStopped() {
   activeTimer.value = null
 }
 
+function handleTimeScaleUpdated(data) {
+  activeTimeScale.value = data
+}
+
+function handleTimeScaleEnded() {
+  activeTimeScale.value = null
+}
+
 onMounted(() => {
   clockTickInterval = window.setInterval(() => { now.value = Date.now() }, 1000)
   const socket = getSocket()
@@ -194,6 +263,8 @@ onMounted(() => {
   socket.on('round-updated', handleRoundUpdated)
   socket.on('timer-updated', handleTimerUpdated)
   socket.on('timer-stopped', handleTimerStopped)
+  socket.on('time-scale-updated', handleTimeScaleUpdated)
+  socket.on('time-scale-ended', handleTimeScaleEnded)
 })
 
 onUnmounted(() => {
@@ -208,6 +279,8 @@ onUnmounted(() => {
   socket.off('round-updated', handleRoundUpdated)
   socket.off('timer-updated', handleTimerUpdated)
   socket.off('timer-stopped', handleTimerStopped)
+  socket.off('time-scale-updated', handleTimeScaleUpdated)
+  socket.off('time-scale-ended', handleTimeScaleEnded)
 })
 </script>
 
@@ -283,6 +356,37 @@ onUnmounted(() => {
         {{ activeTensionScale.title }} — {{ activeTensionScale.level }} / {{ activeTensionScale.steps }} ({{ tensionRatio }}%)
       </p>
       <p v-if="controlError" class="error-line">{{ controlError }}</p>
+    </section>
+
+    <section class="control-section">
+      <h2 class="section-title"><AppIcon icon="lucide:clock" size="0.9em" /> Échelle de temps</h2>
+      <div class="form-row">
+        <input v-model="timescaleTitle" class="form-input" type="text" placeholder="Titre (ex: Journée)" />
+      </div>
+      <div class="form-row split">
+        <div class="labeled-input">
+          <label class="input-label">Durée totale (h)</label>
+          <input v-model.number="timescaleTotalHours" class="form-input" type="number" min="1" max="168" />
+        </div>
+        <div class="labeled-input">
+          <label class="input-label">Nb de paliers</label>
+          <input v-model.number="timescaleSlotCount" class="form-input" type="number" min="2" max="24" />
+        </div>
+        <div class="labeled-input">
+          <label class="input-label">Repos long (paliers)</label>
+          <input v-model.number="timescaleRestSlots" class="form-input" type="number" min="1" :max="timescaleSlotCount" />
+        </div>
+      </div>
+      <p class="hint-line">Palier = {{ timescaleSlotHours }}h · Repos long = {{ timescaleRestHours }}h</p>
+      <div class="inline-actions">
+        <button class="action-btn" @click="createTimeScale">{{ activeTimeScale ? 'Recréer' : 'Créer' }}</button>
+        <button class="action-btn" :disabled="!activeTimeScale || activeTimeScale.elapsedSlots >= activeTimeScale.slotCount" @click="advanceTimeScale">+1 palier</button>
+        <button class="action-btn" :disabled="!activeTimeScale || !timescaleCanRest" @click="longRestTimeScale" :class="{ 'rest-btn': activeTimeScale && timescaleCanRest }">Repos long</button>
+        <button class="action-btn danger-btn" :disabled="!activeTimeScale" @click="endTimeScale">Terminer</button>
+      </div>
+      <p v-if="activeTimeScale" class="status-line">{{ timescaleStatusLabel }}</p>
+      <p v-if="activeTimeScale && activeTimeScale.restTaken" class="hint-line warn-hint">Repos long déjà pris.</p>
+      <p v-else-if="activeTimeScale && !timescaleCanRest" class="hint-line warn-hint">Repos impossible — pas assez de temps.</p>
     </section>
   </div>
 </template>
@@ -364,4 +468,20 @@ onUnmounted(() => {
   font-size: 0.75rem;
   color: var(--admin-danger-text, var(--color-danger));
 }
+.labeled-input { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; }
+.input-label {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+.hint-line {
+  margin: 0;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.65rem;
+  color: var(--color-text-dim);
+}
+.warn-hint { color: var(--admin-danger-text, var(--color-danger)); }
+.rest-btn { border-color: var(--color-success, #4ade80); color: var(--color-success, #4ade80); }
 </style>

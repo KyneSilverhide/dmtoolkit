@@ -1,6 +1,14 @@
 {
   "notes": [
     {
+      "version": "1.0.67",
+      "date": "2026-06-03",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Échelle de temps (onglet Rythme) : nouvelle échelle temporelle par paliers — configurez une durée totale, un nombre de paliers égaux et un repos long. Avancez palier par palier ; le repos long consomme plusieurs paliers d'un coup et ne peut être pris qu'une seule fois par échelle." },
+        { "type": "feature", "role": "admin", "text": "Projection TV de l'échelle de temps : les tuiles s'effondrent visuellement à mesure que le temps passe. L'ambiance bascule progressivement vers le rouge — glow ambré, pulsations orangées, puis tremblement et vignette cramoisie sur les derniers paliers." }
+      ]
+    },
+    {
       "version": "1.0.66",
       "date": "2026-06-03",
       "changes": [

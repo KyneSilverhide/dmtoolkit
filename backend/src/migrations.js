@@ -238,6 +238,14 @@ CREATE TABLE IF NOT EXISTS factions (
 -- TV label for images (displayed top-left on TV when image is projected)
 ALTER TABLE session_images ADD COLUMN IF NOT EXISTS tv_label VARCHAR(200);
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_image_label VARCHAR(200);
+
+-- Time scale (slot-based temporal progression with long rest)
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timescale_title VARCHAR(200);
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timescale_total_hours INTEGER;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timescale_slot_count INTEGER;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timescale_rest_slots INTEGER;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timescale_elapsed_slots INTEGER DEFAULT 0;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timescale_rest_taken BOOLEAN DEFAULT FALSE;
 `
 
 async function runMigrations() {

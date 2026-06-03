@@ -30,6 +30,7 @@ const activeVote = ref(null)
 const activeMerchant = ref(null)
 const activeDoomClock = ref(null)
 const activeTensionScale = ref(null)
+const activeTimeScale = ref(null)
 const now = ref(Date.now())
 let clockTickInterval = null
 const theme = ref(getThemePreference('tv', 'dark'))
@@ -372,6 +373,20 @@ const tensionShakeClass = computed(() => {
   return 'shake-hard'
 })
 
+const timescaleDramaLevel = computed(() => {
+  const ts = activeTimeScale.value
+  if (!ts || ts.slotCount === 0) return 0
+  return ts.elapsedSlots / ts.slotCount
+})
+
+const timescaleDramaClass = computed(() => {
+  const d = timescaleDramaLevel.value
+  if (d >= 0.9) return 'drama-critical'
+  if (d >= 0.67) return 'drama-high'
+  if (d >= 0.34) return 'drama-medium'
+  return 'drama-low'
+})
+
 let socket = null
 
 onMounted(() => {
@@ -395,6 +410,7 @@ onMounted(() => {
     activeMerchant.value = data.activeMerchant || null
     activeDoomClock.value = data.doomClock || null
     activeTensionScale.value = data.tensionScale || null
+    activeTimeScale.value = data.timeScale || null
     combatRound.value = data.combatRound || 0
     activeTimer.value = data.timer || null
     isDemo.value = !!data.isDemo
@@ -527,6 +543,14 @@ onMounted(() => {
 
   socket.on('tension-scale-ended', () => {
     activeTensionScale.value = null
+  })
+
+  socket.on('time-scale-updated', (timeScale) => {
+    activeTimeScale.value = timeScale
+  })
+
+  socket.on('time-scale-ended', () => {
+    activeTimeScale.value = null
   })
 
   socket.on('round-updated', ({ round }) => {
@@ -828,6 +852,72 @@ onUnmounted(() => {
           <div class="tension-level">
             {{ activeTensionScale.level }}<span>/{{ activeTensionScale.steps }}</span>
           </div>
+        </div>
+      </div>
+
+      <!-- Time scale mode -->
+      <div
+        v-else-if="tvMode === 'timescale' && activeTimeScale"
+        class="timescale-display"
+        :class="timescaleDramaClass"
+        :style="{ '--drama': timescaleDramaLevel }"
+        data-testid="tv-mode-timescale"
+      >
+        <!-- Vignette overlay — grows with drama -->
+        <div class="ts-vignette" aria-hidden="true"></div>
+
+        <h2 class="timescale-title">{{ activeTimeScale.title }}</h2>
+
+        <!-- Tiles — align-items: flex-end so they collapse downward -->
+        <div class="timescale-tiles">
+          <div
+            v-for="i in activeTimeScale.slotCount"
+            :key="i"
+            class="timescale-tile"
+            :class="{
+              elapsed: i <= activeTimeScale.elapsedSlots,
+              current: i === activeTimeScale.elapsedSlots + 1,
+              warning: i > activeTimeScale.elapsedSlots && (activeTimeScale.slotCount - i) < Math.ceil(activeTimeScale.slotCount * 0.34) && i !== activeTimeScale.elapsedSlots + 1,
+              danger: i > activeTimeScale.elapsedSlots && (activeTimeScale.slotCount - i) < Math.ceil(activeTimeScale.slotCount * 0.15) && i !== activeTimeScale.elapsedSlots + 1,
+            }"
+          >
+            <span class="tile-hour">{{ i * activeTimeScale.slotHours }}<span class="tile-unit">h</span></span>
+          </div>
+        </div>
+
+        <!-- Progress bar / timeline -->
+        <div class="timescale-bar-wrap">
+          <div class="timescale-bar">
+            <div class="ts-fill-elapsed" :style="{ width: (activeTimeScale.elapsedSlots / activeTimeScale.slotCount * 100) + '%' }"></div>
+            <div
+              v-if="activeTimeScale.restSlots > 0 && !activeTimeScale.restTaken"
+              class="ts-fill-rest"
+              :class="{ impossible: activeTimeScale.elapsedSlots + activeTimeScale.restSlots > activeTimeScale.slotCount }"
+              :style="{
+                left: (activeTimeScale.elapsedSlots / activeTimeScale.slotCount * 100) + '%',
+                width: (Math.min(activeTimeScale.restSlots, activeTimeScale.slotCount - activeTimeScale.elapsedSlots) / activeTimeScale.slotCount * 100) + '%',
+              }"
+            >
+              <span class="ts-rest-label">Repos {{ activeTimeScale.restSlots * activeTimeScale.slotHours }}h</span>
+            </div>
+            <div v-for="i in activeTimeScale.slotCount - 1" :key="i" class="ts-divider" :style="{ left: (i / activeTimeScale.slotCount * 100) + '%' }"></div>
+            <div class="ts-needle" :style="{ left: (activeTimeScale.elapsedSlots / activeTimeScale.slotCount * 100) + '%' }"></div>
+          </div>
+        </div>
+
+        <!-- Info row -->
+        <div class="timescale-info">
+          <span class="ts-info-elapsed">{{ activeTimeScale.elapsedSlots * activeTimeScale.slotHours }}h écoulées</span>
+          <span class="ts-info-sep">·</span>
+          <span class="ts-info-remaining">{{ (activeTimeScale.slotCount - activeTimeScale.elapsedSlots) * activeTimeScale.slotHours }}h restantes</span>
+          <template v-if="activeTimeScale.restTaken">
+            <span class="ts-info-sep">·</span>
+            <span class="ts-info-rest-done">Repos pris ✓</span>
+          </template>
+          <template v-else-if="activeTimeScale.restSlots > 0 && activeTimeScale.elapsedSlots + activeTimeScale.restSlots > activeTimeScale.slotCount">
+            <span class="ts-info-sep">·</span>
+            <span class="ts-info-impossible">Repos impossible</span>
+          </template>
         </div>
       </div>
 
@@ -1742,6 +1832,265 @@ onUnmounted(() => {
   60% { transform: translate(-2px, -1px); }
   80% { transform: translate(2px, 1px); }
 }
+
+/* ── Time scale mode ─────────────────────────────────────────────────── */
+.timescale-display {
+  --drama: 0;
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1.2rem, 2.5vh, 2rem);
+  padding: 2rem 2.5rem;
+  overflow: hidden;
+}
+
+/* Red vignette that bleeds in as drama rises */
+.ts-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at center, transparent 35%, rgba(180, 20, 20, calc(var(--drama) * 0.55)) 100%);
+  z-index: 0;
+  transition: background 1s ease;
+}
+
+.timescale-title {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-title), sans-serif;
+  font-size: clamp(2rem, 4.5vw, 3.8rem);
+  color: var(--color-gold-bright);
+  margin: 0;
+  text-align: center;
+  /* Title warms and pulses at high drama */
+  transition: color 1s ease, text-shadow 1s ease;
+}
+.timescale-display.drama-high .timescale-title,
+.timescale-display.drama-critical .timescale-title {
+  color: #f97316;
+  text-shadow: 0 0 40px rgba(249, 115, 22, 0.5);
+}
+.timescale-display.drama-critical .timescale-title {
+  color: #ef4444;
+  animation: titleBreath 1.8s ease-in-out infinite;
+  text-shadow: 0 0 60px rgba(239, 68, 68, 0.6);
+}
+
+/* Tiles container — flex-end aligns all tiles to the bottom baseline */
+.timescale-tiles {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(0.4rem, 1vw, 0.8rem);
+  width: min(1300px, 100%);
+}
+
+/* Base tile */
+.timescale-tile {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: clamp(130px, 18vw, 200px);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--tv-control-bg-muted, rgba(0,0,0,0.3));
+  transition: height 0.55s cubic-bezier(.4,0,.2,1),
+              border-color 0.6s ease,
+              background 0.6s ease,
+              box-shadow 0.6s ease,
+              opacity 0.5s ease;
+  overflow: hidden;
+}
+
+/* Elapsed: collapsed like a fallen stone slab */
+.timescale-tile.elapsed {
+  height: clamp(18px, 2.5vw, 28px);
+  border-color: transparent;
+  background: rgba(80, 60, 30, 0.3);
+  opacity: 0.5;
+}
+
+/* Current — gold crown, scales with drama */
+.timescale-tile.current {
+  border-color: var(--color-gold-bright);
+  box-shadow:
+    0 0 calc(16px + var(--drama) * 40px) color-mix(in oklab, var(--color-gold-bright) calc(30% + var(--drama) * 50%), transparent),
+    inset 0 0 calc(8px + var(--drama) * 20px) color-mix(in oklab, var(--color-gold-bright) calc(5% + var(--drama) * 15%), transparent);
+}
+
+/* Warning tiles (approaching end) */
+.timescale-tile.warning {
+  border-color: #f97316;
+  background: color-mix(in oklab, #f97316 8%, var(--tv-control-bg-muted, rgba(0,0,0,0.3)));
+  animation: warningPulse 2.2s ease-in-out infinite;
+}
+
+/* Danger tiles (last slots) */
+.timescale-tile.danger {
+  border-color: #ef4444;
+  background: color-mix(in oklab, #ef4444 12%, var(--tv-control-bg-muted, rgba(0,0,0,0.3)));
+  animation: dangerPulse 1s ease-in-out infinite;
+}
+
+/* Critical drama: last tile shakes */
+.timescale-display.drama-critical .timescale-tile:last-child:not(.elapsed) {
+  animation: lastTileShake 0.45s ease-in-out infinite;
+}
+
+.tile-hour {
+  font-family: var(--font-title), sans-serif;
+  font-size: clamp(2rem, 4.5vw, 4rem);
+  line-height: 1;
+  color: var(--color-parchment);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.5s ease;
+}
+.timescale-tile.warning .tile-hour { color: #f97316; }
+.timescale-tile.danger  .tile-hour { color: #ef4444; }
+.tile-unit {
+  font-size: 0.45em;
+  font-family: var(--font-heading), sans-serif;
+  color: var(--color-text-dim);
+  letter-spacing: 0.05em;
+  vertical-align: baseline;
+}
+
+/* Progress bar */
+.timescale-bar-wrap {
+  position: relative;
+  z-index: 1;
+  width: min(1300px, 100%);
+}
+.timescale-bar {
+  position: relative;
+  height: clamp(44px, 5.5vw, 68px);
+  border-radius: 10px;
+  background: var(--tv-control-bg-muted, rgba(0,0,0,0.3));
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+.ts-fill-elapsed {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--color-gold-dark) 70%, transparent),
+    color-mix(in oklab, var(--color-gold-dark) 40%, transparent)
+  );
+  transition: width 0.45s ease;
+}
+.ts-fill-rest {
+  position: absolute;
+  inset-block: 0;
+  background: rgba(34, 197, 94, 0.22);
+  border-left: 2px solid #22c55e;
+  border-right: 2px solid #22c55e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: left 0.45s ease, width 0.45s ease;
+  overflow: hidden;
+}
+.ts-fill-rest.impossible {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: #ef4444;
+}
+.ts-rest-label {
+  font-family: var(--font-heading), sans-serif;
+  font-size: clamp(0.72rem, 1.4vw, 1rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #86efac;
+  white-space: nowrap;
+  background: rgba(0,0,0,0.72);
+  padding: 0.18em 0.6em;
+  border-radius: 5px;
+}
+.ts-fill-rest.impossible .ts-rest-label {
+  color: #fca5a5;
+}
+.ts-divider {
+  position: absolute;
+  inset-block: 0;
+  width: 1px;
+  background: var(--color-border);
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 0.5;
+}
+.ts-needle {
+  position: absolute;
+  inset-block: -4px;
+  width: 4px;
+  transform: translateX(-50%);
+  background: var(--color-gold-bright);
+  border-radius: 2px;
+  box-shadow: 0 0 10px var(--color-gold-bright), 0 0 24px color-mix(in oklab, var(--color-gold-bright) 40%, transparent);
+  transition: left 0.45s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Info row */
+.timescale-info {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-family: var(--font-heading), sans-serif;
+  font-size: clamp(0.9rem, 2vw, 1.25rem);
+  color: var(--color-text-dim);
+}
+.ts-info-elapsed  { color: var(--color-parchment); }
+.ts-info-sep      { opacity: 0.35; }
+.ts-info-impossible { color: #ef4444; }
+.ts-info-rest-done  { color: #22c55e; }
+
+/* ── Dramatic animations ──────────────────────────────────────────────── */
+@keyframes warningPulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(249,115,22,0.3); }
+  50%       { box-shadow: 0 0 22px rgba(249,115,22,0.7); }
+}
+@keyframes dangerPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(239,68,68,0.4); }
+  50%       { box-shadow: 0 0 36px rgba(239,68,68,0.9); }
+}
+@keyframes lastTileShake {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-4px) rotate(-0.6deg); }
+  40%  { transform: translateX(4px)  rotate(0.6deg); }
+  60%  { transform: translateX(-3px) rotate(-0.4deg); }
+  80%  { transform: translateX(3px)  rotate(0.4deg); }
+  100% { transform: translateX(0); }
+}
+@keyframes titleBreath {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+
+/* ── Light theme overrides ────────────────────────────────────────────── */
+:root[data-theme='light'] .timescale-tile {
+  background: rgba(255,255,255,0.6);
+}
+:root[data-theme='light'] .timescale-tile.elapsed {
+  background: rgba(0,0,0,0.1);
+}
+:root[data-theme='light'] .timescale-tile.current {
+  background: rgba(255,255,255,0.9);
+}
+:root[data-theme='light'] .tile-hour { color: #1a1a1a; }
+:root[data-theme='light'] .timescale-tile.warning .tile-hour { color: #c2410c; }
+:root[data-theme='light'] .timescale-tile.danger  .tile-hour { color: #b91c1c; }
+:root[data-theme='light'] .timescale-bar { background: rgba(0,0,0,0.08); }
+:root[data-theme='light'] .ts-info-elapsed { color: #1a1a1a; }
 
 /* ── Image mode ───────────────────────────────────────────────────────── */
 .image-display {

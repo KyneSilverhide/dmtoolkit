@@ -24,6 +24,10 @@ const MAX_COMBAT_ROUND = 9999
 const MIN_TENSION_STEPS = 2
 const MAX_TENSION_STEPS = 20
 const MAX_TITLE_LENGTH = 200
+const MIN_TIMESCALE_HOURS = 1
+const MAX_TIMESCALE_HOURS = 168
+const MIN_TIMESCALE_SLOTS = 2
+const MAX_TIMESCALE_SLOTS = 24
 const TENSION_DIRECTIONS = new Set(['ascending', 'descending'])
 const MAP_SCALE_MIN = 0.1
 const MAP_SCALE_MAX = 10
@@ -107,6 +111,23 @@ function serializeTensionScale(session) {
     level: Math.max(0, Math.min(steps, parseInt(session.tension_level) || 0)),
     direction,
     vibrationEnabled: !!session.tension_vibration,
+  }
+}
+
+function serializeTimeScale(session) {
+  const slotCount = parseInt(session?.timescale_slot_count) || 0
+  const totalHours = parseInt(session?.timescale_total_hours) || 0
+  if (!session?.timescale_title || slotCount <= 0 || totalHours <= 0) return null
+  const restSlots = Math.max(1, parseInt(session.timescale_rest_slots) || 1)
+  const elapsedSlots = Math.max(0, Math.min(slotCount, parseInt(session.timescale_elapsed_slots) || 0))
+  return {
+    title: session.timescale_title,
+    totalHours,
+    slotCount,
+    restSlots,
+    elapsedSlots,
+    restTaken: !!session.timescale_rest_taken,
+    slotHours: totalHours / slotCount,
   }
 }
 
@@ -535,6 +556,7 @@ function setupSocket(io) {
           tvMode: session.tv_mode || 'lobby',
           doomClock: serializeDoomClock(session),
           tensionScale: serializeTensionScale(session),
+          timeScale: serializeTimeScale(session),
           activeVote: await getActiveVote(session.id, session.current_vote_id),
           activeMerchant: (session.current_merchant_id && session.tv_mode === 'merchant')
             ? await getMerchantData(session.current_merchant_id)
@@ -588,6 +610,7 @@ function setupSocket(io) {
           activeVote,
           doomClock,
           tensionScale: serializeTensionScale(session),
+          timeScale: serializeTimeScale(session),
           activeMerchant: (session.current_merchant_id && session.tv_mode === 'merchant')
             ? await getMerchantData(session.current_merchant_id)
             : null,
@@ -771,6 +794,143 @@ function setupSocket(io) {
           [sessionId, 'tension_ended', `Tension terminée : "${tensionTitle}"`]
         )
         io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'tension_ended', description: `Tension terminée : "${tensionTitle}"`, createdAt: new Date() })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: create time scale ─────────────────────────────────────────────
+    socket.on('create-time-scale', async ({ sessionId, title, totalHours, slotCount, restSlots }) => {
+      if (!socket.admin) return
+      try {
+        const parsedHours = parseInt(totalHours) || 0
+        const parsedSlots = parseInt(slotCount) || 0
+        const parsedRest = parseInt(restSlots) || 1
+        if (parsedHours < MIN_TIMESCALE_HOURS || parsedHours > MAX_TIMESCALE_HOURS) {
+          socket.emit('tv-control-error', { message: `Durée invalide (entre ${MIN_TIMESCALE_HOURS} et ${MAX_TIMESCALE_HOURS} heures).` })
+          return
+        }
+        if (parsedSlots < MIN_TIMESCALE_SLOTS || parsedSlots > MAX_TIMESCALE_SLOTS) {
+          socket.emit('tv-control-error', { message: `Nombre de paliers invalide (entre ${MIN_TIMESCALE_SLOTS} et ${MAX_TIMESCALE_SLOTS}).` })
+          return
+        }
+        const safeTitle = (title || 'Échelle de temps').trim().slice(0, MAX_TITLE_LENGTH) || 'Échelle de temps'
+        const safeHours = Math.max(MIN_TIMESCALE_HOURS, Math.min(MAX_TIMESCALE_HOURS, parsedHours))
+        const safeSlots = Math.max(MIN_TIMESCALE_SLOTS, Math.min(MAX_TIMESCALE_SLOTS, parsedSlots))
+        const safeRest = Math.max(1, Math.min(safeSlots, parsedRest))
+        const result = await pool.query(
+          `UPDATE sessions
+           SET timescale_title = $1, timescale_total_hours = $2, timescale_slot_count = $3,
+               timescale_rest_slots = $4, timescale_elapsed_slots = 0, timescale_rest_taken = FALSE, tv_mode = 'timescale'
+           WHERE id = $5 AND created_by = $6
+           RETURNING timescale_title, timescale_total_hours, timescale_slot_count, timescale_rest_slots, timescale_elapsed_slots, timescale_rest_taken`,
+          [safeTitle, safeHours, safeSlots, safeRest, sessionId, socket.admin.id]
+        )
+        const row = result.rows[0]
+        if (!row) return
+        const payload = serializeTimeScale(row)
+        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'timescale' })
+        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'timescale' })
+        io.to(`tv:${sessionId}`).emit('time-scale-updated', payload)
+        io.to(`admin:${sessionId}`).emit('time-scale-updated', payload)
+        const slotHours = safeHours / safeSlots
+        await pool.query(
+          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
+          [sessionId, 'timescale_started', `Échelle de temps : "${safeTitle}" (${safeSlots} paliers de ${slotHours}h)`]
+        )
+        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'timescale_started', description: `Échelle de temps : "${safeTitle}" (${safeSlots} paliers de ${slotHours}h)`, createdAt: new Date() })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: advance time scale by one slot ─────────────────────────────────
+    socket.on('advance-time-scale', async ({ sessionId }) => {
+      if (!socket.admin) return
+      try {
+        const result = await pool.query(
+          `UPDATE sessions
+           SET timescale_elapsed_slots = LEAST(timescale_slot_count, COALESCE(timescale_elapsed_slots, 0) + 1)
+           WHERE id = $1 AND created_by = $2 AND timescale_title IS NOT NULL
+           RETURNING timescale_title, timescale_total_hours, timescale_slot_count, timescale_rest_slots, timescale_elapsed_slots, timescale_rest_taken`,
+          [sessionId, socket.admin.id]
+        )
+        const row = result.rows[0]
+        if (!row) return
+        const payload = serializeTimeScale(row)
+        io.to(`tv:${sessionId}`).emit('time-scale-updated', payload)
+        io.to(`admin:${sessionId}`).emit('time-scale-updated', payload)
+        const elapsed = row.timescale_elapsed_slots
+        const total = row.timescale_slot_count
+        const slotHours = row.timescale_total_hours / total
+        await pool.query(
+          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
+          [sessionId, 'timescale_advanced', `Temps : palier ${elapsed}/${total} — "${row.timescale_title}" (+${slotHours}h)`]
+        )
+        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'timescale_advanced', description: `Temps : palier ${elapsed}/${total} — "${row.timescale_title}" (+${slotHours}h)`, createdAt: new Date() })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: take long rest ─────────────────────────────────────────────────
+    socket.on('long-rest-time-scale', async ({ sessionId }) => {
+      if (!socket.admin) return
+      try {
+        const current = await pool.query(
+          'SELECT timescale_title, timescale_total_hours, timescale_slot_count, timescale_rest_slots, timescale_elapsed_slots FROM sessions WHERE id = $1 AND created_by = $2 AND timescale_title IS NOT NULL',
+          [sessionId, socket.admin.id]
+        )
+        const row = current.rows[0]
+        if (!row) return
+        const elapsed = parseInt(row.timescale_elapsed_slots) || 0
+        const slotCount = parseInt(row.timescale_slot_count) || 0
+        const restSlots = parseInt(row.timescale_rest_slots) || 1
+        if (elapsed + restSlots > slotCount) {
+          socket.emit('tv-control-error', { message: 'Pas assez de temps restant pour un repos long.' })
+          return
+        }
+        if (row.timescale_rest_taken) {
+          socket.emit('tv-control-error', { message: 'Un repos long a déjà été pris.' })
+          return
+        }
+        const newElapsed = elapsed + restSlots
+        await pool.query(
+          'UPDATE sessions SET timescale_elapsed_slots = $1, timescale_rest_taken = TRUE WHERE id = $2 AND created_by = $3',
+          [newElapsed, sessionId, socket.admin.id]
+        )
+        const payload = serializeTimeScale({ ...row, timescale_elapsed_slots: newElapsed, timescale_rest_taken: true })
+        io.to(`tv:${sessionId}`).emit('time-scale-updated', payload)
+        io.to(`admin:${sessionId}`).emit('time-scale-updated', payload)
+        const restHours = (row.timescale_total_hours / slotCount) * restSlots
+        await pool.query(
+          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
+          [sessionId, 'timescale_rest', `Repos long pris (${restHours}h) — "${row.timescale_title}" : palier ${newElapsed}/${slotCount}`]
+        )
+        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'timescale_rest', description: `Repos long pris (${restHours}h) — "${row.timescale_title}" : palier ${newElapsed}/${slotCount}`, createdAt: new Date() })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: end time scale ─────────────────────────────────────────────────
+    socket.on('end-time-scale', async ({ sessionId }) => {
+      if (!socket.admin) return
+      try {
+        const current = await pool.query(
+          'SELECT timescale_title FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        if (!current.rows[0]) return
+        const scaleTitle = current.rows[0].timescale_title || 'Échelle de temps'
+        await pool.query(
+          `UPDATE sessions
+           SET timescale_title = NULL, timescale_total_hours = NULL, timescale_slot_count = NULL,
+               timescale_rest_slots = NULL, timescale_elapsed_slots = 0, tv_mode = 'lobby'
+           WHERE id = $1 AND created_by = $2`,
+          [sessionId, socket.admin.id]
+        )
+        io.to(`tv:${sessionId}`).emit('time-scale-ended')
+        io.to(`admin:${sessionId}`).emit('time-scale-ended')
+        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
+        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
+        await pool.query(
+          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
+          [sessionId, 'timescale_ended', `Échelle de temps terminée : "${scaleTitle}"`]
+        )
+        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'timescale_ended', description: `Échelle de temps terminée : "${scaleTitle}"`, createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 
