@@ -278,9 +278,9 @@ router.get('/:id/journal', authenticateToken, async (req, res) => {
     const totalGoldSpent = purchasesAccepted.reduce((sum, e) => sum + Math.abs(e.value || 0), 0)
 
     const sessionStart = sessionCheck.rows[0].created_at
-    const lastEvent = rows.length ? rows[rows.length - 1].created_at : new Date()
-    const durationMs = new Date(lastEvent) - new Date(sessionStart)
-    const durationMin = Math.round(durationMs / 60000)
+    const durationMin = rows.length
+      ? Math.round((new Date(rows[rows.length - 1].created_at) - new Date(rows[0].created_at)) / 60000)
+      : 0
 
     const summary = [
       `📜 Résumé de session`,

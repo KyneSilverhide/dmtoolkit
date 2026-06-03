@@ -1,6 +1,15 @@
 {
   "notes": [
     {
+      "version": "1.0.66",
+      "date": "2026-06-03",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Drag & drop d'upload : glissez des fichiers directement sur le gestionnaire d'images, de cartes ou d'audio pour les téléverser instantanément (plusieurs fichiers à la fois)" },
+        { "type": "feature", "role": "admin", "text": "Journal de session — statistiques en temps réel : durée de la session, total des dégâts et des soins s'affichent en permanence en haut du journal" },
+        { "type": "feature", "role": "admin", "text": "Journal de session — bouton Réinitialiser : repart le chrono à zéro, vide le journal et remet les statistiques à zéro sans toucher à la session elle-même" }
+      ]
+    },
+    {
       "version": "1.0.65",
       "date": "2026-05-31",
       "changes": [

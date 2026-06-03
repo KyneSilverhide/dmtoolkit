@@ -60,6 +60,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │                      # puzzles: GET /api/puzzles/serve/:imageId?seed=SEED (public, sans auth) — sert le HTML avec PRNG injecté
 │   │                      # release-notes: GET /api/release-notes (public, sans auth)
 │   │                      # sessions: GET/DELETE/PATCH /api/sessions/:id/images/:imageId
+│   │                      # sessions: GET /api/sessions/:id/journal (résumé IA : durée calculée entre premier et dernier événement, 0 si journal vide)
 │   │                      # sessions: DELETE /api/sessions/:id/journal (efface tous les session_events)
 │   │                      # (+ GET /api/sessions/:id/players pour sync Obsidian)
 ├── obsidian-plugin/   # Plugin Obsidian (TypeScript) — sync Initiative Tracker ↔ DM Toolkit
