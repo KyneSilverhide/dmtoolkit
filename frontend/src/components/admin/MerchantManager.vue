@@ -360,11 +360,12 @@ onUnmounted(() => {
 
       <!-- Preset picker panel -->
       <div class="preset-toggle-row">
-        <button class="preset-toggle-btn" @click="presetPanelOpen = !presetPanelOpen">
-          <AppIcon icon="game-icons:shop" size="0.85em" />
-          {{ presetPanelOpen ? 'Masquer les modèles' : '✦ Choisir un modèle de marchand' }}
-        </button>
-        <HelpTip id="merchant.preset" />
+        <HelpTip id="merchant.preset">
+          <button class="preset-toggle-btn" @click="presetPanelOpen = !presetPanelOpen">
+            <AppIcon icon="game-icons:shop" size="0.85em" />
+            {{ presetPanelOpen ? 'Masquer les modèles' : '✦ Choisir un modèle de marchand' }}
+          </button>
+        </HelpTip>
       </div>
       <div v-if="presetPanelOpen" class="preset-panel">
         <p class="preset-panel-hint">Cliquez sur un type pour pré-remplir le formulaire. Vous pourrez tout modifier ensuite.</p>

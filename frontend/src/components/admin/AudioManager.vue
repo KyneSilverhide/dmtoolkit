@@ -473,18 +473,18 @@ onUnmounted(() => {
         >
           <AppIcon icon="lucide:trash-2" size="0.75em" /> Tout supprimer
         </button>
-        <button
-          v-if="tracks.length > 0"
-          class="reclassify-btn"
-          :class="{ loading: reclassifying }"
-          :disabled="reclassifying"
-          @click="reclassifyAll"
-        >
-          <AppIcon :icon="reclassifying ? 'lucide:loader' : 'lucide:sparkles'" size="0.75em" />
-          {{ reclassifying ? `Analyse… ${reclassifyProgress}%` : 'Reclassifier' }}
-          <span class="ai-badge">IA</span>
-        </button>
-        <HelpTip id="audio.reclassify" />
+        <HelpTip v-if="tracks.length > 0" id="audio.reclassify">
+          <button
+            class="reclassify-btn"
+            :class="{ loading: reclassifying }"
+            :disabled="reclassifying"
+            @click="reclassifyAll"
+          >
+            <AppIcon :icon="reclassifying ? 'lucide:loader' : 'lucide:sparkles'" size="0.75em" />
+            {{ reclassifying ? `Analyse… ${reclassifyProgress}%` : 'Reclassifier' }}
+            <span class="ai-badge">IA</span>
+          </button>
+        </HelpTip>
       </div>
       <div v-if="reclassifying" class="reclassify-progress">
         <div class="reclassify-fill" :style="{ width: reclassifyProgress + '%' }" />
@@ -616,12 +616,13 @@ onUnmounted(() => {
                 />
               </div>
               <div class="tile-actions">
-                <button
-                  class="icon-btn" :class="{ active: loops[track.id] }"
-                  :title="loops[track.id] ? 'Désactiver boucle' : 'Activer boucle'"
-                  @click="toggleLoop(track)"
-                ><AppIcon icon="lucide:repeat" size="0.75em" /></button>
-                <HelpTip id="audio.loop" />
+                <HelpTip id="audio.loop">
+                  <button
+                    class="icon-btn" :class="{ active: loops[track.id] }"
+                    :title="loops[track.id] ? 'Désactiver boucle' : 'Activer boucle'"
+                    @click="toggleLoop(track)"
+                  ><AppIcon icon="lucide:repeat" size="0.75em" /></button>
+                </HelpTip>
                 <button class="icon-btn" title="Renommer" @click="startRename(track)">
                   <AppIcon icon="lucide:pencil" size="0.7em" />
                 </button>

@@ -94,11 +94,12 @@ function avatarSrc(player) {
               {{ player.ac ?? '?' }}
             </span>
           </div>
-          <button class="kick-btn" @click="kickPlayer(player)" title="Expulser"
-            :data-testid="`kick-button-${player.id}`">
-            <AppIcon icon="lucide:x" size="0.85rem" />
-          </button>
-          <HelpTip id="admin.kick" />
+          <HelpTip id="admin.kick">
+            <button class="kick-btn" @click="kickPlayer(player)" title="Expulser"
+              :data-testid="`kick-button-${player.id}`">
+              <AppIcon icon="lucide:x" size="0.85rem" />
+            </button>
+          </HelpTip>
         </div>
 
         <!-- Barre HP -->

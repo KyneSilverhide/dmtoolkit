@@ -250,15 +250,16 @@ onUnmounted(() => {
         <button class="show-btn" @click.stop="selectedImageUrl = img.url; showImageOnTv(img.url)" title="Afficher sur la TV">
           <AppIcon icon="lucide:monitor" size="0.85em" /> Afficher TV
         </button>
-        <button
-          class="show-btn lobby-btn"
-          :class="{ active: activeLobbyBgUrl === img.url }"
-          @click.stop="setLobbyBg(img.url)"
-          title="Définir comme fond du lobby"
-        >
-          <AppIcon icon="lucide:image-play" size="0.85em" /> Fond lobby
-        </button>
-        <HelpTip id="image.lobby-bg" />
+        <HelpTip id="image.lobby-bg">
+          <button
+            class="show-btn lobby-btn"
+            :class="{ active: activeLobbyBgUrl === img.url }"
+            @click.stop="setLobbyBg(img.url)"
+            title="Définir comme fond du lobby"
+          >
+            <AppIcon icon="lucide:image-play" size="0.85em" /> Fond lobby
+          </button>
+        </HelpTip>
         </div>
       </div>
     </template>

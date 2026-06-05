@@ -1,11 +1,14 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, useSlots, onBeforeUnmount } from 'vue'
 import { helpContent } from '@/utils/helpContent.js'
 
 const props = defineProps({
   id: { type: String, required: true },
   position: { type: String, default: 'right' },
 })
+
+const slots = useSlots()
+const hasSlot = computed(() => !!slots.default)
 
 const visible = ref(false)
 const triggerRef = ref(null)
@@ -43,7 +46,6 @@ function calcPos() {
     top  = rect.bottom + BUBBLE_OFFSET
   }
 
-  // vertical clamp
   if (top + 80 > vh) top = vh - 90
   if (top < 8) top = 8
 
@@ -89,7 +91,20 @@ const bubbleStyle = computed(() => ({
 </script>
 
 <template>
-<button
+  <!-- Slot mode: the provided content is the trigger, no ? button added -->
+  <span
+    v-if="hasSlot"
+    ref="triggerRef"
+    class="helptip-slot-trigger"
+    @mouseenter="open"
+    @mouseleave="close"
+    @focusin="open"
+    @focusout="close"
+  ><slot /></span>
+
+  <!-- Badge mode: renders a small ? circle next to inline content -->
+  <button
+    v-else
     ref="triggerRef"
     type="button"
     class="helptip-trigger"
@@ -116,17 +131,26 @@ const bubbleStyle = computed(() => ({
 </template>
 
 <style scoped>
-/* Touch-friendly target: 44×44px minimum via padding, small visual circle via ::before */
+.helptip-slot-trigger {
+  display: inline-flex;
+  align-items: stretch;
+  cursor: default;
+}
+
+/* Touch-friendly target: visual circle kept small, padding absorbed via explicit dimensions */
 .helptip-trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem;            /* extends touch area to ≥44px */
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  flex-shrink: 0;
   border: none;
   background: transparent;
   cursor: pointer;
   vertical-align: middle;
-  font-size: 0;                /* hide the "?" text node */
+  font-size: 0;
   line-height: 0;
   color: var(--color-text-dim, #888);
   transition: color 0.15s;
@@ -164,9 +188,10 @@ const bubbleStyle = computed(() => ({
 <!-- Global styles for the Teleported bubble — cannot be scoped -->
 <style>
 .helptip-bubble {
-  background: var(--color-bg-tooltip, #1e1e2a);
-  color: var(--color-text, #e8e0d0);
-  border: 1px solid var(--color-gold-dark, #7a5c1e);
+  /* Always dark regardless of app theme — standard tooltip convention */
+  background: #1e1e2a;
+  color: #e8e0d0;
+  border: 1px solid #7a5c1e;
   border-radius: 6px;
   padding: 0.55rem 0.75rem;
   font-size: 0.78rem;
