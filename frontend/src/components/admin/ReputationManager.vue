@@ -137,15 +137,16 @@ onUnmounted(() => {
         <AppIcon icon="lucide:shield" size="1.1em" />
         Réputations de factions
       </h2>
-      <button
-        class="action-btn primary"
-        :disabled="factions.length === 0"
-        @click="showOnTv"
-      >
-        <AppIcon icon="lucide:tv" size="1em" />
-        Projeter sur TV
-      </button>
-      <HelpTip id="reputation.project" />
+      <HelpTip id="reputation.project">
+        <button
+          class="action-btn primary"
+          :disabled="factions.length === 0"
+          @click="showOnTv"
+        >
+          <AppIcon icon="lucide:tv" size="1em" />
+          Projeter sur TV
+        </button>
+      </HelpTip>
     </div>
 
     <!-- Formulaire de création -->
