@@ -1,6 +1,15 @@
 {
   "notes": [
     {
+      "version": "1.0.75",
+      "date": "2026-06-06",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Carte & brouillard de guerre — grille par cases : configurez une grille carrée ou hexagonale sur vos cartes. Le brouillard se révèle case par case en cliquant (plus de peinture libre), et la grille est synchronisée en temps réel sur la TV dès l'enregistrement." },
+        { "type": "improvement", "role": "admin", "text": "Carte — interface repensée : quand une carte est active, le canevas et les contrôles (grille, brouillard, jetons, viewport) s'affichent côte à côte, sans avoir à scroller." },
+        { "type": "improvement", "role": "admin", "text": "Interface admin pleine largeur : l'interface utilise désormais toute la largeur du navigateur." }
+      ]
+    },
+    {
       "version": "1.0.74",
       "date": "2026-06-06",
       "changes": [
