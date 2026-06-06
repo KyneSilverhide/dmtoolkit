@@ -679,6 +679,14 @@ onMounted(() => {
     renderMapFog()
   })
 
+  socket.on('map-grid-updated', ({ gridType, gridCols, gridRows, gridHexOrientation }) => {
+    mapGridType.value = gridType || 'none'
+    mapGridCols.value = gridCols || 20
+    mapGridRows.value = gridRows || 15
+    mapGridHexOrientation.value = gridHexOrientation || 'flat'
+    renderMapFog()
+  })
+
   socket.on('map-token-moved', ({ playerId, nx, ny, name }) => {
     const existing = mapTokens.value[String(playerId)] || {}
     mapTokens.value = { ...mapTokens.value, [String(playerId)]: { ...existing, nx, ny, ...(name !== undefined ? { name } : {}) } }

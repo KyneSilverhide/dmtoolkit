@@ -503,6 +503,14 @@ async function saveGridConfig() {
     if (res.ok) {
       showGridConfig.value = false
       render()
+      const socket = getSocket()
+      socket.emit('map-sync-grid', {
+        sessionId: sessionStore.activeSession.id,
+        gridType: gridType.value,
+        gridCols: gridCols.value,
+        gridRows: gridRows.value,
+        gridHexOrientation: gridHexOrientation.value,
+      })
     }
   } catch (err) { console.error(err) }
   finally { gridSaving.value = false }
@@ -1030,200 +1038,199 @@ watch([gridCols, gridRows, gridType, gridHexOrientation], () => { if (showGridCo
       </div>
     </div>
 
-    <!-- Map Controls -->
+    <!-- Map active: two-column layout — canvas left, controls right -->
     <template v-if="isMapActive && selectedImageUrl">
+      <div class="map-active-layout">
 
-      <!-- Configuration de grille -->
-      <div class="control-section">
-        <h4 class="subsection-title">
-          <AppIcon icon="lucide:grid-3x3" size="0.85em" /> Grille <HelpTip id="map.grid" />
-        </h4>
-
-        <div class="inline-actions">
-          <button class="action-btn" :class="{ active: showGridConfig }" @click="showGridConfig = !showGridConfig">
-            <AppIcon icon="lucide:settings-2" size="0.85em" />
-            {{ showGridConfig ? 'Masquer' : 'Configurer' }}
-          </button>
-          <span v-if="gridDetecting" class="hint-text"><AppIcon icon="lucide:loader" size="0.8em" /> Détection…</span>
-          <span v-else-if="gridType !== 'none'" class="grid-status-badge">
-            <AppIcon :icon="gridType === 'hex' ? 'lucide:hexagon' : 'lucide:grid-3x3'" size="0.8em" />
-            {{ gridType === 'hex' ? 'Hexagones' : 'Carrés' }} {{ gridCols }}×{{ gridRows }}
-          </span>
-          <span v-else class="hint-text">Peinture libre</span>
+        <!-- Left: Canvas -->
+        <div class="map-canvas-col">
+          <p class="hint-text canvas-hint">
+            <template v-if="pendingTokenPlayerId">Cliquez sur la carte pour placer le jeton</template>
+            <template v-else-if="showGridConfig && gridType !== 'none'">Aperçu grille — ajustez cols/lignes puis enregistrez</template>
+            <template v-else-if="fogEnabled && gridType !== 'none'">Clic gauche sur une case pour la révéler · Molette pour zoomer · Molette centrale pour naviguer</template>
+            <template v-else-if="fogEnabled">Clic gauche pour révéler · Molette pour zoomer · Molette centrale pour naviguer</template>
+            <template v-else>Clic molette pour naviguer · molette pour zoomer</template>
+          </p>
+          <div
+            ref="canvasContainer"
+            class="canvas-container"
+            :style="{ cursor: pendingTokenPlayerId ? 'crosshair' : draggingTokenId ? 'grabbing' : isDragging ? 'grabbing' : fogEnabled && gridType !== 'none' ? 'pointer' : 'default' }"
+          >
+            <canvas
+              ref="canvasEl"
+              class="map-canvas"
+              @pointerdown="onPointerDown"
+              @pointermove="onPointerMove"
+              @pointerup="onPointerUp"
+              @pointerleave="onPointerUp"
+              @pointercancel="onPointerUp"
+              @wheel.prevent="onWheel"
+              @contextmenu.prevent
+            />
+          </div>
         </div>
 
-        <template v-if="showGridConfig">
-          <div class="grid-config-panel">
-            <div class="grid-config-row">
-              <label class="grid-config-label">Type</label>
-              <div class="grid-type-selector">
-                <button
-                  v-for="t in ['none','square','hex']"
-                  :key="t"
-                  class="type-btn"
-                  :class="{ active: gridType === t }"
-                  @click="gridType = t"
-                >
-                  <AppIcon
-                    :icon="t === 'hex' ? 'lucide:hexagon' : t === 'square' ? 'lucide:grid-3x3' : 'lucide:brush'"
-                    size="0.8em"
-                  />
-                  {{ t === 'hex' ? 'Hexagones' : t === 'square' ? 'Carrés' : 'Libre' }}
+        <!-- Right: Controls panel -->
+        <div class="map-controls-col">
+
+          <!-- Configuration de grille -->
+          <div class="control-section">
+            <h4 class="subsection-title">
+              <AppIcon icon="lucide:grid-3x3" size="0.85em" /> Grille <HelpTip id="map.grid" />
+            </h4>
+
+            <div class="inline-actions">
+              <button class="action-btn" :class="{ active: showGridConfig }" @click="showGridConfig = !showGridConfig">
+                <AppIcon icon="lucide:settings-2" size="0.85em" />
+                {{ showGridConfig ? 'Masquer' : 'Configurer' }}
+              </button>
+              <span v-if="gridDetecting" class="hint-text"><AppIcon icon="lucide:loader" size="0.8em" /> Détection…</span>
+              <span v-else-if="gridType !== 'none'" class="grid-status-badge">
+                <AppIcon :icon="gridType === 'hex' ? 'lucide:hexagon' : 'lucide:grid-3x3'" size="0.8em" />
+                {{ gridType === 'hex' ? 'Hexagones' : 'Carrés' }} {{ gridCols }}×{{ gridRows }}
+              </span>
+              <span v-else class="hint-text">Peinture libre</span>
+            </div>
+
+            <template v-if="showGridConfig">
+              <div class="grid-config-panel">
+                <div class="grid-config-row">
+                  <label class="grid-config-label">Type</label>
+                  <div class="grid-type-selector">
+                    <button
+                      v-for="t in ['none','square','hex']"
+                      :key="t"
+                      class="type-btn"
+                      :class="{ active: gridType === t }"
+                      @click="gridType = t"
+                    >
+                      <AppIcon
+                        :icon="t === 'hex' ? 'lucide:hexagon' : t === 'square' ? 'lucide:grid-3x3' : 'lucide:brush'"
+                        size="0.8em"
+                      />
+                      {{ t === 'hex' ? 'Hexagones' : t === 'square' ? 'Carrés' : 'Libre' }}
+                    </button>
+                  </div>
+                </div>
+
+                <template v-if="gridType !== 'none'">
+                  <div class="grid-config-row">
+                    <label class="grid-config-label">Colonnes : {{ gridCols }}</label>
+                    <input v-model.number="gridCols" type="range" min="2" max="100" class="brush-slider" />
+                  </div>
+                  <div class="grid-config-row">
+                    <label class="grid-config-label">Lignes : {{ gridRows }}</label>
+                    <input v-model.number="gridRows" type="range" min="2" max="100" class="brush-slider" />
+                  </div>
+                  <div v-if="gridType === 'hex'" class="grid-config-row">
+                    <label class="grid-config-label">Orientation</label>
+                    <div class="grid-type-selector">
+                      <button class="type-btn" :class="{ active: gridHexOrientation === 'flat' }" @click="gridHexOrientation = 'flat'">Plate</button>
+                      <button class="type-btn" :class="{ active: gridHexOrientation === 'pointy' }" @click="gridHexOrientation = 'pointy'">Pointue</button>
+                    </div>
+                  </div>
+                </template>
+
+                <button class="action-btn save-grid-btn" :disabled="gridSaving" @click="saveGridConfig">
+                  <AppIcon icon="lucide:save" size="0.85em" />
+                  {{ gridSaving ? 'Enregistrement…' : 'Enregistrer la grille' }}
                 </button>
               </div>
-            </div>
+            </template>
+          </div>
 
-            <template v-if="gridType !== 'none'">
-              <div class="grid-config-row">
-                <label class="grid-config-label">Colonnes : {{ gridCols }}</label>
-                <input v-model.number="gridCols" type="range" min="2" max="100" class="brush-slider" />
-              </div>
-              <div class="grid-config-row">
-                <label class="grid-config-label">Lignes : {{ gridRows }}</label>
-                <input v-model.number="gridRows" type="range" min="2" max="100" class="brush-slider" />
-              </div>
-              <div v-if="gridType === 'hex'" class="grid-config-row">
-                <label class="grid-config-label">Orientation</label>
-                <div class="grid-type-selector">
-                  <button class="type-btn" :class="{ active: gridHexOrientation === 'flat' }" @click="gridHexOrientation = 'flat'">Plate</button>
-                  <button class="type-btn" :class="{ active: gridHexOrientation === 'pointy' }" @click="gridHexOrientation = 'pointy'">Pointue</button>
-                </div>
+          <!-- Brouillard de guerre -->
+          <div class="control-section">
+            <h4 class="subsection-title"><AppIcon icon="lucide:cloud" size="0.85em" /> Brouillard <HelpTip id="map.fog" /></h4>
+            <div class="inline-actions">
+              <button class="action-btn" :class="{ active: fogEnabled }" @click="toggleFog">
+                <AppIcon :icon="fogEnabled ? 'lucide:eye-off' : 'lucide:eye'" size="0.85em" />
+                {{ fogEnabled ? 'Désactiver' : 'Activer' }}
+              </button>
+              <button class="action-btn danger-btn" :disabled="!fogEnabled" @click="resetFog">
+                <AppIcon icon="lucide:refresh-cw" size="0.85em" /> Reset
+              </button>
+            </div>
+            <template v-if="fogEnabled && gridType === 'none'">
+              <div class="brush-controls">
+                <label class="brush-label">
+                  Rayon : {{ brushRadius }}px <HelpTip id="map.fog-brush" />
+                  <input v-model.number="brushRadius" type="range" :min="MIN_BRUSH_RADIUS" :max="MAX_BRUSH_RADIUS" class="brush-slider" />
+                </label>
               </div>
             </template>
-
-            <button class="action-btn save-grid-btn" :disabled="gridSaving" @click="saveGridConfig">
-              <AppIcon icon="lucide:save" size="0.85em" />
-              {{ gridSaving ? 'Enregistrement…' : 'Enregistrer la grille' }}
-            </button>
           </div>
-        </template>
-      </div>
 
-      <!-- Brouillard de guerre -->
-      <div class="control-section">
-        <h4 class="subsection-title"><AppIcon icon="lucide:cloud" size="0.85em" /> Brouillard de guerre <HelpTip id="map.fog" /></h4>
-        <div class="inline-actions">
-          <button class="action-btn" :class="{ active: fogEnabled }" @click="toggleFog">
-            <AppIcon :icon="fogEnabled ? 'lucide:eye-off' : 'lucide:eye'" size="0.85em" />
-            {{ fogEnabled ? 'Désactiver' : 'Activer' }}
-          </button>
-          <button class="action-btn danger-btn" :disabled="!fogEnabled" @click="resetFog">
-            <AppIcon icon="lucide:refresh-cw" size="0.85em" /> Réinitialiser
-          </button>
-        </div>
-        <template v-if="fogEnabled && gridType === 'none'">
-          <div class="brush-controls">
-            <p class="hint-text"><AppIcon icon="lucide:brush" size="0.85em" /> Clic gauche pour révéler la carte</p>
-            <label class="brush-label">
-              Rayon : {{ brushRadius }}px <HelpTip id="map.fog-brush" />
-              <input v-model.number="brushRadius" type="range" :min="MIN_BRUSH_RADIUS" :max="MAX_BRUSH_RADIUS" class="brush-slider" />
-            </label>
-          </div>
-        </template>
-        <template v-else-if="fogEnabled && gridType !== 'none'">
-          <p class="hint-text"><AppIcon icon="lucide:mouse-pointer-click" size="0.85em" /> Clic gauche sur une case pour la révéler</p>
-        </template>
-      </div>
-
-      <!-- Jetons de joueurs -->
-      <div class="control-section">
-        <h4 class="subsection-title"><AppIcon icon="game-icons:wizard-staff" size="0.85em" /> Jetons de joueurs <HelpTip id="map.token-place" /></h4>
-        <p v-if="sessionStore.players.length === 0" class="hint-text">Aucun joueur connecté.</p>
-        <div v-else class="token-tray">
-          <div
-            v-for="player in sessionStore.players"
-            :key="player.id"
-            class="token-chip"
-            :class="{
-              placed: !!mapTokens[String(player.id)],
-              pending: pendingTokenPlayerId === String(player.id),
-            }"
-            :title="mapTokens[String(player.id)] ? 'Cliquer pour retirer de la carte' : 'Cliquer pour placer sur la carte'"
-            @click="toggleTokenPlacement(player.id)"
-          >
-            <div class="chip-avatar">
-              <img v-if="player.avatar_url" :src="imageFullUrl(player.avatar_url)" :alt="player.player_name" class="chip-img" />
-              <span v-else class="chip-initial">{{ player.player_name?.[0]?.toUpperCase() || '?' }}</span>
+          <!-- Jetons de joueurs -->
+          <div class="control-section">
+            <h4 class="subsection-title"><AppIcon icon="game-icons:wizard-staff" size="0.85em" /> Jetons <HelpTip id="map.token-place" /></h4>
+            <p v-if="sessionStore.players.length === 0" class="hint-text">Aucun joueur connecté.</p>
+            <div v-else class="token-tray">
+              <div
+                v-for="player in sessionStore.players"
+                :key="player.id"
+                class="token-chip"
+                :class="{
+                  placed: !!mapTokens[String(player.id)],
+                  pending: pendingTokenPlayerId === String(player.id),
+                }"
+                :title="mapTokens[String(player.id)] ? 'Cliquer pour retirer de la carte' : 'Cliquer pour placer sur la carte'"
+                @click="toggleTokenPlacement(player.id)"
+              >
+                <div class="chip-avatar">
+                  <img v-if="player.avatar_url" :src="imageFullUrl(player.avatar_url)" :alt="player.player_name" class="chip-img" />
+                  <span v-else class="chip-initial">{{ player.player_name?.[0]?.toUpperCase() || '?' }}</span>
+                </div>
+                <span class="chip-name">{{ player.player_name }}</span>
+                <span v-if="mapTokens[String(player.id)]" class="chip-badge">✓</span>
+                <span v-else-if="pendingTokenPlayerId === String(player.id)" class="chip-badge pending-badge"><AppIcon icon="lucide:map-pin" size="0.75rem" /></span>
+              </div>
             </div>
-            <span class="chip-name">{{ player.player_name }}</span>
-            <span v-if="mapTokens[String(player.id)]" class="chip-badge">✓</span>
-            <span v-else-if="pendingTokenPlayerId === String(player.id)" class="chip-badge pending-badge"><AppIcon icon="lucide:map-pin" size="0.75rem" /></span>
+
+            <div class="custom-token-form">
+              <input
+                  v-model="customTokenName"
+                  class="custom-token-input"
+                  placeholder="Nom custom…"
+                  maxlength="30"
+                  @keydown.enter="addCustomToken"
+              />
+              <button
+                  class="action-btn"
+                  :class="{ active: pendingCustomToken }"
+                  :disabled="!customTokenName.trim()"
+                  @click="addCustomToken"
+              >
+                <AppIcon icon="lucide:map-pin" size="0.85em" />
+              </button>
+            </div>
+            <p v-if="pendingCustomToken || pendingTokenPlayerId" class="hint-text placement-hint">
+              <AppIcon icon="lucide:map-pin" size="0.85em" /> Cliquez sur la carte pour placer
+            </p>
+            <div v-if="Object.keys(mapTokens).some(k => k.startsWith('custom_'))" class="token-tray" style="margin-top:0.4rem">
+              <template v-for="(tokenPos, pid) in mapTokens" :key="pid">
+                <div v-if="String(pid).startsWith('custom_')" class="token-chip placed" @click="removeCustomToken(pid)"
+                    title="Cliquer pour retirer"><span class="chip-initial" style="color:#6aaa44">{{
+                    tokenPos.name?.[0]?.toUpperCase() || '?'
+                  }}</span> <span class="chip-name">{{ tokenPos.name }}</span> <span class="chip-badge"
+                                                                                    style="color:#6aaa44">✓</span></div>
+              </template>
+            </div>
           </div>
-        </div>
 
-        <div class="custom-token-form">
-          <input
-              v-model="customTokenName"
-              class="custom-token-input"
-              placeholder="Nom du jeton custom…"
-              maxlength="30"
-              @keydown.enter="addCustomToken"
-          />
-          <button
-              class="action-btn"
-              :class="{ active: pendingCustomToken }"
-              :disabled="!customTokenName.trim()"
-              @click="addCustomToken"
-          >
-            <AppIcon icon="lucide:map-pin" size="0.85em" /> Placer
-          </button>
-        </div>
-        <p v-if="pendingCustomToken" class="hint-text placement-hint">
-          <AppIcon icon="lucide:map-pin" size="0.85em" /> Cliquez sur la carte pour placer "{{ customTokenName }}"
-        </p>
-        <div v-if="Object.keys(mapTokens).some(k => k.startsWith('custom_'))" class="token-tray" style="margin-top:0.4rem">
-          <template v-for="(tokenPos, pid) in mapTokens" :key="pid">
-            <div v-if="String(pid).startsWith('custom_')" class="token-chip placed" @click="removeCustomToken(pid)"
-                 title="Cliquer pour retirer"><span class="chip-initial" style="color:#6aaa44">{{
-                tokenPos.name?.[0]?.toUpperCase() || '?'
-              }}</span> <span class="chip-name">{{ tokenPos.name }}</span> <span class="chip-badge"
-                                                                                 style="color:#6aaa44">✓</span></div>
-          </template>
-        </div>
-        <p v-if="pendingTokenPlayerId" class="hint-text placement-hint">
-          <AppIcon icon="lucide:map-pin" size="0.85em" /> Cliquez sur la carte pour placer le jeton
-        </p>
-      </div>
+          <!-- Viewport Controls -->
+          <div class="control-section">
+            <h4 class="subsection-title"><AppIcon icon="lucide:maximize-2" size="0.85em" /> Viewport TV <HelpTip id="map.viewport" /></h4>
+            <p class="viewport-info">
+              x: {{ viewport.x.toFixed(0) }}, y: {{ viewport.y.toFixed(0) }}, zoom: {{ viewport.scale.toFixed(2) }}×
+            </p>
+            <div class="inline-actions">
+              <button class="action-btn" @click="zoomIn">＋</button>
+              <button class="action-btn" @click="zoomOut">－</button>
+              <button class="action-btn" @click="resetViewport">↺</button>
+            </div>
+          </div>
 
-      <!-- Viewport Controls -->
-      <div class="control-section">
-        <h4 class="subsection-title"><AppIcon icon="lucide:maximize-2" size="0.85em" /> Viewport TV <HelpTip id="map.viewport" /></h4>
-        <p class="viewport-info">
-          x: {{ viewport.x.toFixed(0) }}, y: {{ viewport.y.toFixed(0) }}, zoom: {{ viewport.scale.toFixed(2) }}×
-        </p>
-        <div class="inline-actions">
-          <button class="action-btn" @click="zoomIn">＋ Zoom</button>
-          <button class="action-btn" @click="zoomOut">－ Zoom</button>
-          <button class="action-btn" @click="resetViewport">↺ Réinitialiser</button>
-        </div>
-      </div>
-
-      <!-- Canvas -->
-      <div class="control-section">
-        <h4 class="subsection-title"><AppIcon icon="lucide:eye" size="0.85em" /> Vue TV en temps réel</h4>
-        <p class="hint-text">
-          <template v-if="pendingTokenPlayerId">Cliquez sur la carte pour placer le jeton</template>
-          <template v-else-if="showGridConfig && gridType !== 'none'">Aperçu grille — ajustez cols/lignes puis enregistrez</template>
-          <template v-else-if="fogEnabled && gridType !== 'none'">Clic gauche sur une case pour la révéler · Molette pour zoomer · Molette centrale pour naviguer</template>
-          <template v-else-if="fogEnabled">Clic gauche pour révéler · Molette pour zoomer · Molette centrale pour naviguer</template>
-          <template v-else>↕ Clic molette pour naviguer · molette pour zoomer</template>
-        </p>
-        <div
-          ref="canvasContainer"
-          class="canvas-container"
-          :style="{ cursor: pendingTokenPlayerId ? 'crosshair' : draggingTokenId ? 'grabbing' : isDragging ? 'grabbing' : fogEnabled && gridType !== 'none' ? 'pointer' : 'default' }"
-        >
-          <canvas
-            ref="canvasEl"
-            class="map-canvas"
-            @pointerdown="onPointerDown"
-            @pointermove="onPointerMove"
-            @pointerup="onPointerUp"
-            @pointerleave="onPointerUp"
-            @pointercancel="onPointerUp"
-            @wheel.prevent="onWheel"
-            @contextmenu.prevent
-          />
         </div>
       </div>
     </template>
@@ -1506,9 +1513,38 @@ watch([gridCols, gridRows, gridType, gridHexOrientation], () => { if (showGridCo
 .viewport-info { font-family: var(--font-heading), sans-serif; font-size: 0.68rem; color: var(--color-text-dim); letter-spacing: 0.06em; margin: 0; }
 .hint-text { font-family: var(--font-body), sans-serif; font-size: 0.75rem; color: var(--color-text-dim); margin: 0; }
 
+/* ── Two-column map layout ── */
+.map-active-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.map-canvas-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.map-controls-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+  max-height: 80vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.canvas-hint {
+  margin: 0;
+}
+
 .canvas-container {
   width: 100%;
-  height: 65vh;
+  height: 72vh;
   border-radius: 8px;
   border: 1px solid var(--color-border);
   overflow: hidden;
@@ -1521,6 +1557,20 @@ watch([gridCols, gridRows, gridType, gridHexOrientation], () => { if (showGridCo
   height: 100%;
   display: block;
   touch-action: none;
+}
+
+@media (max-width: 900px) {
+  .map-active-layout {
+    grid-template-columns: 1fr;
+  }
+  .map-controls-col {
+    max-height: none;
+    overflow-y: visible;
+  }
+  .canvas-container {
+    height: 55vw;
+    min-height: 280px;
+  }
 }
 
 .thumb-wrapper {
