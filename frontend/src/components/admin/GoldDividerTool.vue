@@ -283,7 +283,7 @@ function reset() {
                   Groupe ({{ groupedPlayerIds.length }} joueur{{ groupedPlayerIds.length > 1 ? 's' : '' }})
                 </span>
                 <span class="player-share group-total">{{ formatShare(groupedShares) }}</span>
-                <span class="share-pc-value">≈ {{ groupedShares_individual.reduce((s, sh) => s + shareTotalPc(sh), 0) }} PC</span>
+                <span class="share-pc-value">≈ {{ shareTotalPc(groupedShares) }} PC</span>
               </div>
               <div v-if="groupExpanded" class="group-members">
                 <div
