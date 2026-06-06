@@ -266,6 +266,11 @@ onMounted(() => {
   socket.on('timer-stopped', handleTimerStopped)
   socket.on('time-scale-updated', handleTimeScaleUpdated)
   socket.on('time-scale-ended', handleTimeScaleEnded)
+  // TvControls mounts lazily (KeepAlive tab) — admin-state was already sent before mount.
+  // Re-emit admin-join to get a fresh snapshot of doom/tension/timescale state.
+  if (sessionStore.activeSession?.id) {
+    socket.emit('admin-join', sessionStore.activeSession.id)
+  }
 })
 
 onUnmounted(() => {

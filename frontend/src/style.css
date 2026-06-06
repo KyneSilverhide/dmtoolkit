@@ -209,10 +209,6 @@ body {
   color: inherit;
 }
 
-body.page-admin #app {
-  max-width: 100%;
-}
-
 button,
 .home-btn,
 .send-btn,
@@ -300,6 +296,9 @@ button:hover:not(:disabled),
 .tab-slide-leave-to     { opacity: 0; transform: translateX(-24px); }
 
 @media (min-width: 1024px) {
+  .admin-wrapper {
+    max-width: 1440px !important;
+  }
   .admin-main {
     padding: 2rem !important;
   }

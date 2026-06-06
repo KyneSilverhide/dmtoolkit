@@ -67,7 +67,7 @@ function handlePlayerRollResult(data) {
 function replyToPlayer(entry) {
   if (entry.playerId) {
     const found = sessionStore.players.find(p => p.id === entry.playerId)
-    if (found) selectedPlayerId.value = String(found.id)
+    if (found) selectedPlayerId.value = found.id
   }
   messageType.value = 'text'
 }

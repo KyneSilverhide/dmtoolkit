@@ -1419,7 +1419,7 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
 .gallery-thumb {
   width: 100%;
   height: auto;
-  aspect-ratio: unset;
+  aspect-ratio: 16/9;
   object-fit: cover;
   border-radius: 6px;
   border: 1px solid var(--color-border);
