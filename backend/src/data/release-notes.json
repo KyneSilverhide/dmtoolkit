@@ -1,6 +1,15 @@
 {
   "notes": [
     {
+      "version": "1.0.73",
+      "date": "2026-06-06",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Répartition de trésor — mode Complet : nouvel algorithme équitable par remplissage progressif (water-fill). Les pièces de chaque dénomination vont en priorité aux joueurs qui ont reçu le moins en valeur cumulée, évitant ainsi les écarts induits par la découpe dénomination par dénomination." },
+        { "type": "feature", "role": "admin", "text": "Répartition de trésor — valeur en PC : chaque joueur affiche maintenant l'équivalent total en pièces de cuivre de sa part, pour vérifier d'un coup d'œil l'équité de la distribution." },
+        { "type": "feature", "role": "admin", "text": "Répartition de trésor — groupement de joueurs : possibilité de regrouper plusieurs joueurs sous un rôle de banquier. Le total consolidé s'affiche en en-tête du groupe, avec le détail individuel dépliable." }
+      ]
+    },
+    {
       "version": "1.0.67",
       "date": "2026-06-03",
       "changes": [

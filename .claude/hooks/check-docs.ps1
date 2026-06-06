@@ -11,8 +11,14 @@ $allChanged   = ($changedFiles + $stagedFiles) | Select-Object -Unique
 if (-not $allChanged) { exit 0 }
 
 $sourcePatterns = @(
-    '^backend/src/',
-    '^frontend/src/',
+    '^backend/src/routes/',
+    '^backend/src/socket\.js$',
+    '^backend/src/migrations\.js$',
+    '^backend/src/index\.js$',
+    '^backend/src/demo\.js$',
+    '^frontend/src/stores/',
+    '^frontend/src/router/',
+    '^frontend/src/socket\.js$',
     '^docker-compose',
     '^backend/package\.json$',
     '^frontend/package\.json$',

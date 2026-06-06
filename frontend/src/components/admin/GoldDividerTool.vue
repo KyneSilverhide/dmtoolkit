@@ -38,11 +38,12 @@ function computeExactShares(playerList, amts) {
   })
 }
 
-// For 'approximate' mode: distribute all coins, extras go to players
-// with lowest running value total (processing denominations high → low)
+// For 'approximate' mode: water-fill across all denominations.
+// Each coin goes to the player(s) with the lowest cumulative PC value,
+// filling gaps between tiers before distributing evenly at the top.
 function computeApproximateShares(playerList, amts) {
   const n = playerList.length
-  const runningTotals = playerList.map((_, i) => ({ idx: i, total: 0 }))
+  const totals = new Array(n).fill(0)
   const result = playerList.map(p => {
     const share = { playerId: p.id, playerName: p.player_name }
     for (const coin of COINS) share[coin.key] = 0
@@ -50,22 +51,37 @@ function computeApproximateShares(playerList, amts) {
   })
 
   for (const coin of COINS) {
-    const amt = Math.max(0, Math.floor(Number(amts[coin.key]) || 0))
-    if (amt === 0) continue
-    const base = Math.floor(amt / n)
-    const r = amt % n
+    let remaining = Math.max(0, Math.floor(Number(amts[coin.key]) || 0))
+    if (remaining === 0) continue
 
-    for (let i = 0; i < n; i++) {
-      result[i][coin.key] = base
-      runningTotals[i].total += base * coin.pcValue
-    }
+    while (remaining > 0) {
+      const minTotal = Math.min(...totals)
+      const minIdxs = []
+      let nextTotal = Infinity
+      for (let i = 0; i < totals.length; i++) {
+        const t = totals[i]
+        if (t === minTotal) minIdxs.push(i)
+        else if (t > minTotal && t < nextTotal) nextTotal = t
+      }
+      const gapPc = nextTotal === Infinity ? Infinity : nextTotal - minTotal
+      const coinsToFill = gapPc === Infinity ? Infinity : Math.ceil(gapPc / coin.pcValue)
+      const coinsNeeded = coinsToFill * minIdxs.length
 
-    if (r > 0) {
-      const sorted = [...runningTotals].sort((a, b) => a.total - b.total)
-      for (let j = 0; j < r; j++) {
-        const idx = sorted[j].idx
-        result[idx][coin.key] += 1
-        runningTotals[idx].total += coin.pcValue
+      if (coinsNeeded <= remaining) {
+        for (const idx of minIdxs) {
+          result[idx][coin.key] += coinsToFill
+          totals[idx] += coinsToFill * coin.pcValue
+        }
+        remaining -= coinsNeeded
+      } else {
+        const perPlayer = Math.floor(remaining / minIdxs.length)
+        const rem = remaining % minIdxs.length
+        for (let k = 0; k < minIdxs.length; k++) {
+          const give = perPlayer + (k < rem ? 1 : 0)
+          result[minIdxs[k]][coin.key] += give
+          totals[minIdxs[k]] += give * coin.pcValue
+        }
+        remaining = 0
       }
     }
   }
@@ -130,6 +146,10 @@ function formatShare(share) {
     if (share[coin.key] > 0) parts.push(`${share[coin.key]} ${coin.label}`)
   }
   return parts.length > 0 ? parts.join(', ') : 'Rien'
+}
+
+function shareTotalPc(share) {
+  return COINS.reduce((sum, coin) => sum + (share[coin.key] || 0) * coin.pcValue, 0)
 }
 
 function anyNonZeroShare() {
@@ -244,6 +264,7 @@ function reset() {
             </button>
             <span class="player-name"><AppIcon icon="game-icons:crossed-swords" size="0.8rem" color="var(--color-gold-bright)" /> {{ share.playerName }}</span>
             <span class="player-share">{{ formatShare(share) }}</span>
+            <span class="share-pc-value">≈ {{ shareTotalPc(share) }} PC</span>
           </div>
 
           <!-- Group row (if any players grouped) -->
@@ -262,6 +283,7 @@ function reset() {
                   Groupe ({{ groupedPlayerIds.length }} joueur{{ groupedPlayerIds.length > 1 ? 's' : '' }})
                 </span>
                 <span class="player-share group-total">{{ formatShare(groupedShares) }}</span>
+                <span class="share-pc-value">≈ {{ shareTotalPc(groupedShares) }} PC</span>
               </div>
               <div v-if="groupExpanded" class="group-members">
                 <div
@@ -278,6 +300,7 @@ function reset() {
                   </button>
                   <span class="player-name player-name-dim">{{ share.playerName }}</span>
                   <span class="player-share player-share-dim">{{ formatShare(share) }}</span>
+                  <span class="share-pc-value">≈ {{ shareTotalPc(share) }} PC</span>
                 </div>
               </div>
             </div>
@@ -613,6 +636,14 @@ function reset() {
 .player-share-dim {
   color: var(--color-text-dim);
   font-size: 0.78rem;
+}
+
+.share-pc-value {
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.68rem;
+  color: var(--color-text-dim);
+  white-space: nowrap;
+  opacity: 0.7;
 }
 
 .remainders {
