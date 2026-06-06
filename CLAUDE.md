@@ -132,6 +132,7 @@ cd frontend && npm run dev  # vite dev server
 - Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/timescale/vote/image/map/merchant/puzzle/reputation), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`, `combat_round` (entier), `timer_label` (VARCHAR 200), `timer_end_at` (TIMESTAMP), `lobby_bg_url` (VARCHAR 500, image de fond du lobby TV à 15 % d'opacité), `current_puzzle_image_id` (INTEGER), `current_puzzle_url` (VARCHAR 500), `current_puzzle_seed` (VARCHAR 100), `current_image_label` (VARCHAR 200 : label affiché en overlay top-left sur la TV quand une image est projetée).
 - Colonnes `timescale_*` de `sessions` : `timescale_title` (VARCHAR 200), `timescale_total_hours` (INTEGER, ex: 24), `timescale_slot_count` (INTEGER, nb de paliers), `timescale_rest_slots` (INTEGER, durée du repos long en paliers), `timescale_elapsed_slots` (INTEGER, paliers écoulés), `timescale_rest_taken` (BOOLEAN, défaut FALSE : indique si le repos long a déjà été pris). Toutes nullable ; si `timescale_title` est NULL l'échelle est inactive.
 - Colonnes clés de `session_images` : `url`, `original_name` (nom d'affichage, renommable), `type` (`image` / `map` / `audio`), `audio_category` (VARCHAR 50 : catégorie libre assignée par l'IA (GPT-4o-mini via GitHub Models) au moment de l'upload ; défaut `Général` si GITHUB_TOKEN absent ou si l'IA échoue ; l'admin peut saisir/modifier librement depuis l'AudioManager), `thumbnail_url` (VARCHAR 500 : URL du WebP 400px généré par `sharp` après upload pour les types `image` et `map` — null pour les fichiers audio ou si la génération échoue ; les galeries admin utilisent cette URL avec fallback sur `url`), `tv_label` (VARCHAR 200 : label optionnel affiché en overlay top-left sur la TV lors de la projection — saisie inline dans l'ImageManager, sauvegardé via PATCH).
+- Colonnes clés de `messages` : `session_id`, `from_name` (VARCHAR), `to_player_id` (FK players, nullable — NULL = tous), `from_player_id` (FK players ON DELETE SET NULL, nullable — non-NULL = message joueur → MJ), `type` (`text`/`image`/`gold`/`player`), `content`, `voice_style`, `text_effect`, `author_color`.
 - Colonnes clés de `players` : `ac`, `max_hp`, `current_hp`, `initiative`, `conditions` (JSON array), `is_concentrating`, `dnd_class`, `avatar_url`, `socket_id`.
 - Les joueurs sont supprimés de la DB à la déconnexion socket (`disconnect`/`leave-session`).
 - Les codes de session sont sur **4 chiffres numériques** (migration automatique des anciens codes).
@@ -160,6 +161,7 @@ cd frontend && npm run dev  # vite dev server
 | `update-concentration` | Basculer la concentration |
 | `update-initiative` | Mettre à jour l'initiative |
 | `player-roll` | Envoyer un jet de dé effectué par le joueur (résultat transmis à l'admin) |
+| `player-send-message` | Envoyer un message secret au MJ (`{ content }`) |
 | `submit-vote` | Voter pour une option |
 | `request-purchase` | Demander l'achat d'un objet (legacy) |
 | `request-batch-purchase` | Demander l'achat d'un panier d'objets |
@@ -248,6 +250,8 @@ cd frontend && npm run dev  # vite dev server
 | `player-roll-result` | admin | Résultat d'un jet de dé effectué côté joueur |
 | `player-roll-confirmed` | joueur | Confirmation du jet de dé (visible) |
 | `player-roll-hidden-sent` | joueur | Confirmation du jet de dé masqué envoyé à l'admin |
+| `player-message` | admin | Message secret d'un joueur — `{ playerName, playerId, content, sentAt }` |
+| `player-message-sent` | joueur | Confirmation que le message secret a été envoyé au MJ |
 | `tv-mode-changed` | TV + admin | Changement de mode TV (pour `image` : inclut `imageUrl` et `imageLabel`) |
 | `doom-clock-started` | TV + admin | Démarrage de l'horloge doom |
 | `doom-clock-stopped` | TV + admin | Arrêt de l'horloge doom |

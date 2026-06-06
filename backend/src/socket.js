@@ -1371,6 +1371,28 @@ function setupSocket(io) {
       } catch (err) { console.error(err) }
     })
 
+    // ── Player: send secret message to DM ──────────────────────────────────
+    socket.on('player-send-message', async ({ content }) => {
+      if (!socket.playerId || !socket.sessionId) return
+      try {
+        const pr = await pool.query('SELECT player_name FROM players WHERE id = $1', [socket.playerId])
+        const playerName = pr.rows[0]?.player_name || 'Inconnu'
+        const trimmed = (content || '').trim().slice(0, 1000)
+        if (!trimmed) return
+        await pool.query(
+          'INSERT INTO messages (session_id, from_name, from_player_id, type, content) VALUES ($1, $2, $3, $4, $5)',
+          [socket.sessionId, playerName, socket.playerId, 'player', trimmed]
+        )
+        io.to(`admin:${socket.sessionId}`).emit('player-message', {
+          playerName,
+          playerId: socket.playerId,
+          content: trimmed,
+          sentAt: new Date(),
+        })
+        socket.emit('player-message-sent')
+      } catch (err) { console.error(err) }
+    })
+
     // ── Admin: send gold split to players ───────────────────────────────────
     socket.on('send-gold-split', async ({ sessionId, shares }) => {
       if (!socket.admin) return

@@ -246,6 +246,9 @@ ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timescale_slot_count INTEGER;
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timescale_rest_slots INTEGER;
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timescale_elapsed_slots INTEGER DEFAULT 0;
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timescale_rest_taken BOOLEAN DEFAULT FALSE;
+
+-- Player-to-DM secret messages
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS from_player_id INTEGER REFERENCES players(id) ON DELETE SET NULL;
 `
 
 async function runMigrations() {

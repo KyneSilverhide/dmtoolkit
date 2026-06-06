@@ -36,6 +36,10 @@ const router = useRouter()
 const route = useRoute()
 const messages = ref([])
 const unreadMessages = ref(0)
+const playerMessageText = ref('')
+const playerMessageSending = ref(false)
+const playerMessageSent = ref(false)
+const replyContext = ref(null) // { fromName, content } when replying
 const playerInfo = ref(sessionStore.playerInfo || { name: 'Aventurier', hp: 20, maxHp: 20, ac: 10 })
 const sessionName = ref(sessionStore.activeSession?.name || 'Session')
 import { BACKEND_URL } from '@/config.js'
@@ -256,6 +260,18 @@ async function handleNotificationButton() {
   if (permission === 'granted') {
     pushAttentionToast('Notifications prêtes', 'Vous verrez désormais des alertes locales quand le MJ vous contacte.', 'success')
   }
+}
+
+function sendPlayerMessage() {
+  const text = playerMessageText.value.trim()
+  if (!text || playerMessageSending.value) return
+  const socket = getSocket()
+  playerMessageSending.value = true
+  socket.emit('player-send-message', { content: text })
+}
+
+function setReplyContext(msg) {
+  replyContext.value = { fromName: msg.fromName || 'MJ', content: msg.content }
 }
 
 function switchTab(tab) {
@@ -526,6 +542,13 @@ const handleDiceResult = (data) => {
   if (activeTab.value !== 'messages') unreadMessages.value++
   notifyAttention(`Résultat Critical Fail (${data?.combatType || 'attaque'}).`)
 }
+const handlePlayerMessageSent = () => {
+  playerMessageSending.value = false
+  playerMessageSent.value = true
+  playerMessageText.value = ''
+  replyContext.value = null
+  setTimeout(() => { playerMessageSent.value = false }, 2500)
+}
 const handleHpConfirmed = (data) => {
   currentHp.value = data.newHp
   pendingHp.value = data.newHp
@@ -742,6 +765,7 @@ onMounted(async () => {
   socket.on('connect', handleSocketReconnect)
   socket.on(NEW_MESSAGE, handleNewMessage)
   socket.on(DICE_RESULT, handleDiceResult)
+  socket.on('player-message-sent', handlePlayerMessageSent)
   socket.on(HP_UPDATE_CONFIRMED, handleHpConfirmed)
   socket.on(MAX_HP_UPDATE_CONFIRMED, handleMaxHpConfirmed)
   socket.on(CONCENTRATION_CONFIRMED, handleConcentrationConfirmed)
@@ -778,6 +802,7 @@ onUnmounted(() => {
     socket.off('connect', handleSocketReconnect)
     socket.off(NEW_MESSAGE, handleNewMessage)
     socket.off(DICE_RESULT, handleDiceResult)
+    socket.off('player-message-sent', handlePlayerMessageSent)
     socket.off(HP_UPDATE_CONFIRMED, handleHpConfirmed)
     socket.off(MAX_HP_UPDATE_CONFIRMED, handleMaxHpConfirmed)
     socket.off(CONCENTRATION_CONFIRMED, handleConcentrationConfirmed)
@@ -1331,7 +1356,41 @@ onUnmounted(() => {
           <p class="empty-sub">Restez vigilant, aventurier.</p>
         </div>
         <div v-else class="messages-list">
-          <MessageCard v-for="(msg, idx) in messages" :key="idx" :message="msg" />
+          <MessageCard
+            v-for="(msg, idx) in messages"
+            :key="idx"
+            :message="msg"
+            :allow-reply="msg.kind === 'message'"
+            @reply="setReplyContext(msg)"
+          />
+        </div>
+
+        <!-- Player compose area -->
+        <div class="player-compose">
+          <div v-if="replyContext" class="reply-context">
+            <span class="reply-context-label">↩ En réponse à {{ replyContext.fromName }}</span>
+            <button class="reply-context-clear" @click="replyContext = null">✕</button>
+          </div>
+          <div class="compose-row">
+            <textarea
+              v-model="playerMessageText"
+              class="compose-textarea"
+              placeholder="Message secret au MJ…"
+              rows="2"
+              @keydown.ctrl.enter.prevent="sendPlayerMessage"
+            />
+            <button
+              class="compose-send-btn"
+              :disabled="!playerMessageText.trim() || playerMessageSending"
+              @click="sendPlayerMessage"
+              title="Envoyer (Ctrl+Entrée)"
+            >
+              <AppIcon v-if="!playerMessageSending && !playerMessageSent" icon="lucide:send" size="1.1rem" />
+              <AppIcon v-else-if="playerMessageSent" icon="lucide:check" size="1.1rem" color="var(--color-success)" />
+              <AppIcon v-else icon="lucide:loader" size="1.1rem" />
+            </button>
+          </div>
+          <p v-if="playerMessageSent" class="compose-feedback">Message envoyé au MJ.</p>
         </div>
       </div>
 
@@ -2142,6 +2201,92 @@ onUnmounted(() => {
 
 /* ── Messages ────────────────────────────────────────────────────────── */
 .messages-list { display: flex; flex-direction: column; gap: 1rem; }
+
+.player-compose {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.reply-context {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.75rem;
+  background: var(--color-surface-alt);
+  border-radius: 6px;
+  border-left: 2px solid var(--color-gold-dark);
+}
+
+.reply-context-label {
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.78rem;
+  color: var(--color-text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reply-context-clear {
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  cursor: pointer;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  padding: 0 0.25rem;
+}
+
+.compose-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.compose-textarea {
+  flex: 1;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  color: var(--color-parchment);
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.9rem;
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s;
+  line-height: 1.4;
+}
+
+.compose-textarea:focus { border-color: var(--color-gold-dark); }
+
+.compose-send-btn {
+  flex-shrink: 0;
+  width: 2.6rem;
+  height: 2.6rem;
+  background: var(--gradient-accent-action);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 8px;
+  color: var(--color-gold-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.compose-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.compose-send-btn:hover:not(:disabled) { box-shadow: var(--shadow-soft); }
+
+.compose-feedback {
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.8rem;
+  color: var(--color-success, #34d399);
+  text-align: center;
+}
 
 /* ── Empty states ────────────────────────────────────────────────────── */
 .empty-panel {

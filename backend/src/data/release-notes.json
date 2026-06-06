@@ -1,6 +1,15 @@
 {
   "notes": [
     {
+      "version": "1.0.74",
+      "date": "2026-06-06",
+      "changes": [
+        { "type": "feature", "role": "player", "text": "Messages — zone de composition : envoyez un message secret au MJ directement depuis l'onglet Messages. Le message n'est visible que par le Maître du Jeu." },
+        { "type": "feature", "role": "player", "text": "Messages — réponse rapide : bouton ↩ sur chaque message du MJ pour ouvrir la zone de composition avec le contexte de la réponse." },
+        { "type": "feature", "role": "admin", "text": "Messages — boîte de réception joueurs : panneau « Reçus des joueurs » dans l'outil Message affiche les messages secrets reçus et les jets de dés cachés. Badge de notification pour les non-lus, bouton Répondre pour cibler directement le joueur concerné." }
+      ]
+    },
+    {
       "version": "1.0.73",
       "date": "2026-06-06",
       "changes": [
