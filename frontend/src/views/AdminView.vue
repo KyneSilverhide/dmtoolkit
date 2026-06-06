@@ -289,6 +289,7 @@ function toggleTheme() {
 }
 
 onMounted(() => {
+  document.body.classList.add('page-admin')
   loadSessions()
   loadConfig()
   releaseNotesStore.load()
@@ -391,6 +392,7 @@ watch(
 )
 
 onUnmounted(() => {
+  document.body.classList.remove('page-admin')
   if (_socket) {
     _socket.off('connect')
     _socket.off(PLAYER_JOINED)
