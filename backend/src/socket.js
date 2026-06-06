@@ -132,13 +132,40 @@ function serializeTimeScale(session) {
 }
 
 /**
+ * Fetches the grid configuration for a map image URL within a session.
+ * Returns null if no matching image row is found.
+ * @param {number} sessionId
+ * @param {string} mapUrl
+ * @returns {Promise<{gridType, gridCols, gridRows, gridHexOrientation}|null>}
+ */
+async function getMapGridConfig(sessionId, mapUrl) {
+  if (!mapUrl) return null
+  try {
+    const res = await pool.query(
+      `SELECT grid_type, grid_cols, grid_rows, grid_hex_orientation
+       FROM session_images WHERE session_id = $1 AND url = $2 AND type = 'map'`,
+      [sessionId, mapUrl]
+    )
+    const row = res.rows[0]
+    if (!row) return null
+    return {
+      gridType: row.grid_type || 'none',
+      gridCols: row.grid_cols || null,
+      gridRows: row.grid_rows || null,
+      gridHexOrientation: row.grid_hex_orientation || 'flat',
+    }
+  } catch { return null }
+}
+
+/**
  * Serializes the battlemap state from a session row.
- * Safely parses JSON columns (map_viewport, map_fog_strokes, map_tokens) with fallbacks.
+ * Safely parses JSON columns (map_viewport, map_fog_strokes, map_tokens, map_fog_cells) with fallbacks.
  * Returns null if there is no active map URL.
  * @param {object} session - A row from the sessions table
- * @returns {{mapUrl, fogEnabled, viewport: {xn, yn, scale}, fogStrokes: Array, mapTokens: object}|null}
+ * @param {object|null} gridConfig - Optional grid config from session_images
+ * @returns {{mapUrl, fogEnabled, viewport, fogStrokes, mapTokens, gridType, gridCols, gridRows, gridHexOrientation, fogCells}|null}
  */
-function serializeMapState(session) {
+function serializeMapState(session, gridConfig = null) {
   if (!session?.current_map_url) return null
   let viewport = { xn: 0, yn: 0, scale: 1 }
   try {
@@ -161,12 +188,22 @@ function serializeMapState(session) {
     const parsed = session.map_tokens ? JSON.parse(session.map_tokens) : null
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) mapTokens = parsed
   } catch { /* use default */ }
+  let fogCells = []
+  try {
+    const parsed = session.map_fog_cells ? JSON.parse(session.map_fog_cells) : null
+    if (Array.isArray(parsed)) fogCells = parsed
+  } catch { /* use default */ }
   return {
     mapUrl: session.current_map_url,
     fogEnabled: !!session.map_fog_enabled,
     viewport,
     fogStrokes,
     mapTokens,
+    gridType: gridConfig?.gridType || 'none',
+    gridCols: gridConfig?.gridCols || null,
+    gridRows: gridConfig?.gridRows || null,
+    gridHexOrientation: gridConfig?.gridHexOrientation || 'flat',
+    fogCells,
   }
 }
 
@@ -561,7 +598,7 @@ function setupSocket(io) {
           activeMerchant: (session.current_merchant_id && session.tv_mode === 'merchant')
             ? await getMerchantData(session.current_merchant_id)
             : null,
-          mapState: serializeMapState(session),
+          mapState: serializeMapState(session, await getMapGridConfig(session.id, session.current_map_url)),
           combatRound: session.combat_round || 0,
           timer: serializeTimer(session),
           lobbyBgUrl: session.lobby_bg_url || null,
@@ -614,7 +651,7 @@ function setupSocket(io) {
           activeMerchant: (session.current_merchant_id && session.tv_mode === 'merchant')
             ? await getMerchantData(session.current_merchant_id)
             : null,
-          mapState: serializeMapState(session),
+          mapState: serializeMapState(session, await getMapGridConfig(session.id, session.current_map_url)),
           combatRound: session.combat_round || 0,
           timer: serializeTimer(session),
           lobbyBgUrl: session.lobby_bg_url || null,
@@ -1132,11 +1169,20 @@ function setupSocket(io) {
         await pool.query(
           `UPDATE sessions
            SET tv_mode = 'map', current_map_url = $1, map_fog_enabled = FALSE,
-               map_viewport = $2, map_fog_strokes = '[]', map_tokens = '{}'
+               map_viewport = $2, map_fog_strokes = '[]', map_tokens = '{}', map_fog_cells = '[]'
            WHERE id = $3 AND created_by = $4`,
           [imageUrl, defaultViewport, sessionId, socket.admin.id]
         )
-        const mapState = { mapUrl: imageUrl, fogEnabled: false, viewport: { xn: 0, yn: 0, scale: 1 }, fogStrokes: [], mapTokens: {} }
+        const gridConfig = await getMapGridConfig(sessionId, imageUrl)
+        const mapState = {
+          mapUrl: imageUrl, fogEnabled: false,
+          viewport: { xn: 0, yn: 0, scale: 1 }, fogStrokes: [], mapTokens: [],
+          gridType: gridConfig?.gridType || 'none',
+          gridCols: gridConfig?.gridCols || null,
+          gridRows: gridConfig?.gridRows || null,
+          gridHexOrientation: gridConfig?.gridHexOrientation || 'flat',
+          fogCells: [],
+        }
         io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'map' })
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'map' })
         io.to(`tv:${sessionId}`).emit('map-state', mapState)
@@ -1204,11 +1250,51 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         await pool.query(
-          "UPDATE sessions SET map_fog_strokes = '[]' WHERE id = $1 AND created_by = $2",
+          "UPDATE sessions SET map_fog_strokes = '[]', map_fog_cells = '[]' WHERE id = $1 AND created_by = $2",
           [sessionId, socket.admin.id]
         )
         io.to(`tv:${sessionId}`).emit('map-fog-reset')
         io.to(`admin:${sessionId}`).emit('map-fog-reset')
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: reveal grid cells (cell-based fog) ───────────────────────────
+    socket.on('map-fog-cell-reveal', async ({ sessionId, cells }) => {
+      if (!socket.admin) return
+      try {
+        if (!Array.isArray(cells) || cells.length === 0) return
+        const sessionRes = await pool.query(
+          'SELECT map_fog_cells FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        if (!sessionRes.rows[0]) return
+        let existing = []
+        try {
+          const raw = sessionRes.rows[0].map_fog_cells
+          existing = raw ? JSON.parse(raw) : []
+          if (!Array.isArray(existing)) existing = []
+        } catch { existing = [] }
+        const validCells = cells.filter(c => Number.isInteger(c) && c >= 0)
+        const merged = [...new Set([...existing, ...validCells])]
+        await pool.query(
+          'UPDATE sessions SET map_fog_cells = $1 WHERE id = $2 AND created_by = $3',
+          [JSON.stringify(merged), sessionId, socket.admin.id]
+        )
+        io.to(`tv:${sessionId}`).emit('map-fog-cells-patch', { cells: validCells })
+        io.to(`admin:${sessionId}`).emit('map-fog-cells-patch', { cells: validCells })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: reset cell-based fog ─────────────────────────────────────────
+    socket.on('map-fog-cells-reset', async ({ sessionId }) => {
+      if (!socket.admin) return
+      try {
+        await pool.query(
+          "UPDATE sessions SET map_fog_cells = '[]' WHERE id = $1 AND created_by = $2",
+          [sessionId, socket.admin.id]
+        )
+        io.to(`tv:${sessionId}`).emit('map-fog-cells-reset')
+        io.to(`admin:${sessionId}`).emit('map-fog-cells-reset')
       } catch (err) { console.error(err) }
     })
 

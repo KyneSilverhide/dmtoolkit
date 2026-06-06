@@ -353,18 +353,22 @@ router.patch('/:id/images/:imageId', authenticateToken, async (req, res) => {
     )
     if (!record.rows[0]) return res.status(404).json({ error: 'File not found.' })
 
-    const { original_name, audio_category, tv_label } = req.body
+    const { original_name, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation } = req.body
     const updates = []
     const values = []
     let idx = 1
     if (original_name !== undefined) { updates.push(`original_name = $${idx++}`); values.push(String(original_name).slice(0, 500)) }
     if (audio_category !== undefined) { updates.push(`audio_category = $${idx++}`); values.push(String(audio_category).slice(0, 50)) }
     if (tv_label !== undefined) { updates.push(`tv_label = $${idx++}`); values.push(tv_label ? String(tv_label).slice(0, 200) : null) }
+    if (grid_type !== undefined) { updates.push(`grid_type = $${idx++}`); values.push(['none', 'square', 'hex'].includes(grid_type) ? grid_type : 'none') }
+    if (grid_cols !== undefined) { updates.push(`grid_cols = $${idx++}`); values.push(grid_cols !== null ? Math.max(1, Math.min(200, parseInt(grid_cols) || 1)) : null) }
+    if (grid_rows !== undefined) { updates.push(`grid_rows = $${idx++}`); values.push(grid_rows !== null ? Math.max(1, Math.min(200, parseInt(grid_rows) || 1)) : null) }
+    if (grid_hex_orientation !== undefined) { updates.push(`grid_hex_orientation = $${idx++}`); values.push(['flat', 'pointy'].includes(grid_hex_orientation) ? grid_hex_orientation : 'flat') }
     if (updates.length === 0) return res.status(400).json({ error: 'Nothing to update.' })
 
     values.push(req.params.imageId)
     const row = await pool.query(
-      `UPDATE session_images SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, url, original_name, type, audio_category, tv_label, uploaded_at`,
+      `UPDATE session_images SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, url, original_name, type, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, uploaded_at`,
       values
     )
     res.json(row.rows[0])
