@@ -58,6 +58,8 @@ test('HP damage appears in journal in real-time', async ({ browser, adminToken }
 
     // Open journal tab so socket listener is active
     await adminPage.switchTab('journal')
+    // Wait for journal to be fully mounted before navigating away (Transition leave ~150ms)
+    await expect(adminPage.page.locator('.journal')).toBeVisible({ timeout: 5_000 })
 
     // Player takes damage
     const playerPage = new PlayerPage(playerPg)
@@ -253,7 +255,7 @@ test('tension_started event appears in journal', async ({ browser, adminToken })
     await titleInput.fill('Tension des négociations')
     const stepsInput = pg.locator('input[placeholder*="Étapes"]').first()
     await stepsInput.fill('5')
-    await pg.locator('button.action-btn').filter({ hasText: /Créer|Recréer/i }).click()
+    await pg.locator('button[data-testid="tension-create-btn"]').click()
 
     // Switch to journal and verify tension_started event
     await adminPage.switchTab('journal')
