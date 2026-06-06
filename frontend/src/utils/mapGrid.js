@@ -140,25 +140,27 @@ export function getHexCellPolygon(idx, cols, rows, orientation = 'flat', offsetX
 }
 
 function _hexVertices(cx, cy, rx, ry, orientation) {
+  const hrx = rx / 2
+  const hry = ry / 2
   if (orientation === 'pointy') {
     // Pointy-top: top/bottom tips at cy ± ry; flat sides at cx ± rx; diagonals at cy ± ry/2
     return [
-      { nx: cx + rx, ny: cy + ry / 2 }, // lower-right
-      { nx: cx,      ny: cy + ry },      // bottom tip
-      { nx: cx - rx, ny: cy + ry / 2 }, // lower-left
-      { nx: cx - rx, ny: cy - ry / 2 }, // upper-left
-      { nx: cx,      ny: cy - ry },      // top tip
-      { nx: cx + rx, ny: cy - ry / 2 }, // upper-right
+      { nx: cx + rx, ny: cy + hry }, // lower-right
+      { nx: cx,      ny: cy + ry },  // bottom tip
+      { nx: cx - rx, ny: cy + hry }, // lower-left
+      { nx: cx - rx, ny: cy - hry }, // upper-left
+      { nx: cx,      ny: cy - ry },  // top tip
+      { nx: cx + rx, ny: cy - hry }, // upper-right
     ]
   }
   // Flat-top: left/right tips at cx ± rx; flat top/bottom at cy ± ry; diagonals at cx ± rx/2
   return [
-    { nx: cx + rx,      ny: cy },        // right tip
-    { nx: cx + rx / 2,  ny: cy + ry },   // lower-right
-    { nx: cx - rx / 2,  ny: cy + ry },   // lower-left
-    { nx: cx - rx,      ny: cy },        // left tip
-    { nx: cx - rx / 2,  ny: cy - ry },   // upper-left
-    { nx: cx + rx / 2,  ny: cy - ry },   // upper-right
+    { nx: cx + rx,  ny: cy },       // right tip
+    { nx: cx + hrx, ny: cy + ry },  // lower-right
+    { nx: cx - hrx, ny: cy + ry },  // lower-left
+    { nx: cx - rx,  ny: cy },       // left tip
+    { nx: cx - hrx, ny: cy - ry },  // upper-left
+    { nx: cx + hrx, ny: cy - ry },  // upper-right
   ]
 }
 
