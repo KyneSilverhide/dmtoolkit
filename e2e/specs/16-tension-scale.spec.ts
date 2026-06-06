@@ -120,7 +120,7 @@ test('admin can end tension scale', async ({ browser, adminToken }) => {
 
     // End tension
     await adminPage.switchTab('tension')
-    await adminPage.page.locator('button.action-btn.danger-btn').filter({ hasText: 'Terminer' }).click()
+    await adminPage.page.locator('button[data-testid="tension-end-btn"]').click()
 
     // TV should revert to lobby
     await expect(tvPage.getLobbyDisplay()).toBeVisible({ timeout: 8_000 })
