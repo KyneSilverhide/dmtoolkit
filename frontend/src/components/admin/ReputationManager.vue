@@ -165,7 +165,8 @@ onUnmounted(() => {
         </label>
       </div>
       <div class="rm-form-row rm-form-row--three">
-        <label class="rm-label">Min <HelpTip id="reputation.range" />
+        <label class="rm-label">
+          <span class="rm-label-text">Min <HelpTip id="reputation.range" /></span>
           <input v-model.number="newMin" class="form-input form-input--sm" type="number" min="-1000" max="-1" />
         </label>
         <label class="rm-label">Valeur initiale
@@ -326,6 +327,12 @@ onUnmounted(() => {
   gap: 0.25rem;
   font-size: 0.78rem;
   color: var(--color-text-muted);
+}
+
+.rm-label-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
 }
 
 .form-input--sm {
