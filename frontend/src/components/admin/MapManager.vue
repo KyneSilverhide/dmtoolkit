@@ -503,14 +503,6 @@ async function saveGridConfig() {
     if (res.ok) {
       showGridConfig.value = false
       render()
-      const socket = getSocket()
-      socket.emit('map-sync-grid', {
-        sessionId: sessionStore.activeSession.id,
-        gridType: gridType.value,
-        gridCols: gridCols.value,
-        gridRows: gridRows.value,
-        gridHexOrientation: gridHexOrientation.value,
-      })
     }
   } catch (err) { console.error(err) }
   finally { gridSaving.value = false }
@@ -891,6 +883,19 @@ function handleFogCellsReset() {
   render()
 }
 
+function handleFogCellsPatch({ cells }) {
+  if (!Array.isArray(cells)) return
+  cells.forEach(c => fogCellsSet.add(c))
+  fogCells.value = [...fogCellsSet]
+  render()
+}
+
+function handleFogCellsReset() {
+  fogCellsSet.clear()
+  fogCells.value = []
+  render()
+}
+
 function handleMapTokenMoved({ playerId, nx, ny, name }) {
   const existing = mapTokens.value[String(playerId)] || {}
   mapTokens.value = { ...mapTokens.value, [String(playerId)]: { ...existing, nx, ny, ...(name !== undefined ? { name } : {}) } }
@@ -1139,7 +1144,73 @@ watch([gridCols, gridRows, gridType, gridHexOrientation], () => { if (showGridCo
             </template>
           </div>
 
-          <!-- Brouillard de guerre -->
+          <!-- Configuration de grille -->
+      <div class="control-section">
+        <h4 class="subsection-title">
+          <AppIcon icon="lucide:grid-3x3" size="0.85em" /> Grille <HelpTip id="map.grid" />
+        </h4>
+
+        <div class="inline-actions">
+          <button class="action-btn" :class="{ active: showGridConfig }" @click="showGridConfig = !showGridConfig">
+            <AppIcon icon="lucide:settings-2" size="0.85em" />
+            {{ showGridConfig ? 'Masquer' : 'Configurer' }}
+          </button>
+          <span v-if="gridDetecting" class="hint-text"><AppIcon icon="lucide:loader" size="0.8em" /> Détection…</span>
+          <span v-else-if="gridType !== 'none'" class="grid-status-badge">
+            <AppIcon :icon="gridType === 'hex' ? 'lucide:hexagon' : 'lucide:grid-3x3'" size="0.8em" />
+            {{ gridType === 'hex' ? 'Hexagones' : 'Carrés' }} {{ gridCols }}×{{ gridRows }}
+          </span>
+          <span v-else class="hint-text">Peinture libre</span>
+        </div>
+
+        <template v-if="showGridConfig">
+          <div class="grid-config-panel">
+            <div class="grid-config-row">
+              <label class="grid-config-label">Type</label>
+              <div class="grid-type-selector">
+                <button
+                  v-for="t in ['none','square','hex']"
+                  :key="t"
+                  class="type-btn"
+                  :class="{ active: gridType === t }"
+                  @click="gridType = t"
+                >
+                  <AppIcon
+                    :icon="t === 'hex' ? 'lucide:hexagon' : t === 'square' ? 'lucide:grid-3x3' : 'lucide:brush'"
+                    size="0.8em"
+                  />
+                  {{ t === 'hex' ? 'Hexagones' : t === 'square' ? 'Carrés' : 'Libre' }}
+                </button>
+              </div>
+            </div>
+
+            <template v-if="gridType !== 'none'">
+              <div class="grid-config-row">
+                <label class="grid-config-label">Colonnes : {{ gridCols }}</label>
+                <input v-model.number="gridCols" type="range" min="2" max="100" class="brush-slider" />
+              </div>
+              <div class="grid-config-row">
+                <label class="grid-config-label">Lignes : {{ gridRows }}</label>
+                <input v-model.number="gridRows" type="range" min="2" max="100" class="brush-slider" />
+              </div>
+              <div v-if="gridType === 'hex'" class="grid-config-row">
+                <label class="grid-config-label">Orientation</label>
+                <div class="grid-type-selector">
+                  <button class="type-btn" :class="{ active: gridHexOrientation === 'flat' }" @click="gridHexOrientation = 'flat'">Plate</button>
+                  <button class="type-btn" :class="{ active: gridHexOrientation === 'pointy' }" @click="gridHexOrientation = 'pointy'">Pointue</button>
+                </div>
+              </div>
+            </template>
+
+            <button class="action-btn save-grid-btn" :disabled="gridSaving" @click="saveGridConfig">
+              <AppIcon icon="lucide:save" size="0.85em" />
+              {{ gridSaving ? 'Enregistrement…' : 'Enregistrer la grille' }}
+            </button>
+          </div>
+        </template>
+      </div>
+
+      <!-- Brouillard de guerre -->
           <div class="control-section">
             <h4 class="subsection-title"><AppIcon icon="lucide:cloud" size="0.85em" /> Brouillard <HelpTip id="map.fog" /></h4>
             <div class="inline-actions">
@@ -1158,6 +1229,9 @@ watch([gridCols, gridRows, gridType, gridHexOrientation], () => { if (showGridCo
                   <input v-model.number="brushRadius" type="range" :min="MIN_BRUSH_RADIUS" :max="MAX_BRUSH_RADIUS" class="brush-slider" />
                 </label>
               </div>
+        </template>
+        <template v-else-if="fogEnabled && gridType !== 'none'">
+          <p class="hint-text"><AppIcon icon="lucide:mouse-pointer-click" size="0.85em" /> Clic gauche sur une case pour la révéler</p>
             </template>
           </div>
 
@@ -1231,6 +1305,32 @@ watch([gridCols, gridRows, gridType, gridHexOrientation], () => { if (showGridCo
             </div>
           </div>
 
+      <!-- Canvas -->
+      <div class="control-section">
+        <h4 class="subsection-title"><AppIcon icon="lucide:eye" size="0.85em" /> Vue TV en temps réel</h4>
+        <p class="hint-text">
+          <template v-if="pendingTokenPlayerId">Cliquez sur la carte pour placer le jeton</template>
+          <template v-else-if="showGridConfig && gridType !== 'none'">Aperçu grille — ajustez cols/lignes puis enregistrez</template>
+          <template v-else-if="fogEnabled && gridType !== 'none'">Clic gauche sur une case pour la révéler · Molette pour zoomer · Molette centrale pour naviguer</template>
+          <template v-else-if="fogEnabled">Clic gauche pour révéler · Molette pour zoomer · Molette centrale pour naviguer</template>
+          <template v-else>↕ Clic molette pour naviguer · molette pour zoomer</template>
+        </p>
+        <div
+          ref="canvasContainer"
+          class="canvas-container"
+          :style="{ cursor: pendingTokenPlayerId ? 'crosshair' : draggingTokenId ? 'grabbing' : isDragging ? 'grabbing' : fogEnabled && gridType !== 'none' ? 'pointer' : 'default' }"
+        >
+          <canvas
+            ref="canvasEl"
+            class="map-canvas"
+            @pointerdown="onPointerDown"
+            @pointermove="onPointerMove"
+            @pointerup="onPointerUp"
+            @pointerleave="onPointerUp"
+            @pointercancel="onPointerUp"
+            @wheel.prevent="onWheel"
+            @contextmenu.prevent
+          />
         </div>
       </div>
     </template>
