@@ -328,8 +328,8 @@ router.get('/:id/images', authenticateToken, async (req, res) => {
 
     const { type } = req.query  // ?type=image ou ?type=map
     const query = type
-        ? 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, uploaded_at FROM session_images WHERE session_id = $1 AND type = $2 ORDER BY uploaded_at DESC'
-        : 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, uploaded_at FROM session_images WHERE session_id = $1 ORDER BY uploaded_at DESC'
+        ? 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, uploaded_at FROM session_images WHERE session_id = $1 AND type = $2 ORDER BY uploaded_at DESC'
+        : 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, uploaded_at FROM session_images WHERE session_id = $1 ORDER BY uploaded_at DESC'
     const params = type ? [req.params.id, type] : [req.params.id]
     const result = await pool.query(query, params)
     res.json(result.rows)
@@ -353,7 +353,7 @@ router.patch('/:id/images/:imageId', authenticateToken, async (req, res) => {
     )
     if (!record.rows[0]) return res.status(404).json({ error: 'File not found.' })
 
-    const { original_name, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation } = req.body
+    const { original_name, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y } = req.body
     const updates = []
     const values = []
     let idx = 1
@@ -364,11 +364,13 @@ router.patch('/:id/images/:imageId', authenticateToken, async (req, res) => {
     if (grid_cols !== undefined) { updates.push(`grid_cols = $${idx++}`); values.push(grid_cols !== null ? Math.max(1, Math.min(200, parseInt(grid_cols) || 1)) : null) }
     if (grid_rows !== undefined) { updates.push(`grid_rows = $${idx++}`); values.push(grid_rows !== null ? Math.max(1, Math.min(200, parseInt(grid_rows) || 1)) : null) }
     if (grid_hex_orientation !== undefined) { updates.push(`grid_hex_orientation = $${idx++}`); values.push(['flat', 'pointy'].includes(grid_hex_orientation) ? grid_hex_orientation : 'flat') }
+    if (grid_offset_x !== undefined) { updates.push(`grid_offset_x = $${idx++}`); values.push(Math.max(-0.5, Math.min(0.5, parseFloat(grid_offset_x) || 0))) }
+    if (grid_offset_y !== undefined) { updates.push(`grid_offset_y = $${idx++}`); values.push(Math.max(-0.5, Math.min(0.5, parseFloat(grid_offset_y) || 0))) }
     if (updates.length === 0) return res.status(400).json({ error: 'Nothing to update.' })
 
     values.push(req.params.imageId)
     const row = await pool.query(
-      `UPDATE session_images SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, url, original_name, type, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, uploaded_at`,
+      `UPDATE session_images SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, url, original_name, type, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, uploaded_at`,
       values
     )
     res.json(row.rows[0])

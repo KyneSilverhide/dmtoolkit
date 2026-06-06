@@ -122,6 +122,8 @@ const mapGridType = ref('none')
 const mapGridCols = ref(20)
 const mapGridRows = ref(15)
 const mapGridHexOrientation = ref('flat')
+const mapGridOffsetX = ref(0)
+const mapGridOffsetY = ref(0)
 const mapFogCells = ref([])   // revealed cell indices
 const mapFogCellsSet = new Set()
 
@@ -232,6 +234,8 @@ function renderMapFog() {
     const rows = mapGridRows.value
     const type = mapGridType.value
     const orientation = mapGridHexOrientation.value
+    const gox = mapGridOffsetX.value
+    const goy = mapGridOffsetY.value
     const totalCells = cols * rows
 
     ctx.save()
@@ -241,7 +245,7 @@ function renderMapFog() {
 
     for (let idx = 0; idx < totalCells; idx++) {
       if (mapFogCellsSet.has(idx)) continue  // revealed — skip
-      const points = getCellPolygon(idx, type, cols, rows, orientation)
+      const points = getCellPolygon(idx, type, cols, rows, orientation, gox, goy)
       if (!points.length) continue
       ctx.beginPath()
       ctx.moveTo(offsetX + points[0].nx * imgW, offsetY + points[0].ny * imgH)
@@ -296,6 +300,8 @@ function applyMapState(data) {
   mapGridCols.value = data.gridCols || 20
   mapGridRows.value = data.gridRows || 15
   mapGridHexOrientation.value = data.gridHexOrientation || 'flat'
+  mapGridOffsetX.value = data.gridOffsetX ?? 0
+  mapGridOffsetY.value = data.gridOffsetY ?? 0
   mapFogCellsSet.clear()
   const cells = Array.isArray(data.fogCells) ? data.fogCells : []
   cells.forEach(c => mapFogCellsSet.add(c))
@@ -679,11 +685,13 @@ onMounted(() => {
     renderMapFog()
   })
 
-  socket.on('map-grid-updated', ({ gridType, gridCols, gridRows, gridHexOrientation }) => {
+  socket.on('map-grid-updated', ({ gridType, gridCols, gridRows, gridHexOrientation, gridOffsetX, gridOffsetY }) => {
     mapGridType.value = gridType || 'none'
     mapGridCols.value = gridCols || 20
     mapGridRows.value = gridRows || 15
     mapGridHexOrientation.value = gridHexOrientation || 'flat'
+    mapGridOffsetX.value = gridOffsetX ?? 0
+    mapGridOffsetY.value = gridOffsetY ?? 0
     renderMapFog()
   })
 

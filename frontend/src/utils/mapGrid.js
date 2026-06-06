@@ -4,6 +4,11 @@
  *
  * Coordinate system: all positions are normalised to [0,1] relative to the map image dimensions.
  * Cell indices are row-major: index = row * cols + col, 0-based.
+ *
+ * Grid offsets (offsetX, offsetY) are normalised fractions that shift the grid origin.
+ * A positive offset shifts the grid right/down so that the first gridline appears at that
+ * fraction of the image width/height.  Partial cells at the leading edges are valid cells
+ * (index still starts at 0 from the shifted origin).
  */
 
 // ── Square grid ────────────────────────────────────────────────────────────
@@ -12,23 +17,25 @@
  * Returns the cell index [0, cols*rows) for a normalised (nx, ny) position in a square grid.
  * Returns -1 if outside the grid.
  */
-export function getSquareCellAt(nx, ny, cols, rows) {
-  if (nx < 0 || nx >= 1 || ny < 0 || ny >= 1) return -1
-  const col = Math.floor(nx * cols)
-  const row = Math.floor(ny * rows)
+export function getSquareCellAt(nx, ny, cols, rows, offsetX = 0, offsetY = 0) {
+  const rx = nx - offsetX
+  const ry = ny - offsetY
+  const col = Math.floor(rx * cols)
+  const row = Math.floor(ry * rows)
+  if (col < 0 || col >= cols || row < 0 || row >= rows) return -1
   return row * cols + col
 }
 
 /**
  * Returns an array of normalised {nx, ny} corner points for the given square cell index.
  */
-export function getSquareCellPolygon(idx, cols, rows) {
+export function getSquareCellPolygon(idx, cols, rows, offsetX = 0, offsetY = 0) {
   const col = idx % cols
   const row = Math.floor(idx / cols)
-  const x0 = col / cols
-  const y0 = row / rows
-  const x1 = (col + 1) / cols
-  const y1 = (row + 1) / rows
+  const x0 = offsetX + col / cols
+  const y0 = offsetY + row / rows
+  const x1 = offsetX + (col + 1) / cols
+  const y1 = offsetY + (row + 1) / rows
   return [{ nx: x0, ny: y0 }, { nx: x1, ny: y0 }, { nx: x1, ny: y1 }, { nx: x0, ny: y1 }]
 }
 
@@ -41,11 +48,11 @@ export function getSquareCellPolygon(idx, cols, rows) {
  * Uses offset coordinates (odd-q for flat, odd-r for pointy).
  * Returns -1 if outside the grid.
  */
-export function getHexCellAt(nx, ny, cols, rows, orientation = 'flat') {
+export function getHexCellAt(nx, ny, cols, rows, orientation = 'flat', offsetX = 0, offsetY = 0) {
   if (orientation === 'pointy') {
-    return _getHexCellPointy(nx, ny, cols, rows)
+    return _getHexCellPointy(nx - offsetX, ny - offsetY, cols, rows)
   }
-  return _getHexCellFlat(nx, ny, cols, rows)
+  return _getHexCellFlat(nx - offsetX, ny - offsetY, cols, rows)
 }
 
 function _getHexCellFlat(nx, ny, cols, rows) {
@@ -113,22 +120,22 @@ function _inPointyHex(nx, ny, cx, cy, w, h) {
 /**
  * Returns normalised polygon points for a hex cell (6 vertices).
  */
-export function getHexCellPolygon(idx, cols, rows, orientation = 'flat') {
+export function getHexCellPolygon(idx, cols, rows, orientation = 'flat', offsetX = 0, offsetY = 0) {
   const col = idx % cols
   const row = Math.floor(idx / cols)
   if (orientation === 'pointy') {
     const hexW = 1 / cols
     const hexH = 1 / (rows * 0.75 + 0.25)
-    const offsetX = (row % 2 === 1) ? hexW / 2 : 0
-    const cx = (col + 0.5) * hexW + offsetX
-    const cy = (row * 0.75 + 0.5) * hexH
+    const offX = (row % 2 === 1) ? hexW / 2 : 0
+    const cx = offsetX + (col + 0.5) * hexW + offX
+    const cy = offsetY + (row * 0.75 + 0.5) * hexH
     return _hexVertices(cx, cy, hexW / 2, hexH / 2, 'pointy')
   }
   const hexW = 1 / (cols * 0.75 + 0.25)
   const hexH = 1 / rows
-  const offsetY = (col % 2 === 1) ? hexH / 2 : 0
-  const cx = (col * 0.75 + 0.5) * hexW
-  const cy = (row + 0.5) * hexH + offsetY
+  const offY = (col % 2 === 1) ? hexH / 2 : 0
+  const cx = offsetX + (col * 0.75 + 0.5) * hexW
+  const cy = offsetY + (row + 0.5) * hexH + offY
   return _hexVertices(cx, cy, hexW / 2, hexH / 2, 'flat')
 }
 
@@ -147,18 +154,18 @@ function _hexVertices(cx, cy, rx, ry, orientation) {
 /**
  * Returns the cell index for a normalised position given grid config.
  */
-export function getCellAt(nx, ny, gridType, cols, rows, hexOrientation = 'flat') {
-  if (gridType === 'square') return getSquareCellAt(nx, ny, cols, rows)
-  if (gridType === 'hex') return getHexCellAt(nx, ny, cols, rows, hexOrientation)
+export function getCellAt(nx, ny, gridType, cols, rows, hexOrientation = 'flat', offsetX = 0, offsetY = 0) {
+  if (gridType === 'square') return getSquareCellAt(nx, ny, cols, rows, offsetX, offsetY)
+  if (gridType === 'hex') return getHexCellAt(nx, ny, cols, rows, hexOrientation, offsetX, offsetY)
   return -1
 }
 
 /**
  * Returns normalised polygon points for a cell index.
  */
-export function getCellPolygon(idx, gridType, cols, rows, hexOrientation = 'flat') {
-  if (gridType === 'square') return getSquareCellPolygon(idx, cols, rows)
-  if (gridType === 'hex') return getHexCellPolygon(idx, cols, rows, hexOrientation)
+export function getCellPolygon(idx, gridType, cols, rows, hexOrientation = 'flat', offsetX = 0, offsetY = 0) {
+  if (gridType === 'square') return getSquareCellPolygon(idx, cols, rows, offsetX, offsetY)
+  if (gridType === 'hex') return getHexCellPolygon(idx, cols, rows, hexOrientation, offsetX, offsetY)
   return []
 }
 
@@ -166,13 +173,13 @@ export function getCellPolygon(idx, gridType, cols, rows, hexOrientation = 'flat
 
 /**
  * Analyses an HTMLImageElement to suggest a square grid configuration.
- * Returns { type: 'square'|'none', cols, rows }.
+ * Returns { type: 'square'|'none', cols, rows, offsetX, offsetY }.
  *
  * Algorithm: project edge-filtered rows/columns onto 1D signals, then find
- * the dominant period via autocorrelation.
+ * the dominant period via autocorrelation and the phase via peak alignment.
  *
  * @param {HTMLImageElement} img
- * @returns {{ type: 'square'|'none', cols: number, rows: number }}
+ * @returns {{ type: 'square'|'none', cols: number, rows: number, offsetX: number, offsetY: number }}
  */
 export function detectGrid(img) {
   const MAX_DIM = 600
@@ -217,13 +224,21 @@ export function detectGrid(img) {
   const colPeriod = _dominantPeriod(colProj)
   const rowPeriod = _dominantPeriod(rowProj)
 
-  if (!colPeriod || !rowPeriod) return { type: 'none', cols: 20, rows: 15 }
+  if (!colPeriod || !rowPeriod) return { type: 'none', cols: 20, rows: 15, offsetX: 0, offsetY: 0 }
 
   const cols = Math.round(w / colPeriod)
   const rows = Math.round(h / rowPeriod)
-  if (cols < 3 || rows < 3 || cols > 100 || rows > 100) return { type: 'none', cols: 20, rows: 15 }
+  if (cols < 3 || rows < 3 || cols > 100 || rows > 100) return { type: 'none', cols: 20, rows: 15, offsetX: 0, offsetY: 0 }
 
-  return { type: 'square', cols, rows }
+  // Detect the phase (offset) of the grid: find the shift that aligns peaks with gridlines
+  const rawOffsetX = _dominantPhase(colProj, colPeriod) / w
+  const rawOffsetY = _dominantPhase(rowProj, rowPeriod) / h
+
+  // Normalise offset to [0, 1/cols) and [0, 1/rows) so it's within one cell
+  const offsetX = rawOffsetX - Math.floor(rawOffsetX * cols) / cols
+  const offsetY = rawOffsetY - Math.floor(rawOffsetY * rows) / rows
+
+  return { type: 'square', cols, rows, offsetX, offsetY }
 }
 
 function _dominantPeriod(proj) {
@@ -245,3 +260,21 @@ function _dominantPeriod(proj) {
   if (zeroCorr === 0 || bestVal / zeroCorr < 0.1) return null
   return bestLag
 }
+
+/**
+ * Finds the phase of the dominant periodic signal in `proj` given its `period`.
+ * Returns the index (in pixels) of the first peak.
+ */
+function _dominantPhase(proj, period) {
+  const n = proj.length
+  const step = Math.max(1, Math.round(period))
+  let bestPhase = 0
+  let bestVal = -Infinity
+  for (let phase = 0; phase < step; phase++) {
+    let sum = 0
+    for (let k = phase; k < n; k += step) sum += proj[k]
+    if (sum > bestVal) { bestVal = sum; bestPhase = phase }
+  }
+  return bestPhase
+}
+

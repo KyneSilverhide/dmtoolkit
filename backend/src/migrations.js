@@ -256,6 +256,10 @@ ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_cols INTEGER;
 ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_rows INTEGER;
 ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_hex_orientation VARCHAR(10) DEFAULT 'flat';
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS map_fog_cells TEXT;
+
+-- Grid offset: allows shifting the grid origin to align with image content
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_offset_x REAL DEFAULT 0;
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_offset_y REAL DEFAULT 0;
 `
 
 async function runMigrations() {

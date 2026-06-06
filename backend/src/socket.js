@@ -142,7 +142,7 @@ async function getMapGridConfig(sessionId, mapUrl) {
   if (!mapUrl) return null
   try {
     const res = await pool.query(
-      `SELECT grid_type, grid_cols, grid_rows, grid_hex_orientation
+      `SELECT grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y
        FROM session_images WHERE session_id = $1 AND url = $2 AND type = 'map'`,
       [sessionId, mapUrl]
     )
@@ -153,6 +153,8 @@ async function getMapGridConfig(sessionId, mapUrl) {
       gridCols: row.grid_cols || null,
       gridRows: row.grid_rows || null,
       gridHexOrientation: row.grid_hex_orientation || 'flat',
+      gridOffsetX: row.grid_offset_x ?? 0,
+      gridOffsetY: row.grid_offset_y ?? 0,
     }
   } catch { return null }
 }
@@ -203,6 +205,8 @@ function serializeMapState(session, gridConfig = null) {
     gridCols: gridConfig?.gridCols || null,
     gridRows: gridConfig?.gridRows || null,
     gridHexOrientation: gridConfig?.gridHexOrientation || 'flat',
+    gridOffsetX: gridConfig?.gridOffsetX ?? 0,
+    gridOffsetY: gridConfig?.gridOffsetY ?? 0,
     fogCells,
   }
 }
@@ -1181,6 +1185,8 @@ function setupSocket(io) {
           gridCols: gridConfig?.gridCols || null,
           gridRows: gridConfig?.gridRows || null,
           gridHexOrientation: gridConfig?.gridHexOrientation || 'flat',
+          gridOffsetX: gridConfig?.gridOffsetX ?? 0,
+          gridOffsetY: gridConfig?.gridOffsetY ?? 0,
           fogCells: [],
         }
         io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'map' })
@@ -1286,9 +1292,16 @@ function setupSocket(io) {
     })
 
     // ── Admin: sync grid config to TV after save ────────────────────────────
-    socket.on('map-sync-grid', ({ sessionId, gridType, gridCols, gridRows, gridHexOrientation }) => {
+    socket.on('map-sync-grid', ({ sessionId, gridType, gridCols, gridRows, gridHexOrientation, gridOffsetX, gridOffsetY }) => {
       if (!socket.admin) return
-      const payload = { gridType: gridType || 'none', gridCols: gridCols || 20, gridRows: gridRows || 15, gridHexOrientation: gridHexOrientation || 'flat' }
+      const payload = {
+        gridType: gridType || 'none',
+        gridCols: gridCols || 20,
+        gridRows: gridRows || 15,
+        gridHexOrientation: gridHexOrientation || 'flat',
+        gridOffsetX: gridOffsetX ?? 0,
+        gridOffsetY: gridOffsetY ?? 0,
+      }
       io.to(`tv:${sessionId}`).emit('map-grid-updated', payload)
       io.to(`admin:${sessionId}`).emit('map-grid-updated', payload)
     })
