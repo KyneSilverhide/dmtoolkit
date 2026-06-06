@@ -234,7 +234,11 @@ export function detectGrid(img) {
   const rawOffsetX = _dominantPhase(colProj, colPeriod) / w
   const rawOffsetY = _dominantPhase(rowProj, rowPeriod) / h
 
-  // Normalise offset to [0, 1/cols) and [0, 1/rows) so it's within one cell
+  // Normalise offset to [0, 1/cols) and [0, 1/rows) so it stays within one cell period.
+  // `Math.floor(rawOffset * cols) / cols` removes any whole-cell shift (integer multiples
+  // of the cell size), leaving only the fractional sub-cell offset that actually moves
+  // the gridlines.  The result is the phase in the same normalised [0,1] space as
+  // the image coordinates.
   const offsetX = rawOffsetX - Math.floor(rawOffsetX * cols) / cols
   const offsetY = rawOffsetY - Math.floor(rawOffsetY * rows) / rows
 

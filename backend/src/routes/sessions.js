@@ -364,6 +364,10 @@ router.patch('/:id/images/:imageId', authenticateToken, async (req, res) => {
     if (grid_cols !== undefined) { updates.push(`grid_cols = $${idx++}`); values.push(grid_cols !== null ? Math.max(1, Math.min(200, parseInt(grid_cols) || 1)) : null) }
     if (grid_rows !== undefined) { updates.push(`grid_rows = $${idx++}`); values.push(grid_rows !== null ? Math.max(1, Math.min(200, parseInt(grid_rows) || 1)) : null) }
     if (grid_hex_orientation !== undefined) { updates.push(`grid_hex_orientation = $${idx++}`); values.push(['flat', 'pointy'].includes(grid_hex_orientation) ? grid_hex_orientation : 'flat') }
+    // Offsets are normalised image fractions. ±0.5 is the maximum meaningful shift
+    // (half the image width/height), covering all realistic sub-cell alignment scenarios.
+    // The frontend slider is bounded by ±1/cols or ±1/rows which is always ≤ 0.5 for
+    // the minimum grid size of 2 columns/rows, so these limits are consistent.
     if (grid_offset_x !== undefined) { updates.push(`grid_offset_x = $${idx++}`); values.push(Math.max(-0.5, Math.min(0.5, parseFloat(grid_offset_x) || 0))) }
     if (grid_offset_y !== undefined) { updates.push(`grid_offset_y = $${idx++}`); values.push(Math.max(-0.5, Math.min(0.5, parseFloat(grid_offset_y) || 0))) }
     if (updates.length === 0) return res.status(400).json({ error: 'Nothing to update.' })
