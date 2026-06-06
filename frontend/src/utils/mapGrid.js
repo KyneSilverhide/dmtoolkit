@@ -83,7 +83,7 @@ function _getHexCellFlat(nx, ny, cols, rows) {
 function _inFlatHex(nx, ny, cx, cy, w, h) {
   const dx = Math.abs(nx - cx) / (w / 2)
   const dy = Math.abs(ny - cy) / (h / 2)
-  return dx <= 1 && dy <= 1 && dx + dy * 0.5 <= 1.5
+  return dx <= 1 && dy <= 1 && dx + dy * 0.5 <= 1
 }
 
 function _getHexCellPointy(nx, ny, cols, rows) {
@@ -114,7 +114,7 @@ function _getHexCellPointy(nx, ny, cols, rows) {
 function _inPointyHex(nx, ny, cx, cy, w, h) {
   const dx = Math.abs(nx - cx) / (w / 2)
   const dy = Math.abs(ny - cy) / (h / 2)
-  return dy <= 1 && dx <= 1 && dy + dx * 0.5 <= 1.5
+  return dy <= 1 && dx <= 1 && dy + dx * 0.5 <= 1
 }
 
 /**
@@ -140,13 +140,28 @@ export function getHexCellPolygon(idx, cols, rows, orientation = 'flat', offsetX
 }
 
 function _hexVertices(cx, cy, rx, ry, orientation) {
-  const angles = orientation === 'pointy'
-    ? [30, 90, 150, 210, 270, 330]
-    : [0, 60, 120, 180, 240, 300]
-  return angles.map(deg => {
-    const rad = (deg * Math.PI) / 180
-    return { nx: cx + rx * Math.cos(rad), ny: cy + ry * Math.sin(rad) }
-  })
+  const hrx = rx / 2
+  const hry = ry / 2
+  if (orientation === 'pointy') {
+    // Pointy-top: top/bottom tips at cy ± ry; flat sides at cx ± rx; diagonals at cy ± ry/2
+    return [
+      { nx: cx + rx, ny: cy + hry }, // lower-right
+      { nx: cx,      ny: cy + ry },  // bottom tip
+      { nx: cx - rx, ny: cy + hry }, // lower-left
+      { nx: cx - rx, ny: cy - hry }, // upper-left
+      { nx: cx,      ny: cy - ry },  // top tip
+      { nx: cx + rx, ny: cy - hry }, // upper-right
+    ]
+  }
+  // Flat-top: left/right tips at cx ± rx; flat top/bottom at cy ± ry; diagonals at cx ± rx/2
+  return [
+    { nx: cx + rx,  ny: cy },       // right tip
+    { nx: cx + hrx, ny: cy + ry },  // lower-right
+    { nx: cx - hrx, ny: cy + ry },  // lower-left
+    { nx: cx - rx,  ny: cy },       // left tip
+    { nx: cx - hrx, ny: cy - ry },  // upper-left
+    { nx: cx + hrx, ny: cy - ry },  // upper-right
+  ]
 }
 
 // ── Unified dispatch ───────────────────────────────────────────────────────
