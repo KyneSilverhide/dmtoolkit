@@ -67,7 +67,7 @@ export const helpContent = {
   'journal.reset':
     'Réinitialise la session complète : journal, statistiques et round de combat. À utiliser entre deux sessions de jeu.',
   'journal.summary':
-    'Génère un résumé narratif de la session en utilisant l\'IA. Nécessite GITHUB_TOKEN. Le résumé est basé sur les événements enregistrés dans le journal.',
+    'Génère un résumé chiffré de la session : durée, dégâts totaux, soins, morts, critiques, votes et achats. Basé sur les événements du journal, sans IA.',
 
   // ── Admin — MessageTool ───────────────────────────────────────────────────
   'message.effect':
