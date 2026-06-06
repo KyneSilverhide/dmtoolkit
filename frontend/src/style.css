@@ -209,6 +209,10 @@ body {
   color: inherit;
 }
 
+body.page-admin #app {
+  max-width: 100%;
+}
+
 button,
 .home-btn,
 .send-btn,

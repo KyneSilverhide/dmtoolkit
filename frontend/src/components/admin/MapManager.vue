@@ -24,6 +24,7 @@ const dragOver = ref(false)
 
 const isMapActive = ref(false)
 const fogEnabled = ref(false)
+const showMapList = ref(true)
 const viewport = ref({ x: 0, y: 0, scale: 1 })
 const fogStrokes = ref([])  // { nx, ny, nr, cover? }
 const fogCells = ref([])    // revealed cell indices (grid mode)
@@ -61,6 +62,7 @@ const fogCellsSet = new Set()  // mirror of fogCells for O(1) lookup
 
 // interaction state
 let isPainting = false
+let isRevealingCells = false
 const isDragging = ref(false)
 let dragStart = null
 let dragViewportStart = null
@@ -610,6 +612,7 @@ function onPointerDown(event) {
 
   if (fogEnabled.value) {
     if (gridType.value !== 'none') {
+      isRevealingCells = true
       applyCellReveal(pos)
     } else {
       isPainting = true
@@ -638,6 +641,11 @@ function onPointerMove(event) {
     return
   }
 
+  if (isRevealingCells && fogEnabled.value && gridType.value !== 'none') {
+    applyCellReveal(pos)
+    return
+  }
+
   if (isDragging.value) {
     const { cx, cy } = getEventXY(event)
     viewport.value = {
@@ -658,6 +666,7 @@ function onPointerUp(_event) {
     return
   }
   isPainting = false
+  isRevealingCells = false
   isDragging.value = false
 }
 
@@ -763,6 +772,7 @@ function showMapOnTv() {
   const socket = getSocket()
   socket.emit('show-map', { sessionId: sessionStore.activeSession.id, imageUrl: selectedImageUrl.value })
   socket.emit('map-set-fog', { sessionId: sessionStore.activeSession.id, enabled: true })
+  showMapList.value = false
 }
 
 function toggleFog() {
@@ -847,6 +857,7 @@ function resetViewport() {
 function handleMapState(data) {
   if (!data) return
   isMapActive.value = true
+  showMapList.value = false
   fogEnabled.value = data.fogEnabled
   const xn = data.viewport?.xn ?? (data.viewport?.x ?? 0)
   const yn = data.viewport?.yn ?? (data.viewport?.y ?? 0)
@@ -1014,6 +1025,8 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
 
     <h3 class="section-title"><AppIcon icon="lucide:map" size="0.9em" /> Gestionnaire de Carte</h3>
 
+    <!-- Gallery + upload: hidden when map is displayed on TV -->
+    <template v-if="showMapList">
     <!-- Upload -->
     <div class="upload-card">
       <label class="upload-btn" data-testid="map-upload-btn" :class="{ disabled: uploading || !sessionStore.activeSession }">
@@ -1053,9 +1066,15 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
         </button>
       </div>
     </div>
+    </template>
 
     <!-- Map active: two-column layout — canvas left, controls right -->
-    <template v-if="isMapActive && selectedImageUrl">
+    <template v-if="!showMapList && isMapActive && selectedImageUrl">
+      <div class="map-view-topbar">
+        <button class="map-back-btn" @click="showMapList = true">
+          <AppIcon icon="lucide:arrow-left" size="0.9em" /> Retour à la liste
+        </button>
+      </div>
       <div class="map-active-layout">
 
         <!-- Left: Canvas -->
@@ -1063,7 +1082,7 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
           <p class="hint-text canvas-hint">
             <template v-if="pendingTokenPlayerId">Cliquez sur la carte pour placer le jeton</template>
             <template v-else-if="showGridConfig && gridType !== 'none'">Aperçu grille — ajustez cols/lignes puis enregistrez</template>
-            <template v-else-if="fogEnabled && gridType !== 'none'">Clic gauche sur une case pour la révéler · Molette pour zoomer · Molette centrale pour naviguer</template>
+            <template v-else-if="fogEnabled && gridType !== 'none'">Clic gauche (maintenu) pour révéler les cases · Molette pour zoomer · Molette centrale pour naviguer</template>
             <template v-else-if="fogEnabled">Clic gauche pour révéler · Molette pour zoomer · Molette centrale pour naviguer</template>
             <template v-else>Clic molette pour naviguer · molette pour zoomer</template>
           </p>
@@ -1263,6 +1282,34 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
 
 <style scoped>
 .map-manager { position: relative; display: flex; flex-direction: column; gap: 1rem; }
+
+/* ── Map view topbar (back button) ── */
+.map-view-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.map-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  background: var(--surface-raised, rgba(255,255,255,0.05));
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.map-back-btn:hover {
+  border-color: var(--color-gold-dark);
+  color: var(--color-gold-bright);
+  background: var(--surface-gold-soft);
+}
 
 .drop-overlay {
   position: absolute;
