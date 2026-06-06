@@ -5,6 +5,7 @@ import { io } from 'socket.io-client'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
 import { DND_CONDITIONS_MAP } from '../utils/conditions.js'
+import { getCellPolygon } from '../utils/mapGrid.js'
 
 const DOOM_DANGER_THRESHOLD_SECONDS = 10
 const TENSION_COLOR_MEDIUM_RATIO = 0.33
@@ -117,6 +118,12 @@ const mapFogCanvas = ref(null)
 const mapContainerRef = ref(null)
 const mapImageSize = ref({ w: 0, h: 0 })
 const mapTokens = ref({})  // { [playerId]: { nx, ny } }
+const mapGridType = ref('none')
+const mapGridCols = ref(20)
+const mapGridRows = ref(15)
+const mapGridHexOrientation = ref('flat')
+const mapFogCells = ref([])   // revealed cell indices
+const mapFogCellsSet = new Set()
 
 // ── Demo mode ───────────────────────────────────────────────────────────────
 const isDemo = ref(false)
@@ -207,18 +214,10 @@ function renderMapFog() {
 
   if (!mapFogEnabled.value) return
 
-  // Draw full fog
-  ctx.globalCompositeOperation = 'source-over'
-  ctx.fillStyle = 'rgba(0,0,0,1)'
-  ctx.fillRect(0, 0, W, H)
-
-  if (mapFogStrokes.value.length === 0) return
-
   const natW = mapImageSize.value.w
   const natH = mapImageSize.value.h
   if (!natW || !natH) return
 
-  // Replicate the same CSS transform the image uses
   const vp = mapViewport.value
   const baseScale = Math.min(W / natW, H / natH)
   const totalScale = baseScale * vp.scale
@@ -227,7 +226,43 @@ function renderMapFog() {
   const offsetX = W / 2 - imgW / 2 + (vp.xn * natW * baseScale)
   const offsetY = H / 2 - imgH / 2 + (vp.yn * natH * baseScale)
 
-  // Erase revealed areas
+  if (mapGridType.value !== 'none') {
+    // Cell-based fog: render per-cell
+    const cols = mapGridCols.value
+    const rows = mapGridRows.value
+    const type = mapGridType.value
+    const orientation = mapGridHexOrientation.value
+    const totalCells = cols * rows
+
+    ctx.save()
+    ctx.beginPath()
+    ctx.rect(offsetX, offsetY, imgW, imgH)
+    ctx.clip()
+
+    for (let idx = 0; idx < totalCells; idx++) {
+      if (mapFogCellsSet.has(idx)) continue  // revealed — skip
+      const points = getCellPolygon(idx, type, cols, rows, orientation)
+      if (!points.length) continue
+      ctx.beginPath()
+      ctx.moveTo(offsetX + points[0].nx * imgW, offsetY + points[0].ny * imgH)
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(offsetX + points[i].nx * imgW, offsetY + points[i].ny * imgH)
+      }
+      ctx.closePath()
+      ctx.fillStyle = 'rgba(0,0,0,1)'
+      ctx.fill()
+    }
+    ctx.restore()
+    return
+  }
+
+  // Brush-based fog
+  ctx.globalCompositeOperation = 'source-over'
+  ctx.fillStyle = 'rgba(0,0,0,1)'
+  ctx.fillRect(0, 0, W, H)
+
+  if (mapFogStrokes.value.length === 0) return
+
   ctx.globalCompositeOperation = 'destination-out'
   for (const stroke of mapFogStrokes.value) {
     ctx.beginPath()
@@ -257,6 +292,14 @@ function applyMapState(data) {
   }
   mapFogStrokes.value = Array.isArray(data.fogStrokes) ? data.fogStrokes : []
   mapTokens.value = (data.mapTokens && typeof data.mapTokens === 'object') ? data.mapTokens : {}
+  mapGridType.value = data.gridType || 'none'
+  mapGridCols.value = data.gridCols || 20
+  mapGridRows.value = data.gridRows || 15
+  mapGridHexOrientation.value = data.gridHexOrientation || 'flat'
+  mapFogCellsSet.clear()
+  const cells = Array.isArray(data.fogCells) ? data.fogCells : []
+  cells.forEach(c => mapFogCellsSet.add(c))
+  mapFogCells.value = cells
   nextTick(renderMapFog)
 }
 
@@ -617,6 +660,22 @@ onMounted(() => {
 
   socket.on('map-fog-reset', () => {
     mapFogStrokes.value = []
+    mapFogCellsSet.clear()
+    mapFogCells.value = []
+    renderMapFog()
+  })
+
+  socket.on('map-fog-cells-patch', ({ cells }) => {
+    if (Array.isArray(cells)) {
+      cells.forEach(c => mapFogCellsSet.add(c))
+      mapFogCells.value = [...mapFogCellsSet]
+      renderMapFog()
+    }
+  })
+
+  socket.on('map-fog-cells-reset', () => {
+    mapFogCellsSet.clear()
+    mapFogCells.value = []
     renderMapFog()
   })
 

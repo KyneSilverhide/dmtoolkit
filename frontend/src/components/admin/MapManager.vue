@@ -1,10 +1,11 @@
-﻿<script setup>
+<script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { authStore } from '@/stores/auth.js'
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
+import { getCellAt, getCellPolygon, detectGrid } from '@/utils/mapGrid.js'
 
 import { BACKEND_URL } from '@/config.js'
 const MAX_BRUSH_RADIUS = 100
@@ -25,9 +26,20 @@ const isMapActive = ref(false)
 const fogEnabled = ref(false)
 const viewport = ref({ x: 0, y: 0, scale: 1 })
 const fogStrokes = ref([])  // { nx, ny, nr, cover? }
+const fogCells = ref([])    // revealed cell indices (grid mode)
 const mapTokens = ref({})   // { [playerId]: { nx, ny } }
 const customTokenName = ref('')
 const pendingCustomToken = ref(false)
+
+// Grid config
+const gridType = ref('none')    // 'none' | 'square' | 'hex'
+const gridCols = ref(20)
+const gridRows = ref(15)
+const gridHexOrientation = ref('flat')
+const showGridConfig = ref(false)   // whether config panel is open
+const gridDetecting = ref(false)
+const gridSaving = ref(false)
+const selectedImageId = ref(null)   // id of currently loaded map image
 
 const brushRadius = ref(DEFAULT_BRUSH_RADIUS)
 
@@ -43,6 +55,7 @@ let resizeObserver = null
 let viewportDebounceTimer = null
 let pendingNormViewport = null
 const avatarCache = {}   // { [playerId]: HTMLImageElement | 'loading' | 'error' }
+const fogCellsSet = new Set()  // mirror of fogCells for O(1) lookup
 
 // interaction state
 let isPainting = false
@@ -157,7 +170,7 @@ function getLayout() {
   return { offsetX, offsetY, imgW, imgH, totalScale }
 }
 
-// ── Fog canvas ─────────────────────────────────────────────────────────────
+// ── Fog canvas (brush mode) ────────────────────────────────────────────────
 function ensureFogCanvas() {
   if (!mapImage) return null
   const w = mapImage.naturalWidth
@@ -246,6 +259,83 @@ function addStrokeToFog(stroke) {
   renderFogFromMask()
 }
 
+// ── Grid rendering ─────────────────────────────────────────────────────────
+
+function renderGridFog(ctx, layout) {
+  if (!mapImage) return
+  const { offsetX, offsetY, imgW, imgH } = layout
+  const cols = gridCols.value
+  const rows = gridRows.value
+  const type = gridType.value
+  const orientation = gridHexOrientation.value
+  const totalCells = cols * rows
+
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(offsetX, offsetY, imgW, imgH)
+  ctx.clip()
+
+  for (let idx = 0; idx < totalCells; idx++) {
+    const isRevealed = fogCellsSet.has(idx)
+    const points = getCellPolygon(idx, type, cols, rows, orientation)
+    if (!points.length) continue
+
+    const canvasPoints = points.map(p => ({
+      x: offsetX + p.nx * imgW,
+      y: offsetY + p.ny * imgH,
+    }))
+
+    ctx.beginPath()
+    ctx.moveTo(canvasPoints[0].x, canvasPoints[0].y)
+    for (let i = 1; i < canvasPoints.length; i++) ctx.lineTo(canvasPoints[i].x, canvasPoints[i].y)
+    ctx.closePath()
+
+    if (!isRevealed) {
+      ctx.fillStyle = 'rgba(30, 20, 60, 0.75)'
+      ctx.fill()
+    }
+
+    ctx.strokeStyle = isRevealed ? 'rgba(180, 140, 255, 0.25)' : 'rgba(180, 140, 255, 0.45)'
+    ctx.lineWidth = 1
+    ctx.stroke()
+  }
+
+  ctx.restore()
+}
+
+function renderGridPreview(ctx, layout) {
+  if (!mapImage) return
+  const { offsetX, offsetY, imgW, imgH } = layout
+  const cols = gridCols.value
+  const rows = gridRows.value
+  const type = gridType.value
+  const orientation = gridHexOrientation.value
+  const totalCells = cols * rows
+
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(offsetX, offsetY, imgW, imgH)
+  ctx.clip()
+
+  for (let idx = 0; idx < totalCells; idx++) {
+    const points = getCellPolygon(idx, type, cols, rows, orientation)
+    if (!points.length) continue
+    const canvasPoints = points.map(p => ({
+      x: offsetX + p.nx * imgW,
+      y: offsetY + p.ny * imgH,
+    }))
+    ctx.beginPath()
+    ctx.moveTo(canvasPoints[0].x, canvasPoints[0].y)
+    for (let i = 1; i < canvasPoints.length; i++) ctx.lineTo(canvasPoints[i].x, canvasPoints[i].y)
+    ctx.closePath()
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.7)'
+    ctx.lineWidth = 1.5
+    ctx.stroke()
+  }
+
+  ctx.restore()
+}
+
 // ── Token helpers ──────────────────────────────────────────────────────────
 function preloadAvatar(player) {
   const pid = String(player.id)
@@ -277,14 +367,12 @@ function drawToken(ctx, pid, tokenPos, layout) {
   const tx = offsetX + tokenPos.nx * mapImage.naturalWidth * totalScale
   const ty = offsetY + tokenPos.ny * mapImage.naturalHeight * totalScale
 
-  // Support custom tokens (clé custom_*) et player tokens
   const isCustom = pid.startsWith('custom_')
   const player = isCustom ? null : sessionStore.players.find(p => String(p.id) === pid)
   const name = isCustom ? (tokenPos.name || '?') : (player?.player_name || '?')
 
   if (!isCustom) preloadAvatar(player || {})
 
-  // Cercle de fond
   ctx.save()
   ctx.beginPath()
   ctx.arc(tx, ty, TOKEN_RADIUS, 0, Math.PI * 2)
@@ -295,7 +383,6 @@ function drawToken(ctx, pid, tokenPos, layout) {
   ctx.stroke()
   ctx.restore()
 
-  // Avatar ou initiale
   const cachedImg = !isCustom && avatarCache[pid]
   if (cachedImg instanceof HTMLImageElement) {
     ctx.save()
@@ -314,7 +401,6 @@ function drawToken(ctx, pid, tokenPos, layout) {
     ctx.restore()
   }
 
-  // Nom sous le jeton
   ctx.save()
   ctx.font = 'bold 11px sans-serif'
   ctx.textAlign = 'center'
@@ -340,16 +426,19 @@ function render() {
   ctx.fillStyle = '#111'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-  // Image
   ctx.drawImage(mapImage, offsetX, offsetY, imgW, imgH)
 
-  // Fog overlay (semi-transparent MJ view)
-  if (fogEnabled.value) {
-    const fc = ensureFogCanvas()
-    if (fc) ctx.drawImage(fc, offsetX, offsetY, imgW, imgH)
+  if (showGridConfig.value && gridType.value !== 'none') {
+    renderGridPreview(ctx, layout)
+  } else if (fogEnabled.value) {
+    if (gridType.value !== 'none') {
+      renderGridFog(ctx, layout)
+    } else {
+      const fc = ensureFogCanvas()
+      if (fc) ctx.drawImage(fc, offsetX, offsetY, imgW, imgH)
+    }
   }
 
-  // Jetons — toujours au-dessus du brouillard
   for (const [pid, tokenPos] of Object.entries(mapTokens.value)) {
     drawToken(ctx, pid, tokenPos, layout)
   }
@@ -370,8 +459,64 @@ function loadMapImage(url) {
     }
     rebuildFogCanvas()
     render()
+    if (gridType.value === 'none' && !showGridConfig.value) {
+      runGridDetection()
+    }
   }
   img.src = imageFullUrl(url)
+}
+
+async function runGridDetection() {
+  if (!mapImage) return
+  gridDetecting.value = true
+  try {
+    const result = detectGrid(mapImage)
+    if (result.type !== 'none') {
+      gridCols.value = result.cols
+      gridRows.value = result.rows
+      showGridConfig.value = true
+    }
+  } finally {
+    gridDetecting.value = false
+  }
+}
+
+// ── Grid config actions ────────────────────────────────────────────────────
+async function saveGridConfig() {
+  if (!selectedImageId.value || !sessionStore.activeSession) return
+  gridSaving.value = true
+  try {
+    const body = {
+      grid_type: gridType.value,
+      grid_cols: gridType.value !== 'none' ? gridCols.value : null,
+      grid_rows: gridType.value !== 'none' ? gridRows.value : null,
+      grid_hex_orientation: gridHexOrientation.value,
+    }
+    const res = await fetch(
+      `${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${selectedImageId.value}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authStore.token}` },
+        body: JSON.stringify(body),
+      }
+    )
+    if (res.ok) {
+      showGridConfig.value = false
+      render()
+    }
+  } catch (err) { console.error(err) }
+  finally { gridSaving.value = false }
+}
+
+function applyGridConfig(state) {
+  gridType.value = state.gridType || 'none'
+  gridCols.value = state.gridCols || 20
+  gridRows.value = state.gridRows || 15
+  gridHexOrientation.value = state.gridHexOrientation || 'flat'
+  fogCellsSet.clear()
+  const cells = state.fogCells || []
+  fogCells.value = cells
+  cells.forEach(c => fogCellsSet.add(c))
 }
 
 // ── Coordinate helpers ─────────────────────────────────────────────────────
@@ -410,7 +555,6 @@ function onPointerDown(event) {
   const pos = eventToCanvas(event)
   if (!pos) return
 
-  // Bouton milieu → pan
   if (event.button === 1) {
     event.preventDefault()
     canvasEl.value?.setPointerCapture(event.pointerId)
@@ -424,7 +568,6 @@ function onPointerDown(event) {
   if (event.button !== 0) return
   canvasEl.value?.setPointerCapture(event.pointerId)
 
-  // Mode placement de jeton en attente
   if (pendingCustomToken.value) {
     const norm = canvasToNorm(pos.x, pos.y)
     if (norm) placeCustomToken(norm.nx, norm.ny)
@@ -437,17 +580,19 @@ function onPointerDown(event) {
     return
   }
 
-  // Drag d'un jeton existant
   const tokenUnderCursor = getTokenAtPos(pos)
   if (tokenUnderCursor) {
     draggingTokenId = tokenUnderCursor
     return
   }
 
-  // Clic gauche : pinceau brouillard
   if (fogEnabled.value) {
-    isPainting = true
-    applyBrush(pos)
+    if (gridType.value !== 'none') {
+      applyCellReveal(pos)
+    } else {
+      isPainting = true
+      applyBrush(pos)
+    }
   }
 }
 
@@ -466,7 +611,7 @@ function onPointerMove(event) {
     return
   }
 
-  if (isPainting && fogEnabled.value) {
+  if (isPainting && fogEnabled.value && gridType.value === 'none') {
     applyBrush(pos)
     return
   }
@@ -521,6 +666,18 @@ function applyBrush(pos) {
   render()
   const socket = getSocket()
   socket.emit('map-fog-clear', { sessionId: sessionStore.activeSession.id, strokes: [stroke] })
+}
+
+function applyCellReveal(pos) {
+  const norm = canvasToNorm(pos.x, pos.y)
+  if (!norm) return
+  const idx = getCellAt(norm.nx, norm.ny, gridType.value, gridCols.value, gridRows.value, gridHexOrientation.value)
+  if (idx < 0 || fogCellsSet.has(idx)) return
+  fogCellsSet.add(idx)
+  fogCells.value = [...fogCellsSet]
+  render()
+  const socket = getSocket()
+  socket.emit('map-fog-cell-reveal', { sessionId: sessionStore.activeSession.id, cells: [idx] })
 }
 
 // ── Token actions ──────────────────────────────────────────────────────────
@@ -593,7 +750,11 @@ function toggleFog() {
 
 function resetFog() {
   const socket = getSocket()
-  socket.emit('map-fog-reset', { sessionId: sessionStore.activeSession.id })
+  if (gridType.value !== 'none') {
+    socket.emit('map-fog-cells-reset', { sessionId: sessionStore.activeSession.id })
+  } else {
+    socket.emit('map-fog-reset', { sessionId: sessionStore.activeSession.id })
+  }
 }
 
 function emitViewport() {
@@ -671,11 +832,14 @@ function handleMapState(data) {
   applyNormViewport(xn, yn, scale)
   fogStrokes.value = Array.isArray(data.fogStrokes) ? data.fogStrokes : []
   mapTokens.value = (data.mapTokens && typeof data.mapTokens === 'object') ? data.mapTokens : {}
+  applyGridConfig(data)
   fogCanvas = null
   fogMask = null
   const newUrl = data.mapUrl
   if (newUrl !== selectedImageUrl.value) {
     selectedImageUrl.value = newUrl
+    const img = images.value.find(i => i.url === newUrl)
+    selectedImageId.value = img?.id || null
     loadMapImage(newUrl)
   } else {
     rebuildFogCanvas()
@@ -700,7 +864,22 @@ function handleFogPatch({ strokes }) {
 
 function handleFogReset() {
   fogStrokes.value = []
+  fogCellsSet.clear()
+  fogCells.value = []
   rebuildFogCanvas()
+  render()
+}
+
+function handleFogCellsPatch({ cells }) {
+  if (!Array.isArray(cells)) return
+  cells.forEach(c => fogCellsSet.add(c))
+  fogCells.value = [...fogCellsSet]
+  render()
+}
+
+function handleFogCellsReset() {
+  fogCellsSet.clear()
+  fogCells.value = []
   render()
 }
 
@@ -745,6 +924,17 @@ async function deleteImage(img, event) {
   } catch (err) { console.error(err) }
 }
 
+function selectImage(img) {
+  selectedImageUrl.value = img.url
+  selectedImageId.value = img.id
+  gridType.value = img.grid_type || 'none'
+  gridCols.value = img.grid_cols || 20
+  gridRows.value = img.grid_rows || 15
+  gridHexOrientation.value = img.grid_hex_orientation || 'flat'
+  showGridConfig.value = false
+  loadMapImage(img.url)
+}
+
 // ── Lifecycle ──────────────────────────────────────────────────────────────
 onMounted(() => {
   loadImages()
@@ -756,6 +946,8 @@ onMounted(() => {
   socket.on('map-fog-updated', handleFogUpdated)
   socket.on('map-fog-patch', handleFogPatch)
   socket.on('map-fog-reset', handleFogReset)
+  socket.on('map-fog-cells-patch', handleFogCellsPatch)
+  socket.on('map-fog-cells-reset', handleFogCellsReset)
   socket.on('map-token-moved', handleMapTokenMoved)
   socket.on('map-token-removed', handleMapTokenRemoved)
   socket.on('admin-state', handleAdminState)
@@ -770,6 +962,8 @@ onUnmounted(() => {
   socket.off('map-fog-updated', handleFogUpdated)
   socket.off('map-fog-patch', handleFogPatch)
   socket.off('map-fog-reset', handleFogReset)
+  socket.off('map-fog-cells-patch', handleFogCellsPatch)
+  socket.off('map-fog-cells-reset', handleFogCellsReset)
   socket.off('map-token-moved', handleMapTokenMoved)
   socket.off('map-token-removed', handleMapTokenRemoved)
   socket.off('admin-state', handleAdminState)
@@ -778,6 +972,7 @@ onUnmounted(() => {
 
 watch(() => selectedImageUrl.value, (url) => { if (url && !mapImage) loadMapImage(url) })
 watch(fogEnabled, () => render())
+watch([gridCols, gridRows, gridType, gridHexOrientation], () => { if (showGridConfig.value) render() })
 </script>
 
 <template>
@@ -820,13 +1015,16 @@ watch(fogEnabled, () => render())
           :key="img.id"
           class="gallery-item"
           :class="{ selected: selectedImageUrl === img.url }"
-          @click="selectedImageUrl = img.url; loadMapImage(img.url)"
+          @click="selectImage(img)"
       >
         <div class="thumb-wrapper">
           <img :src="imageFullUrl(img.thumbnail_url || img.url)" :alt="img.original_name || img.url" class="gallery-thumb" />
           <button class="delete-btn" @click="deleteImage(img, $event)" title="Supprimer">✕</button>
+          <span v-if="img.grid_type && img.grid_type !== 'none'" class="grid-badge" :title="`Grille ${img.grid_type}`">
+            <AppIcon :icon="img.grid_type === 'hex' ? 'lucide:hexagon' : 'lucide:grid-3x3'" size="0.7em" />
+          </span>
         </div>
-        <button class="show-btn" @click.stop="selectedImageUrl = img.url; loadMapImage(img.url); showMapOnTv()">
+        <button class="show-btn" @click.stop="selectImage(img); showMapOnTv()">
           <AppIcon icon="lucide:map" size="0.85em" /> Carte TV
         </button>
       </div>
@@ -834,6 +1032,72 @@ watch(fogEnabled, () => render())
 
     <!-- Map Controls -->
     <template v-if="isMapActive && selectedImageUrl">
+
+      <!-- Configuration de grille -->
+      <div class="control-section">
+        <h4 class="subsection-title">
+          <AppIcon icon="lucide:grid-3x3" size="0.85em" /> Grille <HelpTip id="map.grid" />
+        </h4>
+
+        <div class="inline-actions">
+          <button class="action-btn" :class="{ active: showGridConfig }" @click="showGridConfig = !showGridConfig">
+            <AppIcon icon="lucide:settings-2" size="0.85em" />
+            {{ showGridConfig ? 'Masquer' : 'Configurer' }}
+          </button>
+          <span v-if="gridDetecting" class="hint-text"><AppIcon icon="lucide:loader" size="0.8em" /> Détection…</span>
+          <span v-else-if="gridType !== 'none'" class="grid-status-badge">
+            <AppIcon :icon="gridType === 'hex' ? 'lucide:hexagon' : 'lucide:grid-3x3'" size="0.8em" />
+            {{ gridType === 'hex' ? 'Hexagones' : 'Carrés' }} {{ gridCols }}×{{ gridRows }}
+          </span>
+          <span v-else class="hint-text">Peinture libre</span>
+        </div>
+
+        <template v-if="showGridConfig">
+          <div class="grid-config-panel">
+            <div class="grid-config-row">
+              <label class="grid-config-label">Type</label>
+              <div class="grid-type-selector">
+                <button
+                  v-for="t in ['none','square','hex']"
+                  :key="t"
+                  class="type-btn"
+                  :class="{ active: gridType === t }"
+                  @click="gridType = t"
+                >
+                  <AppIcon
+                    :icon="t === 'hex' ? 'lucide:hexagon' : t === 'square' ? 'lucide:grid-3x3' : 'lucide:brush'"
+                    size="0.8em"
+                  />
+                  {{ t === 'hex' ? 'Hexagones' : t === 'square' ? 'Carrés' : 'Libre' }}
+                </button>
+              </div>
+            </div>
+
+            <template v-if="gridType !== 'none'">
+              <div class="grid-config-row">
+                <label class="grid-config-label">Colonnes : {{ gridCols }}</label>
+                <input v-model.number="gridCols" type="range" min="2" max="100" class="brush-slider" />
+              </div>
+              <div class="grid-config-row">
+                <label class="grid-config-label">Lignes : {{ gridRows }}</label>
+                <input v-model.number="gridRows" type="range" min="2" max="100" class="brush-slider" />
+              </div>
+              <div v-if="gridType === 'hex'" class="grid-config-row">
+                <label class="grid-config-label">Orientation</label>
+                <div class="grid-type-selector">
+                  <button class="type-btn" :class="{ active: gridHexOrientation === 'flat' }" @click="gridHexOrientation = 'flat'">Plate</button>
+                  <button class="type-btn" :class="{ active: gridHexOrientation === 'pointy' }" @click="gridHexOrientation = 'pointy'">Pointue</button>
+                </div>
+              </div>
+            </template>
+
+            <button class="action-btn save-grid-btn" :disabled="gridSaving" @click="saveGridConfig">
+              <AppIcon icon="lucide:save" size="0.85em" />
+              {{ gridSaving ? 'Enregistrement…' : 'Enregistrer la grille' }}
+            </button>
+          </div>
+        </template>
+      </div>
 
       <!-- Brouillard de guerre -->
       <div class="control-section">
@@ -847,7 +1111,7 @@ watch(fogEnabled, () => render())
             <AppIcon icon="lucide:refresh-cw" size="0.85em" /> Réinitialiser
           </button>
         </div>
-        <template v-if="fogEnabled">
+        <template v-if="fogEnabled && gridType === 'none'">
           <div class="brush-controls">
             <p class="hint-text"><AppIcon icon="lucide:brush" size="0.85em" /> Clic gauche pour révéler la carte</p>
             <label class="brush-label">
@@ -855,6 +1119,9 @@ watch(fogEnabled, () => render())
               <input v-model.number="brushRadius" type="range" :min="MIN_BRUSH_RADIUS" :max="MAX_BRUSH_RADIUS" class="brush-slider" />
             </label>
           </div>
+        </template>
+        <template v-else-if="fogEnabled && gridType !== 'none'">
+          <p class="hint-text"><AppIcon icon="lucide:mouse-pointer-click" size="0.85em" /> Clic gauche sur une case pour la révéler</p>
         </template>
       </div>
 
@@ -883,7 +1150,6 @@ watch(fogEnabled, () => render())
             <span v-else-if="pendingTokenPlayerId === String(player.id)" class="chip-badge pending-badge"><AppIcon icon="lucide:map-pin" size="0.75rem" /></span>
           </div>
         </div>
-        <!-- Dans la section Jetons de joueurs, après le token-tray -->
 
         <div class="custom-token-form">
           <input
@@ -936,12 +1202,16 @@ watch(fogEnabled, () => render())
       <div class="control-section">
         <h4 class="subsection-title"><AppIcon icon="lucide:eye" size="0.85em" /> Vue TV en temps réel</h4>
         <p class="hint-text">
-          {{ pendingTokenPlayerId ? 'Cliquez sur la carte pour placer le jeton' : fogEnabled ? 'Clic gauche pour révéler · Molette pour zoomer · Molette centrale pour naviguer' : '↕ Clic molette pour naviguer · molette pour zoomer' }}
+          <template v-if="pendingTokenPlayerId">Cliquez sur la carte pour placer le jeton</template>
+          <template v-else-if="showGridConfig && gridType !== 'none'">Aperçu grille — ajustez cols/lignes puis enregistrez</template>
+          <template v-else-if="fogEnabled && gridType !== 'none'">Clic gauche sur une case pour la révéler · Molette pour zoomer · Molette centrale pour naviguer</template>
+          <template v-else-if="fogEnabled">Clic gauche pour révéler · Molette pour zoomer · Molette centrale pour naviguer</template>
+          <template v-else>↕ Clic molette pour naviguer · molette pour zoomer</template>
         </p>
         <div
           ref="canvasContainer"
           class="canvas-container"
-          :style="{ cursor: pendingTokenPlayerId ? 'crosshair' : draggingTokenId ? 'grabbing' : isDragging ? 'grabbing' : 'default' }"
+          :style="{ cursor: pendingTokenPlayerId ? 'crosshair' : draggingTokenId ? 'grabbing' : isDragging ? 'grabbing' : fogEnabled && gridType !== 'none' ? 'pointer' : 'default' }"
         >
           <canvas
             ref="canvasEl"
@@ -1082,7 +1352,6 @@ watch(fogEnabled, () => render())
   border-color: var(--color-gold-bright);
 }
 
-
 .show-btn {
   width: 100%; padding: 0.3rem 0.25rem;
   background: var(--surface-gold-soft); border: 1px solid var(--color-gold-dark);
@@ -1093,12 +1362,89 @@ watch(fogEnabled, () => render())
 }
 .show-btn:hover { background: var(--surface-gold-soft-strong); border-color: var(--color-gold-bright); color: var(--color-gold-bright); }
 
+.grid-badge {
+  position: absolute;
+  top: 4px; left: 4px;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 4px;
+  padding: 2px 4px;
+  color: var(--color-gold-bright);
+  font-size: 0.6rem;
+}
+
+.grid-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--surface-gold-soft);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 999px;
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+}
+
+/* Grid config panel */
+.grid-config-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.65rem 0.75rem;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+.grid-config-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.grid-config-label {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.68rem;
+  color: var(--color-text-dim);
+  letter-spacing: 0.05em;
+  min-width: 7rem;
+  flex-shrink: 0;
+}
+.grid-type-selector {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.type-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.65rem;
+  background: var(--surface-raised, #1e1e2e);
+  border: 1.5px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.type-btn:hover { border-color: var(--color-gold-dark); color: var(--color-gold); }
+.type-btn.active { border-color: var(--color-gold-bright); color: var(--color-gold-bright); background: var(--surface-gold-soft); }
+
+.save-grid-btn {
+  width: 100%;
+  margin-top: 0.2rem;
+}
+
 .control-section {
   background: var(--admin-panel-bg, var(--gradient-panel));
   border: 1px solid var(--color-border); border-radius: 10px;
   padding: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem;
 }
-.inline-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+.inline-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; align-items: center; }
 
 .action-btn {
   padding: 0.45rem 0.85rem;
@@ -1114,16 +1460,6 @@ watch(fogEnabled, () => render())
 .brush-controls { display: flex; flex-direction: column; gap: 0.4rem; }
 .brush-label { display: flex; align-items: center; gap: 0.4rem; color: var(--color-text-dim); font-family: var(--font-heading), sans-serif; font-size: 0.7rem; }
 .brush-slider { flex: 1; accent-color: var(--color-gold); }
-kbd {
-  display: inline-block;
-  padding: 0.1em 0.35em;
-  background: var(--surface-raised, #222);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-family: monospace;
-  color: var(--color-text-dim);
-}
 
 /* ── Token tray ── */
 .token-tray {

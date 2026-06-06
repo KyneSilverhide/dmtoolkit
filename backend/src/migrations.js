@@ -249,6 +249,13 @@ ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timescale_rest_taken BOOLEAN DEFAU
 
 -- Player-to-DM secret messages
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS from_player_id INTEGER REFERENCES players(id) ON DELETE SET NULL;
+
+-- Grid-based fog of war: grid config stored per map image, revealed cells per session
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_type VARCHAR(10) DEFAULT 'none';
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_cols INTEGER;
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_rows INTEGER;
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_hex_orientation VARCHAR(10) DEFAULT 'flat';
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS map_fog_cells TEXT;
 `
 
 async function runMigrations() {
