@@ -56,8 +56,13 @@ function computeApproximateShares(playerList, amts) {
 
     while (remaining > 0) {
       const minTotal = Math.min(...totals)
-      const minIdxs = totals.reduce((acc, t, i) => (t === minTotal ? [...acc, i] : acc), [])
-      const nextTotal = totals.filter(t => t > minTotal).reduce((a, b) => Math.min(a, b), Infinity)
+      const minIdxs = []
+      let nextTotal = Infinity
+      for (let i = 0; i < totals.length; i++) {
+        const t = totals[i]
+        if (t === minTotal) minIdxs.push(i)
+        else if (t > minTotal && t < nextTotal) nextTotal = t
+      }
       const gapPc = nextTotal === Infinity ? Infinity : nextTotal - minTotal
       const coinsToFill = gapPc === Infinity ? Infinity : Math.ceil(gapPc / coin.pcValue)
       const coinsNeeded = coinsToFill * minIdxs.length
