@@ -1285,6 +1285,14 @@ function setupSocket(io) {
       } catch (err) { console.error(err) }
     })
 
+    // ── Admin: sync grid config to TV after save ────────────────────────────
+    socket.on('map-sync-grid', ({ sessionId, gridType, gridCols, gridRows, gridHexOrientation }) => {
+      if (!socket.admin) return
+      const payload = { gridType: gridType || 'none', gridCols: gridCols || 20, gridRows: gridRows || 15, gridHexOrientation: gridHexOrientation || 'flat' }
+      io.to(`tv:${sessionId}`).emit('map-grid-updated', payload)
+      io.to(`admin:${sessionId}`).emit('map-grid-updated', payload)
+    })
+
     // ── Admin: reset cell-based fog ─────────────────────────────────────────
     socket.on('map-fog-cells-reset', async ({ sessionId }) => {
       if (!socket.admin) return
