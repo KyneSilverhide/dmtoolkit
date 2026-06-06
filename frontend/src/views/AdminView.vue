@@ -646,7 +646,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  max-width: 1600px;
   margin: 0 auto;
   width: 100%;
   color: var(--color-text);
