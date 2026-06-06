@@ -36,6 +36,8 @@ const gridType = ref('none')    // 'none' | 'square' | 'hex'
 const gridCols = ref(20)
 const gridRows = ref(15)
 const gridHexOrientation = ref('flat')
+const gridOffsetX = ref(0)
+const gridOffsetY = ref(0)
 const showGridConfig = ref(false)   // whether config panel is open
 const gridDetecting = ref(false)
 const gridSaving = ref(false)
@@ -268,6 +270,8 @@ function renderGridFog(ctx, layout) {
   const rows = gridRows.value
   const type = gridType.value
   const orientation = gridHexOrientation.value
+  const gox = gridOffsetX.value
+  const goy = gridOffsetY.value
   const totalCells = cols * rows
 
   ctx.save()
@@ -277,7 +281,7 @@ function renderGridFog(ctx, layout) {
 
   for (let idx = 0; idx < totalCells; idx++) {
     const isRevealed = fogCellsSet.has(idx)
-    const points = getCellPolygon(idx, type, cols, rows, orientation)
+    const points = getCellPolygon(idx, type, cols, rows, orientation, gox, goy)
     if (!points.length) continue
 
     const canvasPoints = points.map(p => ({
@@ -310,6 +314,8 @@ function renderGridPreview(ctx, layout) {
   const rows = gridRows.value
   const type = gridType.value
   const orientation = gridHexOrientation.value
+  const gox = gridOffsetX.value
+  const goy = gridOffsetY.value
   const totalCells = cols * rows
 
   ctx.save()
@@ -318,7 +324,7 @@ function renderGridPreview(ctx, layout) {
   ctx.clip()
 
   for (let idx = 0; idx < totalCells; idx++) {
-    const points = getCellPolygon(idx, type, cols, rows, orientation)
+    const points = getCellPolygon(idx, type, cols, rows, orientation, gox, goy)
     if (!points.length) continue
     const canvasPoints = points.map(p => ({
       x: offsetX + p.nx * imgW,
@@ -474,6 +480,8 @@ async function runGridDetection() {
     if (result.type !== 'none') {
       gridCols.value = result.cols
       gridRows.value = result.rows
+      gridOffsetX.value = result.offsetX ?? 0
+      gridOffsetY.value = result.offsetY ?? 0
       showGridConfig.value = true
     }
   } finally {
@@ -491,6 +499,8 @@ async function saveGridConfig() {
       grid_cols: gridType.value !== 'none' ? gridCols.value : null,
       grid_rows: gridType.value !== 'none' ? gridRows.value : null,
       grid_hex_orientation: gridHexOrientation.value,
+      grid_offset_x: gridType.value !== 'none' ? gridOffsetX.value : 0,
+      grid_offset_y: gridType.value !== 'none' ? gridOffsetY.value : 0,
     }
     const res = await fetch(
       `${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${selectedImageId.value}`,
@@ -510,6 +520,8 @@ async function saveGridConfig() {
         gridCols: gridCols.value,
         gridRows: gridRows.value,
         gridHexOrientation: gridHexOrientation.value,
+        gridOffsetX: gridOffsetX.value,
+        gridOffsetY: gridOffsetY.value,
       })
     }
   } catch (err) { console.error(err) }
@@ -521,6 +533,8 @@ function applyGridConfig(state) {
   gridCols.value = state.gridCols || 20
   gridRows.value = state.gridRows || 15
   gridHexOrientation.value = state.gridHexOrientation || 'flat'
+  gridOffsetX.value = state.gridOffsetX ?? 0
+  gridOffsetY.value = state.gridOffsetY ?? 0
   fogCellsSet.clear()
   const cells = state.fogCells || []
   fogCells.value = cells
@@ -679,7 +693,7 @@ function applyBrush(pos) {
 function applyCellReveal(pos) {
   const norm = canvasToNorm(pos.x, pos.y)
   if (!norm) return
-  const idx = getCellAt(norm.nx, norm.ny, gridType.value, gridCols.value, gridRows.value, gridHexOrientation.value)
+  const idx = getCellAt(norm.nx, norm.ny, gridType.value, gridCols.value, gridRows.value, gridHexOrientation.value, gridOffsetX.value, gridOffsetY.value)
   if (idx < 0 || fogCellsSet.has(idx)) return
   fogCellsSet.add(idx)
   fogCells.value = [...fogCellsSet]
@@ -939,6 +953,8 @@ function selectImage(img) {
   gridCols.value = img.grid_cols || 20
   gridRows.value = img.grid_rows || 15
   gridHexOrientation.value = img.grid_hex_orientation || 'flat'
+  gridOffsetX.value = img.grid_offset_x ?? 0
+  gridOffsetY.value = img.grid_offset_y ?? 0
   showGridConfig.value = false
   loadMapImage(img.url)
 }
@@ -980,7 +996,7 @@ onUnmounted(() => {
 
 watch(() => selectedImageUrl.value, (url) => { if (url && !mapImage) loadMapImage(url) })
 watch(fogEnabled, () => render())
-watch([gridCols, gridRows, gridType, gridHexOrientation], () => { if (showGridConfig.value) render() })
+watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffsetY], () => { if (showGridConfig.value) render() })
 </script>
 
 <template>
@@ -1128,6 +1144,14 @@ watch([gridCols, gridRows, gridType, gridHexOrientation], () => { if (showGridCo
                       <button class="type-btn" :class="{ active: gridHexOrientation === 'flat' }" @click="gridHexOrientation = 'flat'">Plate</button>
                       <button class="type-btn" :class="{ active: gridHexOrientation === 'pointy' }" @click="gridHexOrientation = 'pointy'">Pointue</button>
                     </div>
+                  </div>
+                  <div class="grid-config-row">
+                    <label class="grid-config-label">Décalage X : {{ Math.round(gridOffsetX * 1000) / 1000 }}</label>
+                    <input v-model.number="gridOffsetX" type="range" :min="-1 / gridCols" :max="1 / gridCols" :step="1 / gridCols / 20" class="brush-slider" />
+                  </div>
+                  <div class="grid-config-row">
+                    <label class="grid-config-label">Décalage Y : {{ Math.round(gridOffsetY * 1000) / 1000 }}</label>
+                    <input v-model.number="gridOffsetY" type="range" :min="-1 / gridRows" :max="1 / gridRows" :step="1 / gridRows / 20" class="brush-slider" />
                   </div>
                 </template>
 
