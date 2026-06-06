@@ -10,7 +10,7 @@ ALL=$(printf '%s\n%s\n' "$CHANGED" "$STAGED" | sort -u | grep -v '^$')
 
 [ -z "$ALL" ] && exit 0
 
-SOURCE_CHANGED=$(echo "$ALL" | grep -E '^(backend/src/|frontend/src/|docker-compose|backend/package\.json$|frontend/package\.json$|package\.json$)')
+SOURCE_CHANGED=$(echo "$ALL" | grep -E '^(backend/src/routes/|backend/src/socket\.js$|backend/src/migrations\.js$|backend/src/index\.js$|backend/src/demo\.js$|frontend/src/stores/|frontend/src/router/|frontend/src/socket\.js$|docker-compose|backend/package\.json$|frontend/package\.json$|package\.json$)')
 
 [ -z "$SOURCE_CHANGED" ] && exit 0
 
