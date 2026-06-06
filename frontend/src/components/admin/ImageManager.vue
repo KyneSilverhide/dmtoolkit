@@ -174,7 +174,7 @@ onUnmounted(() => {
       <span>Déposer les images ici</span>
     </div>
 
-    <h3 class="section-title"><AppIcon icon="lucide:image" size="0.9em" /> Gestionnaire d'Images</h3>
+    <h3 class="section-title"><AppIcon icon="lucide:image" size="0.9em" /> Gestionnaire d'Images <HelpTip id="image.screen" /></h3>
 
     <div class="upload-card">
       <label class="upload-btn" :class="{ disabled: uploading || !sessionStore.activeSession }">
@@ -245,21 +245,18 @@ onUnmounted(() => {
             @blur="saveTvLabel(img)"
             @keydown.enter.prevent="saveTvLabel(img)"
           />
-          <HelpTip id="image.tv-label" />
         </div>
         <button class="show-btn" @click.stop="selectedImageUrl = img.url; showImageOnTv(img.url)" title="Afficher sur la TV">
           <AppIcon icon="lucide:monitor" size="0.85em" /> Afficher TV
         </button>
-        <HelpTip id="image.lobby-bg">
-          <button
-            class="show-btn lobby-btn"
-            :class="{ active: activeLobbyBgUrl === img.url }"
-            @click.stop="setLobbyBg(img.url)"
-            title="Définir comme fond du lobby"
-          >
-            <AppIcon icon="lucide:image-play" size="0.85em" /> Fond lobby
-          </button>
-        </HelpTip>
+        <button
+          class="show-btn lobby-btn"
+          :class="{ active: activeLobbyBgUrl === img.url }"
+          @click.stop="setLobbyBg(img.url)"
+          title="Définir comme fond du lobby"
+        >
+          <AppIcon icon="lucide:image-play" size="0.85em" /> Fond lobby
+        </button>
         </div>
       </div>
     </template>

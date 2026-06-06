@@ -20,10 +20,8 @@ export const helpContent = {
     'Masque les noms des votants dans les résultats affichés sur la TV. Les joueurs savent qui a voté sans voir ce qu\'ils ont choisi.',
 
   // ── Admin — ImageManager ──────────────────────────────────────────────────
-  'image.tv-label':
-    'Texte affiché en overlay en haut à gauche de la TV quand cette image est projetée (ex : "Taverne du Poignard Noir").',
-  'image.lobby-bg':
-    'Définit cette image comme fond du lobby TV, à 15 % d\'opacité. Crée une ambiance visuelle entre deux scènes.',
+  'image.screen':
+    'Projetez vos images sur la TV via Afficher TV. Le champ Label TV s\'affiche en overlay en haut à gauche de l\'écran lors de la projection (ex : "Taverne du Poignard Noir"). Fond lobby définit l\'image comme arrière-plan du lobby à 15 % d\'opacité.',
 
   // ── Admin — MapManager ────────────────────────────────────────────────────
   'map.fog':
@@ -36,12 +34,8 @@ export const helpContent = {
     'Contrôle le zoom et le cadrage visible sur la TV. Utile pour focaliser l\'attention des joueurs sur une zone précise de la carte.',
 
   // ── Admin — AudioManager ──────────────────────────────────────────────────
-  'audio.reclassify':
-    'Demande à l\'IA (GPT-4o-mini) de recatégoriser automatiquement toutes les pistes en se basant sur leur nom de fichier. Nécessite GITHUB_TOKEN.',
-  'audio.category':
-    'Catégorie libre de la piste (ex : "Ambiance", "Combat", "Village"). Modifiez-la directement pour regrouper vos pistes comme vous le souhaitez.',
-  'audio.loop':
-    'La piste repart automatiquement au début quand elle se termine. Idéal pour les musiques d\'ambiance de longue durée.',
+  'audio.screen':
+    'Lecteur multi-pistes : jouez plusieurs sons simultanément avec volume et boucle indépendants par piste. La catégorie regroupe vos pistes librement. Reclassifier demande à l\'IA (GPT-4o-mini) de recatégoriser toutes les pistes selon leur nom de fichier — nécessite GITHUB_TOKEN.',
 
   // ── Admin — MerchantManager ───────────────────────────────────────────────
   'merchant.counter-offer':

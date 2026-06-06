@@ -456,7 +456,7 @@ onUnmounted(() => {
     <!-- Barre supérieure : titre + lecture en cours + stop all -->
     <div class="top-bar">
       <h3 class="section-title">
-        <AppIcon icon="lucide:music-2" size="0.9em" /> Gestionnaire Audio
+        <AppIcon icon="lucide:music-2" size="0.9em" /> Gestionnaire Audio <HelpTip id="audio.screen" />
       </h3>
       <div class="top-actions">
         <span v-if="playingCount > 0" class="playing-badge">
@@ -473,18 +473,17 @@ onUnmounted(() => {
         >
           <AppIcon icon="lucide:trash-2" size="0.75em" /> Tout supprimer
         </button>
-        <HelpTip v-if="tracks.length > 0" id="audio.reclassify">
-          <button
-            class="reclassify-btn"
-            :class="{ loading: reclassifying }"
-            :disabled="reclassifying"
-            @click="reclassifyAll"
-          >
-            <AppIcon :icon="reclassifying ? 'lucide:loader' : 'lucide:sparkles'" size="0.75em" />
-            {{ reclassifying ? `Analyse… ${reclassifyProgress}%` : 'Reclassifier' }}
-            <span class="ai-badge">IA</span>
-          </button>
-        </HelpTip>
+        <button
+          v-if="tracks.length > 0"
+          class="reclassify-btn"
+          :class="{ loading: reclassifying }"
+          :disabled="reclassifying"
+          @click="reclassifyAll"
+        >
+          <AppIcon :icon="reclassifying ? 'lucide:loader' : 'lucide:sparkles'" size="0.75em" />
+          {{ reclassifying ? `Analyse… ${reclassifyProgress}%` : 'Reclassifier' }}
+          <span class="ai-badge">IA</span>
+        </button>
       </div>
       <div v-if="reclassifying" class="reclassify-progress">
         <div class="reclassify-fill" :style="{ width: reclassifyProgress + '%' }" />
@@ -616,13 +615,11 @@ onUnmounted(() => {
                 />
               </div>
               <div class="tile-actions">
-                <HelpTip id="audio.loop">
-                  <button
-                    class="icon-btn" :class="{ active: loops[track.id] }"
-                    :title="loops[track.id] ? 'Désactiver boucle' : 'Activer boucle'"
-                    @click="toggleLoop(track)"
-                  ><AppIcon icon="lucide:repeat" size="0.75em" /></button>
-                </HelpTip>
+                <button
+                  class="icon-btn" :class="{ active: loops[track.id] }"
+                  :title="loops[track.id] ? 'Désactiver boucle' : 'Activer boucle'"
+                  @click="toggleLoop(track)"
+                ><AppIcon icon="lucide:repeat" size="0.75em" /></button>
                 <button class="icon-btn" title="Renommer" @click="startRename(track)">
                   <AppIcon icon="lucide:pencil" size="0.7em" />
                 </button>
@@ -641,7 +638,6 @@ onUnmounted(() => {
                 @change="changeCategory(track, $event.target.value.trim())"
                 @keydown.enter="$event.target.blur()"
               />
-              <HelpTip id="audio.category" />
             </div>
           </div>
         </div>
