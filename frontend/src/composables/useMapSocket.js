@@ -145,10 +145,11 @@ export function useMapSocket({
     socket.emit('map-set-fog', { sessionId: sessionStore.activeSession.id, enabled: true })
   }
 
-  function emitToggleFog(enabled) {
-    const socket = getSocket()
-    socket.emit('map-set-fog', { sessionId: sessionStore.activeSession.id, enabled })
-  }
+function emitToggleFog(enabled) {
+  if (!sessionStore.activeSession) return
+  const socket = getSocket()
+  socket.emit('map-set-fog', { sessionId: sessionStore.activeSession.id, enabled })
+}
 
   function emitResetFog(isGrid) {
     const socket = getSocket()
