@@ -4,13 +4,17 @@ const props = defineProps({
 })
 
 function barWidth(optionIndex) {
-  if (!props.activeVote || !props.activeVote.totalVotes) return 0
-  return Math.round((props.activeVote.results[optionIndex] / props.activeVote.totalVotes) * 100)
+  const vote = props.activeVote
+  const total = Number(vote?.totalVotes) || 0
+  if (!total) return 0
+  const votesFor = Number(vote?.results?.[optionIndex]) || 0
+  return Math.round((votesFor / total) * 100)
 }
 
 function voterNamesFor(optionIndex) {
-  if (!props.activeVote) return ''
-  return props.activeVote.voterNames
+  const names = props.activeVote?.voterNames
+  if (!Array.isArray(names)) return ''
+  return names
     .filter(v => v.optionIndex === optionIndex)
     .map(v => v.name)
     .join(', ')
