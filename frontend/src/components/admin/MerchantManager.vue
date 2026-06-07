@@ -102,7 +102,11 @@ function groupLoadedRequests(rows) {
 }
 
 // ── Socket actions ───────────────────────────────────────────────────────
+let createInFlight = false
+
 function onCreateSubmit({ name, description, items }) {
+  if (createInFlight || !sessionStore.activeSession) return
+  createInFlight = true
   const socket = getSocket()
   socket.emit('create-merchant', {
     sessionId: sessionStore.activeSession.id,
