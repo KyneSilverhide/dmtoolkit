@@ -93,6 +93,11 @@ function preventReloadDuringPuzzle(e) {
   e.returnValue = ''
 }
 
+watch(puzzleImageId, (imageId) => {
+  if (imageId) window.addEventListener('beforeunload', preventReloadDuringPuzzle)
+  else window.removeEventListener('beforeunload', preventReloadDuringPuzzle)
+}, { immediate: true })
+
 // ── Map state ─────────────────────────────────────────────────────────────────
 const currentMapUrl = ref(null)
 const mapFogEnabled = ref(false)
