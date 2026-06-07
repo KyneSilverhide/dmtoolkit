@@ -238,7 +238,7 @@ async function loadSessions() {
     const data = await res.json()
     if (res.ok) sessionStore.setSessions(data)
   } catch {
-    // SessionManager keeps its own fallback loading.
+    // SessionManager garde son propre chargement en secours.
   }
 }
 
