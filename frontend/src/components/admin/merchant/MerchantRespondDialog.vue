@@ -4,7 +4,7 @@ import AppIcon from '../../AppIcon.vue'
 import HelpTip from '../../HelpTip.vue'
 
 const props = defineProps({
-  request: { default: null },
+  request: { type: Object, default: null },
 })
 
 const emit = defineEmits(['close', 'submit'])
