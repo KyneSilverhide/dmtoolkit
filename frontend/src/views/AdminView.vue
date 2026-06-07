@@ -113,6 +113,8 @@ function pushPlayerRollToast(payload) {
 }
 
 function dismissPlayerRollToast(id) {
+  const timerId = toastTimers.get(id)
+  if (timerId) clearTimeout(timerId)
   playerRollToasts.value = playerRollToasts.value.filter(t => t.id !== id)
   toastTimers.delete(id)
 }
