@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { io } from 'socket.io-client'
+import { getSocket, resetSocket } from '@/socket.js'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
 import TvLobby from '../components/tv/TvLobby.vue'
