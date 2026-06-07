@@ -1,22 +1,19 @@
 <script setup>
-import { watch } from 'vue'
-
 const props = defineProps({
-  activePuzzle:     { default: null },
-  puzzleServeUrl:   { type: String, default: '' },
-  pendingClicks:    { type: Array, default: () => [] },
+  puzzleServeUrl: { type: String, default: '' },
+  pendingClicks: { type: Array, default: () => [] },
 })
 
-const emit = defineEmits(['iframe-ready'])
-
-const iframeRef = defineModel('iframeRef', { default: null })
+const emit = defineEmits(['iframe-ready', 'consumed-pending-clicks'])
 
 function onLoad(event) {
   const iframe = event.target
   emit('iframe-ready', iframe)
+
   const clicks = props.pendingClicks
   if (clicks.length && iframe?.contentWindow) {
     clicks.forEach(path => iframe.contentWindow.postMessage({ type: 'puzzle-remote-click', path }, '*'))
+    emit('consumed-pending-clicks')
   }
 }
 </script>
