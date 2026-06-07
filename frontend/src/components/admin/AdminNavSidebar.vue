@@ -98,6 +98,7 @@ function selectTab(key) {
         'tab-locked': tab.key === 'generator' && !generatorEnabled,
       }"
       :title="tab.label"
+      :aria-disabled="tab.key === 'generator' && !generatorEnabled"
       @click="selectTab(tab.key)"
       @mouseenter="(tab.key === 'generator' && !generatorEnabled) ? showLockedTooltip($event) : null"
       @mouseleave="hideLockedTooltip"
