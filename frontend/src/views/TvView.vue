@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import { io } from 'socket.io-client'
 import { getSocket, resetSocket } from '@/socket.js'
 import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
@@ -196,7 +195,7 @@ let socket = null
 
 onMounted(() => {
   clockTickInterval = window.setInterval(() => { now.value = Date.now() }, 1000)
-  socket = io(BACKEND_URL)
+  socket = getSocket()
 
   socket.on('connect', () => {
     socket.emit('tv-join', { sessionCode: route.params.code })
@@ -391,7 +390,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (clockTickInterval) window.clearInterval(clockTickInterval)
-  if (socket) socket.disconnect()
+  resetSocket()
   window.removeEventListener('beforeunload', preventReloadDuringPuzzle)
 })
 </script>
