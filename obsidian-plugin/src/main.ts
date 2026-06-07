@@ -85,6 +85,9 @@ export default class DmToolkitSync extends Plugin {
 	private readonly playerIdToName = new Map<number, string>();
 	/** id → max_hp, tracked locally to avoid IT's additive max bug */
 	private readonly playerIdToMaxHp = new Map<number, number>();
+	/** Last IT round value seen — used to detect changes via polling */
+	private lastKnownRound = 0;
+	private roundPollInterval: ReturnType<typeof setInterval> | null = null;
 
 	async onload() {
 		await this.loadSettings();
@@ -295,6 +298,7 @@ export default class DmToolkitSync extends Plugin {
 		this.socket.on('connect', () => {
 			new Notice('DM Toolkit Sync: connecté ✓');
 			this.socket!.emit('admin-join', sessionId);
+			this.startRoundPolling();
 		});
 
 		this.socket.on('connect_error', (err: Error) => {
@@ -303,6 +307,7 @@ export default class DmToolkitSync extends Plugin {
 
 		this.socket.on('disconnect', () => {
 			new Notice('DM Toolkit Sync: déconnecté.');
+			this.stopRoundPolling();
 		});
 
 		// DM Toolkit → IT: initial snapshot
@@ -404,6 +409,7 @@ export default class DmToolkitSync extends Plugin {
 	}
 
 	disconnect() {
+		this.stopRoundPolling();
 		if (this.socket) {
 			this.socket.disconnect();
 			this.socket = null;
@@ -447,6 +453,9 @@ export default class DmToolkitSync extends Plugin {
 		} catch (err) {
 			console.error('[DM Toolkit Sync] populateIT error:', err);
 		}
+		// Nouveau combat depuis DM Toolkit → remettre le round à 1
+		this.lastKnownRound = 1;
+		this.pushRoundToCF(1);
 		new Notice(`DM Toolkit Sync: ${players.length} joueur(s) importé(s) dans l'Initiative Tracker.`);
 	}
 
@@ -520,6 +529,35 @@ export default class DmToolkitSync extends Plugin {
 			playerName,
 			currentHp: hp,
 		});
+	}
+
+	private pushRoundToCF(round: number) {
+		if (!this.socket?.connected || !this.settings.sessionId) return;
+		this.socket.emit('set-combat-round', {
+			sessionId: this.settings.sessionId,
+			round,
+		});
+	}
+
+	private startRoundPolling() {
+		this.stopRoundPolling();
+		this.lastKnownRound = 0;
+		this.roundPollInterval = setInterval(() => {
+			const it = this.getITPlugin();
+			if (!it) return;
+			const currentRound: number = it.tracker?.round ?? 0;
+			if (currentRound !== this.lastKnownRound) {
+				this.lastKnownRound = currentRound;
+				if (currentRound > 0) this.pushRoundToCF(currentRound);
+			}
+		}, 2000);
+	}
+
+	private stopRoundPolling() {
+		if (this.roundPollInterval !== null) {
+			clearInterval(this.roundPollInterval);
+			this.roundPollInterval = null;
+		}
 	}
 
 	// ── Manual sync via REST ────────────────────────────────────────────────────

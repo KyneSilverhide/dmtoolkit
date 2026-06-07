@@ -31,7 +31,7 @@ import {
   ADMIN_STATE, TV_MODE_CHANGED, VOTE_STARTED, VOTE_CLOSED,
   MAP_STATE, MERCHANT_ITEMS_UPDATED, DOOM_CLOCK_STARTED, DOOM_CLOCK_STOPPED,
   TENSION_SCALE_UPDATED, TENSION_SCALE_ENDED, TIME_SCALE_UPDATED, TIME_SCALE_ENDED,
-  PLAYER_ROLL_RESULT, DEMO_RESET,
+  PLAYER_ROLL_RESULT, DEMO_RESET, ROUND_UPDATED,
   ADMIN_JOIN, SET_TV_MODE, FACTIONS_UPDATED,
 } from '../socket-events.js'
 
@@ -92,6 +92,7 @@ const hasActiveTimeScale = ref(false)
 const hasActiveMap = ref(false)
 const activePuzzle = ref(null) // { puzzleImageId, puzzleSeed, puzzleClicks }
 const hasActiveReputation = ref(false)
+const combatRound = ref(0)
 
 // Badge d'activitÃ© par onglet (point de couleur dans la nav)
 const tabActivity = computed(() => ({
@@ -225,9 +226,23 @@ function setTvMode(mode) {
   })
 }
 
+function adjustRound(delta) {
+  if (!sessionStore.activeSession?.id) return
+  const socket = getSocket(authStore.token)
+  const newRound = Math.max(0, combatRound.value + delta)
+  socket.emit('set-combat-round', { sessionId: sessionStore.activeSession.id, round: newRound })
+}
+
+function resetRound() {
+  if (!sessionStore.activeSession?.id) return
+  const socket = getSocket(authStore.token)
+  socket.emit('set-combat-round', { sessionId: sessionStore.activeSession.id, round: 0 })
+}
+
 function handleAdminState(data) {
   if (sessionStore.activeSession?.id !== data.sessionId) return
   tvMode.value = data.tvMode || 'lobby'
+  combatRound.value = data.combatRound || 0
 
   hasActiveVote.value = !!data.activeVote
   hasActiveImage.value = !!data.currentImageUrl
@@ -378,6 +393,10 @@ onMounted(() => {
   _socket.on(FACTIONS_UPDATED, (factions) => {
     hasActiveReputation.value = Array.isArray(factions) && factions.length > 0
   })
+
+  _socket.on(ROUND_UPDATED, ({ round }) => {
+    combatRound.value = round
+  })
 })
 
 watch(
@@ -417,6 +436,7 @@ onUnmounted(() => {
     _socket.off(PLAYER_ROLL_RESULT)
     _socket.off(DEMO_RESET)
     _socket.off(FACTIONS_UPDATED)
+    _socket.off(ROUND_UPDATED)
     _socket = null
   }
 })
@@ -568,6 +588,15 @@ onUnmounted(() => {
             <p class="tv-sidebar-subtitle">
               Mode actuel : <span class="tv-mode-current">{{ activeTvModeLabel }}</span>
             </p>
+            <div v-if="sessionStore.activeSession" class="round-widget">
+              <span class="round-widget-label"><AppIcon icon="game-icons:crossed-swords" size="0.85em" /> Round</span>
+              <span class="round-widget-value">{{ combatRound }}</span>
+              <div class="round-widget-btns">
+                <button class="round-btn" @click="adjustRound(-1)" :disabled="combatRound <= 0">−1</button>
+                <button class="round-btn" @click="adjustRound(1)">+1</button>
+                <button class="round-btn round-btn-reset" @click="resetRound" title="Réinitialiser">⟳</button>
+              </div>
+            </div>
             <div v-if="sessionStore.activeSession" class="tv-mode-list">
               <button
                 v-for="mode in tvModes"
@@ -1055,6 +1084,50 @@ onUnmounted(() => {
 .tv-ready-badge.ready { color: var(--admin-success-text); background: var(--admin-success-bg); border-color: var(--admin-success-border); }
 .tv-ready-badge.not-ready { color: var(--color-text-dim); background: var(--admin-control-bg-muted); border-color: var(--color-border); }
 .tv-mode-btn.disabled, .tv-mode-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Combat round widget (tv-sidebar) ───────────────────────────────────── */
+.round-widget {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  background: var(--admin-control-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+.round-widget-label {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.round-widget-value {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-gold-bright);
+  min-width: 1.6rem;
+  text-align: center;
+  flex: 1;
+}
+.round-widget-btns { display: flex; gap: 0.3rem; flex-shrink: 0; }
+.round-btn {
+  padding: 0.25rem 0.5rem;
+  background: var(--gradient-accent-action);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 6px;
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.72rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.round-btn:hover:not(:disabled) { background: var(--gradient-accent-action-hover); }
+.round-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.round-btn-reset { border-color: var(--admin-danger-border); color: var(--admin-danger-text); background: var(--gradient-danger-action); }
 
 /* â”€â”€ Ã‰tats vides â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .no-session-msg { font-size: 0.88rem; color: var(--color-text-dim); padding: 1rem 0; }
