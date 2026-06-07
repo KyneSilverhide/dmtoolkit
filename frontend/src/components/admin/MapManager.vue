@@ -660,6 +660,7 @@ async function handleDeleteImage(img) {
 }
 
 function showMapOnTv(img) {
+  if (!img || !sessionStore.activeSession) return
   selectImage(img)
   mapSocket.emitShowMap(img.url)
   showMapList.value = false
