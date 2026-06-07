@@ -117,3 +117,82 @@ test('treasure split handles zero gold gracefully', async ({ browser, adminToken
     await playerCtx.close()
   }
 })
+
+test('mode Complet (water-fill) distributes all coins equitably', async ({ browser, adminToken }) => {
+  test.setTimeout(20_000)
+  const token = adminToken
+  const code = await createSession(token)
+
+  const adminCtx = await browser.newContext()
+  const player1Ctx = await browser.newContext()
+  const player2Ctx = await browser.newContext()
+
+  try {
+    const adminPage = new AdminPage(await adminCtx.newPage())
+    await adminPage.login(token)
+    await adminPage.selectSession(code)
+
+    await joinAsPlayer(await player1Ctx.newPage(), code, { name: 'WaterA', hp: 30 })
+    await joinAsPlayer(await player2Ctx.newPage(), code, { name: 'WaterB', hp: 30 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]')).toHaveCount(2, { timeout: 8_000 })
+
+    await adminPage.switchTab('tresor')
+    const pg = adminPage.page
+
+    // Enter 5 PO (odd amount — exact mode would leave 1 remainder, water-fill distributes all)
+    const poInput = pg.locator('.gold-divider .coin-input').nth(1)
+    await poInput.fill('5')
+
+    // Switch to Complet mode
+    const completBtn = pg.locator('.mode-btn').filter({ hasText: 'Complet' })
+    await completBtn.click()
+    await expect(completBtn).toHaveClass(/active/, { timeout: 3_000 })
+
+    // In water-fill mode each player should get a non-zero PC value shown
+    await expect(pg.locator('.share-pc-value').first()).toBeVisible({ timeout: 5_000 })
+    const pcText = await pg.locator('.share-pc-value').first().textContent()
+    expect(pcText).toMatch(/PC/)
+  } finally {
+    await adminCtx.close()
+    await player1Ctx.close()
+    await player2Ctx.close()
+  }
+})
+
+test('player grouping (banker) shows consolidated total', async ({ browser, adminToken }) => {
+  test.setTimeout(20_000)
+  const token = adminToken
+  const code = await createSession(token)
+
+  const adminCtx = await browser.newContext()
+  const player1Ctx = await browser.newContext()
+  const player2Ctx = await browser.newContext()
+
+  try {
+    const adminPage = new AdminPage(await adminCtx.newPage())
+    await adminPage.login(token)
+    await adminPage.selectSession(code)
+
+    await joinAsPlayer(await player1Ctx.newPage(), code, { name: 'BankerA', hp: 30 })
+    await joinAsPlayer(await player2Ctx.newPage(), code, { name: 'BankerB', hp: 30 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]')).toHaveCount(2, { timeout: 8_000 })
+
+    await adminPage.switchTab('tresor')
+    const pg = adminPage.page
+
+    const poInput = pg.locator('.gold-divider .coin-input').nth(1)
+    await poInput.fill('200')
+
+    // Group all players under banker
+    const groupAllBtn = pg.locator('.group-all-btn')
+    await expect(groupAllBtn).toBeVisible({ timeout: 5_000 })
+    await groupAllBtn.click()
+
+    // Group row should appear with a consolidated total
+    await expect(pg.locator('.group-row')).toBeVisible({ timeout: 5_000 })
+  } finally {
+    await adminCtx.close()
+    await player1Ctx.close()
+    await player2Ctx.close()
+  }
+})

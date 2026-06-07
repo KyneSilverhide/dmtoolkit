@@ -301,6 +301,107 @@ test('merchant items stock decrements after accepted purchase', async ({ browser
   }
 })
 
+test('player can submit a batch purchase and admin accepts it', async ({ browser, adminToken }) => {
+  test.setTimeout(30_000)
+  const token = adminToken
+  const code = await createSession(token)
+
+  const adminCtx = await browser.newContext()
+  const playerCtx = await browser.newContext()
+
+  try {
+    const adminPage = new AdminPage(await adminCtx.newPage())
+    await adminPage.login(token)
+    await adminPage.selectSession(code)
+
+    const playerPg = await playerCtx.newPage()
+    await joinAsPlayer(playerPg, code, { name: 'Shopper', hp: 40 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
+
+    await createMerchant(adminPage, 'Marchande Faye', [
+      { name: 'Torche', price: 1, stock: 5 },
+      { name: 'Corde', price: 2, stock: 3 },
+    ])
+    await showMerchant(adminPage)
+
+    // Wait for merchant-shown socket event to enable the boutique tab on the player side
+    await expect(playerPg.getByTestId('player-tab-boutique').filter({ visible: true })).not.toBeDisabled({ timeout: 8_000 })
+
+    // Player navigates to the shop
+    const playerPage = new PlayerPage(playerPg)
+    await playerPage.switchTab('boutique')
+    await expect(playerPg.getByText('Torche')).toBeVisible({ timeout: 8_000 })
+
+    // Add 2 Torches to cart (first item's + button)
+    const torchRow = playerPg.locator('.shop-item').filter({ hasText: 'Torche' })
+    await torchRow.locator('.qty-btn').last().click()
+    await torchRow.locator('.qty-btn').last().click()
+
+    // Submit the cart
+    const submitBtn = playerPg.locator('.cart-submit-btn')
+    await expect(submitBtn).toBeEnabled({ timeout: 5_000 })
+    await submitBtn.click()
+
+    // Admin should receive a batch purchase request
+    await adminPage.switchTab('merchants')
+    const respondBtn = adminPage.page.locator('button.respond-btn').first()
+    await expect(respondBtn).toBeVisible({ timeout: 8_000 })
+    await respondBtn.click()
+    // Confirm acceptance
+    await adminPage.page.locator('.respond-dialog button.action-btn').click()
+
+    // Player should receive batch-accepted confirmation modal
+    await expect(playerPg.locator('.purchase-modal.accepted')).toBeVisible({ timeout: 8_000 })
+  } finally {
+    await adminCtx.close()
+    await playerCtx.close()
+  }
+})
+
+test('merchant purchase appears in session journal', async ({ browser, adminToken }) => {
+  test.setTimeout(30_000)
+  const token = adminToken
+  const code = await createSession(token)
+
+  const adminCtx = await browser.newContext()
+  const playerCtx = await browser.newContext()
+
+  try {
+    const adminPage = new AdminPage(await adminCtx.newPage())
+    await adminPage.login(token)
+    await adminPage.selectSession(code)
+
+    const playerPg = await playerCtx.newPage()
+    await joinAsPlayer(playerPg, code, { name: 'Buyer', hp: 30 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
+
+    // Open journal first so socket listener is active
+    await adminPage.switchTab('journal')
+    await expect(adminPage.page.locator('.journal')).toBeVisible({ timeout: 5_000 })
+
+    await createMerchant(adminPage, 'Vendeur', [{ name: 'Épée', price: 15, stock: 1 }])
+    await showMerchant(adminPage)
+
+    const playerPage = new PlayerPage(playerPg)
+    await playerPage.switchTab('boutique')
+    await expect(playerPg.locator('.qty-btn').filter({ hasText: '+' }).first()).toBeVisible({ timeout: 8_000 })
+    await playerPg.locator('.qty-btn').filter({ hasText: '+' }).first().click()
+    await playerPg.locator('.cart-submit-btn').click()
+
+    // Admin accepts
+    await adminPage.switchTab('merchants')
+    await adminPage.page.locator('button.respond-btn').first().click()
+    await adminPage.page.locator('.respond-dialog button.action-btn').click()
+
+    // Journal should log the purchase
+    await adminPage.switchTab('journal')
+    await expect(adminPage.page.locator('.tl-desc').filter({ hasText: /achat|purchase|marchand/i })).toBeVisible({ timeout: 10_000 })
+  } finally {
+    await adminCtx.close()
+    await playerCtx.close()
+  }
+})
+
 test('admin can close merchant', async ({ browser, adminToken }) => {
   const token = adminToken
   const code = await createSession(token)
