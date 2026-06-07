@@ -1048,6 +1048,7 @@ onUnmounted(() => {
             :puzzle-serve-url="computedPuzzleServeUrl()"
             :pending-clicks="pendingPuzzleClicks"
             @iframe-ready="onPuzzleIframeReady"
+            @consumed-pending-clicks="pendingPuzzleClicks = []"
           />
         </div>
 
