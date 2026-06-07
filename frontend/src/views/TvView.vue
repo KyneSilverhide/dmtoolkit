@@ -385,8 +385,7 @@ onMounted(() => {
 
   socket.on('demo-reset', () => { window.location.reload() })
 
-  // Watch puzzle to gate beforeunload
-  if (puzzleImageId.value) window.addEventListener('beforeunload', preventReloadDuringPuzzle)
+  // guard beforeunload géré via watch(puzzleImageId)
 })
 
 onUnmounted(() => {
