@@ -433,7 +433,10 @@ onUnmounted(() => {
             :tv-mode="tvMode"
             :has-active-session="!!sessionStore.activeSession"
             :active-tv-mode-label="activeTvModeLabel"
+            :combat-round="combatRound"
             @set-mode="setTvMode"
+            @adjust-round="adjustRound"
+            @reset-round="resetRound"
           />
         </div>
       </div>
