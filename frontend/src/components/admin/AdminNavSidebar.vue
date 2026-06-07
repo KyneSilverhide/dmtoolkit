@@ -60,6 +60,7 @@ function selectTab(key) {
             'tab-locked': key === 'generator' && !generatorEnabled,
           }"
           :data-testid="`tab-${key}`"
+          :aria-disabled="key === 'generator' && !generatorEnabled"
           @click="selectTab(key)"
           @mouseenter="(key === 'generator' && !generatorEnabled) ? showLockedTooltip($event) : null"
           @mouseleave="hideLockedTooltip"
