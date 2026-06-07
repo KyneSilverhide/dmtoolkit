@@ -60,8 +60,9 @@ const reputationToasts = ref([])
 let reputationToastId = 0
 
 function toastBarColor(toast) {
-  const range = toast.maxValue - toast.minValue || 1
-  const normalized = (toast.newValue - toast.minValue) / range
+  const range = toast.maxValue - toast.minValue
+  if (!Number.isFinite(range) || range <= 0) return 'hsl(60, 65%, 50%)'
+  const normalized = Math.min(1, Math.max(0, (toast.newValue - toast.minValue) / range))
   return `hsl(${Math.round(normalized * 120)}, 65%, 50%)`
 }
 
