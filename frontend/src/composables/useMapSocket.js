@@ -151,14 +151,12 @@ function emitToggleFog(enabled) {
   socket.emit('map-set-fog', { sessionId: sessionStore.activeSession.id, enabled })
 }
 
-  function emitResetFog(isGrid) {
-    const socket = getSocket()
-    if (isGrid) {
-      socket.emit('map-fog-cells-reset', { sessionId: sessionStore.activeSession.id })
-    } else {
-      socket.emit('map-fog-reset', { sessionId: sessionStore.activeSession.id })
-    }
-  }
+function emitResetFog(isGrid) {
+  if (!sessionStore.activeSession) return
+  const socket = getSocket()
+  if (isGrid) socket.emit('map-fog-cells-reset', { sessionId: sessionStore.activeSession.id })
+  else socket.emit('map-fog-reset', { sessionId: sessionStore.activeSession.id })
+}
 
   function emitFogStroke(stroke) {
     const socket = getSocket()
