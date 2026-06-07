@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import AppIcon from '../../AppIcon.vue'
 import HelpTip from '../../HelpTip.vue'
 import MERCHANT_PRESETS from '../../../assets/merchantPresets.js'
@@ -21,6 +21,9 @@ const equipSearchOpen = ref(false)
 const equipError = ref(false)
 let equipTimer = null
 
+onUnmounted(() => {
+  if (equipTimer) clearTimeout(equipTimer)
+})
 async function runEquipSearch() {
   const q = equipSearch.value.trim()
   if (!q) { equipResults.value = []; return }
