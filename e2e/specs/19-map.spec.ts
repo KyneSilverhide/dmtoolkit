@@ -242,15 +242,23 @@ test('admin resets grid fog cells and all cells become hidden', async ({ browser
 
     // Configure square grid and enable fog
     const configBtn = adminPage.page.locator('button').filter({ hasText: /Configurer/i }).first()
+    await expect(configBtn).toBeVisible({ timeout: 8_000 })
     await configBtn.click()
-    await adminPage.page.locator('.type-btn').filter({ hasText: /Carrés/i }).first().click()
-    await adminPage.page.locator('.save-grid-btn').first().click()
+    const squareBtn = adminPage.page.locator('.type-btn').filter({ hasText: /Carrés/i }).first()
+    await expect(squareBtn).toBeVisible({ timeout: 5_000 })
+    await squareBtn.click()
+    const saveGridBtn = adminPage.page.locator('.save-grid-btn').first()
+    await expect(saveGridBtn).toBeVisible({ timeout: 5_000 })
+    await saveGridBtn.click()
     await expect(adminPage.page.locator('.grid-status-badge')).toBeVisible({ timeout: 8_000 })
 
-    await adminPage.page.locator('button').filter({ hasText: /Activer/i }).first().click()
+    const activerBtn = adminPage.page.locator('button').filter({ hasText: /^Activer$/i }).first()
+    await expect(activerBtn).toBeVisible({ timeout: 5_000 })
+    await activerBtn.click()
 
     // Reveal a cell
     const canvas = adminPage.page.locator('.map-canvas').first()
+    await expect(canvas).toBeVisible({ timeout: 5_000 })
     const box = await canvas.boundingBox()
     if (box) await canvas.click({ position: { x: box.width / 2, y: box.height / 2 } })
 
