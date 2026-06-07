@@ -85,12 +85,14 @@ export default class DmToolkitSync extends Plugin {
 	private readonly playerIdToName = new Map<number, string>();
 	/** id → max_hp, tracked locally to avoid IT's additive max bug */
 	private readonly playerIdToMaxHp = new Map<number, number>();
-	/** Last IT round value seen — used to detect changes via polling */
+	/** Last IT round value seen — used to detect changes */
 	private lastKnownRound = 0;
-	private roundPollInterval: ReturnType<typeof setInterval> | null = null;
+	private itRoundUnsubscribe: (() => void) | null = null;
+	/** True after the first populateIT call — reconnects update in place instead of re-adding */
 
 	async onload() {
 		await this.loadSettings();
+		console.log('[DM Toolkit Sync] Plugin chargé (round sync v2)');
 		this.addSettingTab(new DmToolkitSettingTab(this.app, this));
 
 		this.addCommand({
@@ -268,6 +270,7 @@ export default class DmToolkitSync extends Plugin {
 	// ── Connection ──────────────────────────────────────────────────────────────
 
 	async connect({ skipPicker = false } = {}) {
+		console.log('[DM Toolkit Sync] connect() appelé');
 		if (this.socket?.connected) {
 			new Notice('DM Toolkit Sync: déjà connecté.');
 			return;
@@ -279,16 +282,19 @@ export default class DmToolkitSync extends Plugin {
 		}
 
 		const loggedIn = await this.login();
+		console.log('[DM Toolkit Sync] login:', loggedIn);
 		if (!loggedIn) return;
 
 		if (!skipPicker || !this.settings.sessionId) {
 			const chosenId = await this.fetchAndPickSession();
+			console.log('[DM Toolkit Sync] session choisie:', chosenId);
 			if (!chosenId) return;
 			this.settings.sessionId = chosenId;
 			await this.saveSettings();
 		}
 
 		const { backendUrl, sessionId } = this.settings;
+		console.log('[DM Toolkit Sync] io() vers', backendUrl, 'session', sessionId);
 
 		this.socket = io(backendUrl, {
 			auth: { token: this.jwtToken },
@@ -296,9 +302,10 @@ export default class DmToolkitSync extends Plugin {
 		});
 
 		this.socket.on('connect', () => {
+			console.log('[DM Toolkit Sync] socket connecté, démarrage round sync');
 			new Notice('DM Toolkit Sync: connecté ✓');
 			this.socket!.emit('admin-join', sessionId);
-			this.startRoundPolling();
+			this.startRoundSync();
 		});
 
 		this.socket.on('connect_error', (err: Error) => {
@@ -307,7 +314,7 @@ export default class DmToolkitSync extends Plugin {
 
 		this.socket.on('disconnect', () => {
 			new Notice('DM Toolkit Sync: déconnecté.');
-			this.stopRoundPolling();
+			this.stopRoundSync();
 		});
 
 		// DM Toolkit → IT: initial snapshot
@@ -409,7 +416,7 @@ export default class DmToolkitSync extends Plugin {
 	}
 
 	disconnect() {
-		this.stopRoundPolling();
+		this.stopRoundSync();
 		if (this.socket) {
 			this.socket.disconnect();
 			this.socket = null;
@@ -426,7 +433,7 @@ export default class DmToolkitSync extends Plugin {
 		return plugins?.['initiative-tracker'] ?? null;
 	}
 
-	/** Initial load: clears caches, rebuilds encounter from scratch, shows Notice. */
+	/** Sync players into IT — idempotent: updates in place if name already exists, adds otherwise. Never calls newEncounter(). */
 	private populateIT(players: CFPlayer[]) {
 		const it = this.getITPlugin();
 		if (!it) {
@@ -435,28 +442,43 @@ export default class DmToolkitSync extends Plugin {
 		}
 		this.playerIdToName.clear();
 		this.playerIdToMaxHp.clear();
-		const creatures = players.map(p => {
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const existingNames = new Set<string>(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(it.tracker?.getOrderedCreatures?.() ?? []).map((c: any) => c.name as string)
+		);
+
+		const toAdd: object[] = [];
+		for (const p of players) {
 			this.playerIdToName.set(p.id, p.player_name);
 			this.playerIdToMaxHp.set(p.id, p.max_hp);
-			return {
-				name: p.player_name,
-				hp: p.current_hp,
-				max: p.max_hp,
-				ac: p.ac,
-				initiative: p.initiative ?? undefined,
-				player: true,
-			};
-		});
+			if (existingNames.has(p.player_name)) {
+				this.applyITUpdate(p.player_name, {
+					hp: p.current_hp,
+					ac: p.ac,
+					initiative: p.initiative ?? undefined,
+				});
+			} else {
+				toAdd.push({
+					name: p.player_name,
+					hp: p.current_hp,
+					max: p.max_hp,
+					ac: p.ac,
+					initiative: p.initiative ?? undefined,
+					player: true,
+				});
+			}
+		}
+
 		try {
-			if (typeof it.api?.newEncounter === 'function') it.api.newEncounter();
-			if (typeof it.api?.addCreatures === 'function') it.api.addCreatures(creatures);
+			if (toAdd.length > 0 && typeof it.api?.addCreatures === 'function') {
+				it.api.addCreatures(toAdd);
+			}
 		} catch (err) {
 			console.error('[DM Toolkit Sync] populateIT error:', err);
 		}
-		// Nouveau combat depuis DM Toolkit → remettre le round à 1
-		this.lastKnownRound = 1;
-		this.pushRoundToCF(1);
-		new Notice(`DM Toolkit Sync: ${players.length} joueur(s) importé(s) dans l'Initiative Tracker.`);
+		new Notice(`DM Toolkit Sync: ${players.length} joueur(s) synchronisé(s) dans l'Initiative Tracker.`);
 	}
 
 	private upsertITCreature(player: CFPlayer) {
@@ -539,24 +561,42 @@ export default class DmToolkitSync extends Plugin {
 		});
 	}
 
-	private startRoundPolling() {
-		this.stopRoundPolling();
-		this.lastKnownRound = 0;
-		this.roundPollInterval = setInterval(() => {
-			const it = this.getITPlugin();
-			if (!it) return;
-			const currentRound: number = it.tracker?.round ?? 0;
-			if (currentRound !== this.lastKnownRound) {
-				this.lastKnownRound = currentRound;
-				if (currentRound > 0) this.pushRoundToCF(currentRound);
+	private startRoundSync() {
+		this.stopRoundSync();
+		const it = this.getITPlugin();
+		const roundStore = it?.tracker?.round;
+		if (typeof roundStore?.subscribe !== 'function') {
+			console.warn('[DM Toolkit Sync] round store introuvable sur it.tracker.round');
+			return;
+		}
+		console.log('[DM Toolkit Sync] Abonnement au store round IT');
+
+		let isFirst = true;
+		this.itRoundUnsubscribe = roundStore.subscribe((round: number) => {
+			if (isFirst) {
+				isFirst = false;
+				this.lastKnownRound = round ?? 0;
+				console.log('[DM Toolkit Sync] Valeur initiale du round IT :', this.lastKnownRound, '(non envoyée)');
+				return;
 			}
-		}, 2000);
+			const r = round ?? 0;
+			console.log('[DM Toolkit Sync] Round IT changé :', this.lastKnownRound, '→', r);
+			if (r !== this.lastKnownRound) {
+				this.lastKnownRound = r;
+				if (r > 0) {
+					console.log('[DM Toolkit Sync] → Push set-combat-round', r);
+					this.pushRoundToCF(r);
+				} else {
+					console.log('[DM Toolkit Sync] → Round 0, non envoyé');
+				}
+			}
+		});
 	}
 
-	private stopRoundPolling() {
-		if (this.roundPollInterval !== null) {
-			clearInterval(this.roundPollInterval);
-			this.roundPollInterval = null;
+	private stopRoundSync() {
+		if (this.itRoundUnsubscribe) {
+			this.itRoundUnsubscribe();
+			this.itRoundUnsubscribe = null;
 		}
 	}
 
