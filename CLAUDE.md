@@ -182,7 +182,7 @@ cd frontend && npm run dev  # vite dev server
 | `start-doom-clock` | Démarrer l'horloge de doom |
 | `stop-doom-clock` | Arrêter l'horloge de doom |
 | `create-tension-scale` | Créer une échelle de tension |
-| `increment-tension-scale` | Avancer l'échelle de tension |
+| `increment-tension-scale` | Avancer/reculer l'échelle de tension (`{ sessionId, delta }` — delta entier signé, borné à [-20, 20], défaut 1) |
 | `end-tension-scale` | Terminer l'échelle de tension |
 | `create-vote` | Créer un vote |
 | `close-vote` | Fermer un vote |
