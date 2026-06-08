@@ -64,7 +64,7 @@ test('admin advances time scale by one slot and status updates', async ({ browse
     await expect(statusLine).toBeVisible({ timeout: 5_000 })
     const before = await statusLine.textContent()
 
-    await timescaleSection.locator('button.action-btn').filter({ hasText: /\+1 palier/i }).click()
+    await timescaleSection.locator('button.action-btn').filter({ hasText: /^\+1$/ }).click()
 
     // Status line should change (elapsed slots incremented)
     await expect(async () => {
