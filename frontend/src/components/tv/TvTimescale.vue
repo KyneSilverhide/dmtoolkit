@@ -5,6 +5,12 @@ const props = defineProps({
   activeTimeScale: { type: Object, default: null },
 })
 
+const tilesColumns = computed(() => {
+  const n = props.activeTimeScale?.slotCount || 1
+  const rows = n >= 20 ? 3 : n >= 10 ? 2 : 1
+  return Math.ceil(n / rows)
+})
+
 const dramaLevel = computed(() => {
   const ts = props.activeTimeScale
   if (!ts || ts.slotCount === 0) return 0
@@ -30,7 +36,7 @@ const dramaClass = computed(() => {
     <div class="ts-vignette" aria-hidden="true"></div>
     <h2 class="timescale-title">{{ activeTimeScale?.title }}</h2>
 
-    <div class="timescale-tiles">
+    <div class="timescale-tiles" :style="{ '--tile-cols': tilesColumns }">
       <div
         v-for="i in activeTimeScale?.slotCount"
         :key="i"
@@ -89,8 +95,8 @@ const dramaClass = computed(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2rem;
-  padding: 2rem;
+  gap: clamp(1.5rem, 4vh, 4rem);
+  padding: clamp(1.5rem, 4vh, 4rem);
   overflow: hidden;
 }
 .ts-vignette {
@@ -105,7 +111,7 @@ const dramaClass = computed(() => {
   position: relative;
   z-index: 1;
   font-family: var(--font-title), sans-serif;
-  font-size: clamp(1.5rem, 4vw, 3rem);
+  font-size: clamp(2.5rem, 6vw, 7rem);
   color: var(--color-gold-bright);
   text-shadow: var(--text-shadow-accent);
   letter-spacing: 0.1em;
@@ -115,21 +121,21 @@ const dramaClass = computed(() => {
 .timescale-tiles {
   position: relative;
   z-index: 1;
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: 90%;
+  display: grid;
+  grid-template-columns: repeat(var(--tile-cols, 10), 1fr);
+  gap: clamp(0.4rem, 0.8vw, 1.2rem);
+  max-width: 95vw;
 }
 .timescale-tile {
-  display: flex; align-items: flex-end; justify-content: center;
-  width: 3.5rem; min-height: 3.5rem;
+  display: flex; align-items: center; justify-content: center;
+  width: clamp(4rem, 7vw, 9rem);
+  height: clamp(4rem, 7vw, 9rem);
   background: var(--tv-control-bg-muted);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 0.3rem;
+  border: clamp(2px, 0.2vw, 3px) solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.4rem;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: clamp(0.8rem, 1.5vw, 2rem);
   color: var(--color-text-dim);
   transition: all 0.4s;
 }
@@ -154,18 +160,17 @@ const dramaClass = computed(() => {
   animation: tile-pulse 1s ease-in-out infinite alternate;
 }
 @keyframes tile-pulse { from { box-shadow: none; } to { box-shadow: 0 0 8px var(--tv-danger-border); } }
-.tile-hour { font-size: 0.8rem; }
-.tile-unit { font-size: 0.55rem; }
+.tile-hour { font-size: 1em; }
+.tile-unit { font-size: 0.6em; }
 
 .timescale-bar-wrap {
   position: relative;
   z-index: 1;
-  width: 80%;
-  max-width: 700px;
+  width: 90%;
 }
 .timescale-bar {
   position: relative;
-  height: 20px;
+  height: clamp(24px, 3.5vh, 50px);
   background: var(--tv-track-bg);
   border-radius: 10px;
   overflow: hidden;
@@ -188,7 +193,7 @@ const dramaClass = computed(() => {
 .ts-fill-rest.impossible { background: var(--tv-danger-bg); border-color: var(--tv-danger-border); }
 .ts-rest-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.55rem;
+  font-size: clamp(0.6rem, 1vw, 1.2rem);
   color: var(--tv-info-text);
   letter-spacing: 0.04em;
   white-space: nowrap;
@@ -215,9 +220,9 @@ const dramaClass = computed(() => {
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: clamp(0.6rem, 1vw, 1.5rem);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: clamp(1rem, 2vw, 2.5rem);
   letter-spacing: 0.08em;
 }
 .ts-info-elapsed, .ts-info-remaining { color: var(--color-text-dim); }

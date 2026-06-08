@@ -776,19 +776,17 @@ function setupSocket(io) {
       } catch (err) { console.error(err) }
     })
 
-    // ── Admin: advance tension scale (up/down) ──────────────────────────────
-    socket.on('increment-tension-scale', async ({ sessionId }) => {
+    // ── Admin: advance tension scale (up/down, arbitrary delta) ────────────
+    socket.on('increment-tension-scale', async ({ sessionId, delta }) => {
       if (!socket.admin) return
       try {
+        const safeDelta = Math.max(-MAX_TENSION_STEPS, Math.min(MAX_TENSION_STEPS, parseInt(delta, 10) || 1))
         const result = await pool.query(
           `UPDATE sessions
-           SET tension_level = CASE
-             WHEN tension_direction = 'descending' THEN GREATEST(0, COALESCE(tension_level, 0) - 1)
-             ELSE LEAST(COALESCE(tension_steps, 0), COALESCE(tension_level, 0) + 1)
-           END
+           SET tension_level = GREATEST(0, LEAST(COALESCE(tension_steps, 0), COALESCE(tension_level, 0) + $3))
            WHERE id = $1 AND created_by = $2 AND tension_title IS NOT NULL AND tension_steps IS NOT NULL
            RETURNING tension_title, tension_steps, tension_level, tension_direction, tension_vibration`,
-          [sessionId, socket.admin.id]
+          [sessionId, socket.admin.id, safeDelta]
         )
         const row = result.rows[0]
         if (!row) return
@@ -881,16 +879,17 @@ function setupSocket(io) {
       } catch (err) { console.error(err) }
     })
 
-    // ── Admin: advance time scale by one slot ─────────────────────────────────
-    socket.on('advance-time-scale', async ({ sessionId }) => {
+    // ── Admin: advance time scale by N slots (delta can be negative) ──────────
+    socket.on('advance-time-scale', async ({ sessionId, delta }) => {
       if (!socket.admin) return
       try {
+        const safeDelta = Math.max(-24, Math.min(24, parseInt(delta, 10) || 1))
         const result = await pool.query(
           `UPDATE sessions
-           SET timescale_elapsed_slots = LEAST(timescale_slot_count, COALESCE(timescale_elapsed_slots, 0) + 1)
+           SET timescale_elapsed_slots = LEAST(timescale_slot_count, GREATEST(0, COALESCE(timescale_elapsed_slots, 0) + $3))
            WHERE id = $1 AND created_by = $2 AND timescale_title IS NOT NULL
            RETURNING timescale_title, timescale_total_hours, timescale_slot_count, timescale_rest_slots, timescale_elapsed_slots, timescale_rest_taken`,
-          [sessionId, socket.admin.id]
+          [sessionId, socket.admin.id, safeDelta]
         )
         const row = result.rows[0]
         if (!row) return
@@ -900,11 +899,12 @@ function setupSocket(io) {
         const elapsed = row.timescale_elapsed_slots
         const total = row.timescale_slot_count
         const slotHours = row.timescale_total_hours / total
+        const sign = safeDelta >= 0 ? '+' : ''
         await pool.query(
           'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'timescale_advanced', `Temps : palier ${elapsed}/${total} — "${row.timescale_title}" (+${slotHours}h)`]
+          [sessionId, 'timescale_advanced', `Temps : palier ${elapsed}/${total} — "${row.timescale_title}" (${sign}${safeDelta * slotHours}h)`]
         )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'timescale_advanced', description: `Temps : palier ${elapsed}/${total} — "${row.timescale_title}" (+${slotHours}h)`, createdAt: new Date() })
+        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'timescale_advanced', description: `Temps : palier ${elapsed}/${total} — "${row.timescale_title}" (${sign}${safeDelta * slotHours}h)`, createdAt: new Date() })
       } catch (err) { console.error(err) }
     })
 

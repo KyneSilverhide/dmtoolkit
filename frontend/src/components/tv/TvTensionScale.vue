@@ -1,8 +1,16 @@
 <script setup>
+import { computed } from 'vue'
+
 const props = defineProps({
   activeTensionScale: { type: Object, default: null },
   tensionColor: { type: String, default: 'var(--tv-success-text)' },
   tensionShakeClass: { type: String, default: '' },
+})
+
+const stepsColumns = computed(() => {
+  const n = props.activeTensionScale?.steps || 1
+  const rows = n >= 20 ? 3 : n >= 10 ? 2 : 1
+  return Math.ceil(n / rows)
 })
 </script>
 
@@ -13,7 +21,7 @@ const props = defineProps({
     :style="{ '--tension-color': tensionColor }"
   >
     <h2 class="tension-title">{{ activeTensionScale?.title }}</h2>
-    <div class="tension-steps">
+    <div class="tension-steps" :style="{ '--step-cols': stepsColumns }">
       <div
         v-for="step in activeTensionScale?.steps"
         :key="step"
@@ -39,12 +47,12 @@ const props = defineProps({
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2rem;
+  gap: clamp(1rem, 3vh, 3rem);
   padding: 2rem;
 }
 .tension-title {
   font-family: var(--font-title), sans-serif;
-  font-size: clamp(1.5rem, 4vw, 3rem);
+  font-size: clamp(2rem, 5vw, 5rem);
   color: var(--tension-color, var(--tv-success-text));
   text-shadow: 0 0 30px currentColor;
   letter-spacing: 0.1em;
@@ -53,18 +61,19 @@ const props = defineProps({
   transition: color 0.5s;
 }
 .tension-steps {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(var(--step-cols, 10), 1fr);
+  gap: clamp(0.4rem, 0.8vw, 1rem);
+  max-width: 90vw;
 }
 .tension-step {
-  width: 2.4rem; height: 2.4rem;
+  width: clamp(2.4rem, 4.5vw, 5.5rem);
+  height: clamp(2.4rem, 4.5vw, 5.5rem);
   display: flex; align-items: center; justify-content: center;
   border-radius: 50%;
-  border: 2px solid var(--color-border);
+  border: clamp(2px, 0.25vw, 4px) solid var(--color-border);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.85rem;
+  font-size: clamp(0.75rem, 1.6vw, 2rem);
   color: var(--color-text-dim);
   transition: all 0.3s;
 }
@@ -72,14 +81,15 @@ const props = defineProps({
   border-color: var(--tension-color, var(--tv-success-text));
   color: var(--tension-color, var(--tv-success-text));
   background: color-mix(in srgb, var(--tension-color, var(--tv-success-text)) 15%, transparent);
-  box-shadow: 0 0 8px currentColor;
+  box-shadow: 0 0 clamp(8px, 1vw, 20px) currentColor;
 }
 .tension-core {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 200px; height: 200px;
+  width: clamp(200px, 30vw, 500px);
+  height: clamp(200px, 30vw, 500px);
 }
 .tension-pulse-wrap {
   position: absolute;
@@ -89,7 +99,7 @@ const props = defineProps({
   justify-content: center;
 }
 .tension-pulse {
-  width: 160px; height: 160px;
+  width: 80%; height: 80%;
   border-radius: 50%;
   background: radial-gradient(circle, color-mix(in srgb, var(--tension-color, var(--tv-success-text)) 30%, transparent), transparent 70%);
   animation: tension-breathe 2s ease-in-out infinite;
@@ -99,12 +109,12 @@ const props = defineProps({
   position: relative;
   z-index: 1;
   font-family: var(--font-title), sans-serif;
-  font-size: 3.5rem;
+  font-size: clamp(4rem, 12vw, 14rem);
   color: var(--tension-color, var(--tv-success-text));
   text-shadow: 0 0 20px currentColor;
   line-height: 1;
 }
-.tension-level span { font-size: 1.5rem; color: var(--color-text-dim); }
+.tension-level span { font-size: 0.4em; color: var(--color-text-dim); }
 
 @keyframes tension-breathe {
   0%, 100% { transform: scale(1); opacity: 0.6; }

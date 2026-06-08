@@ -67,9 +67,9 @@ function createTensionScale() {
   })
 }
 
-function incrementTensionScale() {
+function incrementTensionScale(delta) {
   const socket = getSocket()
-  socket.emit('increment-tension-scale', { sessionId: sessionStore.activeSession.id })
+  socket.emit('increment-tension-scale', { sessionId: sessionStore.activeSession.id, delta })
 }
 
 function endTensionScale() {
@@ -89,9 +89,9 @@ function createTimeScale() {
   })
 }
 
-function advanceTimeScale() {
+function advanceTimeScale(delta = 1) {
   const socket = getSocket()
-  socket.emit('advance-time-scale', { sessionId: sessionStore.activeSession.id })
+  socket.emit('advance-time-scale', { sessionId: sessionStore.activeSession.id, delta })
 }
 
 function longRestTimeScale() {
@@ -164,10 +164,6 @@ const tensionRatio = computed(() => {
   return Math.round(Math.max(0, Math.min(1, progress)) * 100)
 })
 
-const tensionAdvanceLabel = computed(() => {
-  const direction = activeTensionScale.value?.direction || tensionDirection.value
-  return direction === 'descending' ? '-1' : '+1'
-})
 
 const timescaleSlotHours = computed(() => {
   const ts = activeTimeScale.value
@@ -308,8 +304,14 @@ onUnmounted(() => {
         <input v-model="doomTitle" class="form-input" type="text" placeholder="Titre du compte à rebours" />
       </div>
       <div class="form-row split">
-        <input v-model.number="doomMinutes" class="form-input" type="number" min="0" max="1440" placeholder="Minutes" />
-        <input v-model.number="doomSeconds" class="form-input" type="number" min="0" max="59" placeholder="Secondes" />
+        <div class="labeled-input">
+          <label class="input-label">Minutes</label>
+          <input v-model.number="doomMinutes" class="form-input" type="number" min="0" max="1440" />
+        </div>
+        <div class="labeled-input">
+          <label class="input-label">Secondes</label>
+          <input v-model.number="doomSeconds" class="form-input" type="number" min="0" max="59" />
+        </div>
       </div>
       <div class="inline-actions">
         <button class="action-btn" @click="startDoomClock">Lancer</button>
@@ -326,8 +328,14 @@ onUnmounted(() => {
         <input v-model="timerLabel" class="form-input" type="text" placeholder="Libellé du minuteur" data-testid="timer-label-input" />
       </div>
       <div class="form-row split">
-        <input v-model.number="timerMinutes" class="form-input" type="number" min="0" max="1440" placeholder="Minutes" data-testid="timer-minutes-input" />
-        <input v-model.number="timerSeconds" class="form-input" type="number" min="0" max="59" placeholder="Secondes" data-testid="timer-seconds-input" />
+        <div class="labeled-input">
+          <label class="input-label">Minutes</label>
+          <input v-model.number="timerMinutes" class="form-input" type="number" min="0" max="1440" data-testid="timer-minutes-input" />
+        </div>
+        <div class="labeled-input">
+          <label class="input-label">Secondes</label>
+          <input v-model.number="timerSeconds" class="form-input" type="number" min="0" max="59" data-testid="timer-seconds-input" />
+        </div>
       </div>
       <div class="inline-actions">
         <button class="action-btn" @click="startTimer" data-testid="timer-start-btn">Démarrer</button>
@@ -355,8 +363,13 @@ onUnmounted(() => {
       </div>
       <div class="inline-actions">
         <button class="action-btn" data-testid="tension-create-btn" @click="createTensionScale">{{ activeTensionScale ? 'Recréer' : 'Créer' }}</button>
-        <button class="action-btn" :disabled="!activeTensionScale" @click="incrementTensionScale">{{ tensionAdvanceLabel }}</button>
         <button class="action-btn danger-btn" data-testid="tension-end-btn" :disabled="!activeTensionScale" @click="endTensionScale">Terminer</button>
+      </div>
+      <div v-if="activeTensionScale" class="tension-adjust-row">
+        <button class="action-btn tension-delta-btn" @click="incrementTensionScale(-5)">−5</button>
+        <button class="action-btn tension-delta-btn" @click="incrementTensionScale(-1)">−1</button>
+        <button class="action-btn tension-delta-btn" @click="incrementTensionScale(1)">+1</button>
+        <button class="action-btn tension-delta-btn" @click="incrementTensionScale(5)">+5</button>
       </div>
       <p v-if="activeTensionScale" class="status-line">
         {{ activeTensionScale.title }} — {{ activeTensionScale.level }} / {{ activeTensionScale.steps }} ({{ tensionRatio }}%)
@@ -386,9 +399,14 @@ onUnmounted(() => {
       <p class="hint-line">Palier = {{ timescaleSlotHours }}h · Repos long = {{ timescaleRestHours }}h</p>
       <div class="inline-actions">
         <button class="action-btn" @click="createTimeScale">{{ activeTimeScale ? 'Recréer' : 'Créer' }}</button>
-        <button class="action-btn" :disabled="!activeTimeScale || activeTimeScale.elapsedSlots >= activeTimeScale.slotCount" @click="advanceTimeScale">+1 palier</button>
         <button class="action-btn" :disabled="!activeTimeScale || !timescaleCanRest" @click="longRestTimeScale" :class="{ 'rest-btn': activeTimeScale && timescaleCanRest }">Repos long</button>
         <button class="action-btn danger-btn" :disabled="!activeTimeScale" @click="endTimeScale">Terminer</button>
+      </div>
+      <div v-if="activeTimeScale" class="tension-adjust-row">
+        <button class="action-btn tension-delta-btn" :disabled="activeTimeScale.elapsedSlots <= 0" @click="advanceTimeScale(-5)">−5</button>
+        <button class="action-btn tension-delta-btn" :disabled="activeTimeScale.elapsedSlots <= 0" @click="advanceTimeScale(-1)">−1</button>
+        <button class="action-btn tension-delta-btn" :disabled="activeTimeScale.elapsedSlots >= activeTimeScale.slotCount" @click="advanceTimeScale(1)">+1</button>
+        <button class="action-btn tension-delta-btn" :disabled="activeTimeScale.elapsedSlots >= activeTimeScale.slotCount" @click="advanceTimeScale(5)">+5</button>
       </div>
       <p v-if="activeTimeScale" class="status-line">{{ timescaleStatusLabel }}</p>
       <p v-if="activeTimeScale && activeTimeScale.restTaken" class="hint-line warn-hint">Repos long déjà pris.</p>
@@ -416,6 +434,9 @@ onUnmounted(() => {
   color: var(--color-gold-dark);
 }
 .inline-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+.tension-adjust-row { display: flex; gap: 0.45rem; align-items: center; margin-top: 0.3rem; }
+.tension-delta-input { width: 4rem; text-align: center; flex: 0 0 auto; }
+.tension-delta-btn { flex: 1; font-weight: 700; }
 .round-display {
   font-family: var(--font-heading), sans-serif;
   font-size: 1.1rem;
