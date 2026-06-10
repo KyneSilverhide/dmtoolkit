@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { ref, computed } from 'vue'
 import { sessionStore } from '@/stores/session.js'
 import { authStore } from '@/stores/auth.js'
@@ -9,34 +9,95 @@ import HelpTip from '../HelpTip.vue'
 const MAX_COIN_AMOUNT = 99999
 
 const COINS = [
-  { key: 'pp', label: 'PP', name: 'Platine', color: '#e5e4e2' },
-  { key: 'po', label: 'PO', name: 'Or', color: '#d4af37' },
-  { key: 'pe', label: 'PE', name: 'Electrum', color: '#80bfff' },
-  { key: 'pa', label: 'PA', name: 'Argent', color: '#c0c0c0' },
-  { key: 'pc', label: 'PC', name: 'Cuivre', color: '#b87333' },
+  { key: 'pp', label: 'PP', name: 'Platine', color: '#e5e4e2', pcValue: 1000 },
+  { key: 'po', label: 'PO', name: 'Or', color: '#d4af37', pcValue: 100 },
+  { key: 'pe', label: 'PE', name: 'Electrum', color: '#80bfff', pcValue: 50 },
+  { key: 'pa', label: 'PA', name: 'Argent', color: '#c0c0c0', pcValue: 10 },
+  { key: 'pc', label: 'PC', name: 'Cuivre', color: '#b87333', pcValue: 1 },
 ]
 
 const amounts = ref({ pp: 0, po: 0, pe: 0, pa: 0, pc: 0 })
 const sendFeedback = ref('')
+const splitMode = ref('exact') // 'exact' | 'approximate'
+const groupedPlayerIds = ref([])
+const groupExpanded = ref(true)
 
 const players = computed(() => sessionStore.players || [])
 const numPlayers = computed(() => players.value.length)
 
-// Per-player shares: floor division per coin type
-const shares = computed(() => {
-  const n = numPlayers.value
-  if (n === 0) return []
-  return players.value.map(p => {
+// For 'exact' mode: simple floor division per coin type
+function computeExactShares(playerList, amts) {
+  const n = playerList.length
+  return playerList.map(p => {
     const share = { playerId: p.id, playerName: p.player_name }
     for (const coin of COINS) {
-      const amt = Math.max(0, Math.floor(Number(amounts.value[coin.key]) || 0))
+      const amt = Math.max(0, Math.floor(Number(amts[coin.key]) || 0))
       share[coin.key] = Math.floor(amt / n)
     }
     return share
   })
+}
+
+// For 'approximate' mode: water-fill across all denominations.
+// Each coin goes to the player(s) with the lowest cumulative PC value,
+// filling gaps between tiers before distributing evenly at the top.
+function computeApproximateShares(playerList, amts) {
+  const n = playerList.length
+  const totals = new Array(n).fill(0)
+  const result = playerList.map(p => {
+    const share = { playerId: p.id, playerName: p.player_name }
+    for (const coin of COINS) share[coin.key] = 0
+    return share
+  })
+
+  for (const coin of COINS) {
+    let remaining = Math.max(0, Math.floor(Number(amts[coin.key]) || 0))
+    if (remaining === 0) continue
+
+    while (remaining > 0) {
+      const minTotal = Math.min(...totals)
+      const minIdxs = []
+      let nextTotal = Infinity
+      for (let i = 0; i < totals.length; i++) {
+        const t = totals[i]
+        if (t === minTotal) minIdxs.push(i)
+        else if (t > minTotal && t < nextTotal) nextTotal = t
+      }
+      const gapPc = nextTotal === Infinity ? Infinity : nextTotal - minTotal
+      const coinsToFill = gapPc === Infinity ? Infinity : Math.ceil(gapPc / coin.pcValue)
+      const coinsNeeded = coinsToFill * minIdxs.length
+
+      if (coinsNeeded <= remaining) {
+        for (const idx of minIdxs) {
+          result[idx][coin.key] += coinsToFill
+          totals[idx] += coinsToFill * coin.pcValue
+        }
+        remaining -= coinsNeeded
+      } else {
+        const perPlayer = Math.floor(remaining / minIdxs.length)
+        const rem = remaining % minIdxs.length
+        for (let k = 0; k < minIdxs.length; k++) {
+          const give = perPlayer + (k < rem ? 1 : 0)
+          result[minIdxs[k]][coin.key] += give
+          totals[minIdxs[k]] += give * coin.pcValue
+        }
+        remaining = 0
+      }
+    }
+  }
+
+  return result
+}
+
+const shares = computed(() => {
+  const n = numPlayers.value
+  if (n === 0) return []
+  return splitMode.value === 'approximate'
+    ? computeApproximateShares(players.value, amounts.value)
+    : computeExactShares(players.value, amounts.value)
 })
 
-// Remainders per coin type
+// Remainders per coin type (only relevant in exact mode)
 const remainders = computed(() => {
   const n = numPlayers.value
   if (n === 0) return {}
@@ -55,6 +116,30 @@ const hasAnyCoin = computed(() =>
 const hasPlayers = computed(() => numPlayers.value > 0)
 const hasSession = computed(() => !!sessionStore.activeSession)
 
+const allGrouped = computed(() =>
+  players.value.length > 0 &&
+  players.value.every(p => groupedPlayerIds.value.includes(p.id))
+)
+
+const groupedShares = computed(() => {
+  if (groupedPlayerIds.value.length === 0) return null
+  const total = {}
+  for (const coin of COINS) total[coin.key] = 0
+  for (const share of shares.value) {
+    if (groupedPlayerIds.value.includes(share.playerId)) {
+      for (const coin of COINS) total[coin.key] += share[coin.key]
+    }
+  }
+  return total
+})
+
+const soloShares = computed(() =>
+  shares.value.filter(s => !groupedPlayerIds.value.includes(s.playerId))
+)
+const groupedShares_individual = computed(() =>
+  shares.value.filter(s => groupedPlayerIds.value.includes(s.playerId))
+)
+
 function formatShare(share) {
   const parts = []
   for (const coin of COINS) {
@@ -63,8 +148,30 @@ function formatShare(share) {
   return parts.length > 0 ? parts.join(', ') : 'Rien'
 }
 
+function shareTotalPc(share) {
+  return COINS.reduce((sum, coin) => sum + (share[coin.key] || 0) * coin.pcValue, 0)
+}
+
 function anyNonZeroShare() {
   return shares.value.some(s => COINS.some(c => s[c.key] > 0))
+}
+
+function toggleGroup(playerId) {
+  const idx = groupedPlayerIds.value.indexOf(playerId)
+  if (idx >= 0) groupedPlayerIds.value.splice(idx, 1)
+  else groupedPlayerIds.value.push(playerId)
+}
+
+function isGrouped(playerId) {
+  return groupedPlayerIds.value.includes(playerId)
+}
+
+function toggleAllGroup() {
+  if (allGrouped.value) {
+    groupedPlayerIds.value = []
+  } else {
+    groupedPlayerIds.value = players.value.map(p => p.id)
+  }
 }
 
 function sendSplit() {
@@ -108,7 +215,8 @@ function reset() {
                 type="number"
                 class="coin-input"
                 min="0"
-                :max="MAX_COIN_AMOUNT"                placeholder="0"
+                :max="MAX_COIN_AMOUNT"
+                placeholder="0"
               />
               <button class="step-btn" @click="amounts[coin.key] = (Number(amounts[coin.key]) || 0) + 1">+</button>
             </div>
@@ -118,16 +226,88 @@ function reset() {
       </div>
 
       <div v-if="hasAnyCoin" class="section">
-        <p class="section-label"><AppIcon icon="lucide:scale" size="0.85rem" /> Division entre {{ numPlayers }} joueur(s)</p>
-
-        <div class="players-table">
-          <div v-for="share in shares" :key="share.playerId" class="player-row">
-            <span class="player-name"><AppIcon icon="game-icons:crossed-swords" size="0.8rem" color="var(--color-gold-bright)" /> {{ share.playerName }}</span>
-            <span class="player-share">{{ formatShare(share) }}</span>
+        <div class="split-mode-row">
+          <p class="section-label" style="margin: 0"><AppIcon icon="lucide:scale" size="0.85rem" /> Division entre {{ numPlayers }} joueur(s)</p>
+          <div class="mode-toggle">
+            <button
+              :class="['mode-btn', { active: splitMode === 'exact' }]"
+              @click="splitMode = 'exact'"
+            >Exact</button>
+            <button
+              :class="['mode-btn', { active: splitMode === 'approximate' }]"
+              @click="splitMode = 'approximate'"
+            >Complet</button>
           </div>
         </div>
 
-        <div class="remainders">
+        <div class="group-actions">
+          <button class="group-all-btn" @click="toggleAllGroup">
+            <AppIcon :icon="allGrouped ? 'lucide:ungroup' : 'lucide:group'" size="0.8rem" />
+            {{ allGrouped ? 'Dégrouper' : 'Tout grouper' }}
+          </button>
+        </div>
+
+        <div class="players-table">
+          <!-- Solo players -->
+          <div
+            v-for="share in soloShares"
+            :key="share.playerId"
+            class="player-row"
+          >
+            <button
+              class="group-toggle"
+              :class="{ grouped: false }"
+              :title="'Ajouter au groupe banquier'"
+              @click="toggleGroup(share.playerId)"
+            >
+              <AppIcon icon="lucide:users" size="0.75rem" />
+            </button>
+            <span class="player-name"><AppIcon icon="game-icons:crossed-swords" size="0.8rem" color="var(--color-gold-bright)" /> {{ share.playerName }}</span>
+            <span class="player-share">{{ formatShare(share) }}</span>
+            <span class="share-pc-value">≈ {{ shareTotalPc(share) }} PC</span>
+          </div>
+
+          <!-- Group row (if any players grouped) -->
+          <template v-if="groupedShares">
+            <div class="group-row">
+              <div class="group-row-header">
+                <button
+                  class="group-expand-btn"
+                  :title="groupExpanded ? 'Masquer le détail' : 'Voir le détail'"
+                  @click="groupExpanded = !groupExpanded"
+                >
+                  <AppIcon :icon="groupExpanded ? 'lucide:chevron-down' : 'lucide:chevron-right'" size="0.8rem" />
+                </button>
+                <span class="group-label">
+                  <AppIcon icon="lucide:users" size="0.8rem" color="var(--color-gold-bright)" />
+                  Groupe ({{ groupedPlayerIds.length }} joueur{{ groupedPlayerIds.length > 1 ? 's' : '' }})
+                </span>
+                <span class="player-share group-total">{{ formatShare(groupedShares) }}</span>
+                <span class="share-pc-value">≈ {{ shareTotalPc(groupedShares) }} PC</span>
+              </div>
+              <div v-if="groupExpanded" class="group-members">
+                <div
+                  v-for="share in groupedShares_individual"
+                  :key="share.playerId"
+                  class="group-member-row"
+                >
+                  <button
+                    class="group-toggle grouped"
+                    :title="'Retirer du groupe'"
+                    @click="toggleGroup(share.playerId)"
+                  >
+                    <AppIcon icon="lucide:users" size="0.75rem" />
+                  </button>
+                  <span class="player-name player-name-dim">{{ share.playerName }}</span>
+                  <span class="player-share player-share-dim">{{ formatShare(share) }}</span>
+                  <span class="share-pc-value">≈ {{ shareTotalPc(share) }} PC</span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <div v-if="splitMode === 'exact'" class="remainders">
           <p class="section-label" style="margin-top: 0.5rem"><AppIcon icon="game-icons:coins" size="0.85rem" /> Restes (non divisibles) <HelpTip id="gold.remainder" /></p>
           <div class="remainder-chips">
             <template v-for="coin in COINS" :key="coin.key">
@@ -145,6 +325,9 @@ function reset() {
             >Aucun reste</span>
           </div>
         </div>
+        <p v-else class="approx-hint">
+          <AppIcon icon="lucide:info" size="0.8rem" /> Toutes les pièces sont distribuées — les quelques pièces en trop vont aux joueurs qui ont reçu le moins.
+        </p>
       </div>
 
       <div class="send-section">
@@ -275,6 +458,68 @@ function reset() {
   color: var(--color-gold-bright);
 }
 
+.split-mode-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.mode-toggle {
+  display: flex;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.mode-btn {
+  padding: 0.25rem 0.6rem;
+  border: none;
+  background: var(--admin-control-bg, var(--surface-raised));
+  color: var(--color-text-dim);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.mode-btn + .mode-btn {
+  border-left: 1px solid var(--color-border);
+}
+
+.mode-btn.active {
+  background: var(--color-gold-dark);
+  color: var(--color-parchment);
+}
+
+.group-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.group-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--color-border);
+  background: var(--admin-control-bg, var(--surface-raised));
+  color: var(--color-text-dim);
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.group-all-btn:hover {
+  border-color: var(--color-gold-dark);
+  color: var(--color-gold-bright);
+}
+
 .players-table {
   display: flex;
   flex-direction: column;
@@ -284,7 +529,6 @@ function reset() {
 .player-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.5rem;
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--color-border);
@@ -292,11 +536,33 @@ function reset() {
   background: var(--admin-control-bg, var(--surface-raised));
 }
 
+.group-toggle {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--color-text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.group-toggle:hover, .group-toggle.grouped {
+  border-color: var(--color-gold-dark);
+  color: var(--color-gold-bright);
+  background: rgba(212, 175, 55, 0.1);
+}
+
 .player-name {
   font-family: var(--font-heading), sans-serif;
   font-size: 0.78rem;
   letter-spacing: 0.08em;
   color: var(--color-parchment);
+  flex: 1;
 }
 
 .player-share {
@@ -304,6 +570,80 @@ function reset() {
   font-size: 0.82rem;
   color: var(--color-gold-bright);
   text-align: right;
+}
+
+.group-row {
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--admin-control-bg, var(--surface-raised));
+}
+
+.group-row-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+}
+
+.group-expand-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.group-label {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: var(--color-gold-bright);
+  flex: 1;
+}
+
+.group-total {
+  font-weight: bold;
+}
+
+.group-members {
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.group-member-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.group-member-row:last-child {
+  border-bottom: none;
+}
+
+.player-name-dim {
+  color: var(--color-text-dim);
+}
+
+.player-share-dim {
+  color: var(--color-text-dim);
+  font-size: 0.78rem;
+}
+
+.share-pc-value {
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.68rem;
+  color: var(--color-text-dim);
+  white-space: nowrap;
+  opacity: 0.7;
 }
 
 .remainders {
@@ -330,6 +670,16 @@ function reset() {
 .remainder-chip.none {
   border-color: var(--color-border);
   color: var(--color-text-dim);
+}
+
+.approx-hint {
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.3rem;
 }
 
 .send-section {

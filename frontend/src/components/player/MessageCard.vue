@@ -7,7 +7,13 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  allowReply: {
+    type: Boolean,
+    default: false,
+  },
 })
+
+const emit = defineEmits(['reply'])
 
 import { BACKEND_URL } from '@/config.js'
 
@@ -102,7 +108,10 @@ function resolvedText() {
       :style="{ '--msg-color': message.authorColor || '#d4af37' }">
       <div class="card-header">
         <span class="from-name">{{ message.fromName || 'MJ' }}</span>
-        <span class="card-time">{{ formatTime(message.sentAt) }}</span>
+        <div class="card-header-right">
+          <span class="card-time">{{ formatTime(message.sentAt) }}</span>
+          <button v-if="allowReply" class="reply-btn" @click="emit('reply', message)" title="Répondre">↩</button>
+        </div>
       </div>
       <p class="message-text">{{ resolvedText() }}</p>
     </div>
@@ -220,6 +229,24 @@ function resolvedText() {
   justify-content: space-between;
   margin-bottom: 0.5rem;
 }
+
+.card-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reply-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0 0.2rem;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.reply-btn:hover { color: var(--color-gold-bright); }
 
 .from-name {
   font-family: var(--font-heading), sans-serif;

@@ -6,6 +6,7 @@ const { OpenAI } = require('openai')
 const sharp = require('sharp')
 const { authenticateToken } = require('../middleware/auth')
 const pool = require('../db')
+const { detectGridConfig } = require('../gridDetection')
 
 const THUMB_WIDTH = 400
 const THUMB_SUFFIX = '_thumb.webp'
@@ -272,9 +273,22 @@ router.post('/',
           const type = req.body.type || 'image'
           for (let i = 0; i < uploadedFiles.length; i++) {
             const thumbUrl = await generateThumbnail(uploadedFiles[i].path, UPLOADS_DIR)
+            // Détection automatique de la grille pour les battlemaps
+            let grid = { gridType: 'none', gridCols: null, gridRows: null, gridHexOrientation: 'flat', gridOffsetX: 0, gridOffsetY: 0, gridCellW: null, gridCellH: null }
+            if (type === 'map') {
+              try {
+                grid = await detectGridConfig(uploadedFiles[i].path)
+              } catch (err) {
+                console.error('[upload] grid detection failed:', err.message)
+              }
+            }
             await pool.query(
-              'INSERT INTO session_images (session_id, url, original_name, type, file_size, thumbnail_url) VALUES ($1, $2, $3, $4, $5, $6)',
-              [sessionId, urls[i], uploadedFiles[i].originalname, type, uploadedFiles[i].size, thumbUrl]
+              `INSERT INTO session_images
+                 (session_id, url, original_name, type, file_size, thumbnail_url,
+                  grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+              [sessionId, urls[i], uploadedFiles[i].originalname, type, uploadedFiles[i].size, thumbUrl,
+               grid.gridType, grid.gridCols, grid.gridRows, grid.gridHexOrientation, grid.gridOffsetX, grid.gridOffsetY, grid.gridCellW, grid.gridCellH]
             )
           }
         }

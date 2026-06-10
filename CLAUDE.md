@@ -32,6 +32,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   ├── src/
 │   │   ├── views/     # HomeView, AdminView, TvView, PlayerInboxView, PlayerJoinView
 │   │   ├── components/admin/  # Composants admin (MapManager, MerchantManager, GeneratorTool, AudioManager, PuzzleManager, ReputationManager, SessionJournal, etc.)
+│   │   │                      # MapManager : brouillard de guerre — deux modes : peinture libre (grid_type='none') et cellule par cellule (grid_type='square'|'hex')
 │   │   │                      # SessionJournal : journal des événements en temps réel, stats de session (durée, dégâts totaux, soins totaux), boutons "Effacer le journal" et "Réinitialiser session"
 │   │   ├── components/player/ # Composants joueur (SpellSearchTool, MagicItemSearchTool, PlayerDiceTool, etc.)
 │   │   ├── components/AppIcon.vue  # Composant icônes dynamiques (remplace les emojis statiques)
@@ -39,7 +40,9 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │   ├── components/ReleaseNotesModal.vue # Modal release notes (Teleport+Transition, filtre par rôle)
 │   │   ├── stores/    # Pinia stores (auth.js, session.js, releaseNotes.js)
 │   │   ├── router/    # Vue Router (toutes les vues importées statiquement)
-│   │   ├── utils/     # Utilitaires (conditions.js, playerProfiles.js, playerSessionMemory.js, themePreferences.js, generatorUtils.js)
+│   │   ├── utils/     # Utilitaires (conditions.js, playerProfiles.js, playerSessionMemory.js, themePreferences.js, generatorUtils.js, mapGrid.js)
+│   │   │                      # mapGrid.js : géométrie partagée pour la grille (getCellAt, getCellPolygon) — utilisé par MapManager ET TvView
+│   │   │                      #   paramètres cellW/cellH optionnels (taille de cellule normalisée, détection auto) — null = cellule dérivée de cols/rows
 │   │   └── socket.js  # Singleton Socket.IO client
 ├── backend/           # Node.js + Express + Socket.IO (port 3000)
 │   ├── src/
@@ -49,6 +52,13 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │   ├── demo.js        # Compte démo : seed, reset nocturne, scheduler (code 0000 réservé)
 │   │   ├── db.js          # Pool PostgreSQL (pg, max 20 connexions)
 │   │   ├── middleware/auth.js  # Vérification JWT (HS256 explicite)
+│   │   ├── gridDetection.js    # Détection auto de grille (carrée/hex) sur les battlemaps via sharp
+│   │   │                       # (projections de gradients écrêtés + passe-haut médian + binarisation + autocorrélation/somme harmonique ;
+│   │   │                       #  ratio périodes X/Y : 1 = carrée, √3 = hex flat, 1/√3 = hex pointy)
+│   │   │                       # Taille de cellule détectée stockée dans grid_cell_w/h (découplée de cols/rows → gère marges et grilles partielles)
+│   │   │                       # Offset hex : recalage 2D du gradient le long des arêtes du maillage candidat (fitHexOffset)
+│   │   │                       # Exécutée à l'upload (type='map') et via POST .../detect-grid
+│   │   │                       # Fixtures d'entraînement : backend/test/grid-fixtures/ ; CLI : scripts/detect-grid.js, scripts/grid-overlay.js
 │   │   ├── data/          # Fichiers JSON de données statiques
 │   │   │   ├── aidedd_spells.json        # 477 sorts D&D 5e en français
 │   │   │   ├── aidedd_magic_items.json   # Objets magiques D&D 5e
@@ -60,6 +70,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │                      # puzzles: GET /api/puzzles/serve/:imageId?seed=SEED (public, sans auth) — sert le HTML avec PRNG injecté
 │   │                      # release-notes: GET /api/release-notes (public, sans auth)
 │   │                      # sessions: GET/DELETE/PATCH /api/sessions/:id/images/:imageId
+│   │                      # sessions: POST /api/sessions/:id/images/:imageId/detect-grid — relance la détection auto de grille et persiste le résultat
 │   │                      # sessions: GET /api/sessions/:id/journal (résumé IA : durée calculée entre premier et dernier événement, 0 si journal vide)
 │   │                      # sessions: DELETE /api/sessions/:id/journal (efface tous les session_events)
 │   │                      # (+ GET /api/sessions/:id/players pour sync Obsidian)
@@ -129,9 +140,10 @@ cd frontend && npm run dev  # vite dev server
 - La DB est PostgreSQL 16. Les requêtes utilisent le driver `pg` (pool de connexions dans `db.js`).
 - Tables principales : `admins`, `sessions`, `players`, `messages`, `dice_results`, `votes`, `vote_responses`, `session_events`, `merchants`, `merchant_items`, `purchase_requests`, `session_images`, `factions`.
 - Table `factions` : `id`, `session_id` (FK sessions ON DELETE CASCADE), `name` (VARCHAR 200), `min_value` (INTEGER, défaut -5), `max_value` (INTEGER, défaut 5), `current_value` (INTEGER, défaut 0), `created_at`. Chaque session peut avoir N factions. Route REST : `GET /api/sessions/:id/factions`.
-- Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/timescale/vote/image/map/merchant/puzzle/reputation), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`, `combat_round` (entier), `timer_label` (VARCHAR 200), `timer_end_at` (TIMESTAMP), `lobby_bg_url` (VARCHAR 500, image de fond du lobby TV à 15 % d'opacité), `current_puzzle_image_id` (INTEGER), `current_puzzle_url` (VARCHAR 500), `current_puzzle_seed` (VARCHAR 100), `current_image_label` (VARCHAR 200 : label affiché en overlay top-left sur la TV quand une image est projetée).
+- Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/timescale/vote/image/map/merchant/puzzle/reputation), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes — mode peinture libre), `map_fog_cells` (JSON array d'indices entiers — cellules révélées en mode grille), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`, `combat_round` (entier), `timer_label` (VARCHAR 200), `timer_end_at` (TIMESTAMP), `lobby_bg_url` (VARCHAR 500, image de fond du lobby TV à 15 % d'opacité), `current_puzzle_image_id` (INTEGER), `current_puzzle_url` (VARCHAR 500), `current_puzzle_seed` (VARCHAR 100), `current_image_label` (VARCHAR 200 : label affiché en overlay top-left sur la TV quand une image est projetée).
 - Colonnes `timescale_*` de `sessions` : `timescale_title` (VARCHAR 200), `timescale_total_hours` (INTEGER, ex: 24), `timescale_slot_count` (INTEGER, nb de paliers), `timescale_rest_slots` (INTEGER, durée du repos long en paliers), `timescale_elapsed_slots` (INTEGER, paliers écoulés), `timescale_rest_taken` (BOOLEAN, défaut FALSE : indique si le repos long a déjà été pris). Toutes nullable ; si `timescale_title` est NULL l'échelle est inactive.
-- Colonnes clés de `session_images` : `url`, `original_name` (nom d'affichage, renommable), `type` (`image` / `map` / `audio`), `audio_category` (VARCHAR 50 : catégorie libre assignée par l'IA (GPT-4o-mini via GitHub Models) au moment de l'upload ; défaut `Général` si GITHUB_TOKEN absent ou si l'IA échoue ; l'admin peut saisir/modifier librement depuis l'AudioManager), `thumbnail_url` (VARCHAR 500 : URL du WebP 400px généré par `sharp` après upload pour les types `image` et `map` — null pour les fichiers audio ou si la génération échoue ; les galeries admin utilisent cette URL avec fallback sur `url`), `tv_label` (VARCHAR 200 : label optionnel affiché en overlay top-left sur la TV lors de la projection — saisie inline dans l'ImageManager, sauvegardé via PATCH).
+- Colonnes clés de `session_images` : `url`, `original_name` (nom d'affichage, renommable), `type` (`image` / `map` / `audio`), `audio_category` (VARCHAR 50 : catégorie libre assignée par l'IA (GPT-4o-mini via GitHub Models) au moment de l'upload ; défaut `Général` si GITHUB_TOKEN absent ou si l'IA échoue ; l'admin peut saisir/modifier librement depuis l'AudioManager), `thumbnail_url` (VARCHAR 500 : URL du WebP 400px généré par `sharp` après upload pour les types `image` et `map` — null pour les fichiers audio ou si la génération échoue ; les galeries admin utilisent cette URL avec fallback sur `url`), `tv_label` (VARCHAR 200 : label optionnel affiché en overlay top-left sur la TV lors de la projection — saisie inline dans l'ImageManager, sauvegardé via PATCH), `grid_type` (VARCHAR 10 : `none` / `square` / `hex` — type de grille configuré sur la carte ; rempli automatiquement à l'upload des `type='map'` par `gridDetection.js`, re-calculable via POST `/api/sessions/:id/images/:imageId/detect-grid`), `grid_cols` (INTEGER), `grid_rows` (INTEGER), `grid_hex_orientation` (VARCHAR 10 : `flat` / `pointy`), `grid_offset_x` (REAL), `grid_offset_y` (REAL), `grid_cell_w` (REAL : largeur d'une cellule normalisée en fraction de l'image — null = dérivée de grid_cols), `grid_cell_h` (REAL : hauteur d'une cellule normalisée — null = dérivée de grid_rows). Quand `grid_cell_w/h` sont non-null (détection auto), la géométrie de la grille est découplée de cols/rows — qui ne définissent plus que l'espace d'indices — ce qui permet l'alignement sur les cartes à marges ou recadrées ; toute modification manuelle du type/cols/rows/orientation dans MapGridConfig les remet à null (retour au mode « la grille divise exactement l'image »).
+- Colonnes clés de `messages` : `session_id`, `from_name` (VARCHAR), `to_player_id` (FK players, nullable — NULL = tous), `from_player_id` (FK players ON DELETE SET NULL, nullable — non-NULL = message joueur → MJ), `type` (`text`/`image`/`gold`/`player`), `content`, `voice_style`, `text_effect`, `author_color`.
 - Colonnes clés de `players` : `ac`, `max_hp`, `current_hp`, `initiative`, `conditions` (JSON array), `is_concentrating`, `dnd_class`, `avatar_url`, `socket_id`.
 - Les joueurs sont supprimés de la DB à la déconnexion socket (`disconnect`/`leave-session`).
 - Les codes de session sont sur **4 chiffres numériques** (migration automatique des anciens codes).
@@ -160,6 +172,7 @@ cd frontend && npm run dev  # vite dev server
 | `update-concentration` | Basculer la concentration |
 | `update-initiative` | Mettre à jour l'initiative |
 | `player-roll` | Envoyer un jet de dé effectué par le joueur (résultat transmis à l'admin) |
+| `player-send-message` | Envoyer un message secret au MJ (`{ content }`) |
 | `submit-vote` | Voter pour une option |
 | `request-purchase` | Demander l'achat d'un objet (legacy) |
 | `request-batch-purchase` | Demander l'achat d'un panier d'objets |
@@ -178,7 +191,7 @@ cd frontend && npm run dev  # vite dev server
 | `start-doom-clock` | Démarrer l'horloge de doom |
 | `stop-doom-clock` | Arrêter l'horloge de doom |
 | `create-tension-scale` | Créer une échelle de tension |
-| `increment-tension-scale` | Avancer l'échelle de tension |
+| `increment-tension-scale` | Avancer/reculer l'échelle de tension (`{ sessionId, delta }` — delta entier signé, borné à [-20, 20], défaut 1) |
 | `end-tension-scale` | Terminer l'échelle de tension |
 | `create-vote` | Créer un vote |
 | `close-vote` | Fermer un vote |
@@ -191,6 +204,7 @@ cd frontend && npm run dev  # vite dev server
 | `map-fog-reset` | Réinitialiser le brouillard |
 | `map-token-move` | Déplacer un token de joueur |
 | `map-token-remove` | Retirer un token de joueur |
+| `map-sync-grid` | Synchroniser la config de grille vers la TV après sauvegarde (`{ sessionId, gridType, gridCols, gridRows, gridHexOrientation, gridOffsetX, gridOffsetY, gridCellW, gridCellH }`) — relayé via `map-grid-updated` |
 | `send-message` | Envoyer un message à un ou tous les joueurs |
 | `send-dice-result` | Envoyer un résultat de jet de dé |
 | `send-gold-split` | Envoyer une répartition d'or entre joueurs |
@@ -216,6 +230,8 @@ cd frontend && npm run dev  # vite dev server
 | `end-time-scale` | Terminer l'échelle de temps (`{ sessionId }`) |
 | `show-puzzle` | Afficher un puzzle HTML sur le TV et chez les joueurs (`{ sessionId, imageId }`) — génère un seed aléatoire |
 | `close-puzzle` | Fermer le puzzle actif (`{ sessionId }`) — retour en mode lobby |
+| `map-fog-cell-reveal` | Révéler des cellules de grille (`{ sessionId, cells: [idx] }`) — mode grille uniquement |
+| `map-fog-cells-reset` | Réinitialiser toutes les cellules révélées (`{ sessionId }`) — mode grille uniquement |
 | `create-faction` | Créer une faction (`{ sessionId, name, minValue, maxValue, initialValue }`) |
 | `update-faction-value` | Modifier la réputation d'une faction (`{ sessionId, factionId, delta }`) |
 | `delete-faction` | Supprimer une faction (`{ sessionId, factionId }`) |
@@ -248,6 +264,8 @@ cd frontend && npm run dev  # vite dev server
 | `player-roll-result` | admin | Résultat d'un jet de dé effectué côté joueur |
 | `player-roll-confirmed` | joueur | Confirmation du jet de dé (visible) |
 | `player-roll-hidden-sent` | joueur | Confirmation du jet de dé masqué envoyé à l'admin |
+| `player-message` | admin | Message secret d'un joueur — `{ playerName, playerId, content, sentAt }` |
+| `player-message-sent` | joueur | Confirmation que le message secret a été envoyé au MJ |
 | `tv-mode-changed` | TV + admin | Changement de mode TV (pour `image` : inclut `imageUrl` et `imageLabel`) |
 | `doom-clock-started` | TV + admin | Démarrage de l'horloge doom |
 | `doom-clock-stopped` | TV + admin | Arrêt de l'horloge doom |
@@ -269,6 +287,7 @@ cd frontend && npm run dev  # vite dev server
 | `map-fog-reset` | TV + admin | Réinitialisation du brouillard |
 | `map-token-moved` | TV + admin | Token déplacé |
 | `map-token-removed` | TV + admin | Token retiré |
+| `map-grid-updated` | TV + admin | Config de grille synchronisée (mêmes champs que `map-sync-grid`) |
 | `new-message` | joueur(s) | Nouveau message du MJ |
 | `dice-result` | joueur(s) | Résultat de jet de dé |
 | `session-event` | admin | Événement de session (log) |
@@ -297,6 +316,8 @@ cd frontend && npm run dev  # vite dev server
 | `puzzle-started` | TV + session + admin | Puzzle affiché — `{ puzzleImageId, puzzleSeed, puzzleClicks: [] }` |
 | `puzzle-closed` | TV + session + admin | Puzzle fermé |
 | `puzzle-cell-clicked` | TV + session + admin (sauf émetteur) | Clic relayé — `{ path: number[] }` |
+| `map-fog-cells-patch` | TV + admin | Nouvelles cellules révélées — `{ cells: [idx] }` |
+| `map-fog-cells-reset` | TV + admin | Toutes les cellules redeviennent cachées |
 | `faction-created` | admin | Faction créée — `{ faction }` |
 | `faction-deleted` | admin | Faction supprimée — `{ factionId }` |
 | `factions-updated` | admin + TV | Liste complète des factions mise à jour — `[faction, ...]` |
@@ -319,6 +340,7 @@ cd frontend && npm run dev  # vite dev server
 - **Bouton d'action primaire** (form-commit standalone en bas de formulaire) : `width: 100%`, `padding: 0.6rem 1rem`, `font-size: 0.8rem`, `background: var(--gradient-accent-action)`, `border: 1px solid var(--color-gold-dark)`. Ne pas appliquer aux boutons inline avec un input (search, select+send), ni aux grilles de contrôles compacts (TvControls, MapManager).
 - **`font-family` avec variables CSS** : toujours ajouter `, sans-serif` après le `var()` — ex : `font-family: var(--font-heading), sans-serif;`. Toutes les variables `--font-*` du projet sont `sans-serif`; le fallback générique est requis par la spec CSS et évite les warnings linter.
 - **`HelpTip` — bulles d'aide contextuelles** (`components/HelpTip.vue`) : deux modes d'usage. (1) **Badge `?`** : `<HelpTip id="clé" />` — ajoute un petit cercle `?` inline, à utiliser sur des titres/labels (`<h2>`, `<label>`, en-têtes de colonnes). (2) **Slot wrapper** : `<HelpTip id="clé"><button …/></HelpTip>` — la bulle s'affiche au survol/focus du contenu sans ajouter de `?`; à utiliser systématiquement quand le déclencheur est un bouton existant. Ne jamais placer un `<HelpTip>` à côté d'un bouton sans le wrapper (ajoute un `?` superflu et peut casser le layout). Les textes sont dans `frontend/src/utils/helpContent.js`.
+- **`GoldDividerTool` — deux modes de répartition** : `exact` (division entière par joueur, reste affiché séparément) et `approximate` (toutes les pièces distribuées — les extras vont aux joueurs avec la valeur cumulée la plus basse, traitées du dénominateur le plus fort au plus faible). Groupement de joueurs disponible pour afficher le total d'un « banquier » avec détail individuel dépliable.
 - **Responsive `PlayerInboxView`** — trois breakpoints : `< 640px` mobile (tab bar en bas, layout colonne unique), `640px–1023px` tablette (tab bar en bas, onglet Combat en 2 colonnes CSS grid 3fr/2fr), `≥ 1024px` desktop (sidebar gauche 160px `.sidebar-nav`, tab bar cachée, onglet Combat 2 colonnes). Les items de navigation sont **dupliqués** entre `.sidebar-nav` et `.tab-bar` — toute modification d'un onglet doit être répercutée aux deux endroits. Le shell intermédiaire `.inbox-lower` (flex row sur desktop) contient la sidebar et `.inbox-main` (flex: 1, flex column) qui héberge le puzzle-overlay et le contenu scrollable.
 
 ### Backend

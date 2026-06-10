@@ -328,8 +328,8 @@ router.get('/:id/images', authenticateToken, async (req, res) => {
 
     const { type } = req.query  // ?type=image ou ?type=map
     const query = type
-        ? 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, uploaded_at FROM session_images WHERE session_id = $1 AND type = $2 ORDER BY uploaded_at DESC'
-        : 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, uploaded_at FROM session_images WHERE session_id = $1 ORDER BY uploaded_at DESC'
+        ? 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at FROM session_images WHERE session_id = $1 AND type = $2 ORDER BY uploaded_at DESC'
+        : 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at FROM session_images WHERE session_id = $1 ORDER BY uploaded_at DESC'
     const params = type ? [req.params.id, type] : [req.params.id]
     const result = await pool.query(query, params)
     res.json(result.rows)
@@ -353,21 +353,81 @@ router.patch('/:id/images/:imageId', authenticateToken, async (req, res) => {
     )
     if (!record.rows[0]) return res.status(404).json({ error: 'File not found.' })
 
-    const { original_name, audio_category, tv_label } = req.body
+    const { original_name, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h } = req.body
     const updates = []
     const values = []
     let idx = 1
     if (original_name !== undefined) { updates.push(`original_name = $${idx++}`); values.push(String(original_name).slice(0, 500)) }
     if (audio_category !== undefined) { updates.push(`audio_category = $${idx++}`); values.push(String(audio_category).slice(0, 50)) }
     if (tv_label !== undefined) { updates.push(`tv_label = $${idx++}`); values.push(tv_label ? String(tv_label).slice(0, 200) : null) }
+    if (grid_type !== undefined) { updates.push(`grid_type = $${idx++}`); values.push(['none', 'square', 'hex'].includes(grid_type) ? grid_type : 'none') }
+    if (grid_cols !== undefined) { updates.push(`grid_cols = $${idx++}`); values.push(grid_cols !== null ? Math.max(1, Math.min(200, parseInt(grid_cols) || 1)) : null) }
+    if (grid_rows !== undefined) { updates.push(`grid_rows = $${idx++}`); values.push(grid_rows !== null ? Math.max(1, Math.min(200, parseInt(grid_rows) || 1)) : null) }
+    if (grid_hex_orientation !== undefined) { updates.push(`grid_hex_orientation = $${idx++}`); values.push(['flat', 'pointy'].includes(grid_hex_orientation) ? grid_hex_orientation : 'flat') }
+    // Offsets are normalised image fractions. ±0.5 is the maximum meaningful shift
+    // (half the image width/height), covering all realistic sub-cell alignment scenarios.
+    // The frontend slider is bounded by ±1/cols or ±1/rows which is always ≤ 0.5 for
+    // the minimum grid size of 2 columns/rows, so these limits are consistent.
+    if (grid_offset_x !== undefined) { updates.push(`grid_offset_x = $${idx++}`); values.push(Math.max(-0.5, Math.min(0.5, parseFloat(grid_offset_x) || 0))) }
+    if (grid_offset_y !== undefined) { updates.push(`grid_offset_y = $${idx++}`); values.push(Math.max(-0.5, Math.min(0.5, parseFloat(grid_offset_y) || 0))) }
+    // Taille de cellule normalisée (fraction de l'image) — null = dérivée de cols/rows
+    if (grid_cell_w !== undefined) { updates.push(`grid_cell_w = $${idx++}`); values.push(grid_cell_w !== null && parseFloat(grid_cell_w) > 0 ? Math.min(1, parseFloat(grid_cell_w)) : null) }
+    if (grid_cell_h !== undefined) { updates.push(`grid_cell_h = $${idx++}`); values.push(grid_cell_h !== null && parseFloat(grid_cell_h) > 0 ? Math.min(1, parseFloat(grid_cell_h)) : null) }
     if (updates.length === 0) return res.status(400).json({ error: 'Nothing to update.' })
 
     values.push(req.params.imageId)
     const row = await pool.query(
-      `UPDATE session_images SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, url, original_name, type, audio_category, tv_label, uploaded_at`,
+      `UPDATE session_images SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, url, original_name, type, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at`,
       values
     )
     res.json(row.rows[0])
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
+// Relance la détection automatique de grille sur une carte existante,
+// persiste le résultat et le retourne.
+router.post('/:id/images/:imageId/detect-grid', authenticateToken, async (req, res) => {
+  try {
+    const sessionCheck = await pool.query(
+      'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+      [req.params.id, req.admin.id]
+    )
+    if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
+
+    const imgRes = await pool.query(
+      "SELECT id, url, type FROM session_images WHERE id = $1 AND session_id = $2",
+      [req.params.imageId, req.params.id]
+    )
+    if (!imgRes.rows[0]) return res.status(404).json({ error: 'Image not found.' })
+    if (!['map', 'image'].includes(imgRes.rows[0].type)) {
+      return res.status(400).json({ error: 'La détection de grille ne s\'applique qu\'aux images.' })
+    }
+
+    const path = require('path')
+    const filePath = path.join(__dirname, '../../uploads', imgRes.rows[0].url.replace('/uploads/', ''))
+
+    const { detectGridConfig } = require('../gridDetection')
+    let grid
+    try {
+      grid = await detectGridConfig(filePath)
+    } catch (err) {
+      console.error('[detect-grid] analysis failed:', err.message)
+      return res.status(422).json({ error: 'Impossible d\'analyser cette image.' })
+    }
+
+    const row = await pool.query(
+      `UPDATE session_images
+         SET grid_type = $1, grid_cols = $2, grid_rows = $3, grid_hex_orientation = $4,
+             grid_offset_x = $5, grid_offset_y = $6, grid_cell_w = $7, grid_cell_h = $8
+       WHERE id = $9
+       RETURNING id, url, original_name, type, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at`,
+      [grid.gridType, grid.gridCols, grid.gridRows, grid.gridHexOrientation,
+       grid.gridOffsetX, grid.gridOffsetY, grid.gridCellW, grid.gridCellH, req.params.imageId]
+    )
+    res.json({ ...row.rows[0], confidence: grid.confidence })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Server error.' })

@@ -227,7 +227,7 @@ async function joinSession() {
 
         <div class="form-group">
           <label class="form-label">Code de session</label>
-          <input v-model="sessionCode" type="text" class="form-input"
+          <input v-model="sessionCode" type="text" inputmode="numeric" pattern="[0-9]*" class="form-input"
             placeholder="Code à 4 chiffres" data-testid="session-code-input" />
           <p class="form-hint">Fourni par votre MJ ou via le QR Code.</p>
           <p v-if="sessionCode === '0000'" class="form-hint demo-hint">

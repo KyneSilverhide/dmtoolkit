@@ -28,6 +28,10 @@ const textEffect = ref('none')
 const sending = ref(false)
 const feedback = ref('')
 
+const inbox = ref([]) // player messages + hidden dice rolls received
+const unreadInbox = ref(0)
+const inboxOpen = ref(false)
+
 const imageSource = ref('gallery')   // 'gallery' | 'pc'
 const galleryImages = ref([])
 const selectedGalleryUrl = ref(null)
@@ -47,6 +51,36 @@ const canSend = computed(() => {
 
 function handleSendError(data) {
   feedback.value = data?.message || "Erreur lors de l'envoi."
+}
+
+function handlePlayerMessage(data) {
+  inbox.value.push({ kind: 'player-msg', ...data })
+  if (!inboxOpen.value) unreadInbox.value++
+}
+
+function handlePlayerRollResult(data) {
+  if (!data?.hidden) return // only hidden rolls go to the inbox
+  inbox.value.push({ kind: 'player-roll', ...data })
+  if (!inboxOpen.value) unreadInbox.value++
+}
+
+function replyToPlayer(entry) {
+  if (entry.playerId) {
+    const found = sessionStore.players.find(p => p.id === entry.playerId)
+    if (found) selectedPlayerId.value = found.id
+  }
+  messageType.value = 'text'
+}
+
+function toggleInbox() {
+  inboxOpen.value = !inboxOpen.value
+  if (inboxOpen.value) unreadInbox.value = 0
+}
+
+function formatInboxTime(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
 async function loadGalleryImages() {
@@ -81,11 +115,15 @@ watch(hasConnectedPlayers, (isConnected) => {
 onMounted(() => {
   const socket = getSocket(authStore.token)
   socket.on('send-error', handleSendError)
+  socket.on('player-message', handlePlayerMessage)
+  socket.on('player-roll-result', handlePlayerRollResult)
 })
 
 onUnmounted(() => {
   const socket = getSocket()
   socket.off('send-error', handleSendError)
+  socket.off('player-message', handlePlayerMessage)
+  socket.off('player-roll-result', handlePlayerRollResult)
 })
 
 function onFileChange(e) {
@@ -154,6 +192,44 @@ async function sendMessage() {
 <template>
   <div class="message-tool">
     <h2 class="section-title">✦ Envoyer un Message</h2>
+
+    <!-- ── Player inbox ──────────────────────────────────────────────────── -->
+    <div class="inbox-section">
+      <button class="inbox-toggle" @click="toggleInbox">
+        <span class="inbox-toggle-label">
+          <AppIcon icon="lucide:inbox" size="0.85em" /> Reçus des joueurs
+        </span>
+        <span v-if="unreadInbox > 0" class="inbox-badge">{{ unreadInbox }}</span>
+        <AppIcon :icon="inboxOpen ? 'lucide:chevron-up' : 'lucide:chevron-down'" size="0.85em" />
+      </button>
+      <div v-if="inboxOpen" class="inbox-list">
+        <div v-if="inbox.length === 0" class="inbox-empty">Aucun message reçu.</div>
+        <div
+          v-for="(entry, idx) in [...inbox].reverse()"
+          :key="idx"
+          class="inbox-entry"
+          :class="entry.kind"
+        >
+          <div class="inbox-entry-header">
+            <span class="inbox-entry-name">{{ entry.playerName }}</span>
+            <span class="inbox-entry-time">{{ formatInboxTime(entry.sentAt) }}</span>
+          </div>
+          <template v-if="entry.kind === 'player-msg'">
+            <p class="inbox-entry-content">{{ entry.content }}</p>
+            <button class="inbox-reply-btn" @click="replyToPlayer(entry)">↩ Répondre</button>
+          </template>
+          <template v-else-if="entry.kind === 'player-roll'">
+            <p class="inbox-entry-content dice-roll">
+              <AppIcon icon="lucide:eye-off" size="0.75em" />
+              {{ entry.diceCount }}d{{ entry.diceType }}<template v-if="entry.modifier !== 0">{{ entry.modifier > 0 ? '+' : '' }}{{ entry.modifier }}</template>
+              <template v-if="entry.rollType !== 'normal'"> ({{ entry.rollType === 'advantage' ? 'avantage' : 'désavantage' }})</template>
+              = <strong>{{ entry.total }}</strong>
+            </p>
+            <button class="inbox-reply-btn" @click="replyToPlayer(entry)">↩ Répondre</button>
+          </template>
+        </div>
+      </div>
+    </div>
 
     <div v-if="!hasSession" class="no-session">
       <p>Aucune session active. Créez ou sélectionnez une session d'abord.</p>
@@ -521,4 +597,129 @@ async function sendMessage() {
 }
 
 .send-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Inbox ───────────────────────────────────────────────── */
+.inbox-section {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.inbox-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--color-surface);
+  border: none;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.inbox-toggle:hover { background: var(--color-surface-alt); }
+
+.inbox-toggle-label { flex: 1; text-align: left; display: flex; align-items: center; gap: 0.35rem; }
+
+.inbox-badge {
+  background: var(--color-gold-dark);
+  color: var(--color-bg);
+  border-radius: 10px;
+  font-size: 0.65rem;
+  padding: 0.05rem 0.45rem;
+  font-weight: 700;
+  min-width: 1.3rem;
+  text-align: center;
+}
+
+.inbox-list {
+  border-top: 1px solid var(--color-border);
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.inbox-empty {
+  padding: 1rem;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.82rem;
+  color: var(--color-text-dim);
+  text-align: center;
+}
+
+.inbox-entry {
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.inbox-entry:last-child { border-bottom: none; }
+
+.inbox-entry.player-msg { border-left: 3px solid var(--color-gold-dark); }
+.inbox-entry.player-roll { border-left: 3px solid #c084fc; }
+
+.inbox-entry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.inbox-entry-name {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-gold-dark);
+}
+
+.inbox-entry-time {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.65rem;
+  color: var(--color-text-dim);
+}
+
+.inbox-entry-content {
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.88rem;
+  color: var(--color-parchment);
+  line-height: 1.4;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.inbox-entry-content.dice-roll {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #c084fc;
+  font-size: 0.85rem;
+}
+
+.inbox-reply-btn {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.55rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.inbox-reply-btn:hover {
+  border-color: var(--color-gold-dark);
+  color: var(--color-gold-bright);
+}
 </style>

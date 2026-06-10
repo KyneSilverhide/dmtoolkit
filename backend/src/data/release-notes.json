@@ -1,6 +1,50 @@
 {
   "notes": [
     {
+      "version": "1.0.77",
+      "date": "2026-06-10",
+      "changes": [
+        { "type": "improvement", "role": "admin", "text": "Galerie d'images — vignettes adaptatives : les cartes s'organisent désormais en grille responsive (largeur fixe ~160 px). Plus aucune carte ne s'étire sur toute la largeur de l'écran." }
+      ]
+    },
+    {
+      "version": "1.0.76",
+      "date": "2026-06-08",
+      "changes": [
+        { "type": "improvement", "role": "admin", "text": "Rythme — Doom Clock & Minuteur libre : les champs de durée affichent désormais des labels « Minutes » / « Secondes » pour plus de clarté." },
+        { "type": "improvement", "role": "admin", "text": "Rythme — Échelle de tension : boutons −5 −1 +1 +5 pour ajuster rapidement le niveau de tension quand une échelle est active." },
+        { "type": "improvement", "role": "admin", "text": "Rythme — Échelle de temps : boutons −5 −1 +1 +5 pour avancer ou reculer les paliers de temps. Les boutons sont désactivés aux bornes." },
+        { "type": "improvement", "role": "all", "text": "TV — Échelle de temps & Échelle de tension : affichage agrandi pour être lisible de loin. Les paliers s'organisent automatiquement sur 1, 2 ou 3 lignes selon leur nombre (< 10 / < 20 / ≥ 20)." }
+      ]
+    },
+    {
+      "version": "1.0.75",
+      "date": "2026-06-06",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Carte & brouillard de guerre — grille par cases : configurez une grille carrée ou hexagonale sur vos cartes. Le brouillard se révèle case par case en cliquant (plus de peinture libre), et la grille est synchronisée en temps réel sur la TV dès l'enregistrement." },
+        { "type": "improvement", "role": "admin", "text": "Carte — interface repensée : quand une carte est active, le canevas et les contrôles (grille, brouillard, jetons, viewport) s'affichent côte à côte, sans avoir à scroller." },
+        { "type": "improvement", "role": "admin", "text": "Interface admin pleine largeur : l'interface utilise désormais toute la largeur du navigateur." }
+      ]
+    },
+    {
+      "version": "1.0.74",
+      "date": "2026-06-06",
+      "changes": [
+        { "type": "feature", "role": "player", "text": "Messages — zone de composition : envoyez un message secret au MJ directement depuis l'onglet Messages. Le message n'est visible que par le Maître du Jeu." },
+        { "type": "feature", "role": "player", "text": "Messages — réponse rapide : bouton ↩ sur chaque message du MJ pour ouvrir la zone de composition avec le contexte de la réponse." },
+        { "type": "feature", "role": "admin", "text": "Messages — boîte de réception joueurs : panneau « Reçus des joueurs » dans l'outil Message affiche les messages secrets reçus et les jets de dés cachés. Badge de notification pour les non-lus, bouton Répondre pour cibler directement le joueur concerné." }
+      ]
+    },
+    {
+      "version": "1.0.73",
+      "date": "2026-06-06",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Répartition de trésor — mode Complet : nouvel algorithme équitable par remplissage progressif (water-fill). Les pièces de chaque dénomination vont en priorité aux joueurs qui ont reçu le moins en valeur cumulée, évitant ainsi les écarts induits par la découpe dénomination par dénomination." },
+        { "type": "feature", "role": "admin", "text": "Répartition de trésor — valeur en PC : chaque joueur affiche maintenant l'équivalent total en pièces de cuivre de sa part, pour vérifier d'un coup d'œil l'équité de la distribution." },
+        { "type": "feature", "role": "admin", "text": "Répartition de trésor — groupement de joueurs : possibilité de regrouper plusieurs joueurs sous un rôle de banquier. Le total consolidé s'affiche en en-tête du groupe, avec le détail individuel dépliable." }
+      ]
+    },
+    {
       "version": "1.0.67",
       "date": "2026-06-03",
       "changes": [

@@ -246,6 +246,27 @@ ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timescale_slot_count INTEGER;
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timescale_rest_slots INTEGER;
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timescale_elapsed_slots INTEGER DEFAULT 0;
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS timescale_rest_taken BOOLEAN DEFAULT FALSE;
+
+-- Player-to-DM secret messages
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS from_player_id INTEGER REFERENCES players(id) ON DELETE SET NULL;
+
+-- Grid-based fog of war: grid config stored per map image, revealed cells per session
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_type VARCHAR(10) DEFAULT 'none';
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_cols INTEGER;
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_rows INTEGER;
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_hex_orientation VARCHAR(10) DEFAULT 'flat';
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS map_fog_cells TEXT;
+
+-- Grid offset: allows shifting the grid origin to align with image content
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_offset_x REAL DEFAULT 0;
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_offset_y REAL DEFAULT 0;
+
+-- Grid cell size, normalised by image dimensions. When set, the cell size is
+-- decoupled from grid_cols/grid_rows (which only define the cell index space),
+-- allowing grids that do not exactly tile the image (margins, partial grids).
+-- NULL = legacy behaviour (cell size derived from cols/rows spanning the image).
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_cell_w DOUBLE PRECISION;
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_cell_h DOUBLE PRECISION;
 `
 
 async function runMigrations() {

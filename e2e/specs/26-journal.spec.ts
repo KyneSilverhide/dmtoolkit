@@ -58,6 +58,8 @@ test('HP damage appears in journal in real-time', async ({ browser, adminToken }
 
     // Open journal tab so socket listener is active
     await adminPage.switchTab('journal')
+    // Wait for journal to be fully mounted before navigating away (Transition leave ~150ms)
+    await expect(adminPage.page.locator('.journal')).toBeVisible({ timeout: 5_000 })
 
     // Player takes damage
     const playerPage = new PlayerPage(playerPg)
@@ -253,7 +255,7 @@ test('tension_started event appears in journal', async ({ browser, adminToken })
     await titleInput.fill('Tension des négociations')
     const stepsInput = pg.locator('input[placeholder*="Étapes"]').first()
     await stepsInput.fill('5')
-    await pg.locator('button.action-btn').filter({ hasText: /Créer|Recréer/i }).click()
+    await pg.locator('button[data-testid="tension-create-btn"]').click()
 
     // Switch to journal and verify tension_started event
     await adminPage.switchTab('journal')
@@ -261,5 +263,90 @@ test('tension_started event appears in journal', async ({ browser, adminToken })
     await expect(pg.locator('.tl-desc').filter({ hasText: /Tension des négociations/i })).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
+  }
+})
+
+test('journal displays session stats (duration, damage, healing) in real-time', async ({ browser, adminToken }) => {
+  const token = adminToken
+  const code = await createSession(token)
+
+  const adminCtx = await browser.newContext()
+  const playerCtx = await browser.newContext()
+
+  try {
+    const adminPage = new AdminPage(await adminCtx.newPage())
+    await adminPage.login(token)
+    await adminPage.selectSession(code)
+
+    const playerPg = await playerCtx.newPage()
+    await joinAsPlayer(playerPg, code, { name: 'Fighter', hp: 80 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
+
+    await adminPage.switchTab('journal')
+    const pg = adminPage.page
+    await expect(pg.locator('.journal')).toBeVisible({ timeout: 5_000 })
+
+    // Stats block should be visible
+    await expect(pg.locator('.session-stats')).toBeVisible({ timeout: 5_000 })
+    // Three stat values: duration, damage, healing
+    await expect(pg.locator('.session-stats .stat-value')).toHaveCount(3)
+
+    // Capture damage stat BEFORE the player takes damage
+    const damageStatBefore = await pg.locator('.session-stats .stat-value').nth(1).textContent()
+
+    // Player takes damage — should update total damage stat
+    const playerPage = new PlayerPage(playerPg)
+    await playerPage.setHp(60) // 20 damage
+    await expect(async () => {
+      const after = await pg.locator('.session-stats .stat-value').nth(1).textContent()
+      expect(after).not.toBe(damageStatBefore)
+    }).toPass({ timeout: 8_000 })
+  } finally {
+    await adminCtx.close()
+    await playerCtx.close()
+  }
+})
+
+test('journal reset button clears events and resets stats', async ({ browser, adminToken }) => {
+  const token = adminToken
+  const code = await createSession(token)
+
+  const adminCtx = await browser.newContext()
+  const playerCtx = await browser.newContext()
+
+  try {
+    const adminPage = new AdminPage(await adminCtx.newPage())
+    await adminPage.login(token)
+    await adminPage.selectSession(code)
+
+    const playerPg = await playerCtx.newPage()
+    await joinAsPlayer(playerPg, code, { name: 'Paladin', hp: 70 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
+
+    // Open journal tab BEFORE damage so socket listener is registered
+    await adminPage.switchTab('journal')
+    const pg = adminPage.page
+    await expect(pg.locator('.journal')).toBeVisible({ timeout: 5_000 })
+
+    const playerPage = new PlayerPage(playerPg)
+    await playerPage.setHp(50) // generate damage event
+
+    // Wait for a timeline event to appear
+    await expect(pg.locator('.timeline-item')).not.toHaveCount(0, { timeout: 8_000 })
+
+    // Click reset button (needs two clicks: first shows confirm, second confirms)
+    await pg.locator('.reset-btn').click()
+    await expect(pg.locator('.reset-confirm-btn')).toBeVisible({ timeout: 3_000 })
+    await pg.locator('.reset-confirm-btn').click()
+
+    // After reset, journal should be empty
+    await expect(pg.locator('.timeline-item')).toHaveCount(0, { timeout: 8_000 })
+
+    // Damage stat should be back to 0 or —
+    const damageVal = await pg.locator('.session-stats .stat-value').nth(1).textContent()
+    expect(damageVal?.trim()).toMatch(/^0$|^—$/)
+  } finally {
+    await adminCtx.close()
+    await playerCtx.close()
   }
 })

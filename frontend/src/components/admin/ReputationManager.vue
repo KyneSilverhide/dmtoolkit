@@ -169,7 +169,8 @@ onUnmounted(() => {
           <span class="rm-label-text">Min <HelpTip id="reputation.range" /></span>
           <input v-model.number="newMin" class="form-input form-input--sm" type="number" min="-1000" max="-1" />
         </label>
-        <label class="rm-label">Valeur initiale
+        <label class="rm-label">
+          <span class="rm-label-text">Valeur initiale</span>
           <input
             v-model.number="newInitial"
             class="form-input form-input--sm"
@@ -178,7 +179,8 @@ onUnmounted(() => {
             :max="newMax"
           />
         </label>
-        <label class="rm-label">Max
+        <label class="rm-label">
+          <span class="rm-label-text">Max</span>
           <input v-model.number="newMax" class="form-input form-input--sm" type="number" min="1" max="1000" />
         </label>
       </div>
