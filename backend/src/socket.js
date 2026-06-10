@@ -1191,6 +1191,8 @@ function setupSocket(io) {
           gridHexOrientation: gridConfig?.gridHexOrientation || 'flat',
           gridOffsetX: gridConfig?.gridOffsetX ?? 0,
           gridOffsetY: gridConfig?.gridOffsetY ?? 0,
+          gridCellW: gridConfig?.gridCellW ?? null,
+          gridCellH: gridConfig?.gridCellH ?? null,
           fogCells: [],
         }
         io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'map' })
@@ -1296,7 +1298,7 @@ function setupSocket(io) {
     })
 
     // ── Admin: sync grid config to TV after save ────────────────────────────
-    socket.on('map-sync-grid', ({ sessionId, gridType, gridCols, gridRows, gridHexOrientation, gridOffsetX, gridOffsetY }) => {
+    socket.on('map-sync-grid', ({ sessionId, gridType, gridCols, gridRows, gridHexOrientation, gridOffsetX, gridOffsetY, gridCellW, gridCellH }) => {
       if (!socket.admin) return
       const payload = {
         gridType: gridType || 'none',
@@ -1305,6 +1307,8 @@ function setupSocket(io) {
         gridHexOrientation: gridHexOrientation || 'flat',
         gridOffsetX: gridOffsetX ?? 0,
         gridOffsetY: gridOffsetY ?? 0,
+        gridCellW: gridCellW ?? null,
+        gridCellH: gridCellH ?? null,
       }
       io.to(`tv:${sessionId}`).emit('map-grid-updated', payload)
       io.to(`admin:${sessionId}`).emit('map-grid-updated', payload)

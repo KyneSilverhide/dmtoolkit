@@ -353,7 +353,7 @@ router.patch('/:id/images/:imageId', authenticateToken, async (req, res) => {
     )
     if (!record.rows[0]) return res.status(404).json({ error: 'File not found.' })
 
-    const { original_name, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y } = req.body
+    const { original_name, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h } = req.body
     const updates = []
     const values = []
     let idx = 1
@@ -370,6 +370,9 @@ router.patch('/:id/images/:imageId', authenticateToken, async (req, res) => {
     // the minimum grid size of 2 columns/rows, so these limits are consistent.
     if (grid_offset_x !== undefined) { updates.push(`grid_offset_x = $${idx++}`); values.push(Math.max(-0.5, Math.min(0.5, parseFloat(grid_offset_x) || 0))) }
     if (grid_offset_y !== undefined) { updates.push(`grid_offset_y = $${idx++}`); values.push(Math.max(-0.5, Math.min(0.5, parseFloat(grid_offset_y) || 0))) }
+    // Taille de cellule normalisée (fraction de l'image) — null = dérivée de cols/rows
+    if (grid_cell_w !== undefined) { updates.push(`grid_cell_w = $${idx++}`); values.push(grid_cell_w !== null && parseFloat(grid_cell_w) > 0 ? Math.min(1, parseFloat(grid_cell_w)) : null) }
+    if (grid_cell_h !== undefined) { updates.push(`grid_cell_h = $${idx++}`); values.push(grid_cell_h !== null && parseFloat(grid_cell_h) > 0 ? Math.min(1, parseFloat(grid_cell_h)) : null) }
     if (updates.length === 0) return res.status(400).json({ error: 'Nothing to update.' })
 
     values.push(req.params.imageId)
@@ -418,11 +421,11 @@ router.post('/:id/images/:imageId/detect-grid', authenticateToken, async (req, r
     const row = await pool.query(
       `UPDATE session_images
          SET grid_type = $1, grid_cols = $2, grid_rows = $3, grid_hex_orientation = $4,
-             grid_offset_x = $5, grid_offset_y = $6
-       WHERE id = $7
+             grid_offset_x = $5, grid_offset_y = $6, grid_cell_w = $7, grid_cell_h = $8
+       WHERE id = $9
        RETURNING id, url, original_name, type, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at`,
       [grid.gridType, grid.gridCols, grid.gridRows, grid.gridHexOrientation,
-       grid.gridOffsetX, grid.gridOffsetY, req.params.imageId]
+       grid.gridOffsetX, grid.gridOffsetY, grid.gridCellW, grid.gridCellH, req.params.imageId]
     )
     res.json({ ...row.rows[0], confidence: grid.confidence })
   } catch (err) {
