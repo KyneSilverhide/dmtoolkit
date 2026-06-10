@@ -538,6 +538,103 @@ onUnmounted(() => {
       <AudioCategorySection
         v-for="group in tracksByCategory"
         :key="group.key"
+<<<<<<< HEAD
+        class="category-section"
+      >
+        <!-- En-tête de catégorie -->
+        <div class="cat-header">
+          <AppIcon icon="lucide:folder" size="0.8em" class="cat-icon" />
+          <span class="cat-label">{{ group.label }}</span>
+          <span class="cat-count">{{ group.tracks.length }}</span>
+          <div class="cat-header-line" />
+          <button
+            class="cat-delete-btn"
+            :title="`Supprimer les ${group.tracks.length} fichier(s) de « ${group.label} »`"
+            @click="deleteCategory(group.tracks)"
+          ><AppIcon icon="lucide:trash-2" size="0.7em" /></button>
+        </div>
+
+        <!-- Tracks de cette catégorie -->
+        <div class="track-list">
+          <div
+            v-for="track in group.tracks"
+            :key="track.id"
+            class="track-tile"
+            :class="{ playing: playing.has(track.id) }"
+          >
+            <!-- En-tête : play + nom -->
+            <div class="tile-header">
+              <button class="play-btn" @click="togglePlay(track)" :title="playing.has(track.id) ? 'Pause' : 'Lecture'">
+                <AppIcon :icon="playing.has(track.id) ? 'lucide:pause' : 'lucide:play'" size="0.85em" />
+              </button>
+              <div v-if="renamingId === track.id" class="rename-row">
+                <input
+                  ref="renameInput"
+                  v-model="renameValue"
+                  class="rename-input"
+                  @keydown.enter="commitRename(track)"
+                  @keydown.esc="renamingId = null"
+                  @blur="commitRename(track)"
+                />
+              </div>
+              <div v-else class="track-name" @dblclick="startRename(track)" title="Double-clic pour renommer">
+                {{ track.original_name || track.url.split('/').pop() }}
+              </div>
+            </div>
+
+            <!-- Seek bar -->
+            <div class="seek-row">
+              <input
+                type="range" class="seek-bar"
+                :min="0" :max="durations[track.id] || 0"
+                :value="currentTimes[track.id] || 0"
+                step="0.5"
+                @input="seek(track, +$event.target.value)"
+              />
+              <span class="time-label">{{ formatTime(durations[track.id]) }}</span>
+            </div>
+
+            <!-- Volume + actions -->
+            <div class="tile-controls">
+              <div class="volume-row">
+                <AppIcon icon="lucide:volume-2" size="0.65em" class="vol-icon" />
+                <input
+                  type="range" class="volume-slider"
+                  :min="0" :max="1" step="0.05"
+                  :value="volumes[track.id] ?? 1"
+                  @input="setVolume(track, +$event.target.value)"
+                />
+              </div>
+              <div class="tile-actions">
+                <button
+                  class="icon-btn" :class="{ active: loops[track.id] }"
+                  :title="loops[track.id] ? 'Désactiver boucle' : 'Activer boucle'"
+                  @click="toggleLoop(track)"
+                ><AppIcon icon="lucide:repeat" size="0.75em" /></button>
+                <button class="icon-btn" title="Renommer" @click="startRename(track)">
+                  <AppIcon icon="lucide:pencil" size="0.7em" />
+                </button>
+                <button class="icon-btn danger" title="Supprimer" @click="deleteTrack(track)">
+                  <AppIcon icon="lucide:trash-2" size="0.7em" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Catégorie en bas de la tile -->
+            <div class="cat-row">
+              <input
+                class="cat-input"
+                :value="track.audio_category || 'Général'"
+                list="audio-cats"
+                @change="changeCategory(track, $event.target.value.trim())"
+                @keydown.enter="$event.target.blur()"
+              />
+            </div>
+          </div>
+        </div>
+
+      </div>
+=======
         :group="group"
         :playing="playing"
         :volumes="volumes"
@@ -559,6 +656,7 @@ onUnmounted(() => {
         @delete-category="deleteCategory"
         @change-category="changeCategory"
       />
+>>>>>>> origin/main
     </div>
   </div>
 </template>
