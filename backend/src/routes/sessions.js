@@ -328,8 +328,8 @@ router.get('/:id/images', authenticateToken, async (req, res) => {
 
     const { type } = req.query  // ?type=image ou ?type=map
     const query = type
-        ? 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, uploaded_at FROM session_images WHERE session_id = $1 AND type = $2 ORDER BY uploaded_at DESC'
-        : 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, uploaded_at FROM session_images WHERE session_id = $1 ORDER BY uploaded_at DESC'
+        ? 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at FROM session_images WHERE session_id = $1 AND type = $2 ORDER BY uploaded_at DESC'
+        : 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at FROM session_images WHERE session_id = $1 ORDER BY uploaded_at DESC'
     const params = type ? [req.params.id, type] : [req.params.id]
     const result = await pool.query(query, params)
     res.json(result.rows)
@@ -374,10 +374,57 @@ router.patch('/:id/images/:imageId', authenticateToken, async (req, res) => {
 
     values.push(req.params.imageId)
     const row = await pool.query(
-      `UPDATE session_images SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, url, original_name, type, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, uploaded_at`,
+      `UPDATE session_images SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, url, original_name, type, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at`,
       values
     )
     res.json(row.rows[0])
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
+// Relance la détection automatique de grille sur une carte existante,
+// persiste le résultat et le retourne.
+router.post('/:id/images/:imageId/detect-grid', authenticateToken, async (req, res) => {
+  try {
+    const sessionCheck = await pool.query(
+      'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+      [req.params.id, req.admin.id]
+    )
+    if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
+
+    const imgRes = await pool.query(
+      "SELECT id, url, type FROM session_images WHERE id = $1 AND session_id = $2",
+      [req.params.imageId, req.params.id]
+    )
+    if (!imgRes.rows[0]) return res.status(404).json({ error: 'Image not found.' })
+    if (!['map', 'image'].includes(imgRes.rows[0].type)) {
+      return res.status(400).json({ error: 'La détection de grille ne s\'applique qu\'aux images.' })
+    }
+
+    const path = require('path')
+    const filePath = path.join(__dirname, '../../uploads', imgRes.rows[0].url.replace('/uploads/', ''))
+
+    const { detectGridConfig } = require('../gridDetection')
+    let grid
+    try {
+      grid = await detectGridConfig(filePath)
+    } catch (err) {
+      console.error('[detect-grid] analysis failed:', err.message)
+      return res.status(422).json({ error: 'Impossible d\'analyser cette image.' })
+    }
+
+    const row = await pool.query(
+      `UPDATE session_images
+         SET grid_type = $1, grid_cols = $2, grid_rows = $3, grid_hex_orientation = $4,
+             grid_offset_x = $5, grid_offset_y = $6
+       WHERE id = $7
+       RETURNING id, url, original_name, type, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at`,
+      [grid.gridType, grid.gridCols, grid.gridRows, grid.gridHexOrientation,
+       grid.gridOffsetX, grid.gridOffsetY, req.params.imageId]
+    )
+    res.json({ ...row.rows[0], confidence: grid.confidence })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Server error.' })

@@ -41,7 +41,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │   ├── stores/    # Pinia stores (auth.js, session.js, releaseNotes.js)
 │   │   ├── router/    # Vue Router (toutes les vues importées statiquement)
 │   │   ├── utils/     # Utilitaires (conditions.js, playerProfiles.js, playerSessionMemory.js, themePreferences.js, generatorUtils.js, mapGrid.js)
-│   │   │                      # mapGrid.js : géométrie partagée pour la grille (getCellAt, getCellPolygon, detectGrid) — utilisé par MapManager ET TvView
+│   │   │                      # mapGrid.js : géométrie partagée pour la grille (getCellAt, getCellPolygon) — utilisé par MapManager ET TvView
 │   │   └── socket.js  # Singleton Socket.IO client
 ├── backend/           # Node.js + Express + Socket.IO (port 3000)
 │   ├── src/
@@ -51,6 +51,11 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │   ├── demo.js        # Compte démo : seed, reset nocturne, scheduler (code 0000 réservé)
 │   │   ├── db.js          # Pool PostgreSQL (pg, max 20 connexions)
 │   │   ├── middleware/auth.js  # Vérification JWT (HS256 explicite)
+│   │   ├── gridDetection.js    # Détection auto de grille (carrée/hex) sur les battlemaps via sharp
+│   │   │                       # (projections de gradients écrêtés + autocorrélation + somme harmonique ;
+│   │   │                       #  ratio périodes X/Y : 1 = carrée, √3 = hex flat, 1/√3 = hex pointy)
+│   │   │                       # Exécutée à l'upload (type='map') et via POST .../detect-grid
+│   │   │                       # Fixtures d'entraînement : backend/test/grid-fixtures/ ; CLI : scripts/detect-grid.js, scripts/grid-overlay.js
 │   │   ├── data/          # Fichiers JSON de données statiques
 │   │   │   ├── aidedd_spells.json        # 477 sorts D&D 5e en français
 │   │   │   ├── aidedd_magic_items.json   # Objets magiques D&D 5e
@@ -62,6 +67,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │                      # puzzles: GET /api/puzzles/serve/:imageId?seed=SEED (public, sans auth) — sert le HTML avec PRNG injecté
 │   │                      # release-notes: GET /api/release-notes (public, sans auth)
 │   │                      # sessions: GET/DELETE/PATCH /api/sessions/:id/images/:imageId
+│   │                      # sessions: POST /api/sessions/:id/images/:imageId/detect-grid — relance la détection auto de grille et persiste le résultat
 │   │                      # sessions: GET /api/sessions/:id/journal (résumé IA : durée calculée entre premier et dernier événement, 0 si journal vide)
 │   │                      # sessions: DELETE /api/sessions/:id/journal (efface tous les session_events)
 │   │                      # (+ GET /api/sessions/:id/players pour sync Obsidian)
@@ -133,7 +139,7 @@ cd frontend && npm run dev  # vite dev server
 - Table `factions` : `id`, `session_id` (FK sessions ON DELETE CASCADE), `name` (VARCHAR 200), `min_value` (INTEGER, défaut -5), `max_value` (INTEGER, défaut 5), `current_value` (INTEGER, défaut 0), `created_at`. Chaque session peut avoir N factions. Route REST : `GET /api/sessions/:id/factions`.
 - Colonnes clés de `sessions` : `tv_mode` (lobby/doom/tension/timescale/vote/image/map/merchant/puzzle/reputation), `current_map_url`, `map_fog_enabled`, `map_viewport` (JSON), `map_fog_strokes` (JSON, max 500 strokes — mode peinture libre), `map_fog_cells` (JSON array d'indices entiers — cellules révélées en mode grille), `map_tokens` (JSON), `doom_clock_*`, `tension_*`, `current_vote_id`, `current_merchant_id`, `combat_round` (entier), `timer_label` (VARCHAR 200), `timer_end_at` (TIMESTAMP), `lobby_bg_url` (VARCHAR 500, image de fond du lobby TV à 15 % d'opacité), `current_puzzle_image_id` (INTEGER), `current_puzzle_url` (VARCHAR 500), `current_puzzle_seed` (VARCHAR 100), `current_image_label` (VARCHAR 200 : label affiché en overlay top-left sur la TV quand une image est projetée).
 - Colonnes `timescale_*` de `sessions` : `timescale_title` (VARCHAR 200), `timescale_total_hours` (INTEGER, ex: 24), `timescale_slot_count` (INTEGER, nb de paliers), `timescale_rest_slots` (INTEGER, durée du repos long en paliers), `timescale_elapsed_slots` (INTEGER, paliers écoulés), `timescale_rest_taken` (BOOLEAN, défaut FALSE : indique si le repos long a déjà été pris). Toutes nullable ; si `timescale_title` est NULL l'échelle est inactive.
-- Colonnes clés de `session_images` : `url`, `original_name` (nom d'affichage, renommable), `type` (`image` / `map` / `audio`), `audio_category` (VARCHAR 50 : catégorie libre assignée par l'IA (GPT-4o-mini via GitHub Models) au moment de l'upload ; défaut `Général` si GITHUB_TOKEN absent ou si l'IA échoue ; l'admin peut saisir/modifier librement depuis l'AudioManager), `thumbnail_url` (VARCHAR 500 : URL du WebP 400px généré par `sharp` après upload pour les types `image` et `map` — null pour les fichiers audio ou si la génération échoue ; les galeries admin utilisent cette URL avec fallback sur `url`), `tv_label` (VARCHAR 200 : label optionnel affiché en overlay top-left sur la TV lors de la projection — saisie inline dans l'ImageManager, sauvegardé via PATCH), `grid_type` (VARCHAR 10 : `none` / `square` / `hex` — type de grille configuré sur la carte), `grid_cols` (INTEGER), `grid_rows` (INTEGER), `grid_hex_orientation` (VARCHAR 10 : `flat` / `pointy`).
+- Colonnes clés de `session_images` : `url`, `original_name` (nom d'affichage, renommable), `type` (`image` / `map` / `audio`), `audio_category` (VARCHAR 50 : catégorie libre assignée par l'IA (GPT-4o-mini via GitHub Models) au moment de l'upload ; défaut `Général` si GITHUB_TOKEN absent ou si l'IA échoue ; l'admin peut saisir/modifier librement depuis l'AudioManager), `thumbnail_url` (VARCHAR 500 : URL du WebP 400px généré par `sharp` après upload pour les types `image` et `map` — null pour les fichiers audio ou si la génération échoue ; les galeries admin utilisent cette URL avec fallback sur `url`), `tv_label` (VARCHAR 200 : label optionnel affiché en overlay top-left sur la TV lors de la projection — saisie inline dans l'ImageManager, sauvegardé via PATCH), `grid_type` (VARCHAR 10 : `none` / `square` / `hex` — type de grille configuré sur la carte ; rempli automatiquement à l'upload des `type='map'` par `gridDetection.js`, re-calculable via POST `/api/sessions/:id/images/:imageId/detect-grid`), `grid_cols` (INTEGER), `grid_rows` (INTEGER), `grid_hex_orientation` (VARCHAR 10 : `flat` / `pointy`).
 - Colonnes clés de `messages` : `session_id`, `from_name` (VARCHAR), `to_player_id` (FK players, nullable — NULL = tous), `from_player_id` (FK players ON DELETE SET NULL, nullable — non-NULL = message joueur → MJ), `type` (`text`/`image`/`gold`/`player`), `content`, `voice_style`, `text_effect`, `author_color`.
 - Colonnes clés de `players` : `ac`, `max_hp`, `current_hp`, `initiative`, `conditions` (JSON array), `is_concentrating`, `dnd_class`, `avatar_url`, `socket_id`.
 - Les joueurs sont supprimés de la DB à la déconnexion socket (`disconnect`/`leave-session`).

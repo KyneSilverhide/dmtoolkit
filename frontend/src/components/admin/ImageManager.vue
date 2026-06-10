@@ -355,7 +355,7 @@ onUnmounted(() => {
 
 .gallery {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 0.6rem;
 }
 .gallery-item {

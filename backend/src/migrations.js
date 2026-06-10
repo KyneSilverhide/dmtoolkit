@@ -260,6 +260,13 @@ ALTER TABLE sessions ADD COLUMN IF NOT EXISTS map_fog_cells TEXT;
 -- Grid offset: allows shifting the grid origin to align with image content
 ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_offset_x REAL DEFAULT 0;
 ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_offset_y REAL DEFAULT 0;
+
+-- Grid cell size, normalised by image dimensions. When set, the cell size is
+-- decoupled from grid_cols/grid_rows (which only define the cell index space),
+-- allowing grids that do not exactly tile the image (margins, partial grids).
+-- NULL = legacy behaviour (cell size derived from cols/rows spanning the image).
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_cell_w DOUBLE PRECISION;
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_cell_h DOUBLE PRECISION;
 `
 
 async function runMigrations() {

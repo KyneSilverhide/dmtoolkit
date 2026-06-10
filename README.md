@@ -20,7 +20,7 @@ Déploie automatiquement le backend, le frontend et une base de données Postgre
 
 - **Gestion des joueurs** : PV, CA, classe, avatar, conditions, concentration, initiative
 - **Écran TV** : affichage dédié avec plusieurs modes (lobby, image, map, vote, marchand, doom clock, échelle de tension, timer, round de combat)
-- **Battlemap interactive** : brouillard de guerre, tokens de joueurs, contrôle du viewport
+- **Battlemap interactive** : brouillard de guerre, tokens de joueurs, contrôle du viewport, détection automatique de la grille (carrée ou hexagonale) à l'upload
 - **Messagerie** : envoi de messages et résultats de jets de dés aux joueurs ; envoi d'images depuis la galerie de la session ou depuis le PC
 - **Système de vote** : votes anonymes ou publics avec fermeture automatique
 - **Marchand** : boutique interactive avec panier, stock et négociation de prix

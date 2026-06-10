@@ -10,7 +10,7 @@ import MapTokenPanel from './map/MapTokenPanel.vue'
 import MapViewportControls from './map/MapViewportControls.vue'
 import { useMapUpload } from '@/composables/useMapUpload.js'
 import { useMapSocket } from '@/composables/useMapSocket.js'
-import { getCellAt, getCellPolygon, detectGrid } from '@/utils/mapGrid.js'
+import { getCellAt, getCellPolygon } from '@/utils/mapGrid.js'
 import { BACKEND_URL } from '@/config.js'
 
 const MAX_BRUSH_RADIUS = 100
@@ -363,19 +363,30 @@ function loadMapImage(url) {
   img.src = imageFullUrl(url)
 }
 
+// Détection de grille côté backend (analyse du fichier uploadé par sharp).
+// Le résultat est persisté par le backend ; le panneau de config s'ouvre pour
+// permettre à l'admin de vérifier/ajuster avant synchronisation TV.
 async function runGridDetection() {
-  if (!mapImage) return
+  if (!selectedImageId.value || !sessionStore.activeSession) return
   gridDetecting.value = true
   try {
-    const result = detectGrid(mapImage)
-    if (result.type !== 'none') {
-      gridCols.value = result.cols
-      gridRows.value = result.rows
-      gridOffsetX.value = result.offsetX ?? 0
-      gridOffsetY.value = result.offsetY ?? 0
+    const res = await fetch(
+      `${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${selectedImageId.value}/detect-grid`,
+      { method: 'POST', headers: { Authorization: `Bearer ${authStore.token}` } }
+    )
+    if (!res.ok) return
+    const result = await res.json()
+    if (result.grid_type && result.grid_type !== 'none') {
+      gridType.value = result.grid_type
+      gridCols.value = result.grid_cols
+      gridRows.value = result.grid_rows
+      gridHexOrientation.value = result.grid_hex_orientation || 'flat'
+      gridOffsetX.value = parseFloat(result.grid_offset_x) || 0
+      gridOffsetY.value = parseFloat(result.grid_offset_y) || 0
       showGridConfig.value = true
     }
-  } finally { gridDetecting.value = false }
+  } catch (err) { console.error(err) }
+  finally { gridDetecting.value = false }
 }
 
 // ── Grid config ────────────────────────────────────────────────────────────

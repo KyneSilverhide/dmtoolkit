@@ -1,6 +1,13 @@
 {
   "notes": [
     {
+      "version": "1.0.77",
+      "date": "2026-06-10",
+      "changes": [
+        { "type": "improvement", "role": "admin", "text": "Galerie d'images — vignettes adaptatives : les cartes s'organisent désormais en grille responsive (largeur fixe ~160 px). Plus aucune carte ne s'étire sur toute la largeur de l'écran." }
+      ]
+    },
+    {
       "version": "1.0.76",
       "date": "2026-06-08",
       "changes": [

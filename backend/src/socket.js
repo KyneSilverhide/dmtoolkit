@@ -142,7 +142,7 @@ async function getMapGridConfig(sessionId, mapUrl) {
   if (!mapUrl) return null
   try {
     const res = await pool.query(
-      `SELECT grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y
+      `SELECT grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h
        FROM session_images WHERE session_id = $1 AND url = $2 AND type = 'map'`,
       [sessionId, mapUrl]
     )
@@ -155,6 +155,8 @@ async function getMapGridConfig(sessionId, mapUrl) {
       gridHexOrientation: row.grid_hex_orientation || 'flat',
       gridOffsetX: row.grid_offset_x ?? 0,
       gridOffsetY: row.grid_offset_y ?? 0,
+      gridCellW: row.grid_cell_w ?? null,
+      gridCellH: row.grid_cell_h ?? null,
     }
   } catch { return null }
 }
@@ -207,6 +209,8 @@ function serializeMapState(session, gridConfig = null) {
     gridHexOrientation: gridConfig?.gridHexOrientation || 'flat',
     gridOffsetX: gridConfig?.gridOffsetX ?? 0,
     gridOffsetY: gridConfig?.gridOffsetY ?? 0,
+    gridCellW: gridConfig?.gridCellW ?? null,
+    gridCellH: gridConfig?.gridCellH ?? null,
     fogCells,
   }
 }
