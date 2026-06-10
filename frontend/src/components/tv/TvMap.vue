@@ -16,6 +16,8 @@ const props = defineProps({
   gridHexOrientation: { type: String, default: 'flat' },
   gridOffsetX: { type: Number, default: 0 },
   gridOffsetY: { type: Number, default: 0 },
+  gridCellW: { type: Number, default: null },
+  gridCellH: { type: Number, default: null },
   players: { type: Array, default: () => [] },
 })
 
@@ -124,7 +126,7 @@ function renderMapFog() {
     ctx.clip()
     for (let idx = 0; idx < totalCells; idx++) {
       if (fogCellsSet.has(idx)) continue
-      const points = getCellPolygon(idx, type, cols, rows, orientation, gox, goy)
+      const points = getCellPolygon(idx, type, cols, rows, orientation, gox, goy, props.gridCellW, props.gridCellH)
       if (!points.length) continue
       ctx.beginPath()
       ctx.moveTo(offsetX + points[0].nx * imgW, offsetY + points[0].ny * imgH)

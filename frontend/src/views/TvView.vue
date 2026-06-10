@@ -110,6 +110,8 @@ const mapGridRows = ref(15)
 const mapGridHexOrientation = ref('flat')
 const mapGridOffsetX = ref(0)
 const mapGridOffsetY = ref(0)
+const mapGridCellW = ref(null)
+const mapGridCellH = ref(null)
 const mapFogCells = ref([])
 const mapFogCellsSet = new Set()
 
@@ -130,6 +132,8 @@ function applyMapState(data) {
   mapGridHexOrientation.value = data.gridHexOrientation || 'flat'
   mapGridOffsetX.value = data.gridOffsetX ?? 0
   mapGridOffsetY.value = data.gridOffsetY ?? 0
+  mapGridCellW.value = data.gridCellW ?? null
+  mapGridCellH.value = data.gridCellH ?? null
   mapFogCellsSet.clear()
   const cells = Array.isArray(data.fogCells) ? data.fogCells : []
   cells.forEach(c => mapFogCellsSet.add(c))
@@ -368,13 +372,15 @@ onMounted(() => {
     mapFogCells.value = []
   })
 
-  socket.on('map-grid-updated', ({ gridType, gridCols, gridRows, gridHexOrientation, gridOffsetX, gridOffsetY }) => {
+  socket.on('map-grid-updated', ({ gridType, gridCols, gridRows, gridHexOrientation, gridOffsetX, gridOffsetY, gridCellW, gridCellH }) => {
     mapGridType.value = gridType || 'none'
     mapGridCols.value = gridCols || 20
     mapGridRows.value = gridRows || 15
     mapGridHexOrientation.value = gridHexOrientation || 'flat'
     mapGridOffsetX.value = gridOffsetX ?? 0
     mapGridOffsetY.value = gridOffsetY ?? 0
+    mapGridCellW.value = gridCellW ?? null
+    mapGridCellH.value = gridCellH ?? null
   })
 
   socket.on('map-token-moved', ({ playerId, nx, ny, name }) => {
@@ -495,6 +501,8 @@ onUnmounted(() => {
             :grid-hex-orientation="mapGridHexOrientation"
             :grid-offset-x="mapGridOffsetX"
             :grid-offset-y="mapGridOffsetY"
+            :grid-cell-w="mapGridCellW"
+            :grid-cell-h="mapGridCellH"
             :players="players"
           />
 

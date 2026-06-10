@@ -130,16 +130,23 @@ function handleFileUpload(event) {
   transition: width 0.15s ease;
 }
 
-.gallery { columns: 2; column-gap: 0.75rem; }
-.gallery-item { break-inside: avoid; margin-bottom: 0.75rem; }
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 0.6rem;
+}
+.gallery-item {
+  min-width: 0;
+}
 .gallery-thumb {
-  width: 100%; height: auto;
+  width: 100%;
   aspect-ratio: 16/9;
   object-fit: cover;
   border-radius: 6px;
   border: 1px solid var(--color-border);
   display: block;
 }
+
 .gallery-item.selected { border-color: var(--color-gold-bright); }
 
 .show-btn {

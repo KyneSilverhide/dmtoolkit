@@ -9,7 +9,24 @@
  * A positive offset shifts the grid right/down so that the first gridline appears at that
  * fraction of the image width/height.  Partial cells at the leading edges are valid cells
  * (index still starts at 0 from the shifted origin).
+ *
+ * Cell size (cellW, cellH) is the normalised size of one cell (hexW/hexH for hex grids).
+ * When null/undefined, the legacy behaviour applies: the cell size is derived from
+ * cols/rows so that the grid exactly spans the image.  When set (auto-detection),
+ * the size is decoupled from cols/rows — cols/rows only define the index space —
+ * which allows grids that do not exactly tile the image (margins, partial grids).
  */
+
+function squareCellSize(cols, rows, cellW, cellH) {
+  return { cw: cellW || 1 / cols, ch: cellH || 1 / rows }
+}
+
+function hexCellSize(cols, rows, orientation, cellW, cellH) {
+  if (orientation === 'pointy') {
+    return { hexW: cellW || 1 / cols, hexH: cellH || 1 / (rows * 0.75 + 0.25) }
+  }
+  return { hexW: cellW || 1 / (cols * 0.75 + 0.25), hexH: cellH || 1 / rows }
+}
 
 // ── Square grid ────────────────────────────────────────────────────────────
 
@@ -17,11 +34,10 @@
  * Returns the cell index [0, cols*rows) for a normalised (nx, ny) position in a square grid.
  * Returns -1 if outside the grid.
  */
-export function getSquareCellAt(nx, ny, cols, rows, offsetX = 0, offsetY = 0) {
-  const rx = nx - offsetX
-  const ry = ny - offsetY
-  const col = Math.floor(rx * cols)
-  const row = Math.floor(ry * rows)
+export function getSquareCellAt(nx, ny, cols, rows, offsetX = 0, offsetY = 0, cellW = null, cellH = null) {
+  const { cw, ch } = squareCellSize(cols, rows, cellW, cellH)
+  const col = Math.floor((nx - offsetX) / cw)
+  const row = Math.floor((ny - offsetY) / ch)
   if (col < 0 || col >= cols || row < 0 || row >= rows) return -1
   return row * cols + col
 }
@@ -29,13 +45,14 @@ export function getSquareCellAt(nx, ny, cols, rows, offsetX = 0, offsetY = 0) {
 /**
  * Returns an array of normalised {nx, ny} corner points for the given square cell index.
  */
-export function getSquareCellPolygon(idx, cols, rows, offsetX = 0, offsetY = 0) {
+export function getSquareCellPolygon(idx, cols, rows, offsetX = 0, offsetY = 0, cellW = null, cellH = null) {
+  const { cw, ch } = squareCellSize(cols, rows, cellW, cellH)
   const col = idx % cols
   const row = Math.floor(idx / cols)
-  const x0 = offsetX + col / cols
-  const y0 = offsetY + row / rows
-  const x1 = offsetX + (col + 1) / cols
-  const y1 = offsetY + (row + 1) / rows
+  const x0 = offsetX + col * cw
+  const y0 = offsetY + row * ch
+  const x1 = x0 + cw
+  const y1 = y0 + ch
   return [{ nx: x0, ny: y0 }, { nx: x1, ny: y0 }, { nx: x1, ny: y1 }, { nx: x0, ny: y1 }]
 }
 
@@ -48,16 +65,15 @@ export function getSquareCellPolygon(idx, cols, rows, offsetX = 0, offsetY = 0) 
  * Uses offset coordinates (odd-q for flat, odd-r for pointy).
  * Returns -1 if outside the grid.
  */
-export function getHexCellAt(nx, ny, cols, rows, orientation = 'flat', offsetX = 0, offsetY = 0) {
+export function getHexCellAt(nx, ny, cols, rows, orientation = 'flat', offsetX = 0, offsetY = 0, cellW = null, cellH = null) {
+  const { hexW, hexH } = hexCellSize(cols, rows, orientation, cellW, cellH)
   if (orientation === 'pointy') {
-    return _getHexCellPointy(nx - offsetX, ny - offsetY, cols, rows)
+    return _getHexCellPointy(nx - offsetX, ny - offsetY, cols, rows, hexW, hexH)
   }
-  return _getHexCellFlat(nx - offsetX, ny - offsetY, cols, rows)
+  return _getHexCellFlat(nx - offsetX, ny - offsetY, cols, rows, hexW, hexH)
 }
 
-function _getHexCellFlat(nx, ny, cols, rows) {
-  const hexW = 1 / (cols * 0.75 + 0.25)
-  const hexH = 1 / rows
+function _getHexCellFlat(nx, ny, cols, rows, hexW, hexH) {
   const col = Math.floor(nx / (hexW * 0.75))
   if (col < 0 || col >= cols) return -1
   const offsetY = (col % 2 === 1) ? hexH / 2 : 0
@@ -86,9 +102,7 @@ function _inFlatHex(nx, ny, cx, cy, w, h) {
   return dx <= 1 && dy <= 1 && dx + dy * 0.5 <= 1
 }
 
-function _getHexCellPointy(nx, ny, cols, rows) {
-  const hexW = 1 / cols
-  const hexH = 1 / (rows * 0.75 + 0.25)
+function _getHexCellPointy(nx, ny, cols, rows, hexW, hexH) {
   const row = Math.floor(ny / (hexH * 0.75))
   if (row < 0 || row >= rows) return -1
   const offsetX = (row % 2 === 1) ? hexW / 2 : 0
@@ -120,19 +134,16 @@ function _inPointyHex(nx, ny, cx, cy, w, h) {
 /**
  * Returns normalised polygon points for a hex cell (6 vertices).
  */
-export function getHexCellPolygon(idx, cols, rows, orientation = 'flat', offsetX = 0, offsetY = 0) {
+export function getHexCellPolygon(idx, cols, rows, orientation = 'flat', offsetX = 0, offsetY = 0, cellW = null, cellH = null) {
+  const { hexW, hexH } = hexCellSize(cols, rows, orientation, cellW, cellH)
   const col = idx % cols
   const row = Math.floor(idx / cols)
   if (orientation === 'pointy') {
-    const hexW = 1 / cols
-    const hexH = 1 / (rows * 0.75 + 0.25)
     const offX = (row % 2 === 1) ? hexW / 2 : 0
     const cx = offsetX + (col + 0.5) * hexW + offX
     const cy = offsetY + (row * 0.75 + 0.5) * hexH
     return _hexVertices(cx, cy, hexW / 2, hexH / 2, 'pointy')
   }
-  const hexW = 1 / (cols * 0.75 + 0.25)
-  const hexH = 1 / rows
   const offY = (col % 2 === 1) ? hexH / 2 : 0
   const cx = offsetX + (col * 0.75 + 0.5) * hexW
   const cy = offsetY + (row + 0.5) * hexH + offY
@@ -169,17 +180,17 @@ function _hexVertices(cx, cy, rx, ry, orientation) {
 /**
  * Returns the cell index for a normalised position given grid config.
  */
-export function getCellAt(nx, ny, gridType, cols, rows, hexOrientation = 'flat', offsetX = 0, offsetY = 0) {
-  if (gridType === 'square') return getSquareCellAt(nx, ny, cols, rows, offsetX, offsetY)
-  if (gridType === 'hex') return getHexCellAt(nx, ny, cols, rows, hexOrientation, offsetX, offsetY)
+export function getCellAt(nx, ny, gridType, cols, rows, hexOrientation = 'flat', offsetX = 0, offsetY = 0, cellW = null, cellH = null) {
+  if (gridType === 'square') return getSquareCellAt(nx, ny, cols, rows, offsetX, offsetY, cellW, cellH)
+  if (gridType === 'hex') return getHexCellAt(nx, ny, cols, rows, hexOrientation, offsetX, offsetY, cellW, cellH)
   return -1
 }
 
 /**
  * Returns normalised polygon points for a cell index.
  */
-export function getCellPolygon(idx, gridType, cols, rows, hexOrientation = 'flat', offsetX = 0, offsetY = 0) {
-  if (gridType === 'square') return getSquareCellPolygon(idx, cols, rows, offsetX, offsetY)
-  if (gridType === 'hex') return getHexCellPolygon(idx, cols, rows, hexOrientation, offsetX, offsetY)
+export function getCellPolygon(idx, gridType, cols, rows, hexOrientation = 'flat', offsetX = 0, offsetY = 0, cellW = null, cellH = null) {
+  if (gridType === 'square') return getSquareCellPolygon(idx, cols, rows, offsetX, offsetY, cellW, cellH)
+  if (gridType === 'hex') return getHexCellPolygon(idx, cols, rows, hexOrientation, offsetX, offsetY, cellW, cellH)
   return []
 }

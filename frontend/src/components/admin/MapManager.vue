@@ -44,6 +44,11 @@ const gridRows = ref(15)
 const gridHexOrientation = ref('flat')
 const gridOffsetX = ref(0)
 const gridOffsetY = ref(0)
+// Taille de cellule normalisée (null = dérivée de cols/rows, voir mapGrid.js).
+// Renseignée par la détection auto ; remise à null quand l'admin modifie
+// manuellement le type, les colonnes, les lignes ou l'orientation.
+const gridCellW = ref(null)
+const gridCellH = ref(null)
 const showGridConfig = ref(false)
 const gridDetecting = ref(false)
 const gridSaving = ref(false)
@@ -203,7 +208,7 @@ function renderGridFog(ctx, layout) {
   ctx.clip()
   for (let idx = 0; idx < totalCells; idx++) {
     const isRevealed = fogCellsSet.has(idx)
-    const points = getCellPolygon(idx, type, cols, rows, orientation, gox, goy)
+    const points = getCellPolygon(idx, type, cols, rows, orientation, gox, goy, gridCellW.value, gridCellH.value)
     if (!points.length) continue
     const canvasPoints = points.map(p => ({ x: offsetX + p.nx * imgW, y: offsetY + p.ny * imgH }))
     ctx.beginPath()
@@ -233,7 +238,7 @@ function renderGridPreview(ctx, layout) {
   ctx.rect(offsetX, offsetY, imgW, imgH)
   ctx.clip()
   for (let idx = 0; idx < totalCells; idx++) {
-    const points = getCellPolygon(idx, type, cols, rows, orientation, gox, goy)
+    const points = getCellPolygon(idx, type, cols, rows, orientation, gox, goy, gridCellW.value, gridCellH.value)
     if (!points.length) continue
     const canvasPoints = points.map(p => ({ x: offsetX + p.nx * imgW, y: offsetY + p.ny * imgH }))
     ctx.beginPath()
@@ -383,6 +388,8 @@ async function runGridDetection() {
       gridHexOrientation.value = result.grid_hex_orientation || 'flat'
       gridOffsetX.value = parseFloat(result.grid_offset_x) || 0
       gridOffsetY.value = parseFloat(result.grid_offset_y) || 0
+      gridCellW.value = parseFloat(result.grid_cell_w) || null
+      gridCellH.value = parseFloat(result.grid_cell_h) || null
       showGridConfig.value = true
     }
   } catch (err) { console.error(err) }
@@ -390,6 +397,30 @@ async function runGridDetection() {
 }
 
 // ── Grid config ────────────────────────────────────────────────────────────
+// Une modification manuelle du type / cols / lignes / orientation invalide la
+// taille de cellule détectée automatiquement : la grille redevient « pleine
+// image » (cellule = 1/cols × 1/rows), comportement prévisible pour l'admin.
+function setGridTypeManual(t) {
+  gridType.value = t
+  gridCellW.value = null
+  gridCellH.value = null
+}
+function setGridColsManual(v) {
+  gridCols.value = v
+  gridCellW.value = null
+  gridCellH.value = null
+}
+function setGridRowsManual(v) {
+  gridRows.value = v
+  gridCellW.value = null
+  gridCellH.value = null
+}
+function setGridHexOrientationManual(o) {
+  gridHexOrientation.value = o
+  gridCellW.value = null
+  gridCellH.value = null
+}
+
 function applyGridConfig(state) {
   gridType.value = state.gridType || 'none'
   gridCols.value = state.gridCols || 20
@@ -397,6 +428,8 @@ function applyGridConfig(state) {
   gridHexOrientation.value = state.gridHexOrientation || 'flat'
   gridOffsetX.value = state.gridOffsetX ?? 0
   gridOffsetY.value = state.gridOffsetY ?? 0
+  gridCellW.value = state.gridCellW ?? null
+  gridCellH.value = state.gridCellH ?? null
   fogCellsSet.clear()
   const cells = state.fogCells || []
   fogCells.value = cells
@@ -414,6 +447,8 @@ async function saveGridConfig() {
       grid_hex_orientation: gridHexOrientation.value,
       grid_offset_x: gridType.value !== 'none' ? gridOffsetX.value : 0,
       grid_offset_y: gridType.value !== 'none' ? gridOffsetY.value : 0,
+      grid_cell_w: gridType.value !== 'none' ? gridCellW.value : null,
+      grid_cell_h: gridType.value !== 'none' ? gridCellH.value : null,
     }
     const res = await fetch(
       `${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${selectedImageId.value}`,
@@ -425,6 +460,7 @@ async function saveGridConfig() {
       mapSocket.emitSyncGrid({
         gridType: gridType.value, gridCols: gridCols.value, gridRows: gridRows.value,
         gridHexOrientation: gridHexOrientation.value, gridOffsetX: gridOffsetX.value, gridOffsetY: gridOffsetY.value,
+        gridCellW: gridCellW.value, gridCellH: gridCellH.value,
       })
     }
   } catch (err) { console.error(err) }
@@ -524,7 +560,7 @@ function applyBrush(pos) {
 function applyCellReveal(pos) {
   const norm = canvasToNorm(pos.x, pos.y)
   if (!norm) return
-  const idx = getCellAt(norm.nx, norm.ny, gridType.value, gridCols.value, gridRows.value, gridHexOrientation.value, gridOffsetX.value, gridOffsetY.value)
+  const idx = getCellAt(norm.nx, norm.ny, gridType.value, gridCols.value, gridRows.value, gridHexOrientation.value, gridOffsetX.value, gridOffsetY.value, gridCellW.value, gridCellH.value)
   if (idx < 0 || fogCellsSet.has(idx)) return
   fogCellsSet.add(idx)
   fogCells.value = [...fogCellsSet]
@@ -659,8 +695,10 @@ function selectImage(img) {
   gridCols.value = img.grid_cols || 20
   gridRows.value = img.grid_rows || 15
   gridHexOrientation.value = img.grid_hex_orientation || 'flat'
-  gridOffsetX.value = img.grid_offset_x ?? 0
-  gridOffsetY.value = img.grid_offset_y ?? 0
+  gridOffsetX.value = parseFloat(img.grid_offset_x) || 0
+  gridOffsetY.value = parseFloat(img.grid_offset_y) || 0
+  gridCellW.value = parseFloat(img.grid_cell_w) || null
+  gridCellH.value = parseFloat(img.grid_cell_h) || null
   showGridConfig.value = false
   loadMapImage(img.url)
 }
@@ -705,7 +743,7 @@ onUnmounted(() => {
 
 watch(() => selectedImageUrl.value, (url) => { if (url && !mapImage) loadMapImage(url) })
 watch(fogEnabled, () => render())
-watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffsetY], () => { if (showGridConfig.value) render() })
+watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffsetY, gridCellW, gridCellH], () => { if (showGridConfig.value) render() })
 </script>
 
 <template>
@@ -784,13 +822,15 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
             :grid-hex-orientation="gridHexOrientation"
             :grid-offset-x="gridOffsetX"
             :grid-offset-y="gridOffsetY"
+            :grid-cell-w="gridCellW"
+            :grid-cell-h="gridCellH"
             :grid-detecting="gridDetecting"
             :grid-saving="gridSaving"
             @update:show="showGridConfig = $event"
-            @update:grid-type="gridType = $event"
-            @update:grid-cols="gridCols = $event"
-            @update:grid-rows="gridRows = $event"
-            @update:grid-hex-orientation="gridHexOrientation = $event"
+            @update:grid-type="setGridTypeManual"
+            @update:grid-cols="setGridColsManual"
+            @update:grid-rows="setGridRowsManual"
+            @update:grid-hex-orientation="setGridHexOrientationManual"
             @update:grid-offset-x="gridOffsetX = $event"
             @update:grid-offset-y="gridOffsetY = $event"
             @save="saveGridConfig"

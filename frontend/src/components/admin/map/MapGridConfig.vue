@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import AppIcon from '../../AppIcon.vue'
 import HelpTip from '../../HelpTip.vue'
 
@@ -10,9 +11,17 @@ const props = defineProps({
   gridHexOrientation: { type: String, default: 'flat' },
   gridOffsetX: { type: Number, default: 0 },
   gridOffsetY: { type: Number, default: 0 },
+  // Taille de cellule normalisée (détection auto) — borne les sliders d'offset
+  gridCellW: { type: Number, default: null },
+  gridCellH: { type: Number, default: null },
   gridDetecting: { type: Boolean, default: false },
   gridSaving: { type: Boolean, default: false },
 })
+
+// L'origine d'un maillage hexagonal détecté peut être décalée jusqu'à une
+// période et demie (invariance du réseau) — bornes élargies pour les hex.
+const cellW = computed(() => (props.gridCellW || 1 / props.gridCols) * (props.gridType === 'hex' ? 1.5 : 1))
+const cellH = computed(() => (props.gridCellH || 1 / props.gridRows) * (props.gridType === 'hex' ? 1.5 : 1))
 
 const emit = defineEmits([
   'update:show',
@@ -84,11 +93,11 @@ const emit = defineEmits([
           </div>
           <div class="grid-config-row">
             <label class="grid-config-label">Décalage X : {{ Math.round(gridOffsetX * 1000) / 1000 }}</label>
-            <input :value="gridOffsetX" type="range" :min="-1 / gridCols" :max="1 / gridCols" :step="1 / gridCols / 20" class="brush-slider" @input="emit('update:gridOffsetX', +$event.target.value)" />
+            <input :value="gridOffsetX" type="range" :min="-cellW" :max="cellW" :step="cellW / 20" class="brush-slider" @input="emit('update:gridOffsetX', +$event.target.value)" />
           </div>
           <div class="grid-config-row">
             <label class="grid-config-label">Décalage Y : {{ Math.round(gridOffsetY * 1000) / 1000 }}</label>
-            <input :value="gridOffsetY" type="range" :min="-1 / gridRows" :max="1 / gridRows" :step="1 / gridRows / 20" class="brush-slider" @input="emit('update:gridOffsetY', +$event.target.value)" />
+            <input :value="gridOffsetY" type="range" :min="-cellH" :max="cellH" :step="cellH / 20" class="brush-slider" @input="emit('update:gridOffsetY', +$event.target.value)" />
           </div>
         </template>
 
