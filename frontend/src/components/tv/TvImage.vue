@@ -25,7 +25,6 @@ function resolveMediaUrl(url) {
   flex: 1;
   position: relative;
   display: flex;
-  align-items: center;
   justify-content: center;
   overflow: hidden;
   background: #000;
@@ -44,7 +43,7 @@ function resolveMediaUrl(url) {
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.9rem;
+  font-size: 72pt;
   letter-spacing: 0.1em;
   color: var(--color-gold-bright);
 }
