@@ -38,8 +38,12 @@ const sharp = require('sharp')
 
 const MAX_ANALYSIS_DIM = 2000
 const GRADIENT_CLIP = 24          // écrêtage du gradient par pixel (sur 0-255)
-const MIN_PERIOD_PX = 18          // pas de grille minimal à l'échelle d'analyse
-                                  // (sous ~18px le bruit de texture domine et les cellules sont inutilisables)
+// Pas de grille minimal, proportionnel à la dimension de l'image : le bruit de
+// texture domine sous ~0.9 % de la dimension (18px à l'échelle d'analyse max de
+// 2000px), mais une petite image peut légitimement avoir des cellules plus fines.
+function minPeriodFor(dim) {
+  return Math.max(8, Math.round(dim * 0.009))
+}
 const MIN_DIVISIONS = 4           // nombre minimal de périodes visibles par axe
 const BINARIZE_QUANTILE = 0.8     // seuil de binarisation (quantile des valeurs positives)
 const SCORE_THRESHOLD = 0.6       // score harmonique minimal pour valider un axe
@@ -230,6 +234,72 @@ function findPhase(proj, period) {
   return bestPhase
 }
 
+// ── Étendue de la grille ─────────────────────────────────────────────────────
+// La grille ne couvre pas forcément toute l'image (bordures, marges). On
+// détermine la première et la dernière ligne réellement présentes, puis on
+// teste si les bandes de bord contiennent encore du signal de grille (cellule
+// partielle coupée par le cadrage) ou non (marge vide à exclure).
+
+// Première et dernière dent du peigne (période/phase) présentes dans le signal binarisé.
+function combExtent(bin, period, phase) {
+  let first = null
+  let last = null
+  for (let t = phase; t < bin.length; t += period) {
+    const c = Math.round(t)
+    let support = false
+    for (let d = -2; d <= 2; d++) {
+      const i = c + d
+      if (i >= 0 && i < bin.length && bin[i] > 0) { support = true; break }
+    }
+    if (support) {
+      if (first === null) first = t
+      last = t
+    }
+  }
+  return first !== null && last > first ? { first, last } : null
+}
+
+// Positions des dents du peigne entre first et last inclus.
+function teethBetween(first, last, period) {
+  const teeth = []
+  for (let t = first; t <= last + period / 4; t += period) teeth.push(t)
+  return teeth
+}
+
+// Énergie moyenne du gradient le long des lignes horizontales `yLines`,
+// restreinte à la bande x ∈ [x0, x1).
+function bandEnergyAlongY(G, w, h, x0, x1, yLines) {
+  let sum = 0
+  let count = 0
+  const a = Math.max(1, Math.round(x0))
+  const b = Math.min(w - 1, Math.round(x1))
+  for (const ty of yLines) {
+    const y = Math.round(ty)
+    if (y < 1 || y >= h - 1) continue
+    for (let x = a; x < b; x++) { sum += G[y * w + x]; count++ }
+  }
+  return count > 0 ? sum / count : 0
+}
+
+// Énergie moyenne du gradient le long des lignes verticales `xLines`,
+// restreinte à la bande y ∈ [y0, y1).
+function bandEnergyAlongX(G, w, h, y0, y1, xLines) {
+  let sum = 0
+  let count = 0
+  const a = Math.max(1, Math.round(y0))
+  const b = Math.min(h - 1, Math.round(y1))
+  for (const tx of xLines) {
+    const x = Math.round(tx)
+    if (x < 1 || x >= w - 1) continue
+    for (let y = a; y < b; y++) { sum += G[y * w + x]; count++ }
+  }
+  return count > 0 ? sum / count : 0
+}
+
+// Une bande de bord appartient à la grille si son énergie atteint cette
+// fraction de l'énergie mesurée à l'intérieur de la grille.
+const EDGE_BAND_RATIO = 0.45
+
 // ── Recalage 2D des hexagones ────────────────────────────────────────────────
 
 // Sommets (en pixels) de l'hexagone (col, row) pour le maillage donné.
@@ -256,16 +326,14 @@ function hexVerticesPx(col, row, hexW, hexH, orientation, ox, oy) {
   ]
 }
 
-// Score d'alignement : gradient moyen échantillonné le long des arêtes du maillage.
-function hexEdgeScore(G, w, h, hexW, hexH, orientation, ox, oy, cellStep) {
-  const colPitch = orientation === 'flat' ? 0.75 * hexW : hexW
-  const rowPitch = orientation === 'flat' ? hexH : 0.75 * hexH
-  const nCols = Math.ceil(w / colPitch) + 2
-  const nRows = Math.ceil(h / rowPitch) + 2
+// Gradient moyen échantillonné le long des arêtes des hexagones d'une plage
+// de cellules [c0..c1] × [r0..r1]. Les échantillons hors image sont ignorés
+// (une cellule entièrement hors champ donne count = 0).
+function hexRangeEnergy(G, w, h, hexW, hexH, orientation, ox, oy, c0, c1, r0, r1, cellStep = 1) {
   let sum = 0
   let count = 0
-  for (let col = 0; col < nCols; col += cellStep) {
-    for (let row = 0; row < nRows; row += cellStep) {
+  for (let col = c0; col <= c1; col += cellStep) {
+    for (let row = r0; row <= r1; row += cellStep) {
       const v = hexVerticesPx(col, row, hexW, hexH, orientation, ox, oy)
       for (let e = 0; e < 6; e++) {
         const a = v[e]
@@ -283,6 +351,15 @@ function hexEdgeScore(G, w, h, hexW, hexH, orientation, ox, oy, cellStep) {
     }
   }
   return count > 0 ? sum / count : 0
+}
+
+// Score d'alignement global : gradient moyen le long des arêtes du maillage.
+function hexEdgeScore(G, w, h, hexW, hexH, orientation, ox, oy, cellStep) {
+  const colPitch = orientation === 'flat' ? 0.75 * hexW : hexW
+  const rowPitch = orientation === 'flat' ? hexH : 0.75 * hexH
+  const nCols = Math.ceil(w / colPitch) + 2
+  const nRows = Math.ceil(h / rowPitch) + 2
+  return hexRangeEnergy(G, w, h, hexW, hexH, orientation, ox, oy, 0, nCols - 1, 0, nRows - 1, cellStep)
 }
 
 /**
@@ -331,6 +408,49 @@ function fitHexOffset(G, w, h, hexW, hexH, orientation) {
   return best
 }
 
+/**
+ * Rogne l'espace d'indices hexagonal aux colonnes/lignes qui portent réellement
+ * du signal de grille (exclut les marges sans grille). L'origine est décalée
+ * vers la première colonne/ligne conservée. Pour préserver la parité du
+ * maillage (colonnes décalées d'une demi-cellule), le rognage de tête se fait
+ * par pas de 2 sur l'axe décalé (colonnes en flat, lignes en pointy).
+ */
+function trimHexExtent(G, w, h, hexW, hexH, orientation, ox, oy, nCols, nRows) {
+  const colPitch = orientation === 'flat' ? 0.75 * hexW : hexW
+  const rowPitch = orientation === 'flat' ? hexH : 0.75 * hexH
+  const colE = []
+  for (let c = 0; c < nCols; c++) {
+    colE.push(hexRangeEnergy(G, w, h, hexW, hexH, orientation, ox, oy, c, c, 0, nRows - 1))
+  }
+  const rowE = []
+  for (let r = 0; r < nRows; r++) {
+    rowE.push(hexRangeEnergy(G, w, h, hexW, hexH, orientation, ox, oy, 0, nCols - 1, r, r))
+  }
+  const median = (arr) => {
+    const s = [...arr].sort((a, b) => a - b)
+    return s[Math.floor(s.length / 2)]
+  }
+  const TRIM_RATIO = 0.4
+  const thC = median(colE) * TRIM_RATIO
+  const thR = median(rowE) * TRIM_RATIO
+  let c0 = 0
+  while (c0 < nCols - 2 && colE[c0] < thC) c0++
+  let c1 = nCols - 1
+  while (c1 > c0 + 1 && colE[c1] < thC) c1--
+  let r0 = 0
+  while (r0 < nRows - 2 && rowE[r0] < thR) r0++
+  let r1 = nRows - 1
+  while (r1 > r0 + 1 && rowE[r1] < thR) r1--
+  if (orientation === 'flat' && c0 % 2 === 1) c0--
+  if (orientation === 'pointy' && r0 % 2 === 1) r0--
+  return {
+    ox: ox + c0 * colPitch,
+    oy: oy + r0 * rowPitch,
+    cols: c1 - c0 + 1,
+    rows: r1 - r0 + 1,
+  }
+}
+
 function clampInt(v, min, max) {
   return Math.max(min, Math.min(max, Math.round(v)))
 }
@@ -366,8 +486,8 @@ async function detectGridConfig(filePath) {
   const bx = binarize(sx)
   const by = binarize(sy)
   if (!bx || !by) return { ...NONE_RESULT }
-  const fx = findFundamental(bx, MIN_PERIOD_PX, maxPeriodX)
-  const fy = findFundamental(by, MIN_PERIOD_PX, maxPeriodY)
+  const fx = findFundamental(bx, minPeriodFor(w), maxPeriodX)
+  const fy = findFundamental(by, minPeriodFor(h), maxPeriodY)
   if (!fx || !fy || fx.score < SCORE_THRESHOLD || fy.score < SCORE_THRESHOLD) return { ...NONE_RESULT }
   fx.period = refinePeriod(sx, fx.period, maxPeriodX)
   fy.period = refinePeriod(sy, fy.period, maxPeriodY)
@@ -377,15 +497,44 @@ async function detectGridConfig(filePath) {
 
   // ── Grille carrée ─────────────────────────────────────────────────────────
   if (Math.abs(ratio - 1) <= RATIO_TOLERANCE) {
-    // Origine dans (-période, 0] : la cellule 0 commence sur ou avant le bord
     const phaseX = findPhase(sx, fx.period)
     const phaseY = findPhase(sy, fy.period)
-    const ox = phaseX > 0 ? phaseX - fx.period : 0
-    const oy = phaseY > 0 ? phaseY - fy.period : 0
-    const cols = clampInt(Math.ceil((w - ox) / fx.period), 3, 200)
-    const rows = clampInt(Math.ceil((h - oy) / fy.period), 3, 200)
+    const extX = combExtent(bx, fx.period, phaseX)
+    const extY = combExtent(by, fy.period, phaseY)
+
+    let ox
+    let oy
+    let cols
+    let rows
+    if (extX && extY) {
+      // Étendue réelle de la grille : entre la première et la dernière ligne
+      // observées, étendue d'une cellule de chaque côté si la bande de bord
+      // contient encore du signal de grille (cellule partielle coupée).
+      const xLines = teethBetween(extX.first, extX.last, fx.period)
+      const yLines = teethBetween(extY.first, extY.last, fy.period)
+      const interiorX = bandEnergyAlongY(G, w, h, extX.first + 2, extX.last - 2, yLines)
+      const interiorY = bandEnergyAlongX(G, w, h, extY.first + 2, extY.last - 2, xLines)
+      const leftCell = extX.first > 3 &&
+        bandEnergyAlongY(G, w, h, 1, extX.first - 2, yLines) > EDGE_BAND_RATIO * interiorX
+      const rightCell = (w - extX.last) > 3 &&
+        bandEnergyAlongY(G, w, h, extX.last + 2, w - 1, yLines) > EDGE_BAND_RATIO * interiorX
+      const topCell = extY.first > 3 &&
+        bandEnergyAlongX(G, w, h, 1, extY.first - 2, xLines) > EDGE_BAND_RATIO * interiorY
+      const bottomCell = (h - extY.last) > 3 &&
+        bandEnergyAlongX(G, w, h, extY.last + 2, h - 1, xLines) > EDGE_BAND_RATIO * interiorY
+      ox = leftCell ? extX.first - fx.period : extX.first
+      oy = topCell ? extY.first - fy.period : extY.first
+      cols = Math.round((extX.last - extX.first) / fx.period) + (leftCell ? 1 : 0) + (rightCell ? 1 : 0)
+      rows = Math.round((extY.last - extY.first) / fy.period) + (topCell ? 1 : 0) + (bottomCell ? 1 : 0)
+    } else {
+      // Repli : couverture de toute l'image depuis l'origine (-période, 0]
+      ox = phaseX > 0 ? phaseX - fx.period : 0
+      oy = phaseY > 0 ? phaseY - fy.period : 0
+      cols = Math.ceil((w - ox) / fx.period)
+      rows = Math.ceil((h - oy) / fy.period)
+    }
     return {
-      gridType: 'square', gridCols: cols, gridRows: rows,
+      gridType: 'square', gridCols: clampInt(cols, 2, 200), gridRows: clampInt(rows, 2, 200),
       gridHexOrientation: 'flat',
       gridOffsetX: round6(ox / w), gridOffsetY: round6(oy / h),
       gridCellW: round6(fx.period / w), gridCellH: round6(fy.period / h),
@@ -411,16 +560,18 @@ async function detectGridConfig(filePath) {
     return { ...NONE_RESULT }
   }
 
-  const { ox, oy } = fitHexOffset(G, w, h, hexW, hexH, orientation)
-  // Espace d'indices couvrant toute l'image depuis l'origine (ox, oy)
+  const fit = fitHexOffset(G, w, h, hexW, hexH, orientation)
+  // Espace d'indices couvrant toute l'image depuis l'origine, puis rogné aux
+  // colonnes/lignes qui portent réellement la grille (exclut les marges)
   const colPitch = orientation === 'flat' ? 0.75 * hexW : hexW
   const rowPitch = orientation === 'flat' ? hexH : 0.75 * hexH
-  const cols = clampInt(Math.ceil((w - ox) / colPitch) + 1, 3, 200)
-  const rows = clampInt(Math.ceil((h - oy) / rowPitch) + 1, 3, 200)
+  const coverCols = Math.ceil((w - fit.ox) / colPitch) + 1
+  const coverRows = Math.ceil((h - fit.oy) / rowPitch) + 1
+  const ext = trimHexExtent(G, w, h, hexW, hexH, orientation, fit.ox, fit.oy, coverCols, coverRows)
   return {
-    gridType: 'hex', gridCols: cols, gridRows: rows,
+    gridType: 'hex', gridCols: clampInt(ext.cols, 2, 200), gridRows: clampInt(ext.rows, 2, 200),
     gridHexOrientation: orientation,
-    gridOffsetX: round6(ox / w), gridOffsetY: round6(oy / h),
+    gridOffsetX: round6(ext.ox / w), gridOffsetY: round6(ext.oy / h),
     gridCellW: round6(hexW / w), gridCellH: round6(hexH / h),
     confidence,
   }
@@ -429,5 +580,5 @@ async function detectGridConfig(filePath) {
 module.exports = {
   detectGridConfig,
   // Exposé pour les scripts de diagnostic (scripts/detect-grid.js, scripts/grid-overlay.js)
-  _internal: { loadGrayscale, computeGradients, prepareSignal, binarize, findFundamental, refinePeriod, findPhase, fitHexOffset, hexVerticesPx, MIN_PERIOD_PX, MIN_DIVISIONS },
+  _internal: { loadGrayscale, computeGradients, prepareSignal, binarize, findFundamental, refinePeriod, findPhase, fitHexOffset, hexVerticesPx, minPeriodFor, MIN_DIVISIONS },
 }

@@ -52,7 +52,7 @@ function resolveMediaUrl(url) {
 .tv-header { text-align: center; margin-bottom: 0.6rem; }
 .session-title {
   font-family: var(--font-title), sans-serif;
-  font-size: clamp(1.2rem, 3vw, 2.4rem);
+  font-size: clamp(2rem, 4.5vw, 4rem);
   color: var(--color-gold-bright);
   text-shadow: var(--text-shadow-accent);
   letter-spacing: 0.1em;
@@ -60,14 +60,14 @@ function resolveMediaUrl(url) {
 }
 .lobby-divider {
   font-family: var(--font-heading), sans-serif;
-  font-size: clamp(0.48rem, 0.9vw, 0.66rem);
+  font-size: clamp(0.8rem, 1.2vw, 1.1rem);
   letter-spacing: 0.5em;
   color: var(--color-gold-dark);
   margin-top: 0.3rem;
 }
 .lobby-title {
   font-family: var(--font-title), sans-serif;
-  font-size: clamp(1.08rem, 2.1vw, 1.68rem);
+  font-size: clamp(1.6rem, 3.2vw, 2.6rem);
   color: var(--color-parchment);
   text-shadow: var(--text-shadow-emphasis);
   letter-spacing: 0.08em;
@@ -92,8 +92,8 @@ function resolveMediaUrl(url) {
 }
 .lobby-hint {
   font-family: var(--font-heading), sans-serif;
-  font-size: clamp(0.42rem, 0.9vw, 0.6rem);
-  letter-spacing: 0.25em;
+  font-size: clamp(1.1rem, 1.7vw, 1.6rem);
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-text-dim);
   text-align: center;

@@ -93,13 +93,15 @@ function parseConditions(player) {
             <span class="card-name">{{ player.player_name }}</span>
             <span v-if="player.dnd_class" class="class-badge">{{ player.dnd_class }}</span>
           </div>
+        </div>
+        <div class="card-stats-row">
           <div class="initiative-badge"><AppIcon icon="game-icons:dice-six-faces-five" size="1em" /> {{ player.initiative ?? '—' }}</div>
           <div class="ac-shield">
             <span class="ac-icon"><AppIcon icon="game-icons:shield" size="1em" color="var(--color-gold-bright)" /></span>
             <span class="ac-value">{{ player.ac ?? 10 }}</span>
           </div>
           <span v-if="player.is_concentrating" class="concentration-badge" title="Concentration">
-            <AppIcon icon="game-icons:bullseye" size="1em" color="var(--tv-info-text, var(--color-info-bright))" />
+            <AppIcon icon="game-icons:bullseye" size="1.4em" color="var(--tv-info-text, var(--color-info-bright))" />
           </span>
         </div>
 
@@ -168,13 +170,13 @@ function parseConditions(player) {
 .combat-round-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 1.2rem;
+  gap: 0.5rem;
+  padding: 0.6rem 1.8rem;
   background: var(--tv-gold-bg);
   border: 1px solid var(--color-gold-dark);
   border-radius: 999px;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.9rem;
+  font-size: 1.4rem;
   letter-spacing: 0.15em;
   color: var(--color-gold-bright);
   text-transform: uppercase;
@@ -183,21 +185,23 @@ function parseConditions(player) {
 .party-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.75rem;
-  padding: 0.75rem;
-  align-content: start;
+  grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  align-content: stretch;
   overflow: auto;
 }
 
 .player-card {
   background: var(--tv-panel-bg);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 0.9rem;
+  border-radius: 16px;
+  padding: 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  justify-content: center;
+  gap: 1.5rem;
   position: relative;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
@@ -232,12 +236,17 @@ function parseConditions(player) {
 .card-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.9rem;
+}
+.card-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 .card-avatar {
-  width: 3rem; height: 3rem;
+  width: 5rem; height: 5rem;
   border-radius: 50%;
-  border: 2px solid var(--color-gold-dark);
+  border: 3px solid var(--color-gold-dark);
   overflow: hidden;
   background: var(--tv-control-bg);
   display: flex; align-items: center; justify-content: center;
@@ -246,7 +255,7 @@ function parseConditions(player) {
 .avatar-img { width: 100%; height: 100%; object-fit: cover; }
 .avatar-fallback {
   font-family: var(--font-title), sans-serif;
-  font-size: 1.2rem;
+  font-size: 2rem;
   color: var(--color-gold-dark);
 }
 .card-identity {
@@ -257,7 +266,7 @@ function parseConditions(player) {
 }
 .card-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.95rem;
+  font-size: 2rem;
   letter-spacing: 0.06em;
   color: var(--color-text);
   white-space: nowrap;
@@ -266,7 +275,7 @@ function parseConditions(player) {
 }
 .class-badge {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.62rem;
+  font-size: 1.3rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -274,95 +283,95 @@ function parseConditions(player) {
 .initiative-badge {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
+  gap: 0.5rem;
+  padding: 0.55rem 1.1rem;
   background: var(--tv-control-bg-muted);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 8px;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: 1.6rem;
   color: var(--color-text-dim);
   white-space: nowrap;
 }
 .ac-shield {
   display: flex;
   align-items: center;
-  gap: 0.2rem;
-  padding: 0.25rem 0.45rem;
+  gap: 0.4rem;
+  padding: 0.55rem 0.95rem;
   background: var(--tv-gold-bg);
   border: 1px solid var(--color-gold-dark);
-  border-radius: 6px;
+  border-radius: 8px;
   white-space: nowrap;
 }
 .ac-icon { display: flex; align-items: center; }
 .ac-value {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: 1.7rem;
   font-weight: bold;
   color: var(--color-gold-bright);
 }
 .concentration-badge { display: flex; align-items: center; }
 
-.hp-section { display: flex; flex-direction: column; gap: 0.3rem; }
+.hp-section { display: flex; flex-direction: column; gap: 0.7rem; }
 .hp-numbers {
   display: flex;
   align-items: baseline;
-  gap: 0.25rem;
+  gap: 0.4rem;
   font-family: var(--font-heading), sans-serif;
 }
-.hp-current { font-size: 1.6rem; font-weight: bold; line-height: 1; }
-.hp-separator { font-size: 1rem; color: var(--color-text-dim); }
-.hp-max { font-size: 1rem; color: var(--color-text-dim); }
+.hp-current { font-size: 4rem; font-weight: bold; line-height: 1; }
+.hp-separator { font-size: 2rem; color: var(--color-text-dim); }
+.hp-max { font-size: 2rem; color: var(--color-text-dim); }
 .hp-label {
-  font-size: 0.65rem;
+  font-size: 1.2rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-dim);
-  margin-left: 0.1rem;
+  margin-left: 0.15rem;
 }
 .hp-temp {
-  font-size: 0.72rem;
+  font-size: 1.25rem;
   color: var(--tv-info-text);
   letter-spacing: 0.05em;
   margin-left: auto;
 }
 .hp-track {
-  height: 8px;
+  height: 26px;
   background: var(--tv-track-bg);
-  border-radius: 4px;
+  border-radius: 13px;
   overflow: hidden;
 }
 .hp-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: 13px;
   transition: width 0.5s ease, background 0.5s ease;
 }
 
 .conditions-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
+  gap: 0.6rem;
 }
 .condition-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.2rem;
-  padding: 0.2rem 0.45rem;
+  gap: 0.35rem;
+  padding: 0.45rem 0.9rem;
   background: var(--tv-control-bg-muted);
   border: 1px solid var(--color-border);
   border-radius: 999px;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.62rem;
+  font-size: 1.4rem;
   letter-spacing: 0.06em;
   color: var(--color-text-dim);
 }
 
 .hp-delta {
   position: absolute;
-  top: 0.5rem;
-  right: 0.75rem;
+  top: 0.75rem;
+  right: 1rem;
   font-family: var(--font-title), sans-serif;
-  font-size: 1.6rem;
+  font-size: 2.6rem;
   font-weight: bold;
   pointer-events: none;
   z-index: 5;

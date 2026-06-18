@@ -52,13 +52,14 @@ function formatFactionValue(v) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 1.5rem;
-  gap: 1rem;
+  justify-content: center;
+  padding: 3rem 5rem;
+  gap: 2.5rem;
 }
-.tv-header { text-align: center; margin-bottom: 0.6rem; }
+.tv-header { text-align: center; margin-bottom: 1rem; }
 .session-title {
   font-family: var(--font-title), sans-serif;
-  font-size: clamp(1.2rem, 3vw, 2.4rem);
+  font-size: clamp(2.2rem, 5vw, 4rem);
   color: var(--color-gold-bright);
   text-shadow: var(--text-shadow-accent);
   letter-spacing: 0.1em;
@@ -67,46 +68,48 @@ function formatFactionValue(v) {
 .tv-faction-list {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 2.2rem;
   overflow: auto;
 }
 .tv-faction-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 2rem;
 }
 .tv-faction-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 1rem;
+  font-size: 3.4rem;
   letter-spacing: 0.08em;
   color: var(--color-text);
-  min-width: 160px;
+  width: 720px;
+  flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .tv-faction-bar-track {
   flex: 1;
-  height: 16px;
+  height: 30px;
   background: var(--tv-track-bg);
-  border-radius: 8px;
+  border-radius: 15px;
   overflow: hidden;
 }
 .tv-faction-bar-fill {
   height: 100%;
-  border-radius: 8px;
+  border-radius: 15px;
   transition: width 0.6s ease, background 0.6s ease;
 }
 .tv-faction-value {
   font-family: var(--font-heading), sans-serif;
-  font-size: 1rem;
+  font-size: 2.6rem;
   font-weight: bold;
-  min-width: 3rem;
+  width: 5.5rem;
+  flex-shrink: 0;
   text-align: right;
 }
 .tv-no-factions {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.85rem;
+  font-size: 1.3rem;
   color: var(--color-text-dim);
   text-align: center;
   letter-spacing: 0.1em;

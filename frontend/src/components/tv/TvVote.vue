@@ -51,12 +51,12 @@ function voterNamesFor(optionIndex) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.5rem;
-  padding: 2rem;
+  gap: 2.5rem;
+  padding: 3rem;
 }
 .vote-question {
   font-family: var(--font-title), sans-serif;
-  font-size: clamp(1.4rem, 3.5vw, 2.8rem);
+  font-size: clamp(2.2rem, 5.5vw, 4.5rem);
   color: var(--color-gold-bright);
   text-shadow: var(--text-shadow-accent);
   text-align: center;
@@ -65,19 +65,19 @@ function voterNamesFor(optionIndex) {
 }
 .vote-progress {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.85rem;
+  font-size: 1.4rem;
   letter-spacing: 0.15em;
   color: var(--color-text-dim);
   text-transform: uppercase;
 }
 .vote-results {
   width: 100%;
-  max-width: 700px;
+  max-width: 1200px;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 2rem;
 }
-.vote-option { display: flex; flex-direction: column; gap: 0.35rem; }
+.vote-option { display: flex; flex-direction: column; gap: 0.6rem; }
 .vote-option-header {
   display: flex;
   justify-content: space-between;
@@ -85,30 +85,30 @@ function voterNamesFor(optionIndex) {
 }
 .vote-option-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 1rem;
+  font-size: 1.8rem;
   letter-spacing: 0.06em;
   color: var(--color-text);
 }
 .vote-option-count {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: 1.4rem;
   color: var(--color-text-dim);
 }
 .vote-bar {
-  height: 14px;
+  height: 28px;
   background: var(--tv-track-bg);
-  border-radius: 7px;
+  border-radius: 14px;
   overflow: hidden;
 }
 .vote-bar-fill {
   height: 100%;
   background: var(--color-gold-bright);
-  border-radius: 7px;
+  border-radius: 14px;
   transition: width 0.6s ease;
 }
 .voter-names {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: 1.15rem;
   color: var(--color-text-dim);
   letter-spacing: 0.04em;
 }
@@ -116,19 +116,19 @@ function voterNamesFor(optionIndex) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 .vote-waiting p {
   font-family: var(--font-heading), sans-serif;
-  font-size: 1rem;
+  font-size: 1.6rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-text-dim);
 }
 .vote-orb {
-  width: 64px; height: 64px;
+  width: 96px; height: 96px;
   border-radius: 50%;
-  border: 3px solid var(--color-gold-dark);
+  border: 4px solid var(--color-gold-dark);
   border-top-color: var(--color-gold-bright);
   animation: spin 1.2s linear infinite;
 }

@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, watch } from 'vue'
 import AppIcon from '../../AppIcon.vue'
 import HelpTip from '../../HelpTip.vue'
 
@@ -18,10 +18,36 @@ const props = defineProps({
   gridSaving: { type: Boolean, default: false },
 })
 
-// L'origine d'un maillage hexagonal détecté peut être décalée jusqu'à une
-// période et demie (invariance du réseau) — bornes élargies pour les hex.
-const cellW = computed(() => (props.gridCellW || 1 / props.gridCols) * (props.gridType === 'hex' ? 1.5 : 1))
-const cellH = computed(() => (props.gridCellH || 1 / props.gridRows) * (props.gridType === 'hex' ? 1.5 : 1))
+// Bornes des sliders d'offset : ±une cellule autour de l'offset courant (une
+// grille avec marges a un offset bien supérieur à une cellule). Figées à
+// l'ouverture du panneau / au changement de config pour que le déplacement du
+// slider ne déplace pas ses propres bornes.
+const cellW = ref(1 / 20)
+const cellH = ref(1 / 15)
+const offsetXMin = ref(-1 / 20)
+const offsetXMax = ref(1 / 20)
+const offsetYMin = ref(-1 / 15)
+const offsetYMax = ref(1 / 15)
+
+function computeOffsetBounds() {
+  // L'origine d'un maillage hexagonal détecté peut être décalée jusqu'à une
+  // période et demie (invariance du réseau) — bornes élargies pour les hex.
+  const scale = props.gridType === 'hex' ? 1.5 : 1
+  const cw = (props.gridCellW || 1 / props.gridCols) * scale
+  const ch = (props.gridCellH || 1 / props.gridRows) * scale
+  cellW.value = cw
+  cellH.value = ch
+  offsetXMin.value = Math.min(-cw, props.gridOffsetX - cw)
+  offsetXMax.value = Math.max(cw, props.gridOffsetX + cw)
+  offsetYMin.value = Math.min(-ch, props.gridOffsetY - ch)
+  offsetYMax.value = Math.max(ch, props.gridOffsetY + ch)
+}
+
+watch(() => props.show, (visible) => { if (visible) computeOffsetBounds() }, { immediate: true })
+watch(
+  () => [props.gridType, props.gridCols, props.gridRows, props.gridCellW, props.gridCellH],
+  computeOffsetBounds
+)
 
 const emit = defineEmits([
   'update:show',
@@ -32,6 +58,7 @@ const emit = defineEmits([
   'update:gridOffsetX',
   'update:gridOffsetY',
   'save',
+  'detect',
 ])
 </script>
 
@@ -93,13 +120,18 @@ const emit = defineEmits([
           </div>
           <div class="grid-config-row">
             <label class="grid-config-label">Décalage X : {{ Math.round(gridOffsetX * 1000) / 1000 }}</label>
-            <input :value="gridOffsetX" type="range" :min="-cellW" :max="cellW" :step="cellW / 20" class="brush-slider" @input="emit('update:gridOffsetX', +$event.target.value)" />
+            <input :value="gridOffsetX" type="range" :min="offsetXMin" :max="offsetXMax" :step="cellW / 20" class="brush-slider" @input="emit('update:gridOffsetX', +$event.target.value)" />
           </div>
           <div class="grid-config-row">
             <label class="grid-config-label">Décalage Y : {{ Math.round(gridOffsetY * 1000) / 1000 }}</label>
-            <input :value="gridOffsetY" type="range" :min="-cellH" :max="cellH" :step="cellH / 20" class="brush-slider" @input="emit('update:gridOffsetY', +$event.target.value)" />
+            <input :value="gridOffsetY" type="range" :min="offsetYMin" :max="offsetYMax" :step="cellH / 20" class="brush-slider" @input="emit('update:gridOffsetY', +$event.target.value)" />
           </div>
         </template>
+
+        <button class="action-btn detect-grid-btn" :disabled="gridDetecting" @click="emit('detect')">
+          <AppIcon icon="lucide:scan-search" size="0.85em" />
+          {{ gridDetecting ? 'Détection…' : 'Re-détecter automatiquement' }}
+        </button>
 
         <button class="action-btn save-grid-btn" :disabled="gridSaving" @click="emit('save')">
           <AppIcon icon="lucide:save" size="0.85em" />
@@ -193,5 +225,6 @@ const emit = defineEmits([
 .action-btn.active { background: var(--gradient-accent-action-hover); border-color: var(--color-gold-bright); }
 .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .save-grid-btn { width: 100%; margin-top: 0.2rem; }
+.detect-grid-btn { width: 100%; margin-top: 0.2rem; background: var(--surface-raised, #1e1e2e); }
 .brush-slider { flex: 1; accent-color: var(--color-gold); }
 </style>

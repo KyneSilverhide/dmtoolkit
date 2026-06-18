@@ -128,14 +128,14 @@ const dramaClass = computed(() => {
 }
 .timescale-tile {
   display: flex; align-items: center; justify-content: center;
-  width: clamp(4rem, 7vw, 9rem);
-  height: clamp(4rem, 7vw, 9rem);
+  width: clamp(5rem, 8.5vw, 11rem);
+  height: clamp(5rem, 8.5vw, 11rem);
   background: var(--tv-control-bg-muted);
-  border: clamp(2px, 0.2vw, 3px) solid var(--color-border);
-  border-radius: 8px;
-  padding: 0.4rem;
+  border: clamp(2px, 0.25vw, 4px) solid var(--color-border);
+  border-radius: 10px;
+  padding: 0.5rem;
   font-family: var(--font-heading), sans-serif;
-  font-size: clamp(0.8rem, 1.5vw, 2rem);
+  font-size: clamp(1.3rem, 2.2vw, 2.8rem);
   color: var(--color-text-dim);
   transition: all 0.4s;
 }
@@ -193,7 +193,7 @@ const dramaClass = computed(() => {
 .ts-fill-rest.impossible { background: var(--tv-danger-bg); border-color: var(--tv-danger-border); }
 .ts-rest-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: clamp(0.6rem, 1vw, 1.2rem);
+  font-size: clamp(1rem, 1.5vw, 1.8rem);
   color: var(--tv-info-text);
   letter-spacing: 0.04em;
   white-space: nowrap;
@@ -220,9 +220,9 @@ const dramaClass = computed(() => {
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: clamp(0.6rem, 1vw, 1.5rem);
+  gap: clamp(0.8rem, 1.3vw, 2rem);
   font-family: var(--font-heading), sans-serif;
-  font-size: clamp(1rem, 2vw, 2.5rem);
+  font-size: clamp(1.5rem, 2.5vw, 3rem);
   letter-spacing: 0.08em;
 }
 .ts-info-elapsed, .ts-info-remaining { color: var(--color-text-dim); }

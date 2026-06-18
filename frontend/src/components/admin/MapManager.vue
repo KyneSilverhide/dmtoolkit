@@ -834,6 +834,7 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
             @update:grid-offset-x="gridOffsetX = $event"
             @update:grid-offset-y="gridOffsetY = $event"
             @save="saveGridConfig"
+            @detect="runGridDetection"
           />
 
           <MapFogControls

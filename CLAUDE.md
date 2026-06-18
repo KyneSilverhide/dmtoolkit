@@ -56,6 +56,8 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │   │                       # (projections de gradients écrêtés + passe-haut médian + binarisation + autocorrélation/somme harmonique ;
 │   │   │                       #  ratio périodes X/Y : 1 = carrée, √3 = hex flat, 1/√3 = hex pointy)
 │   │   │                       # Taille de cellule détectée stockée dans grid_cell_w/h (découplée de cols/rows → gère marges et grilles partielles)
+│   │   │                       # Étendue détectée : cols/rows et offsets bornés aux lignes réellement présentes (combExtent + énergie des bandes
+│   │   │                       #   de bord pour distinguer cellule partielle coupée vs marge vide ; hex : trimHexExtent par énergie de colonne/ligne)
 │   │   │                       # Offset hex : recalage 2D du gradient le long des arêtes du maillage candidat (fitHexOffset)
 │   │   │                       # Exécutée à l'upload (type='map') et via POST .../detect-grid
 │   │   │                       # Fixtures d'entraînement : backend/test/grid-fixtures/ ; CLI : scripts/detect-grid.js, scripts/grid-overlay.js
