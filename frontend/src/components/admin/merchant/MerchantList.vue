@@ -150,8 +150,11 @@ const emit = defineEmits(['show-tv', 'close-merchant', 'delete-merchant'])
   letter-spacing: 0.1em;
   text-transform: uppercase;
   font-size: 0.6rem;
-  width: 70px;
+  width: 90px;
   flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .preview-name { flex: 1; color: var(--color-parchment); }
 .preview-price { color: var(--color-gold-bright); width: 50px; text-align: right; flex-shrink: 0; }
