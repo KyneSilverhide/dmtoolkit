@@ -252,9 +252,11 @@ test('admin resets grid fog cells and all cells become hidden', async ({ browser
     await saveGridBtn.click()
     await expect(adminPage.page.locator('.grid-status-badge')).toBeVisible({ timeout: 8_000 })
 
-    const activerBtn = adminPage.page.locator('button').filter({ hasText: /^Activer$/i }).first()
-    await expect(activerBtn).toBeVisible({ timeout: 5_000 })
-    await activerBtn.click()
+    // "Carte TV" already enables fog automatically, so the toggle may read "Activer" or "Désactiver"
+    const fogToggleBtn = adminPage.page.locator('button.action-btn').filter({ hasText: /Activer|Désactiver/i }).first()
+    await expect(fogToggleBtn).toBeVisible({ timeout: 5_000 })
+    const fogAlreadyEnabled = await fogToggleBtn.evaluate(el => el.classList.contains('active'))
+    if (!fogAlreadyEnabled) await fogToggleBtn.click()
 
     // Reveal a cell
     const canvas = adminPage.page.locator('.map-canvas').first()
