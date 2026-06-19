@@ -19,6 +19,7 @@ const uploading = ref(false)
 const uploadError = ref('')
 const previewIframeRef = ref(null)
 const pendingPuzzleClicks = ref([])
+const dragOver = ref(false)
 
 const sessionId = computed(() => sessionStore.activeSession?.id)
 
@@ -41,9 +42,8 @@ async function loadPuzzles() {
   }
 }
 
-async function uploadPuzzle(event) {
-  const file = event.target.files?.[0]
-  if (!file) return
+async function uploadFile(file) {
+  if (!file || !sessionId.value) return
   uploadError.value = ''
   uploading.value = true
   try {
@@ -62,8 +62,31 @@ async function uploadPuzzle(event) {
     uploadError.value = 'Erreur réseau.'
   } finally {
     uploading.value = false
-    event.target.value = ''
   }
+}
+
+function uploadPuzzle(event) {
+  const file = event.target.files?.[0]
+  uploadFile(file)
+  event.target.value = ''
+}
+
+function onDragOver(e) {
+  if (uploading.value || !sessionId.value) return
+  e.preventDefault()
+  dragOver.value = true
+}
+
+function onDragLeave(e) {
+  if (!e.currentTarget.contains(e.relatedTarget)) dragOver.value = false
+}
+
+function onDrop(e) {
+  e.preventDefault()
+  dragOver.value = false
+  if (uploading.value || !sessionId.value) return
+  const file = Array.from(e.dataTransfer.files).find(f => /\.html?$/i.test(f.name))
+  if (file) uploadFile(file)
 }
 
 function showPuzzle(puzzle) {
@@ -108,12 +131,22 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="puzzle-manager">
+  <div
+    class="puzzle-manager"
+    :class="{ 'drag-active': dragOver }"
+    @dragover="onDragOver"
+    @dragleave="onDragLeave"
+    @drop="onDrop"
+  >
+    <div v-if="dragOver" class="drop-overlay">
+      <AppIcon icon="lucide:file-code" size="2rem" color="var(--color-gold-bright)" />
+      <span>Déposer le puzzle HTML ici</span>
+    </div>
+
     <div class="puzzle-upload-section">
       <label class="upload-label">
         <AppIcon icon="lucide:upload" size="1em" />
         Importer un puzzle HTML
-        <HelpTip id="puzzle.html" />
         <input
           type="file"
           accept=".html,.htm"
@@ -122,6 +155,7 @@ onUnmounted(() => {
           @change="uploadPuzzle"
         />
       </label>
+      <HelpTip id="puzzle.html" />
       <span v-if="uploading" class="upload-status">Envoi…</span>
       <span v-if="uploadError" class="upload-error">{{ uploadError }}</span>
     </div>
@@ -175,11 +209,34 @@ onUnmounted(() => {
 
 <style scoped>
 .puzzle-manager {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   padding: 0.5rem 0;
 }
+
+.drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: rgba(0, 0, 0, 0.65);
+  border: 2px dashed var(--color-gold-dark);
+  border-radius: 10px;
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.drag-active > *:not(.drop-overlay) { opacity: 0.35; pointer-events: none; }
 
 .puzzle-upload-section {
   display: flex;
