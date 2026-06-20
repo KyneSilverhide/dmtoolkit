@@ -267,6 +267,9 @@ ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_offset_y REAL DEFAULT 0
 -- NULL = legacy behaviour (cell size derived from cols/rows spanning the image).
 ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_cell_w DOUBLE PRECISION;
 ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_cell_h DOUBLE PRECISION;
+
+-- TV theme always mirrors the admin's theme (no independent light/dark switch on TV).
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS tv_theme VARCHAR(10) NOT NULL DEFAULT 'dark';
 `
 
 async function runMigrations() {

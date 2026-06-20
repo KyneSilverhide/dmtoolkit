@@ -201,6 +201,10 @@ function toggleTheme() {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
   setThemePreference('admin', theme.value)
   applyTheme(theme.value)
+  if (sessionStore.activeSession?.id) {
+    const socket = getSocket(authStore.token)
+    socket.emit('set-tv-theme', { sessionId: sessionStore.activeSession.id, theme: theme.value })
+  }
 }
 
 function adjustRound(delta) {
@@ -347,6 +351,7 @@ watch(
     isSessionPanelCollapsed.value = true
     const socket = getSocket(authStore.token)
     socket.emit(ADMIN_JOIN, sessionId)
+    socket.emit('set-tv-theme', { sessionId, theme: theme.value })
   },
   { immediate: true }
 )

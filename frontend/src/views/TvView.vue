@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { getSocket, resetSocket } from '@/socket.js'
-import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
+import { applyTheme } from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
 import TvLobby from '../components/tv/TvLobby.vue'
 import TvCombat from '../components/tv/TvCombat.vue'
@@ -44,11 +44,8 @@ const activeTimeScale = ref(null)
 const activeTimer = ref(null)
 const combatRound = ref(0)
 const factions = ref([])
-const isDemo = ref(false)
 const now = ref(Date.now())
 let clockTickInterval = null
-const theme = ref(getThemePreference('tv', 'dark'))
-const isLightTheme = computed(() => theme.value === 'light')
 
 // ── HP animations ───────────────────────────────────────────────────────────
 const hpAnimations = ref({})
@@ -193,12 +190,6 @@ const tensionShakeClass = computed(() => {
   return 'shake-hard'
 })
 
-function toggleTheme() {
-  theme.value = theme.value === 'light' ? 'dark' : 'light'
-  setThemePreference('tv', theme.value)
-  applyTheme(theme.value)
-}
-
 // ── Socket ────────────────────────────────────────────────────────────────────
 let socket = null
 
@@ -226,7 +217,7 @@ onMounted(() => {
     activeTimeScale.value = data.timeScale || null
     combatRound.value = data.combatRound || 0
     activeTimer.value = data.timer || null
-    isDemo.value = !!data.isDemo
+    applyTheme(data.tvTheme || 'dark')
     factions.value = Array.isArray(data.factions) ? data.factions : []
     data.players.forEach(pl => { previousHp.value[pl.id] = pl.current_hp })
     if (data.mapState) applyMapState(data.mapState)
@@ -396,6 +387,8 @@ onMounted(() => {
 
   socket.on('demo-reset', () => { window.location.reload() })
 
+  socket.on('tv-theme-updated', ({ theme }) => { applyTheme(theme || 'dark') })
+
   // guard beforeunload géré via watch(puzzleImageId)
 })
 
@@ -408,15 +401,6 @@ onUnmounted(() => {
 
 <template>
   <div class="tv-wrapper">
-    <button class="tv-theme-toggle" @click="toggleTheme">
-      <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="1em" />
-      {{ isLightTheme ? 'Sombre' : 'Clair' }}
-    </button>
-
-    <div v-if="isDemo" class="tv-demo-banner" role="alert">
-      ⚠️ Mode démonstration — contenu effacé chaque nuit à minuit
-    </div>
-
     <div v-if="connectionError" class="tv-error">
       <p class="error-icon"><AppIcon icon="lucide:alert-triangle" size="3rem" color="var(--color-warning)" /></p>
       <p class="error-text">{{ connectionError }}</p>
@@ -591,28 +575,6 @@ onUnmounted(() => {
   --tv-danger-border: var(--color-danger-border);
 }
 
-.tv-theme-toggle {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 20;
-  background: var(--tv-control-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  padding: 0.45rem 0.85rem;
-  color: var(--color-text-dim);
-  font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.tv-theme-toggle:hover {
-  color: var(--color-gold-bright);
-  border-color: var(--color-gold-dark);
-}
-
 /* ── Loading / Error ──────────────────────────────────────────────────────── */
 .tv-loading, .tv-error {
   flex: 1;
@@ -734,25 +696,6 @@ onUnmounted(() => {
 .tv-mode-enter-from,
 /* noinspection CssUnusedSymbol */
 .tv-mode-leave-to { opacity: 0; }
-
-/* ── Demo banner ──────────────────────────────────────────────────────────── */
-.tv-demo-banner {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 9000;
-  text-align: center;
-  padding: 0.3rem 1rem;
-  background: rgba(146, 64, 14, 0.75);
-  color: #fef3c7;
-  font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  backdrop-filter: blur(4px);
-  border-top: 1px solid rgba(245, 158, 11, 0.4);
-}
 
 /* ── Reputation change toasts ─────────────────────────────────────────────── */
 .reputation-toast-area {

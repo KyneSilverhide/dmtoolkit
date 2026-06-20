@@ -617,6 +617,7 @@ function setupSocket(io) {
           } : null,
           isDemo: !!socket.admin.is_demo,
           factions: await getFactionsBySession(session.id),
+          tvTheme: session.tv_theme || 'dark',
         })
       } catch (err) { console.error(err) }
     })
@@ -670,7 +671,18 @@ function setupSocket(io) {
           } : null,
           isDemo: !!session.admin_is_demo,
           factions: await getFactionsBySession(session.id),
+          tvTheme: session.tv_theme || 'dark',
         })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: set TV theme (always mirrors admin's own theme) ─────────────
+    socket.on('set-tv-theme', async ({ sessionId, theme }) => {
+      if (!socket.admin) return
+      if (theme !== 'light' && theme !== 'dark') return
+      try {
+        await pool.query('UPDATE sessions SET tv_theme = $1 WHERE id = $2 AND created_by = $3', [theme, sessionId, socket.admin.id])
+        io.to(`tv:${sessionId}`).emit('tv-theme-updated', { theme })
       } catch (err) { console.error(err) }
     })
 

@@ -99,6 +99,19 @@ function closePuzzle() {
   socket.emit(CLOSE_PUZZLE, { sessionId: sessionId.value })
 }
 
+async function deletePuzzle(puzzle) {
+  if (!confirm(`Supprimer "${puzzle.original_name || `Puzzle #${puzzle.id}`}" ?`)) return
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionId.value}/images/${puzzle.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    if (res.ok) await loadPuzzles()
+  } catch (err) {
+    console.error('[PuzzleManager] deletePuzzle:', err)
+  }
+}
+
 function puzzleServeUrl(puzzle, seed) {
   if (!puzzle || !seed) return ''
   return `${BACKEND_URL}/api/puzzles/serve/${puzzle.id}?seed=${seed}`
@@ -191,14 +204,24 @@ onUnmounted(() => {
           <AppIcon icon="lucide:file-code" size="1em" />
           {{ puzzle.original_name || `Puzzle #${puzzle.id}` }}
         </span>
-        <button
-          class="show-btn"
-          :disabled="!!activePuzzle"
-          @click="showPuzzle(puzzle)"
-        >
-          <AppIcon icon="lucide:monitor-play" size="1em" />
-          Afficher
-        </button>
+        <div class="puzzle-actions">
+          <button
+            class="show-btn"
+            :disabled="!!activePuzzle"
+            @click="showPuzzle(puzzle)"
+          >
+            <AppIcon icon="lucide:monitor-play" size="1em" />
+            Afficher
+          </button>
+          <button
+            class="delete-btn"
+            title="Supprimer"
+            :disabled="activePuzzle?.puzzleImageId === puzzle.id"
+            @click="deletePuzzle(puzzle)"
+          >
+            <AppIcon icon="lucide:trash-2" size="1em" />
+          </button>
+        </div>
       </div>
     </div>
     <p v-else-if="!uploading" class="empty-hint">
@@ -352,6 +375,30 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 .show-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.puzzle-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.5rem;
+  background: transparent;
+  border: 1px solid var(--color-border, #444);
+  border-radius: 4px;
+  color: var(--color-danger, #e55);
+  cursor: pointer;
+}
+.delete-btn:hover { background: var(--surface-raised); border-color: var(--color-danger, #e55); }
+.delete-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
