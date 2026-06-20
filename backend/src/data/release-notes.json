@@ -1,6 +1,95 @@
 {
   "notes": [
     {
+      "version": "1.0.108",
+      "date": "2026-06-20",
+      "changes": [
+        { "type": "fix", "role": "all", "text": "TV — l'écran n'affiche plus la mention du mode démonstration, et son thème clair/sombre suit désormais automatiquement celui de l'admin (plus de switch indépendant côté TV)." },
+        { "type": "improvement", "role": "admin", "text": "Puzzles — bouton pour supprimer un puzzle importé directement depuis le gestionnaire." }
+      ]
+    },
+    {
+      "version": "1.0.107",
+      "date": "2026-06-19",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Puzzles — glissez-déposez un fichier HTML directement sur le gestionnaire de puzzles pour l'importer, en plus du bouton d'upload classique." }
+      ]
+    },
+    {
+      "version": "1.0.105",
+      "date": "2026-06-19",
+      "changes": [
+        { "type": "fix", "role": "admin", "text": "Marchand — les catégories trop longues ne débordent plus sur le nom de l'objet dans la liste des stocks." },
+        { "type": "improvement", "role": "all", "text": "Puzzle des tuyaux — la grille s'adapte désormais à la taille de l'écran TV au lieu d'utiliser une taille de cellule fixe." }
+      ]
+    },
+    {
+      "version": "1.0.104",
+      "date": "2026-06-18",
+      "changes": [
+        { "type": "improvement", "role": "all", "text": "TV — lisibilité générale améliorée (tailles de texte et contrastes retravaillés)." }
+      ]
+    },
+    {
+      "version": "1.0.102",
+      "date": "2026-06-10",
+      "changes": [
+        { "type": "improvement", "role": "all", "text": "TV — image projetée : agrandissement du texte d'overlay et suppression d'un centrage vertical superflu." }
+      ]
+    },
+    {
+      "version": "1.0.99",
+      "date": "2026-06-10",
+      "changes": [
+        { "type": "improvement", "role": "admin", "text": "Interface admin : suppression de la largeur maximale, l'écran est désormais utilisé sur toute sa largeur." },
+        { "type": "improvement", "role": "admin", "text": "Carte — la détection automatique de la grille est désormais effectuée côté serveur (plus fiable, indépendante du navigateur)." }
+      ]
+    },
+    {
+      "version": "1.0.92",
+      "date": "2026-06-07",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Rythme — nouveau widget de gestion du round de combat dans l'interface admin, synchronisé en temps réel avec la TV." }
+      ]
+    },
+    {
+      "version": "1.0.85",
+      "date": "2026-06-06",
+      "changes": [
+        { "type": "fix", "role": "admin", "text": "Corrections diverses : vignettes des cartes harmonisées au format des images, alignement des labels de réputation, échelle de tension qui restait affichée comme active après fermeture, clavier numérique pour la saisie du code de session, et sélection du joueur corrigée dans les réponses aux jets de dés cachés." }
+      ]
+    },
+    {
+      "version": "1.0.83",
+      "date": "2026-06-06",
+      "changes": [
+        { "type": "improvement", "role": "admin", "text": "Carte — maintenir le clic pour révéler plusieurs cellules de brouillard d'un coup (hold-to-reveal)." },
+        { "type": "fix", "role": "all", "text": "TV — la galerie de cartes ne s'affiche plus par erreur sur l'écran TV." }
+      ]
+    },
+    {
+      "version": "1.0.82",
+      "date": "2026-06-06",
+      "changes": [
+        { "type": "fix", "role": "admin", "text": "Carte — correction du calcul des sommets de la grille hexagonale et de la détection de clic sur les cellules." }
+      ]
+    },
+    {
+      "version": "1.0.81",
+      "date": "2026-06-06",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Carte — détection assistée de la grille par analyse d'image, avec aperçu en surimpression à confirmer ou ajuster ; possibilité de décaler la grille (offset) si elle n'est pas parfaitement alignée avec l'image." },
+        { "type": "fix", "role": "all", "text": "Carte — correction de l'affichage des cellules révélées côté TV après l'enregistrement de la configuration de grille." }
+      ]
+    },
+    {
+      "version": "1.0.78",
+      "date": "2026-06-06",
+      "changes": [
+        { "type": "fix", "role": "admin", "text": "Bulles d'aide : correction du texte de l'info-bulle du résumé de journal de session (qui mentionnait l'IA à tort), une seule bulle affichée par écran pour les galeries d'images/audio, et correction de la bulle de réputation qui cassait la mise en page du formulaire." }
+      ]
+    },
+    {
       "version": "1.0.77",
       "date": "2026-06-10",
       "changes": [
