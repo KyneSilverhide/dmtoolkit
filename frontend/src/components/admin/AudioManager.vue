@@ -71,10 +71,21 @@ const audioSearch = ref('')
 const renamingId = ref(null)
 const renameValue = ref('')
 
+const MUSIC_CATEGORY = 'Musique'
+const MUSIC_CROSSFADE_MS = 1200
+
+function isMusicTrack(track) {
+  return (track.audio_category || 'Général') === MUSIC_CATEGORY
+}
+
 const allCategories = computed(() => {
   const seen = new Set()
   for (const t of tracks.value) seen.add(t.audio_category || 'Général')
-  return [...seen].sort((a, b) => a.localeCompare(b, 'fr'))
+  return [...seen].sort((a, b) => {
+    if (a === MUSIC_CATEGORY) return -1
+    if (b === MUSIC_CATEGORY) return 1
+    return a.localeCompare(b, 'fr')
+  })
 })
 
 const tracksByCategory = computed(() => {
@@ -132,7 +143,59 @@ function getAudio(track) {
   return audioObjects.get(track.id)
 }
 
+function fadeOutAndStop(track, duration = MUSIC_CROSSFADE_MS) {
+  const audio = audioObjects.get(track.id)
+  if (!audio) return
+  connectToContext(track)
+  const gain = gainNodes.get(track.id)
+  if (gain) {
+    const ctx = getAudioContext()
+    const now = ctx.currentTime
+    gain.gain.cancelScheduledValues(now)
+    gain.gain.setValueAtTime(gain.gain.value, now)
+    gain.gain.linearRampToValueAtTime(0, now + duration / 1000)
+    setTimeout(() => {
+      audio.pause()
+      audio.currentTime = 0
+      gain.gain.value = volumes.value[track.id] ?? 1
+      playing.value = new Set([...playing.value].filter(id => id !== track.id))
+      currentTimes.value = { ...currentTimes.value, [track.id]: 0 }
+    }, duration)
+  } else {
+    audio.pause()
+    playing.value = new Set([...playing.value].filter(id => id !== track.id))
+  }
+}
+
+function fadeInPlay(track, duration = MUSIC_CROSSFADE_MS) {
+  const audio = getAudio(track)
+  connectToContext(track)
+  const ctx = getAudioContext()
+  if (ctx.state === 'suspended') ctx.resume()
+  const gain = gainNodes.get(track.id)
+  const targetVol = volumes.value[track.id] ?? 1
+  if (gain) {
+    const now = ctx.currentTime
+    gain.gain.cancelScheduledValues(now)
+    gain.gain.setValueAtTime(0, now)
+    gain.gain.linearRampToValueAtTime(targetVol, now + duration / 1000)
+  }
+  audio.play().catch(err => console.error(err))
+  playing.value = new Set([...playing.value, track.id])
+}
+
 function togglePlay(track) {
+  if (isMusicTrack(track)) {
+    if (playing.value.has(track.id)) {
+      fadeOutAndStop(track)
+      return
+    }
+    const others = tracks.value.filter(t => isMusicTrack(t) && t.id !== track.id && playing.value.has(t.id))
+    for (const other of others) fadeOutAndStop(other)
+    fadeInPlay(track)
+    return
+  }
+
   const audio = getAudio(track)
   if (playing.value.has(track.id)) {
     audio.pause()
@@ -540,6 +603,7 @@ onUnmounted(() => {
         :key="group.key"
         class="category-section"
         :group="group"
+        :is-music="group.key === 'Musique'"
         :playing="playing"
         :volumes="volumes"
         :loops="loops"

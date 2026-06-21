@@ -11,6 +11,7 @@ import { BACKEND_URL } from '@/config.js'
 const images = ref([])
 const selectedImageUrl = ref(null)
 const activeLobbyBgUrl = ref(null)
+const zoomedImageUrl = ref(null)
 const uploading = ref(false)
 const uploadError = ref('')
 const uploadProgress = ref(0)   // 0–100
@@ -115,6 +116,14 @@ function handleAdminState(data) {
 
 function handleLobbyBgUpdated({ url }) {
   activeLobbyBgUrl.value = url || null
+}
+
+function openZoom(url) {
+  zoomedImageUrl.value = url
+}
+
+function closeZoom() {
+  zoomedImageUrl.value = null
 }
 
 function imageFullUrl(url) {
@@ -233,7 +242,13 @@ onUnmounted(() => {
           class="gallery-item"
           :class="{ selected: selectedImageUrl === img.url }">
         <div class="thumb-wrapper">
-          <img :src="imageFullUrl(img.thumbnail_url || img.url)" :alt="img.original_name || img.url" class="gallery-thumb" />
+          <img
+            :src="imageFullUrl(img.thumbnail_url || img.url)"
+            :alt="img.original_name || img.url"
+            class="gallery-thumb zoomable"
+            title="Voir en grand"
+            @click="openZoom(img.url)"
+          />
           <button class="delete-btn" @click="deleteImage(img, $event)" title="Supprimer">✕</button>
         </div>
         <p class="img-name">{{ img.original_name || img.url.split('/').pop() }}</p>
@@ -260,6 +275,15 @@ onUnmounted(() => {
         </div>
       </div>
     </template>
+
+    <Teleport to="body">
+      <div v-if="zoomedImageUrl" class="zoom-overlay" @click="closeZoom">
+        <button class="zoom-close-btn" @click="closeZoom" title="Fermer">
+          <AppIcon icon="lucide:x" size="1.2em" />
+        </button>
+        <img :src="imageFullUrl(zoomedImageUrl)" class="zoom-image" @click.stop />
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -493,6 +517,43 @@ onUnmounted(() => {
   line-height: 1;
 }
 .thumb-wrapper:hover .delete-btn { opacity: 1; }
+
+.zoomable { cursor: zoom-in; }
+
+.zoom-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  cursor: zoom-out;
+}
+.zoom-image {
+  max-width: 92vw;
+  max-height: 92vh;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid var(--color-gold-dark);
+  cursor: default;
+}
+.zoom-close-btn {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 50%;
+  color: var(--color-gold-bright);
+  cursor: pointer;
+}
+.zoom-close-btn:hover { background: rgba(0, 0, 0, 0.8); }
 
 .lobby-btn {
   margin-top: 0.2rem;

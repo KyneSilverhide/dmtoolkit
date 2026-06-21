@@ -12,6 +12,7 @@ const props = defineProps({
   renamingId:    { default: null },
   renameValue:   { type: String, default: '' },
   allCategories: { type: Array, default: () => [] },
+  isMusic:       { type: Boolean, default: false },
 })
 
 const emit = defineEmits([
@@ -30,12 +31,15 @@ const emit = defineEmits([
 </script>
 
 <template>
-  <div class="category-section">
+  <div class="category-section" :class="{ 'category-music': isMusic }">
     <!-- En-tête de catégorie -->
     <div class="cat-header">
-      <AppIcon icon="lucide:folder" size="0.8em" class="cat-icon" />
+      <AppIcon :icon="isMusic ? 'lucide:disc-3' : 'lucide:folder'" size="0.8em" class="cat-icon" />
       <span class="cat-label">{{ group.label }}</span>
       <span class="cat-count">{{ group.tracks.length }}</span>
+      <span v-if="isMusic" class="cat-exclusive-badge" title="Une seule musique à la fois, avec transition en fondu">
+        <AppIcon icon="lucide:repeat" size="0.65em" /> Exclusif
+      </span>
       <div class="cat-header-line" />
       <button
         class="cat-delete-btn"
@@ -123,6 +127,31 @@ const emit = defineEmits([
   transition: all 0.12s;
 }
 .cat-delete-btn:hover { border-color: var(--color-danger); color: var(--color-danger); }
+
+/* Catégorie Musique : exclusive, mise en avant visuellement */
+.category-music {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--color-accent-border, var(--color-gold-dark));
+  border-radius: 8px;
+  background: var(--surface-accent-soft, var(--surface-gold-soft));
+}
+.category-music .cat-icon { color: var(--color-accent, var(--color-gold-bright)); }
+.category-music .cat-label { color: var(--color-accent, var(--color-gold-bright)); }
+.cat-exclusive-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.55rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent, var(--color-gold-bright));
+  background: var(--surface-accent-soft-strong, var(--surface-gold-soft-strong));
+  border: 1px solid var(--color-accent-border, var(--color-gold-dark));
+  border-radius: 10px;
+  padding: 0.05rem 0.4rem;
+}
 
 .track-list {
   display: grid;
