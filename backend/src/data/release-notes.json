@@ -1,6 +1,13 @@
 {
   "notes": [
     {
+      "version": "1.0.109",
+      "date": "2026-06-21",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Audio — la catégorie « Musique » est désormais exclusive (une seule piste à la fois) et passe en fondu enchaîné d'un morceau à l'autre, avec une mise en valeur visuelle distincte dans le gestionnaire audio." }
+      ]
+    },
+    {
       "version": "1.0.108",
       "date": "2026-06-20",
       "changes": [
