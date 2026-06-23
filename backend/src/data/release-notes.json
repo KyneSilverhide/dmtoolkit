@@ -1,6 +1,13 @@
 {
   "notes": [
     {
+      "version": "1.0.111",
+      "date": "2026-06-23",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Vidéos — nouvel onglet pour téléverser des vidéos (MP4, WebM, OGG, MOV…) et les projeter en plein écran sur la TV, avec lecture automatique, recherche/filtre et suppression. (Indisponible en mode démo.)" }
+      ]
+    },
+    {
       "version": "1.0.109",
       "date": "2026-06-21",
       "changes": [

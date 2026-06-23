@@ -270,6 +270,9 @@ ALTER TABLE session_images ADD COLUMN IF NOT EXISTS grid_cell_h DOUBLE PRECISION
 
 -- TV theme always mirrors the admin's theme (no independent light/dark switch on TV).
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS tv_theme VARCHAR(10) NOT NULL DEFAULT 'dark';
+
+-- URL de la vidéo actuellement projetée sur la TV (tv_mode = 'video').
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_video_url VARCHAR(500);
 `
 
 async function runMigrations() {

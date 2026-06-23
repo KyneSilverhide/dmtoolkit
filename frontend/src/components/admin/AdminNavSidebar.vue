@@ -7,22 +7,30 @@ const props = defineProps({
   navGroups:       { type: Array, required: true },
   activeTab:       { type: String, required: true },
   tabActivity:     { type: Object, default: () => ({}) },
-  generatorEnabled:{ type: Boolean, default: true },
+  // Map des onglets verrouillés : { [tabKey]: { title, text } }. text peut contenir
+  // du markup simple (<code>) — contenu défini en dur, jamais une entrée utilisateur.
+  lockedTabs:      { type: Object, default: () => ({}) },
   isCollapsed:     { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:activeTab', 'update:isCollapsed'])
 
-// Tooltip fixe pour l'onglet Générateur grisé (échappe à overflow:hidden de la sidebar)
+// Tooltip fixe pour les onglets grisés (échappe à overflow:hidden de la sidebar)
 const lockedTooltipVisible = ref(false)
 const lockedTooltipPos = ref({ top: 0, left: 0 })
+const lockedTooltipContent = ref({ title: '', text: '' })
 
-function showLockedTooltip(event) {
+function isLocked(key) {
+  return !!props.lockedTabs[key]
+}
+
+function showLockedTooltip(event, key) {
   const rect = event.currentTarget.getBoundingClientRect()
   lockedTooltipPos.value = {
     top: rect.top + rect.height / 2,
     left: rect.right + 10,
   }
+  lockedTooltipContent.value = props.lockedTabs[key]
   lockedTooltipVisible.value = true
 }
 
@@ -31,7 +39,7 @@ function hideLockedTooltip() {
 }
 
 function selectTab(key) {
-  if (key === 'generator' && !props.generatorEnabled) return
+  if (isLocked(key)) return
   emit('update:activeTab', key)
 }
 </script>
@@ -57,12 +65,12 @@ function selectTab(key) {
           class="sidebar-item"
           :class="{
             active: activeTab === key,
-            'tab-locked': key === 'generator' && !generatorEnabled,
+            'tab-locked': isLocked(key),
           }"
           :data-testid="`tab-${key}`"
-          :aria-disabled="key === 'generator' && !generatorEnabled"
+          :aria-disabled="isLocked(key)"
           @click="selectTab(key)"
-          @mouseenter="(key === 'generator' && !generatorEnabled) ? showLockedTooltip($event) : null"
+          @mouseenter="isLocked(key) ? showLockedTooltip($event, key) : null"
           @mouseleave="hideLockedTooltip"
         >
           <span class="sidebar-item-icon">
@@ -95,12 +103,12 @@ function selectTab(key) {
       class="mobile-nav-btn"
       :class="{
         active: activeTab === tab.key,
-        'tab-locked': tab.key === 'generator' && !generatorEnabled,
+        'tab-locked': isLocked(tab.key),
       }"
       :title="tab.label"
-      :aria-disabled="tab.key === 'generator' && !generatorEnabled"
+      :aria-disabled="isLocked(tab.key)"
       @click="selectTab(tab.key)"
-      @mouseenter="(tab.key === 'generator' && !generatorEnabled) ? showLockedTooltip($event) : null"
+      @mouseenter="isLocked(tab.key) ? showLockedTooltip($event, tab.key) : null"
       @mouseleave="hideLockedTooltip"
     >
       <span class="mobile-nav-icon-wrap">
@@ -119,10 +127,11 @@ function selectTab(key) {
         class="generator-locked-tooltip"
         :style="{ top: lockedTooltipPos.top + 'px', left: lockedTooltipPos.left + 'px' }"
       >
-        <span class="glt-icon"><AppIcon icon="lucide:key" size="0.9em" /></span>
+        <span class="glt-icon"><AppIcon icon="lucide:lock" size="0.9em" /></span>
         <div class="glt-body">
-          <span class="glt-title">Générateur IA non activé</span>
-          <span class="glt-text">Configurez <code>GITHUB_TOKEN</code> dans le <code>.env</code> backend</span>
+          <span class="glt-title">{{ lockedTooltipContent.title }}</span>
+          <!-- eslint-disable-next-line vue/no-v-html — contenu défini en dur, pas d'entrée utilisateur -->
+          <span class="glt-text" v-html="lockedTooltipContent.text"></span>
         </div>
       </div>
     </Transition>

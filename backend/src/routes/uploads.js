@@ -141,11 +141,31 @@ const audioFilter = (req, file, cb) => {
   cb(null, true)
 }
 
+const VIDEO_ALLOWED_MIMES = [
+  'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime',
+  'video/x-matroska', 'video/x-m4v', 'video/mpeg',
+]
+const VIDEO_ALLOWED_EXTS = ['.mp4', '.webm', '.ogg', '.ogv', '.mov', '.mkv', '.m4v', '.mpeg', '.mpg']
+
+const videoFilter = (req, file, cb) => {
+  const ext = path.extname(file.originalname).toLowerCase()
+  if (!file.mimetype.startsWith('video/') && !VIDEO_ALLOWED_MIMES.includes(file.mimetype) && !VIDEO_ALLOWED_EXTS.includes(ext)) {
+    return cb(new Error('Format invalide. Formats acceptés : MP4, WebM, OGG, MOV, MKV, M4V.'))
+  }
+  cb(null, true)
+}
+
 // Multer instances — normal limits
 const audioUploadAdmin = multer({
   storage: adminStorage,
   limits: { fileSize: 150 * 1024 * 1024 },
   fileFilter: audioFilter,
+})
+
+const videoUploadAdmin = multer({
+  storage: adminStorage,
+  limits: { fileSize: 500 * 1024 * 1024 },
+  fileFilter: videoFilter,
 })
 
 const upload = multer({
@@ -165,6 +185,12 @@ const demoUploadAudio = multer({
   storage: adminStorage,
   limits: { fileSize: DEMO_MAX_FILE_BYTES },
   fileFilter: audioFilter,
+})
+
+const demoUploadVideo = multer({
+  storage: adminStorage,
+  limits: { fileSize: DEMO_MAX_FILE_BYTES },
+  fileFilter: videoFilter,
 })
 
 const HTML_SIZE_LIMIT = 5 * 1024 * 1024
@@ -337,6 +363,52 @@ router.post('/audio',
             await pool.query(
               'INSERT INTO session_images (session_id, url, original_name, type, audio_category, file_size) VALUES ($1, $2, $3, $4, $5, $6)',
               [sessionId, urls[i], uploadedFiles[i].originalname, 'audio', category, uploadedFiles[i].size]
+            )
+          }
+        }
+      } catch (err) { console.error(err) }
+    }
+
+    return res.json({ url: urls.length === 1 ? urls[0] : null, urls })
+  }
+)
+
+// Video upload endpoint — admin only
+router.post('/video',
+  authenticateToken,
+  handleUpload(videoUploadAdmin, demoUploadVideo, [
+    { name: 'files', maxCount: 20 },
+    { name: 'file',  maxCount: 1  },
+  ]),
+  async (req, res) => {
+    const uploadedFiles = [...(req.files?.files || []), ...(req.files?.file || [])]
+    if (uploadedFiles.length === 0) return res.status(400).json({ error: 'No file uploaded.' })
+
+    const sessionId = req.body.session_id
+    const urls = uploadedFiles.map(fileToUrl)
+
+    if (sessionId) {
+      try {
+        const sessionCheck = await pool.query(
+          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, req.admin.id]
+        )
+        if (sessionCheck.rows[0]) {
+          // Demo total storage check
+          if (req.admin.is_demo) {
+            const newBytes = uploadedFiles.reduce((s, f) => s + f.size, 0)
+            if (await exceedsDemoTotal(sessionId, newBytes)) {
+              removeFiles(uploadedFiles)
+              return res.status(413).json({
+                error: `Limite du mode démo atteinte : le stockage total est limité à 500 Mo par session.`,
+              })
+            }
+          }
+
+          for (let i = 0; i < uploadedFiles.length; i++) {
+            await pool.query(
+              "INSERT INTO session_images (session_id, url, original_name, type, file_size) VALUES ($1, $2, $3, 'video', $4)",
+              [sessionId, urls[i], uploadedFiles[i].originalname, uploadedFiles[i].size]
             )
           }
         }

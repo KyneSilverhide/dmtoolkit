@@ -610,6 +610,7 @@ function setupSocket(io) {
           combatRound: session.combat_round || 0,
           timer: serializeTimer(session),
           lobbyBgUrl: session.lobby_bg_url || null,
+          currentVideoUrl: session.current_video_url || null,
           activePuzzle: session.tv_mode === 'puzzle' && session.current_puzzle_image_id ? {
             puzzleImageId: session.current_puzzle_image_id,
             puzzleSeed: parseInt(session.current_puzzle_seed, 10),
@@ -653,6 +654,7 @@ function setupSocket(io) {
           qrCodeDataUrl,
           currentImageUrl: session.current_image_url,
           currentImageLabel: session.current_image_label || null,
+          currentVideoUrl: session.current_video_url || null,
           activeVote,
           doomClock,
           tensionScale: serializeTensionScale(session),
@@ -1104,6 +1106,20 @@ function setupSocket(io) {
         )
         io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: show video on TV ─────────────────────────────────────────────
+    socket.on('show-video', async ({ sessionId, videoUrl }) => {
+      if (!socket.admin) return
+      try {
+        if (!videoUrl || typeof videoUrl !== 'string') return
+        await pool.query(
+          'UPDATE sessions SET tv_mode = $1, current_video_url = $2 WHERE id = $3 AND created_by = $4',
+          ['video', videoUrl, sessionId, socket.admin.id]
+        )
+        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'video', videoUrl })
+        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'video', videoUrl })
       } catch (err) { console.error(err) }
     })
 

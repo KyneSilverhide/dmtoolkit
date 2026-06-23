@@ -81,6 +81,9 @@ const CLOSE_VOTE = 'close-vote'
 /** Admin displays an image on the TV: { sessionId, imageUrl } */
 const SHOW_IMAGE = 'show-image'
 
+/** Admin displays a video on the TV: { sessionId, videoUrl } */
+const SHOW_VIDEO = 'show-video'
+
 /** Admin displays a battlemap on the TV: { sessionId, imageUrl } */
 const SHOW_MAP = 'show-map'
 
@@ -341,6 +344,7 @@ module.exports = {
   CREATE_VOTE,
   CLOSE_VOTE,
   SHOW_IMAGE,
+  SHOW_VIDEO,
   SHOW_MAP,
   MAP_SET_FOG,
   MAP_VIEWPORT_UPDATE,

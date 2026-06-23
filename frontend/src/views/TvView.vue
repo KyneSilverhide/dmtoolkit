@@ -11,6 +11,7 @@ import TvDoomClock from '../components/tv/TvDoomClock.vue'
 import TvTensionScale from '../components/tv/TvTensionScale.vue'
 import TvTimescale from '../components/tv/TvTimescale.vue'
 import TvImage from '../components/tv/TvImage.vue'
+import TvVideo from '../components/tv/TvVideo.vue'
 import TvMap from '../components/tv/TvMap.vue'
 import TvMerchant from '../components/tv/TvMerchant.vue'
 import TvPuzzle from '../components/tv/TvPuzzle.vue'
@@ -35,6 +36,7 @@ const qrCodeDataUrl = ref(null)
 const sessionCode = ref('')
 const currentImageUrl = ref(null)
 const currentImageLabel = ref(null)
+const currentVideoUrl = ref(null)
 const lobbyBgUrl = ref(null)
 const activeVote = ref(null)
 const activeMerchant = ref(null)
@@ -209,6 +211,7 @@ onMounted(() => {
     sessionCode.value = data.sessionCode || ''
     currentImageUrl.value = data.currentImageUrl || null
     currentImageLabel.value = data.currentImageLabel || null
+    currentVideoUrl.value = data.currentVideoUrl || null
     lobbyBgUrl.value = data.lobbyBgUrl || null
     activeVote.value = data.activeVote || null
     activeMerchant.value = data.activeMerchant || null
@@ -232,10 +235,11 @@ onMounted(() => {
     }
   })
 
-  socket.on('tv-mode-changed', ({ mode, imageUrl, imageLabel, merchantData, puzzleImageId: pid, puzzleSeed: ps }) => {
+  socket.on('tv-mode-changed', ({ mode, imageUrl, imageLabel, videoUrl, merchantData, puzzleImageId: pid, puzzleSeed: ps }) => {
     tvMode.value = mode
     if (imageUrl) currentImageUrl.value = imageUrl
     if (mode === 'image') currentImageLabel.value = imageLabel || null
+    if (videoUrl) currentVideoUrl.value = videoUrl
     if (merchantData) activeMerchant.value = merchantData
     else if (mode === 'lobby') activeMerchant.value = null
     if (mode === 'puzzle' && pid) {
@@ -469,6 +473,11 @@ onUnmounted(() => {
             v-else-if="tvMode === 'image'"
             :image-url="currentImageUrl"
             :image-label="currentImageLabel"
+          />
+
+          <TvVideo
+            v-else-if="tvMode === 'video'"
+            :video-url="currentVideoUrl"
           />
 
           <TvMap

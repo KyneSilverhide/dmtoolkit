@@ -11,6 +11,7 @@ import SessionJournal from '../components/admin/SessionJournal.vue'
 import TvControls from '../components/admin/TvControls.vue'
 import VoteManager from '../components/admin/VoteManager.vue'
 import ImageManager from '../components/admin/ImageManager.vue'
+import VideoManager from '../components/admin/VideoManager.vue'
 import AudioManager from '../components/admin/AudioManager.vue'
 import MerchantManager from '../components/admin/MerchantManager.vue'
 import PuzzleManager from '../components/admin/PuzzleManager.vue'
@@ -58,6 +59,7 @@ const tabComponents = {
   tension: TvControls,
   vote: VoteManager,
   images: ImageManager,
+  videos: VideoManager,
   audio: AudioManager,
   map: MapManager,
   merchants: MerchantManager,
@@ -71,6 +73,7 @@ const currentTabComponent = computed(() => tabComponents[activeTab.value] || nul
 
 const hasActiveVote = ref(false)
 const hasActiveImage = ref(false)
+const hasActiveVideo = ref(false)
 const hasActiveMerchant = ref(false)
 const hasActiveDoom = ref(false)
 const hasActiveTension = ref(false)
@@ -80,9 +83,28 @@ const activePuzzle = ref(null)
 const hasActiveReputation = ref(false)
 const combatRound = ref(0)
 
+// Onglets verrouillés (grisés + tooltip). Map { [tabKey]: { title, text } }.
+const lockedTabs = computed(() => {
+  const locked = {}
+  if (!generatorEnabled.value) {
+    locked.generator = {
+      title: 'Générateur IA non activé',
+      text: 'Configurez <code>GITHUB_TOKEN</code> dans le <code>.env</code> backend',
+    }
+  }
+  if (authStore.admin?.is_demo) {
+    locked.videos = {
+      title: 'Indisponible en mode démo',
+      text: 'L\'upload de vidéos n\'est pas disponible sur le compte de démonstration.',
+    }
+  }
+  return locked
+})
+
 const tabActivity = computed(() => ({
   vote: hasActiveVote.value,
   images: hasActiveImage.value,
+  videos: hasActiveVideo.value,
   merchants: hasActiveMerchant.value,
   tension: hasActiveDoom.value || hasActiveTension.value || hasActiveTimeScale.value,
   map: hasActiveMap.value,
@@ -142,6 +164,7 @@ const tabs = [
   { key: 'tension',   label: 'Rythme',        icon: 'lucide:timer' },
   { key: 'vote',      label: 'Vote',          icon: 'lucide:check-square' },
   { key: 'images',    label: 'Images',        icon: 'lucide:image' },
+  { key: 'videos',    label: 'Vidéos',        icon: 'lucide:video' },
   { key: 'audio',     label: 'Audio',         icon: 'lucide:music-2' },
   { key: 'map',       label: 'Carte',         icon: 'lucide:map' },
   { key: 'merchants', label: 'Marchands',     icon: 'game-icons:shop' },
@@ -154,7 +177,7 @@ const tabs = [
 
 const navGroups = [
   { label: 'En jeu',  items: ['players', 'message', 'dice', 'journal'] },
-  { label: 'Scène',   items: ['tension', 'vote', 'images', 'audio', 'map', 'merchants', 'puzzle', 'reputation'] },
+  { label: 'Scène',   items: ['tension', 'vote', 'images', 'videos', 'audio', 'map', 'merchants', 'puzzle', 'reputation'] },
   { label: 'Outils',  items: ['tresor', 'search', 'generator'] },
 ]
 
@@ -164,6 +187,7 @@ const tvModes = computed(() => ([
   { key: 'combat',     label: 'Combat',           hint: 'Liste des joueurs / HP / AC',  ready: true },
   { key: 'vote',       label: 'Vote',             hint: 'Affiche le vote actif',         ready: hasActiveVote.value },
   { key: 'image',      label: 'Image',            hint: 'Affiche l image active',        ready: hasActiveImage.value },
+  { key: 'video',      label: 'Vidéo',            hint: 'Affiche la vidéo active',       ready: hasActiveVideo.value },
   { key: 'map',        label: 'Carte',            hint: 'Depuis l onglet Carte',         ready: hasActiveMap.value },
   { key: 'merchant',   label: 'Marchand',         hint: 'Affiche le marchand actif',     ready: hasActiveMerchant.value },
   { key: 'doom',       label: 'Doom Clock',       hint: 'Depuis l onglet Rythme',        ready: hasActiveDoom.value },
@@ -228,6 +252,7 @@ function handleAdminState(data) {
 
   hasActiveVote.value = !!data.activeVote
   hasActiveImage.value = !!data.currentImageUrl
+  hasActiveVideo.value = !!data.currentVideoUrl
   hasActiveMerchant.value = !!data.activeMerchant
   hasActiveDoom.value = !!data.doomClock
   hasActiveTension.value = !!data.tensionScale
@@ -243,6 +268,7 @@ function handleAdminState(data) {
 function handleTvModeChanged(payload) {
   if (payload?.mode) tvMode.value = payload.mode
   if (payload?.imageUrl !== undefined) hasActiveImage.value = !!payload.imageUrl
+  if (payload?.videoUrl !== undefined) hasActiveVideo.value = !!payload.videoUrl
   if (payload?.merchantData !== undefined) hasActiveMerchant.value = !!payload.merchantData
   if (payload?.mode === 'puzzle' && payload?.puzzleImageId) {
     activePuzzle.value = { puzzleImageId: payload.puzzleImageId, puzzleSeed: payload.puzzleSeed, puzzleClicks: activePuzzle.value?.puzzleClicks || [] }
@@ -411,7 +437,7 @@ onUnmounted(() => {
         :nav-groups="navGroups"
         :active-tab="activeTab"
         :tab-activity="tabActivity"
-        :generator-enabled="generatorEnabled"
+        :locked-tabs="lockedTabs"
         :is-collapsed="isNavCollapsed"
         @update:active-tab="activeTab = $event"
         @update:is-collapsed="isNavCollapsed = $event"

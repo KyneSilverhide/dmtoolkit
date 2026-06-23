@@ -23,6 +23,10 @@ export const helpContent = {
   'image.screen':
     'Projetez vos images sur la TV via Afficher TV. Le champ Label TV s\'affiche en overlay en haut à gauche de l\'écran lors de la projection (ex : "Taverne du Poignard Noir"). Fond lobby définit l\'image comme arrière-plan du lobby à 15 % d\'opacité.',
 
+  // ── Admin — VideoManager ──────────────────────────────────────────────────
+  'video.screen':
+    'Téléversez vos vidéos (MP4, WebM, OGG, MOV…) puis projetez-les sur la TV via Afficher TV. La vidéo occupe tout l\'écran et démarre automatiquement.',
+
   // ── Admin — MapManager ────────────────────────────────────────────────────
   'map.fog':
     'Voile noir couvrant toute la carte côté TV. Peignez avec la souris sur le canvas pour révéler des zones. Les joueurs voient la révélation en temps réel.',
