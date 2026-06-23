@@ -1123,6 +1123,23 @@ function setupSocket(io) {
       } catch (err) { console.error(err) }
     })
 
+    // ── Admin: sync video playback to TV (only if that video is projected) ──
+    socket.on('video-control', async ({ sessionId, videoUrl, action, time }) => {
+      if (!socket.admin) return
+      try {
+        if (!['play', 'pause', 'seek'].includes(action)) return
+        const { rows } = await pool.query(
+          'SELECT tv_mode, current_video_url FROM sessions WHERE id = $1 AND created_by = $2',
+          [sessionId, socket.admin.id]
+        )
+        const s = rows[0]
+        // Ne rien faire si cet onglet n'est pas celui projeté sur la TV.
+        if (!s || s.tv_mode !== 'video' || s.current_video_url !== videoUrl) return
+        const t = (typeof time === 'number' && isFinite(time)) ? Math.max(0, time) : null
+        io.to(`tv:${sessionId}`).emit('video-control', { action, time: t })
+      } catch (err) { console.error(err) }
+    })
+
     // ── Admin: show puzzle on TV and players ──────────────────────────────
     socket.on('show-puzzle', async ({ sessionId, imageId }) => {
       if (!socket.admin) return

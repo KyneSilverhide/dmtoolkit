@@ -84,6 +84,9 @@ const SHOW_IMAGE = 'show-image'
 /** Admin displays a video on the TV: { sessionId, videoUrl } */
 const SHOW_VIDEO = 'show-video'
 
+/** Admin syncs video playback to the TV: { sessionId, videoUrl, action, time } — relayed to TV as { action, time } */
+const VIDEO_CONTROL = 'video-control'
+
 /** Admin displays a battlemap on the TV: { sessionId, imageUrl } */
 const SHOW_MAP = 'show-map'
 
@@ -345,6 +348,7 @@ module.exports = {
   CLOSE_VOTE,
   SHOW_IMAGE,
   SHOW_VIDEO,
+  VIDEO_CONTROL,
   SHOW_MAP,
   MAP_SET_FOG,
   MAP_VIEWPORT_UPDATE,

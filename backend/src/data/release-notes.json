@@ -4,7 +4,7 @@
       "version": "1.0.111",
       "date": "2026-06-23",
       "changes": [
-        { "type": "feature", "role": "admin", "text": "Vidéos — nouvel onglet pour téléverser des vidéos (MP4, WebM, OGG, MOV…) et les projeter en plein écran sur la TV, avec lecture automatique, recherche/filtre et suppression. (Indisponible en mode démo.)" }
+        { "type": "feature", "role": "admin", "text": "Vidéos — nouvel onglet pour téléverser des vidéos (MP4, WebM, OGG, MOV…) et les projeter en plein écran sur la TV, avec recherche/filtre et suppression. La lecture (play/pause/avance) se synchronise depuis l'aperçu de l'admin vers la TV, et le son sort du PC de l'admin comme pour l'audio. (Indisponible en mode démo.)" }
       ]
     },
     {

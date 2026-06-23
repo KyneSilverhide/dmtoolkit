@@ -90,6 +90,13 @@ export const SHOW_IMAGE = 'show-image'
 /** Admin displays a video on the TV: { sessionId, videoUrl } */
 export const SHOW_VIDEO = 'show-video'
 
+/**
+ * Admin syncs video playback to the TV: { sessionId, videoUrl, action: 'play'|'pause'|'seek', time }
+ * The server only relays it to the TV if that exact video is currently projected (tv_mode = 'video').
+ * Also re-emitted server → TV with { action, time }.
+ */
+export const VIDEO_CONTROL = 'video-control'
+
 /** Admin displays a battlemap on the TV: { sessionId, imageUrl } */
 export const SHOW_MAP = 'show-map'
 
@@ -414,6 +421,7 @@ export default {
   CLOSE_VOTE,
   SHOW_IMAGE,
   SHOW_VIDEO,
+  VIDEO_CONTROL,
   SHOW_MAP,
   MAP_SET_FOG,
   MAP_VIEWPORT_UPDATE,

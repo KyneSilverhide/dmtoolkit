@@ -1,16 +1,21 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
 import { authStore } from '@/stores/auth.js'
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
-import { SHOW_VIDEO } from '@/socket-events.js'
+import { SHOW_VIDEO, VIDEO_CONTROL } from '@/socket-events.js'
 
 import { BACKEND_URL } from '@/config.js'
 
 const videos = ref([])
 const selectedVideoUrl = ref(null)
+// URL de la vidéo réellement projetée sur la TV (suivie via admin-state / tv-mode-changed),
+// pour ne synchroniser la lecture que pour celle-ci.
+const projectedVideoUrl = ref(null)
+// Éléments <video> de la galerie, indexés par id, pour piloter la lecture de l'aperçu.
+const videoEls = {}
 const uploading = ref(false)
 const uploadError = ref('')
 const uploadProgress = ref(0)   // 0–100
@@ -92,9 +97,42 @@ function onDrop(e) {
   if (files.length) uploadFiles(files)
 }
 
-function showVideoOnTv(videoUrl) {
+function setVideoRef(id, el) {
+  if (el) videoEls[id] = el
+  else delete videoEls[id]
+}
+
+function projectVideo(video) {
+  selectedVideoUrl.value = video.url
+  projectedVideoUrl.value = video.url
   const socket = getSocket()
-  socket.emit(SHOW_VIDEO, { sessionId: sessionStore.activeSession.id, videoUrl })
+  socket.emit(SHOW_VIDEO, { sessionId: sessionStore.activeSession.id, videoUrl: video.url })
+  // Démarre l'aperçu admin pour partir synchronisé avec la TV (autoplay côté TV).
+  nextTick(() => { videoEls[video.id]?.play?.().catch(() => {}) })
+}
+
+// Relaie play/pause/seek à la TV. Le serveur ne transmet la commande que si cette
+// vidéo est bien celle projetée (tv_mode='video') — sinon il l'ignore. On envoie donc
+// sans garde client : revoir un aperçu non projeté reste sans effet sur la TV.
+function onVideoEvent(video, action, event) {
+  if (!sessionStore.activeSession) return
+  const socket = getSocket()
+  socket.emit(VIDEO_CONTROL, {
+    sessionId: sessionStore.activeSession.id,
+    videoUrl: video.url,
+    action,
+    time: event.target.currentTime,
+  })
+}
+
+function handleAdminState(data) {
+  if (sessionStore.activeSession?.id !== data.sessionId) return
+  projectedVideoUrl.value = data.tvMode === 'video' ? (data.currentVideoUrl || null) : null
+}
+
+function handleTvModeChanged(payload) {
+  if (payload?.mode === 'video') projectedVideoUrl.value = payload.videoUrl || projectedVideoUrl.value
+  else if (payload?.mode) projectedVideoUrl.value = null
 }
 
 function videoFullUrl(url) {
@@ -119,9 +157,16 @@ async function deleteVideo(video, event) {
 
 onMounted(() => {
   loadVideos()
+  const socket = getSocket()
+  socket.on('admin-state', handleAdminState)
+  socket.on('tv-mode-changed', handleTvModeChanged)
 })
 
-onUnmounted(() => {})
+onUnmounted(() => {
+  const socket = getSocket()
+  socket.off('admin-state', handleAdminState)
+  socket.off('tv-mode-changed', handleTvModeChanged)
+})
 </script>
 
 <template>
@@ -189,18 +234,27 @@ onUnmounted(() => {})
           :class="{ selected: selectedVideoUrl === video.url }">
         <div class="thumb-wrapper">
           <video
+            :ref="el => setVideoRef(video.id, el)"
             :src="videoFullUrl(video.url)"
             class="gallery-thumb"
             preload="metadata"
-            muted
             controls
             playsinline
+            @play="onVideoEvent(video, 'play', $event)"
+            @pause="onVideoEvent(video, 'pause', $event)"
+            @seeked="onVideoEvent(video, 'seek', $event)"
           />
           <button class="delete-btn" @click="deleteVideo(video, $event)" title="Supprimer">✕</button>
         </div>
         <p class="vid-name">{{ video.original_name || video.url.split('/').pop() }}</p>
-        <button class="show-btn" @click.stop="selectedVideoUrl = video.url; showVideoOnTv(video.url)" title="Afficher sur la TV">
-          <AppIcon icon="lucide:monitor" size="0.85em" /> Afficher TV
+        <button
+          class="show-btn"
+          :class="{ active: projectedVideoUrl === video.url }"
+          @click.stop="projectVideo(video)"
+          title="Afficher sur la TV"
+        >
+          <AppIcon icon="lucide:monitor" size="0.85em" />
+          {{ projectedVideoUrl === video.url ? 'Projeté' : 'Afficher TV' }}
         </button>
         </div>
       </div>
@@ -372,6 +426,11 @@ onUnmounted(() => {})
 }
 
 .show-btn:hover {
+  background: var(--surface-gold-soft-strong);
+  border-color: var(--color-gold-bright);
+  color: var(--color-gold-bright);
+}
+.show-btn.active {
   background: var(--surface-gold-soft-strong);
   border-color: var(--color-gold-bright);
   color: var(--color-gold-bright);

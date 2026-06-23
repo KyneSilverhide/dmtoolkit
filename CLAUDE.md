@@ -33,6 +33,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Il contient
 │   │   ├── views/     # HomeView, AdminView, TvView, PlayerInboxView, PlayerJoinView
 │   │   ├── components/admin/  # Composants admin (MapManager, MerchantManager, GeneratorTool, AudioManager, ImageManager, VideoManager, PuzzleManager, ReputationManager, SessionJournal, etc.)
 │   │   │                      # VideoManager : upload de vidéos (type='video'), recherche/filtre, suppression, projection sur la TV (scène 'video', maximisée et autoplay via TvVideo) — onglet verrouillé en mode démo
+│   │   │                      #   Audio : comme les fichiers audio, le son sort du navigateur de l'admin (PC → TV/Bluetooth). L'aperçu admin a le son ; TvVideo est muet (muted) pour éviter le double son ; la lecture (play/pause/seek) est synchronisée admin → TV via l'événement video-control
 │   │   │                      # MapManager : brouillard de guerre — deux modes : peinture libre (grid_type='none') et cellule par cellule (grid_type='square'|'hex')
 │   │   │                      # SessionJournal : journal des événements en temps réel, stats de session (durée, dégâts totaux, soins totaux), boutons "Effacer le journal" et "Réinitialiser session"
 │   │   ├── components/player/ # Composants joueur (SpellSearchTool, MagicItemSearchTool, PlayerDiceTool, etc.)
@@ -200,6 +201,7 @@ cd frontend && npm run dev  # vite dev server
 | `close-vote` | Fermer un vote |
 | `show-image` | Afficher une image sur le TV |
 | `show-video` | Afficher une vidéo sur le TV (`{ sessionId, videoUrl }`) — passe tv_mode à 'video' |
+| `video-control` | Synchroniser la lecture vidéo vers la TV (`{ sessionId, videoUrl, action: 'play'\|'pause'\|'seek', time }`) — relayé à la TV **uniquement** si cette vidéo est celle projetée (tv_mode='video' et current_video_url correspond), sinon ignoré |
 | `set-lobby-bg` | Définir/effacer l'image de fond du lobby (`{ sessionId, imageUrl: string\|null }`) |
 | `set-tv-theme` | Synchroniser le thème clair/sombre de la TV sur celui de l'admin (`{ sessionId, theme: 'light'\|'dark' }`) — la TV n'a pas de switch indépendant |
 | `show-map` | Afficher une battlemap sur le TV |
@@ -272,6 +274,7 @@ cd frontend && npm run dev  # vite dev server
 | `player-message` | admin | Message secret d'un joueur — `{ playerName, playerId, content, sentAt }` |
 | `player-message-sent` | joueur | Confirmation que le message secret a été envoyé au MJ |
 | `tv-mode-changed` | TV + admin | Changement de mode TV (pour `image` : inclut `imageUrl` et `imageLabel` ; pour `video` : inclut `videoUrl`) |
+| `video-control` | TV | Commande de lecture vidéo relayée depuis l'admin (`{ action: 'play'\|'pause'\|'seek', time }`) — appliquée par TvVideo |
 | `doom-clock-started` | TV + admin | Démarrage de l'horloge doom |
 | `doom-clock-stopped` | TV + admin | Arrêt de l'horloge doom |
 | `tension-scale-updated` | TV + admin | Mise à jour de l'échelle de tension |
