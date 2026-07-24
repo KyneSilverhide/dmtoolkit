@@ -1,6 +1,8 @@
 const STORAGE_KEY = 'cf_theme_preferences'
 const VALID_THEMES = new Set(['dark', 'light'])
-const THEME_META_COLORS = {
+// Secours si --color-bg n'est pas résolvable (ex. tests sans style.css chargé) —
+// la source de vérité reste --color-bg dans style.css ; garder synchronisé si modifié.
+const THEME_META_COLORS_FALLBACK = {
   dark: '#120d04',
   light: '#f5f1e8',
 }
@@ -41,7 +43,8 @@ export function applyTheme(theme, fallback = 'dark') {
 
   const metaThemeColor = document.querySelector('meta[name="theme-color"]')
   if (metaThemeColor) {
-    metaThemeColor.setAttribute('content', THEME_META_COLORS[safeTheme])
+    const resolved = getComputedStyle(root).getPropertyValue('--color-bg').trim()
+    metaThemeColor.setAttribute('content', resolved || THEME_META_COLORS_FALLBACK[safeTheme])
   }
 
   return safeTheme

@@ -78,12 +78,39 @@ const groupedEvents = computed(() => {
   return result.slice().reverse()
 })
 
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
+function formatDayLabel(date) {
+  const now = new Date()
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  if (isSameDay(date, now)) return "Aujourd'hui"
+  if (isSameDay(date, yesterday)) return 'Hier'
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+const journalDays = computed(() => {
+  const days = []
+  for (const evt of groupedEvents.value) {
+    const d = new Date(evt.createdAt || evt.created_at)
+    const last = days[days.length - 1]
+    if (last && isSameDay(last.date, d)) {
+      last.events.push(evt)
+    } else {
+      days.push({ date: d, label: formatDayLabel(d), events: [evt] })
+    }
+  }
+  return days
+})
+
 const EVENT_ICONS = {
   join:              { icon: 'lucide:log-in',                 color: 'var(--color-gold-dark)' },
   leave:             { icon: 'lucide:log-out',                color: 'var(--color-text-dim)' },
   damage:            { icon: 'game-icons:sword-wound',        color: 'var(--color-danger)' },
   heal:              { icon: 'game-icons:health-increase',    color: 'var(--color-success)' },
-  death:             { icon: 'game-icons:skull',              color: '#aaa' },
+  death:             { icon: 'game-icons:skull',              color: 'var(--color-death)' },
   critical_hit:      { icon: 'game-icons:star-struck',        color: 'var(--color-gold-bright)' },
   critical_miss:     { icon: 'game-icons:broken-bone',        color: 'var(--color-warning)' },
   vote_started:      { icon: 'lucide:vote',                   color: 'var(--color-info)' },
@@ -104,7 +131,7 @@ const DOT_COLORS = {
   leave:             'var(--color-text-dim)',
   damage:            'var(--color-danger)',
   heal:              'var(--color-success)',
-  death:             '#555',
+  death:             'var(--color-death-dim)',
   critical_hit:      'var(--color-gold-bright)',
   critical_miss:     'var(--color-warning)',
   vote_started:      'var(--color-info)',
@@ -282,24 +309,31 @@ onUnmounted(() => {
       </div>
 
       <div v-else class="timeline">
-        <div
-          v-for="(evt, idx) in groupedEvents"
-          :key="idx"
-          class="timeline-item"
-        >
-          <div
-            class="timeline-dot"
-            :style="{ borderColor: getDotColor(evt) }"
-          >
-            <AppIcon
-              :icon="getIcon(evt).icon"
-              :color="getIcon(evt).color"
-              size="0.9rem"
-            />
+        <div v-for="day in journalDays" :key="day.date.toISOString()" class="timeline-day">
+          <div class="day-separator">
+            <span class="day-separator-label">{{ day.label }}</span>
           </div>
-          <div class="timeline-content">
-            <span class="tl-desc">{{ evt.description }}</span>
-            <span class="tl-time">{{ formatTime(evt.createdAt || evt.created_at) }}</span>
+          <div class="timeline-day-group">
+            <div
+              v-for="(evt, idx) in day.events"
+              :key="idx"
+              class="timeline-item"
+            >
+              <div
+                class="timeline-dot"
+                :style="{ borderColor: getDotColor(evt) }"
+              >
+                <AppIcon
+                  :icon="getIcon(evt).icon"
+                  :color="getIcon(evt).color"
+                  size="0.9rem"
+                />
+              </div>
+              <div class="timeline-content">
+                <span class="tl-desc">{{ evt.description }}</span>
+                <span class="tl-time">{{ formatTime(evt.createdAt || evt.created_at) }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -383,7 +417,7 @@ onUnmounted(() => {
   border-color: var(--color-warning);
   color: var(--color-warning);
 }
-.reset-confirm-btn:hover:not(:disabled) { background: rgba(180, 120, 30, 0.15); }
+.reset-confirm-btn:hover:not(:disabled) { background: var(--color-warning-soft); }
 
 .clear-btn {
   display: flex;
@@ -427,7 +461,7 @@ onUnmounted(() => {
   cursor: pointer;
   transition: all 0.2s;
 }
-.confirm-btn:hover:not(:disabled) { background: rgba(var(--color-danger-rgb, 180,50,50), 0.15); }
+.confirm-btn:hover:not(:disabled) { background: rgba(var(--color-danger-rgb), 0.15); }
 .confirm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .cancel-btn {
@@ -500,11 +534,44 @@ onUnmounted(() => {
 
 /* ── Timeline ── */
 .timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-day + .timeline-day {
+  margin-top: 0.4rem;
+}
+
+.day-separator {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 0.6rem;
+}
+
+.day-separator::before,
+.day-separator::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.day-separator-label {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  white-space: nowrap;
+}
+
+.timeline-day-group {
   position: relative;
   padding-left: 2.2rem;
 }
 
-.timeline::before {
+.timeline-day-group::before {
   content: '';
   position: absolute;
   left: 0.7rem;
@@ -559,8 +626,8 @@ onUnmounted(() => {
 
 .tl-time {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
-  color: var(--color-border);
+  font-size: 0.72rem;
+  color: var(--color-text-dim);
   white-space: nowrap;
   flex-shrink: 0;
 }

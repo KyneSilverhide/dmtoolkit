@@ -248,7 +248,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
-  background: rgba(0, 0, 0, 0.65);
+  background: var(--overlay-scrim);
   border: 2px dashed var(--color-gold-dark);
   border-radius: 10px;
   color: var(--color-gold-bright);
@@ -327,7 +327,7 @@ onUnmounted(() => {
   width: 100%;
   height: 400px;
   border: none;
-  background: #fff;
+  background: var(--color-invariant-white);
 }
 
 .puzzle-list {

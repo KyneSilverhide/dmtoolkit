@@ -279,7 +279,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
-  background: rgba(0, 0, 0, 0.65);
+  background: var(--overlay-scrim);
   border: 2px dashed var(--color-gold-dark);
   border-radius: 10px;
   color: var(--color-gold-bright);
@@ -367,7 +367,7 @@ onUnmounted(() => {
   border-radius: 6px;
   border: 1px solid var(--color-border);
   display: block;
-  background: #000;
+  background: var(--color-media-letterbox);
 }
 
 .search-bar {
@@ -465,7 +465,7 @@ onUnmounted(() => {
   position: absolute;
   top: 4px; right: 4px;
   width: 20px; height: 20px;
-  background: rgba(0,0,0,0.7);
+  background: var(--overlay-scrim);
   border: 1px solid var(--color-danger, #e74c3c);
   border-radius: 50%;
   color: var(--color-danger, #e74c3c);

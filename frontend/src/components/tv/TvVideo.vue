@@ -63,7 +63,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: #000;
+  background: var(--color-media-letterbox);
 }
 .tv-video {
   width: 100%;

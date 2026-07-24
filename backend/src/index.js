@@ -18,6 +18,9 @@ const equipmentRoutes = require('./routes/equipment')
 const generateRoutes = require('./routes/generate')
 const releaseNotesRoutes = require('./routes/release-notes')
 const puzzleRoutes = require('./routes/puzzles')
+const raceRoutes = require('./routes/races')
+const classRoutes = require('./routes/classes')
+const backgroundRoutes = require('./routes/backgrounds')
 const setupSocket = require('./socket')
 
 const app = express()
@@ -90,6 +93,9 @@ app.use('/api/equipment', isTest ? equipmentRoutes : [apiLimiter, equipmentRoute
 app.use('/api/generate', isTest ? generateRoutes : [apiLimiter, generateRoutes])
 app.use('/api/release-notes', releaseNotesRoutes)
 app.use('/api/puzzles', isTest ? puzzleRoutes : [apiLimiter, puzzleRoutes])
+app.use('/api/races', isTest ? raceRoutes : [apiLimiter, raceRoutes])
+app.use('/api/classes', isTest ? classRoutes : [apiLimiter, classRoutes])
+app.use('/api/backgrounds', isTest ? backgroundRoutes : [apiLimiter, backgroundRoutes])
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
 app.get('/api/config', (req, res) => {
   const demoEnabled = process.env.DEMO_ENABLED !== 'false'

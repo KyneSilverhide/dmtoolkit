@@ -78,7 +78,7 @@ function resolveMediaUrl(url) {
   height: 400px;
   border: 2px solid var(--color-gold-dark);
   border-radius: 10px;
-  background: white;
+  background: var(--color-invariant-white);
   padding: 5px;
   box-shadow: var(--shadow-soft);
 }

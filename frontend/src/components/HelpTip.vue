@@ -189,14 +189,14 @@ const bubbleStyle = computed(() => ({
 <style>
 .helptip-bubble {
   /* Always dark regardless of app theme — standard tooltip convention */
-  background: #1e1e2a;
-  color: #e8e0d0;
-  border: 1px solid #7a5c1e;
+  background: var(--helptip-bg);
+  color: var(--helptip-text);
+  border: 1px solid var(--helptip-border);
   border-radius: 6px;
   padding: 0.55rem 0.75rem;
   font-size: 0.78rem;
   line-height: 1.45;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+  box-shadow: var(--helptip-shadow);
   pointer-events: none;
   white-space: normal;
   word-break: break-word;

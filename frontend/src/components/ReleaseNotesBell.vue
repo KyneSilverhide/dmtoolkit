@@ -75,7 +75,7 @@ const latestUnread = computed(() => {
 
 .rn-bell-btn:hover {
   color: var(--color-parchment);
-  background: rgba(201, 168, 76, 0.08);
+  background: var(--surface-gold-soft);
 }
 
 .rn-bell-btn.has-unread { color: var(--color-gold); }
@@ -96,8 +96,8 @@ const latestUnread = computed(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  background: rgba(201, 168, 76, 0.06);
-  border: 1px solid rgba(201, 168, 76, 0.2);
+  background: var(--surface-gold-soft);
+  border: 1px solid var(--border-gold-soft);
   border-radius: 10px;
   padding: 0.55rem 0.9rem;
   cursor: pointer;
@@ -110,13 +110,13 @@ const latestUnread = computed(() => {
 }
 
 .rn-banner-btn:hover {
-  background: rgba(201, 168, 76, 0.12);
-  border-color: rgba(201, 168, 76, 0.4);
+  background: var(--surface-gold-soft);
+  border-color: var(--border-gold-strong);
   color: var(--color-parchment);
 }
 
 .rn-banner-btn.has-unread {
-  background: rgba(201, 168, 76, 0.1);
+  background: var(--surface-gold-soft);
   border-color: var(--color-gold-dark);
   color: var(--color-parchment);
   animation: rn-banner-glow 3s ease-in-out infinite;
@@ -160,8 +160,8 @@ const latestUnread = computed(() => {
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--color-gold-bright);
-  background: rgba(201, 168, 76, 0.12);
-  border: 1px solid rgba(201, 168, 76, 0.2);
+  background: var(--surface-gold-soft);
+  border: 1px solid var(--border-gold-soft);
   border-radius: 4px;
   padding: 0.05rem 0.35rem;
   flex-shrink: 0;
@@ -181,7 +181,7 @@ const latestUnread = computed(() => {
 }
 
 @keyframes rn-banner-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0); }
-  50% { box-shadow: 0 0 8px 0 rgba(201, 168, 76, 0.18); }
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 8px 0 var(--surface-gold-soft-strong); }
 }
 </style>

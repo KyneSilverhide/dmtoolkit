@@ -1,0 +1,735 @@
+{
+  "backgrounds": [
+    {
+      "name": "Acolyte",
+      "slug": "acolyte",
+      "description": "Vous avez consacré votre vie au service d'une divinité, agissant comme intermédiaire entre le monde des mortels et le divin à travers rites et cérémonies. Votre passé religieux (novice depuis l'enfance, appel soudain, ou rupture avec un culte maléfique) est à définir avec le MJ.",
+      "skill_proficiencies": [
+        "Intuition",
+        "Religion"
+      ],
+      "tool_proficiencies": [],
+      "languages_count": 2,
+      "languages_note": "",
+      "equipment": "un symbole sacré (cadeau reçu lors de votre initiation religieuse), un livre de prières, 5 bâtons d'encens, des habits de cérémonie, des vêtements communs et une bourse contenant 15 po.",
+      "feature": {
+        "name": "Abri du fidèle",
+        "description": "Votre statut religieux vous vaut le respect des fidèles de votre culte et le droit de diriger les rituels sacrés. Vous et vos compagnons recevez des soins gratuits dans les lieux de culte de votre foi (composantes matérielles à votre charge), ainsi qu'un logis modeste auprès des croyants. Vous pouvez aussi conserver un lien avec un temple précis pouvant servir de résidence, dont les membres vous aident tant que la demande reste raisonnable et que vous restez en bons termes avec l'institution."
+      },
+      "personality_traits": [
+        "Je vénère particulièrement une figure légendaire de ma tradition religieuse et j'en rappelle constamment les exploits.",
+        "Je possède le don de réconcilier même les adversaires les plus irréconciliables par l'empathie et la médiation.",
+        "J'interprète chaque événement comme un message divin nécessitant de la compréhension.",
+        "J'arbore une confiance et un optimisme inébranlables.",
+        "Je fais constamment référence aux écritures et aux dictons religieux dans mes interactions.",
+        "Je suis particulièrement tolérant ou intolérant envers les croyances différentes des miennes.",
+        "J'ai connu le luxe et les plaisirs du temple ; la vie difficile m'affecte profondément.",
+        "Ma vie entière s'est déroulée en retrait du temple, me rendant maladroit avec les gens ordinaires."
+      ],
+      "ideals": [
+        "Tradition : Préserver les pratiques ancestrales de culte et de dévotion est une obligation sacrée (Loyal).",
+        "Compassion : Soulager la misère des nécessiteux constitue mon devoir premier, peu importe le prix (Bon).",
+        "Transformation : Les changements que les dieux opèrent universellement doivent se manifester sur terre (Chaotique).",
+        "Autorité : J'aspire à atteindre les plus hauts échelons de la hiérarchie religieuse (Loyal).",
+        "Confiance divine : Ma divinité orientera mon parcours si je suis assidu dans ma dévotion (Loyal).",
+        "Mérite : J'agis pour démontrer que je suis digne des bénédictions de ma divinité (Neutre)."
+      ],
+      "bonds": [
+        "Un artefact sacré de ma tradition a disparu autrefois ; récupérer cet objet constitue ma quête principale.",
+        "J'ai été faussement accusé d'hérésie par des autorités religieuses corrompues ; je rêve de rédemption.",
+        "Un prêtre bienveillant m'a recueilli après le décès de ma famille ; je lui dois tout.",
+        "Mon engagement religieux est motivé par mon désir de servir les populations vulnérables.",
+        "Le sanctuaire où j'ai officié représente tout pour moi et je le protégerais par tous les moyens.",
+        "Un texte sacré risque d'être anéanti par ceux qui le jugent hérétique ; sa préservation m'obsède."
+      ],
+      "flaws": [
+        "Je suis extrêmement critique envers autrui, reflétant une autocritique encore plus sévère.",
+        "J'accorde une confiance excessive aux figures d'autorité au sein de mon institution religieuse.",
+        "Ma ferveur religieuse m'amène parfois à faire confiance trop facilement aux prétendus fidèles.",
+        "J'adopte une vision rigide et peu flexible du monde.",
+        "L'inconnu m'inquiète ; je présume généralement le pire des étrangers.",
+        "Une fois engagé vers un objectif, mon obsession peut éclipser tous les autres aspects de ma vie."
+      ],
+      "detail_url": "https://www.aidedd.org/regles/historiques/acolyte/",
+      "source": "Manuel des Joueurs (PHB 2014)",
+      "icon": "game-icons:holy-symbol"
+    },
+    {
+      "name": "Artisan de guilde",
+      "slug": "artisan-de-guilde",
+      "description": "Vous êtes membre d'une corporation d'artisans spécialisés, ayant gravi les échelons de l'apprentissage jusqu'au statut de maître dans votre domaine, ce qui vous confère une certaine influence et une prospérité commerciale.",
+      "skill_proficiencies": [
+        "Intuition",
+        "Persuasion"
+      ],
+      "tool_proficiencies": [
+        "un outil d'artisan au choix"
+      ],
+      "languages_count": 1,
+      "languages_note": "",
+      "equipment": "un jeu d'outil d'artisan (de votre choix), une lettre de recommandation de votre guilde, des vêtements de voyage et une bourse contenant 15 po.",
+      "feature": {
+        "name": "Membre de guilde",
+        "description": "Votre appartenance à la guilde vous garantit un soutien concret de vos pairs : logement et nourriture en cas de besoin, funérailles prises en charge, et opportunités de réseautage professionnel. La guilde possède un poids politique et peut intervenir légalement en votre faveur, voire vous introduire auprès de figures influentes (contre rétribution). En contrepartie, vous devez verser une cotisation mensuelle de 5 po."
+      },
+      "personality_traits": [
+        "Je suis un perfectionniste incurable qui insiste pour que toute tâche soit exécutée impeccablement.",
+        "Je manifeste du mépris envers ceux incapables d'apprécier la qualité artistique.",
+        "Je suis animé par une curiosité constante sur le fonctionnement des choses et la nature humaine.",
+        "Je parsème mes conversations de sagesses et de maximes philosophiques.",
+        "J'exprime mon dédain envers ceux qui ne partagent pas mon éthique de travail exigeante.",
+        "Je m'étends longuement sur les détails fascinants de mon métier.",
+        "Je suis particulièrement économe et négocie ardemment chaque transaction.",
+        "Fier de ma réputation, je suis surpris et déçu que certains ignorent mon œuvre."
+      ],
+      "ideals": [
+        "Communauté : renforcer les liens sociaux et garantir la sécurité collective (Loyal).",
+        "Générosité : mettre mes compétences au service d'autrui (Bon).",
+        "Liberté : chacun doit pouvoir exercer son activité librement (Chaotique).",
+        "Profit : ma seule motivation est l'accumulation de richesses (Mauvais).",
+        "Relations : je soutiens les individus, non les abstractions (Neutre).",
+        "Excellence : je m'efforce de devenir incomparable dans ma spécialité (tous alignements)."
+      ],
+      "bonds": [
+        "L'atelier qui m'a formé reste mon endroit de prédilection.",
+        "J'ai créé une œuvre exceptionnelle pour quelqu'un jugé indigne ; je cherche à la confier à quelqu'un de mieux.",
+        "Ma corporation a transformé mon destin ; je lui dois une loyauté profonde.",
+        "L'enrichissement m'obsède comme moyen de conquérir l'affection d'une personne.",
+        "Je rêve de retourner auprès de mes pairs et de les surpasser artistiquement.",
+        "Je poursuis vengeance contre les forces qui ont détruit mon établissement et ruiné ma subsistance."
+      ],
+      "flaws": [
+        "L'acquisition d'objets rares m'aveugle complètement.",
+        "Je soupçonne rapidement les autres de malhonnêteté envers moi.",
+        "Personne ne doit découvrir que j'ai autrefois volé dans les réserves de ma guilde.",
+        "La satisfaction m'échappe ; je désire perpétuellement davantage.",
+        "Je suis prêt au meurtre pour accéder à la noblesse.",
+        "L'envie me consume envers ceux qui surpassent mes créations ; je vois des rivalités partout."
+      ],
+      "detail_url": "https://www.aidedd.org/regles/historiques/artisan-de-guilde/",
+      "source": "Manuel des Joueurs (PHB 2014)",
+      "icon": "game-icons:anvil"
+    },
+    {
+      "name": "Artiste",
+      "slug": "artiste",
+      "description": "Vous vivez pour la scène et le regard du public, maîtrisant l'art de captiver une audience et de susciter des émotions fortes par vos talents (musique, poésie, acrobatie, comédie).",
+      "skill_proficiencies": [
+        "Acrobaties",
+        "Représentation"
+      ],
+      "tool_proficiencies": [
+        "kit de déguisement",
+        "un instrument de musique au choix"
+      ],
+      "languages_count": 0,
+      "languages_note": "",
+      "equipment": "un instrument de musique (de votre choix), un présent d'admirateur (lettre d'amour, mèche de cheveux, babiole), un costume et une bourse contenant 15 po.",
+      "feature": {
+        "name": "À la demande du public",
+        "description": "Vous trouvez toujours des lieux pour vous produire — auberges, cirques, châteaux — où vous recevez gîte et couvert modestes en échange d'une représentation quotidienne. Cette exposition fait de vous une figure locale reconnue partout où vous vous produisez."
+      },
+      "personality_traits": [
+        "Vous possédez une anecdote pertinente pour chaque contexte.",
+        "Vous collectionnez et propagez les ragots locaux.",
+        "Vous êtes incurablement sentimental, cherchant constamment l'amour.",
+        "Votre charme dissout rapidement les tensions.",
+        "Vous raffolez des joutes verbales piquantes.",
+        "Vous devez rester au centre de l'attention.",
+        "Vous exigez l'excellence absolue.",
+        "Vos émotions fluctuent aussi rapidement que votre musique."
+      ],
+      "ideals": [
+        "Beauté : Vos performances embellissent le monde (Bon).",
+        "Tradition : Les légendes anciennes doivent survivre (Loyal).",
+        "Créativité : L'audace et l'innovation transforment le monde (Chaotique).",
+        "Avarice : Seul l'or et la gloire vous motivent (Mauvais).",
+        "Peuple : Créer du bonheur autour de vous suffit (Neutre).",
+        "Honnêteté : L'art révèle l'essence profonde (tous alignements)."
+      ],
+      "bonds": [
+        "Votre instrument représente un souvenir précieux d'une personne aimée.",
+        "On vous a volé votre bien le plus cher, que vous recherchez.",
+        "Vous aspirez à la célébrité et agiriez de façon radicale pour l'atteindre.",
+        "Vous admirez un héros légendaire et imitez ses actions.",
+        "Vous défiez constamment un rival détesté.",
+        "Vous seriez loyal corps et âme à votre ancienne compagnie."
+      ],
+      "flaws": [
+        "Vous sacrifieriez tout pour obtenir renommée et prestige.",
+        "Vous perdez vos moyens face à une belle personne.",
+        "Un scandale vous poursuit, entravant votre retour au foyer.",
+        "Une moquerie passée envers un noble vous menace encore.",
+        "Votre langue tranchante crée régulièrement des problèmes.",
+        "Malgré vos efforts, vos compagnons doutent de votre sincérité."
+      ],
+      "detail_url": "https://www.aidedd.org/regles/historiques/artiste/",
+      "source": "Manuel des Joueurs (PHB 2014)",
+      "icon": "game-icons:drama-masks"
+    },
+    {
+      "name": "Charlatan",
+      "slug": "charlatan",
+      "description": "Vous avez un don naturel pour cerner les désirs cachés des gens et les exploiter sans scrupules, leur promettant exactement ce qu'ils convoitent — même quand cette promesse n'est qu'illusion.",
+      "skill_proficiencies": [
+        "Escamotage",
+        "Tromperie"
+      ],
+      "tool_proficiencies": [
+        "kit de contrefaçon",
+        "kit de déguisement"
+      ],
+      "languages_count": 0,
+      "languages_note": "",
+      "equipment": "des vêtements fins, un kit de déguisement, des outils d'escroquerie variés (bouteilles colorées, dés truqués, cartes marquées, fausse bague ducale, etc.) et une bourse contenant 15 po.",
+      "feature": {
+        "name": "Fausse identité",
+        "description": "Vous avez élaboré une identité fictive complète, avec papiers, relations sociales établies et techniques de maquillage. Vous pouvez également reproduire des documents officiels ou de la correspondance personnelle, à condition d'avoir déjà vu un modèle similaire ou l'écriture à imiter."
+      },
+      "personality_traits": [
+        "Vos sentiments s'enflamment vite mais se refroidissent plus vite encore ; vous courtisez continuellement quelqu'un d'autre.",
+        "Vous plaisantez sur tout, même quand le moment demande sérieux et retenue.",
+        "Vous employez les compliments comme levier principal pour obtenir vos fins.",
+        "Vous êtes un parieur impulsif qui ne peut refuser un enjeu potentiellement lucratif.",
+        "Vous déformez la vérité sans raison valable, par simple habitude.",
+        "L'ironie et les piques verbales constituent vos outils de prédilection.",
+        "Vous portez d'innombrables objets religieux et implorez n'importe quel dieu en détresse.",
+        "Vous empochez automatiquement tout objet paraissant avoir une quelconque valeur marchande."
+      ],
+      "ideals": [
+        "Liberté : Nul ne gouverne votre destinée ; vous agissez sans entrave (Chaotique).",
+        "Équité : Vous évitez de cibler ceux pour qui quelques pièces représentent beaucoup (Loyal).",
+        "Générosité : Les gains illicites servent à soulager ceux dans le besoin (Bon).",
+        "Originalité : Vous refusez de répéter identiquement une même supercherie (Chaotique).",
+        "Solidarité : Les liens sincères surpassent les richesses périssables (Bon).",
+        "Ambition : Vous aspirez à laisser votre marque, à compter réellement (tous alignements)."
+      ],
+      "bonds": [
+        "Vous avez dupé quelqu'un de dangereux ; vous devez préserver votre anonymat ou risquer des représailles.",
+        "Vous devez tout à votre ancien mentor, un individu répugnant actuellement emprisonné.",
+        "Un enfant issu de votre passé ignore votre existence quelque part ; vous voulez améliorer son sort.",
+        "Vous descendez de nobles déchus ; récupérer votre héritage devient une obsession.",
+        "Une personnalité influente a ôté la vie à quelqu'un de précieux pour vous ; la vengeance vous appelle.",
+        "Votre escroquerie a autrefois anéanti quelqu'un d'innocent ; ce remords vous poursuivra éternellement."
+      ],
+      "flaws": [
+        "L'apparence physique captivante vous rend irrésistiblement vulnérable.",
+        "Les dépenses somptueuses dépassent constamment vos revenus criminels.",
+        "Vous croyez fermement que personne ne possède votre capacité à duper les autres.",
+        "L'appât du gain décuple votre prise de risque déraisonnée.",
+        "Vous succombez toujours à l'envie d'escroquer les puissants.",
+        "Face au danger mortel, votre honneur disparaît ; sauver votre peau prime sur tout."
+      ],
+      "detail_url": "https://www.aidedd.org/regles/historiques/charlatan/",
+      "source": "Manuel des Joueurs (PHB 2014)",
+      "icon": "game-icons:sly"
+    },
+    {
+      "name": "Criminel",
+      "slug": "criminel",
+      "description": "Vous avez une longue expérience de la vie hors-la-loi et un solide réseau de contacts dans les milieux criminels, ayant appris à survivre dans un monde souterrain fait de larcins et de violence en rejetant les normes établies.",
+      "skill_proficiencies": [
+        "Discrétion",
+        "Tromperie"
+      ],
+      "tool_proficiencies": [
+        "un type de jeu au choix",
+        "outils de voleur"
+      ],
+      "languages_count": 0,
+      "languages_note": "",
+      "equipment": "un pied-de-biche, des vêtements communs sombres avec une capuche et une bourse contenant 15 po.",
+      "feature": {
+        "name": "Accointances avec la pègre",
+        "description": "Vous disposez d'un contact fiable servant de relais au sein du réseau criminel, vous permettant d'envoyer et de recevoir des messages sur de longues distances. Vous connaissez les courriers, responsables de caravanes véreux et matelots louches susceptibles de faire transiter vos communications."
+      },
+      "personality_traits": [
+        "Quand la situation s'aggrave, j'ai toujours une stratégie prête.",
+        "Je conserve un sang-froid constant et maîtrise toujours mes réactions.",
+        "En découvrant un lieu nouveau, j'identifie aussitôt ce qui a de la valeur.",
+        "Créer des alliés me plaît plus que de multiplier les adversaires.",
+        "Je suis extrêmement prudent avant d'accorder ma confiance à quelqu'un.",
+        "Je minimise systématiquement les dangers et risques présents.",
+        "On peut facilement m'inciter à faire quelque chose en me l'interdisant.",
+        "Une insulte anodine suffit à déclencher ma colère immédiate."
+      ],
+      "ideals": [
+        "Intégrité : Je refuse les tractations déloyales (Loyal).",
+        "Indépendance : Tout ce qui emprisonne doit être détruit (Chaotique).",
+        "Générosité : Je redistribue le bien des aisés aux démunis (Bon).",
+        "Convoitise : Je ferai l'impossible pour amasser de la richesse (Mauvais).",
+        "Loyauté personnelle : Mes camarades m'importent, pas les principes abstraits (Neutre).",
+        "Rédemption : Chacun possède une part de lumière (Bon)."
+      ],
+      "bonds": [
+        "Je rembourse une obligation envers quelqu'un qui m'a autrefois aidé.",
+        "Mes revenus illicites permettent à ma famille de vivre décemment.",
+        "Un bien précieux m'a été ravi ; je dois le récupérer.",
+        "Mon aspiration est de devenir le plus célèbre voleur de tous les temps.",
+        "Un crime grave pèse sur ma conscience ; j'espère m'en racheter.",
+        "Mon imprudence a coûté la vie à quelqu'un de cher ; cela ne se reproduira pas."
+      ],
+      "flaws": [
+        "Dès que j'aperçois quelque chose de valeur, le posséder devient mon unique pensée.",
+        "Face à un choix entre la richesse et l'amitié, je penche habituellement vers l'argent.",
+        "J'oublie ou j'ignore les stratégies établies une fois en action.",
+        "Mes mensonges sont trahis par un détail involontaire.",
+        "Je m'enfuis précipitamment dès que la situation devient critique.",
+        "Un innocent purge une sentence pour une faute que j'ai commise, sans que j'en éprouve de culpabilité."
+      ],
+      "detail_url": "https://www.aidedd.org/regles/historiques/criminel/",
+      "source": "Manuel des Joueurs (PHB 2014)",
+      "icon": "game-icons:hood"
+    },
+    {
+      "name": "Enfant des rues",
+      "slug": "enfant-des-rues",
+      "description": "Orphelin livré à lui-même dans les rues d'une grande ville, ce personnage a dû apprendre très tôt à survivre par la ruse, la force ou la vitesse, sans personne pour veiller sur lui.",
+      "skill_proficiencies": [
+        "Discrétion",
+        "Escamotage"
+      ],
+      "tool_proficiencies": [
+        "Kit de déguisement",
+        "Outils de voleur"
+      ],
+      "languages_count": 0,
+      "languages_note": "",
+      "equipment": "un petit couteau, une carte de la ville où vous avez grandi, une souris apprivoisée, un souvenir de vos parents, des vêtements communs et une bourse contenant 10 po.",
+      "feature": {
+        "name": "Secrets de la ville",
+        "description": "Le personnage connaît les passages et raccourcis cachés d'une agglomération citadine. En dehors du combat, lui et ses compagnons peuvent ainsi traverser deux fois plus vite une ville en empruntant des itinéraires que la plupart des gens ignorent."
+      },
+      "personality_traits": [
+        "Je fourre machinalement dans mes poches tout ce qui pourrait servir, même les plus petits objets.",
+        "Je pose sans cesse des questions sur tout ce qui m'entoure.",
+        "Je me faufile dans les recoins et les espaces étroits que personne d'autre ne peut atteindre.",
+        "Je dors toujours dos au mur, mes affaires serrées contre moi, prêt à réagir.",
+        "Mes manières à table laissent clairement deviner que je n'ai pas grandi dans la haute société.",
+        "Je me méfie instinctivement de toute gentillesse inattendue, y voyant forcément un piège.",
+        "L'hygiène n'a jamais été ma priorité.",
+        "Je dis tout haut ce que les autres pensent tout bas ou n'osent pas exprimer."
+      ],
+      "ideals": [
+        "Respect : chacun mérite d'être traité avec dignité, peu importe sa fortune (Bon)",
+        "Communauté : on ne s'en sort qu'en s'entraidant quand personne d'autre ne le fait (Loyal)",
+        "Changement : les puissants doivent tomber pour que les plus faibles puissent enfin se relever (Chaotique)",
+        "Châtiment : les riches méritent une bonne leçon sur leur propre mortalité (Mauvais)",
+        "Réciprocité : je rends toujours l'aide qu'on m'apporte, car ma survie en dépend (Neutre)",
+        "Ambition : je veux prouver ma valeur en accomplissant quelque chose de grand (Tous)"
+      ],
+      "bonds": [
+        "Je resterai toujours profondément attaché à la ville où j'ai grandi.",
+        "Je soutiens les orphelinats pour éviter à d'autres enfants de vivre ce que j'ai vécu.",
+        "Je dois ma survie à un autre gamin des rues qui m'a tout appris.",
+        "J'ai une dette immense envers quelqu'un qui a eu pitié de moi, et je ne l'oublierai jamais.",
+        "J'ai volé une personne puissante pour survivre, et elle me traque encore aujourd'hui.",
+        "Je porte le poids d'épreuves que personne d'autre ne pourrait comprendre."
+      ],
+      "flaws": [
+        "Je prends la fuite dès que le combat tourne en ma défaveur.",
+        "L'appât du gain peut me pousser à agir sans aucun scrupule.",
+        "Je ne fais confiance à personne d'autre qu'à moi-même.",
+        "Je préfère m'en prendre à un adversaire sans défense plutôt que d'affronter un ennemi loyalement.",
+        "Je considère que le vol est toujours justifié tant que mon besoin est plus grand que celui de la victime.",
+        "Je pense que les gens sans défense méritent ce qui leur arrive."
+      ],
+      "detail_url": "https://www.aidedd.org/regles/historiques/enfant-des-rues/",
+      "source": "Manuel des Joueurs (PHB 2014)",
+      "icon": "game-icons:barefoot"
+    },
+    {
+      "name": "Ermite",
+      "slug": "ermite",
+      "description": "Ce personnage a passé une longue période coupé du monde, reclus dans un lieu protégé comme un monastère ou totalement seul, pour trouver la paix intérieure et, peut-être, des réponses à ses questions.",
+      "skill_proficiencies": [
+        "Médecine",
+        "Religion"
+      ],
+      "tool_proficiencies": [
+        "Kit d'herboristerie"
+      ],
+      "languages_count": 1,
+      "languages_note": "",
+      "equipment": "un étui à parchemins rempli de vos notes tirées de vos études ou de vos prières, une couverture d'hiver, des vêtements communs, un kit d'herboristerie et 5 po.",
+      "feature": {
+        "name": "Découverte",
+        "description": "Les longues années passées dans la solitude ont permis au personnage de faire une découverte singulière et importante, à définir avec le MJ : une vérité cosmique, un savoir oublié, un lieu caché ou une information dangereuse. Cette révélation peut avoir un impact durable sur la campagne."
+      },
+      "personality_traits": [
+        "Mes longues années de solitude m'ont rendu taciturne ; je préfère les gestes et les grognements aux longues phrases.",
+        "Je garde mon calme même face aux pires catastrophes.",
+        "Mon ancien maître spirituel avait réponse à tout, et j'aime répéter ses enseignements à qui veut l'entendre.",
+        "Je ressens une compassion profonde pour quiconque souffre.",
+        "Je me moque complètement des convenances et de l'étiquette.",
+        "Je vois dans chaque événement le signe d'un vaste dessein cosmique.",
+        "Je me perds souvent dans mes pensées, oubliant tout ce qui m'entoure.",
+        "J'élabore des théories philosophiques complexes et j'adore les exposer aux autres."
+      ],
+      "ideals": [
+        "Bien commun : mes talents doivent servir tout le monde, pas seulement mon intérêt personnel (Bon)",
+        "Logique : les émotions ne doivent jamais brouiller la recherche de la vérité (Loyal)",
+        "Libre pensée : le progrès naît du doute et de l'exploration (Chaotique)",
+        "Pouvoir : la méditation et la solitude peuvent ouvrir la voie à une force occulte (Mauvais)",
+        "Non-ingérence : se mêler des affaires d'autrui ne fait que compliquer les choses (Neutre)",
+        "Connaissance de soi : une fois qu'on se comprend pleinement soi-même, plus rien d'autre à apprendre ne compte vraiment (Tous)"
+      ],
+      "bonds": [
+        "Ma communauté ou mon ordre religieux compte plus que tout à mes yeux.",
+        "Je me suis retiré du monde pour fuir des poursuivants que je devrai un jour affronter.",
+        "Je cherche sans relâche un éveil spirituel qui m'a toujours échappé.",
+        "Je me suis isolé parce qu'aimer une personne inaccessible m'était devenu insupportable.",
+        "Ma découverte pourrait bouleverser le monde si elle venait à être révélée.",
+        "Ma solitude m'a révélé l'existence d'un grand mal que je suis seul à pouvoir vaincre."
+      ],
+      "flaws": [
+        "Un retour à la civilisation me pousse à abuser sans retenue de ses plaisirs.",
+        "Malgré des années de discipline méditative, des pensées sombres et violentes continuent de me hanter.",
+        "Je campe sur mes positions philosophiques sans jamais vouloir en démordre.",
+        "Mon besoin d'avoir toujours raison finit par nuire à mes relations avec les autres.",
+        "Je me lance à corps perdu dans la quête d'un savoir obscur, sans me soucier du danger.",
+        "J'ai l'habitude de garder mes secrets pour moi et de ne rien partager avec personne."
+      ],
+      "detail_url": "https://www.aidedd.org/regles/historiques/ermite/",
+      "source": "Manuel des Joueurs (PHB 2014)",
+      "icon": "game-icons:campfire"
+    },
+    {
+      "name": "Héros du peuple",
+      "slug": "heros-du-peuple",
+      "description": "Issu d'un milieu rural modeste, ce personnage est déjà considéré comme un protecteur par les siens, et le destin semble le pousser à s'opposer aux tyrans et aux monstres qui menacent les gens ordinaires.",
+      "skill_proficiencies": [
+        "Dressage",
+        "Survie"
+      ],
+      "tool_proficiencies": [
+        "Un type d'outil d'artisan au choix",
+        "Véhicules terrestres"
+      ],
+      "languages_count": 0,
+      "languages_note": "",
+      "equipment": "un jeu d'outils d'artisan (celui de votre outil de compétence), une pelle, une marmite en fer, des vêtements communs et une bourse contenant 10 po.",
+      "feature": {
+        "name": "Hospitalité rustique",
+        "description": "Le personnage trouve facilement refuge, repos et soins auprès des gens du peuple, tant qu'il ne représente pas une menace pour eux. Ils le cacheront des autorités ou de ses ennemis, sans toutefois mettre leur propre sécurité en péril pour lui."
+      },
+      "personality_traits": [
+        "Je juge les gens sur leurs actes, pas sur leurs belles paroles.",
+        "J'aide instinctivement quiconque semble en danger ou dans le besoin.",
+        "Une fois que je me suis fixé un but, rien ne peut m'en détourner.",
+        "J'ai un sens aigu de la justice et je cherche toujours une issue équitable aux conflits.",
+        "Je dégage une confiance naturelle et je cherche à en insuffler aux autres.",
+        "Je préfère agir tout de suite plutôt que de réfléchir longuement.",
+        "J'écorche les mots savants quand j'essaie de paraître cultivé.",
+        "Je m'impatiente souvent, me demandant quand mon grand destin va enfin se réaliser."
+      ],
+      "ideals": [
+        "Bien : chacun mérite d'être traité avec respect et dignité (Bon)",
+        "Loi : les lois doivent s'appliquer à tous de la même façon ; les privilèges sont une injustice (Loyal)",
+        "Liberté : la tyrannie sur le peuple doit toujours être combattue (Chaotique)",
+        "Pouvoir : la force donne le droit de posséder et de dominer (Mauvais)",
+        "Sincérité : faire semblant nuit à l'intégrité ; mieux vaut rester honnête (Neutre)",
+        "Destinée : un destin immuable guide chacun de mes choix (Tous)"
+      ],
+      "bonds": [
+        "Ma famille a disparu et je rêve avant tout de la retrouver un jour.",
+        "Le travail de la terre m'a façonné, et je veux préserver ces terres qui m'ont vu grandir.",
+        "Un noble arrogant m'a humilié autrefois ; je veux me venger de tous les tyrans comme lui.",
+        "Mes vieux outils me rappellent d'où je viens et m'aident à rester humble.",
+        "Je me suis juré de protéger ceux qui ne peuvent pas se défendre eux-mêmes.",
+        "J'espère qu'un amour de jeunesse me rejoindra un jour dans mon épopée."
+      ],
+      "flaws": [
+        "Le tyran qui dirige mon pays natal mettra tout en œuvre pour me faire disparaître.",
+        "Je suis persuadé d'être promis à un grand destin, au point d'ignorer mes propres faiblesses.",
+        "Des gens de mon village connaissent un secret honteux qui m'empêche d'y retourner.",
+        "J'ai du mal à résister aux plaisirs de la ville, en particulier à l'alcool fort.",
+        "Je pense secrètement qu'un pouvoir autoritaire sur ma région arrangerait bien des choses.",
+        "J'ai toujours du mal à faire confiance à mes compagnons."
+      ],
+      "detail_url": "https://www.aidedd.org/regles/historiques/heros-du-peuple/",
+      "source": "Manuel des Joueurs (PHB 2014)",
+      "icon": "game-icons:pitchfork"
+    },
+    {
+      "name": "Marin",
+      "slug": "marin",
+      "description": "Ce personnage a passé des années en mer, affrontant tempêtes et dangers des profondeurs pour protéger son navire, avant que les circonstances ne le ramènent vers la terre ferme.",
+      "skill_proficiencies": [
+        "Athlétisme",
+        "Perception"
+      ],
+      "tool_proficiencies": [
+        "Outils de navigateur",
+        "Véhicules (eau)"
+      ],
+      "languages_count": 0,
+      "languages_note": "",
+      "equipment": "un épissoir (matraque), 15 mètres de corde de soie, un porte-bonheur (comme une patte de lapin ou une petite pierre percée, ou tiré au hasard parmi les babioles), des vêtements communs et une bourse contenant 10 po.",
+      "feature": {
+        "name": "Place à bord",
+        "description": "Le personnage peut obtenir un passage gratuit sur un navire pour lui et ses compagnons, que ce soit son ancien bateau ou un autre où il a quitté l'équipage en bons termes. Le MJ détermine la date de départ et l'itinéraire, qui ne coïncident pas forcément avec les besoins du personnage. En échange, le groupe doit prêter main-forte à l'équipage durant la traversée."
+      },
+      "personality_traits": [
+        "Mes compagnons savent qu'ils peuvent compter sur moi en toutes circonstances.",
+        "Je travaille dur pour pouvoir profiter pleinement de mon repos une fois la tâche finie.",
+        "J'aime découvrir de nouveaux ports et me faire des amis autour d'un verre.",
+        "J'enjolive un peu la réalité pour raconter de meilleures histoires.",
+        "Rien ne vaut une taverne animée pour découvrir une nouvelle ville.",
+        "Je ne refuse jamais un petit pari amical.",
+        "Mon langage est aussi grossier que le nid d'un otyugh.",
+        "J'apprécie le travail bien fait, surtout quand je parviens à le faire faire par quelqu'un d'autre."
+      ],
+      "ideals": [
+        "Respect : le respect mutuel entre capitaine et équipage maintient la cohésion du navire (Bon)",
+        "Justice : un travail équitable mérite une part équitable (Loyal)",
+        "Liberté : la mer représente une liberté totale d'aller où bon me semble (Chaotique)",
+        "Domination : les autres navires ne sont que des proies pour un prédateur comme moi (Mauvais)",
+        "Peuple : je me dois à mon équipage, pas à un idéal abstrait (Neutre)",
+        "Ambition : un jour, je commanderai mon propre navire et déciderai de mon destin (Tous)"
+      ],
+      "bonds": [
+        "Mon premier capitaine a toute ma loyauté, plus que quiconque.",
+        "Le navire lui-même compte plus que tout ; les équipages et les capitaines, eux, se remplacent.",
+        "Je n'oublierai jamais mon tout premier bateau.",
+        "Une histoire d'amour dans un port a failli me faire abandonner la mer.",
+        "On m'a volé ma juste part des profits, et je compte bien la récupérer.",
+        "Des pirates sans pitié ont massacré mon capitaine et mon équipage et pillé mon navire, me laissant pour mort ; je veux me venger."
+      ],
+      "flaws": [
+        "J'obéis aux ordres même quand je les sais mauvais.",
+        "Je suis prêt à inventer n'importe quel prétexte pour éviter une corvée.",
+        "Si l'on doute de mon courage, je fais n'importe quoi pour le prouver, même au péril de ma vie.",
+        "Une fois que je commence à boire, il m'est presque impossible de m'arrêter.",
+        "Les objets de valeur disparaissent étrangement des poches de ceux qui m'approchent.",
+        "Ma fierté finira sans doute par causer ma perte."
+      ],
+      "detail_url": "https://www.aidedd.org/regles/historiques/marin/",
+      "source": "Manuel des Joueurs (PHB 2014)",
+      "icon": "game-icons:anchor"
+    },
+    {
+      "name": "Noble",
+      "slug": "noble",
+      "description": "Issu d'une lignée aristocratique dotée de titres, de terres et d'influence politique, ce personnage peut être un héritier gâté, un marchand récemment anobli, un vaurien renié ou un dirigeant loyal envers les siens.",
+      "skill_proficiencies": [
+        "Histoire",
+        "Persuasion"
+      ],
+      "tool_proficiencies": [
+        "Un jeu au choix"
+      ],
+      "languages_count": 1,
+      "languages_note": "",
+      "equipment": "des vêtements fins, une chevalière, une lettre attestant de votre statut de noble et une bourse contenant 25 po.",
+      "feature": {
+        "name": "Apanage de la noblesse",
+        "description": "Grâce à sa naissance, le personnage est instinctivement bien vu et perçu comme à sa place dans les cercles distingués. Les roturiers font tout pour lui être agréables, tandis que la noblesse le traite comme un pair. Il peut demander et obtenir une audience auprès de n'importe quel aristocrate local raisonnable."
+      },
+      "personality_traits": [
+        "Je flatte habilement chacun pour qu'il se sente unique et important.",
+        "Les gens du peuple m'adorent pour ma gentillesse et ma générosité.",
+        "Mon allure et ma tenue trahissent immédiatement ma supériorité sur le commun des mortels.",
+        "Je veille scrupuleusement à toujours paraître impeccable et à la dernière mode.",
+        "Je refuse tout travail manuel et n'accepte jamais des conditions de vie médiocres.",
+        "Malgré ma naissance, je me considère comme l'égal de tous, et non comme leur supérieur.",
+        "Une fois que je retire ma faveur à quelqu'un, il ne la retrouve jamais.",
+        "Quiconque me fait du tort en paiera le prix, y compris sa réputation et ses biens."
+      ],
+      "ideals": [
+        "Respect : mon rang m'impose le respect, mais chacun mérite d'être traité avec dignité (Bon)",
+        "Responsabilité : je dois honorer mes supérieurs tout en exigeant le respect de mes subordonnés (Loyal)",
+        "Indépendance : je dois prouver que je peux me passer de la protection de ma famille (Chaotique)",
+        "Pouvoir : gagner en influence, c'est se libérer de l'autorité des autres (Mauvais)",
+        "Famille : les liens du sang priment sur toute autre loyauté (Tous)",
+        "Devoir noble : protéger et subvenir aux besoins de mes gens est mon obligation (Bon)"
+      ],
+      "bonds": [
+        "Je suis prêt à toutes les épreuves pour gagner l'estime et l'approbation de ma famille.",
+        "L'alliance politique de ma famille avec une autre maison noble passe avant tout.",
+        "Le bien-être de mes proches compte plus que tout le reste.",
+        "J'éprouve des sentiments pour l'héritier d'une famille que la mienne méprise.",
+        "Ma loyauté envers mon souverain est absolue et sans faille.",
+        "Le peuple doit voir en moi son champion et son protecteur."
+      ],
+      "flaws": [
+        "Au fond de moi, je pense que la plupart des gens me sont inférieurs.",
+        "Je cache un secret scandaleux capable de ruiner définitivement la réputation de ma famille.",
+        "Je prends la moindre insinuation ou menace voilée comme une offense directe et je réagis avec colère.",
+        "Mon appétit pour les plaisirs charnels semble insatiable.",
+        "Je crois sincèrement que le monde tourne autour de la satisfaction de mes désirs.",
+        "Ma conduite fait honte à toute ma lignée."
+      ],
+      "detail_url": "https://www.aidedd.org/regles/historiques/noble/",
+      "source": "Manuel des Joueurs (PHB 2014)",
+      "icon": "game-icons:crown"
+    },
+    {
+      "name": "Sage",
+      "slug": "sage",
+      "description": "Un historique pour un personnage ayant passé des années à étudier le multivers, dévorant les manuscrits et apprenant auprès des experts dans ses domaines de prédilection.",
+      "skill_proficiencies": [
+        "Arcanes",
+        "Histoire"
+      ],
+      "tool_proficiencies": [],
+      "languages_count": 2,
+      "languages_note": "",
+      "equipment": "une bouteille d'encre noire, une plume, un petit couteau, une lettre d'un collègue mort posant une question à laquelle vous n'avez pas encore été en mesure de répondre, des vêtements communs et une bourse contenant 10 po.",
+      "feature": {
+        "name": "Chercheur",
+        "description": "Quand vous cherchez une information que vous ne connaissez pas déjà, vous savez généralement où et auprès de qui la trouver — bibliothèque, scriptorium, université ou érudit compétent. Le MJ peut décider que certains savoirs restent hors de portée ou nécessitent une véritable quête pour être découverts."
+      },
+      "personality_traits": [
+        "Utilise des mots savants et alambiqués même dans une conversation banale, pour paraître érudit.",
+        "Sait lire les expressions et le langage corporel des autres comme un livre ouvert.",
+        "A toujours un proverbe ou une citation adaptée à chaque situation.",
+        "D'une curiosité insatiable, au point de poser bien trop de questions.",
+        "Aime partager des anecdotes savantes même quand personne ne s'y intéresse.",
+        "Pèse soigneusement le pour et le contre avant chaque décision.",
+        "Parle lentement, prenant le temps de choisir le mot juste.",
+        "Socialement maladroit et mal à l'aise hors des cercles savants."
+      ],
+      "ideals": [
+        "Le savoir est la voie vers le pouvoir et l'accomplissement de soi. (Neutre)",
+        "La beauté d'une grande idée surpasse n'importe quel trésor matériel. (Bon)",
+        "La logique doit primer sur les sentiments dans toute décision. (Loyal)",
+        "Rien ne doit jamais limiter la quête de la connaissance. (Chaotique)",
+        "Le savoir n'appartient qu'à ceux assez sages ou assez forts pour le mériter. (Mauvais)",
+        "Ce qui compte, c'est de progresser et de se perfectionner par tous les moyens. (Ordre indifférent)"
+      ],
+      "bonds": [
+        "Vous vous consacrez à protéger un étudiant qui vous rappelle qui vous étiez autrefois.",
+        "Préserver un livre précieux ou les fruits de vos recherches est devenu le but de votre vie.",
+        "Vous cherchez la réponse à une question qui occupe toute votre carrière.",
+        "Tout ce que vous faites est au service des habitants d'une cité ou d'une nation particulière.",
+        "Une certaine école de magie ou une secte précise du multivers vous fascine.",
+        "Vous êtes prêt à tout risquer pour percer un secret oublié du monde."
+      ],
+      "flaws": [
+        "Facilement distrait par une anecdote intéressante.",
+        "A peu d'expérience pratique de la violence et gère mal les situations de stress qui en découlent.",
+        "Convaincu que les autres cherchent sans cesse à lui voler ses secrets.",
+        "Incapable de garder un secret, quel qu'il soit.",
+        "Ne peut s'empêcher de relever la moindre incohérence philosophique dans une discussion.",
+        "Épouvantable en société, incapable de soutenir un regard ou une conversation banale."
+      ],
+      "detail_url": "https://www.aidedd.org/regles/historiques/sage/",
+      "source": "Manuel des Joueurs (PHB 2014)",
+      "icon": "game-icons:open-book"
+    },
+    {
+      "name": "Sauvageon",
+      "slug": "sauvageon",
+      "description": "Un personnage élevé dans les grands espaces sauvages, loin de toute civilisation et des conforts qu'offrent les villes et la technologie.",
+      "skill_proficiencies": [
+        "Athlétisme",
+        "Survie"
+      ],
+      "tool_proficiencies": [
+        "un type d'instrument de musique (au choix)"
+      ],
+      "languages_count": 1,
+      "languages_note": "",
+      "equipment": "un bâton, un piège à mâchoires, un trophée de l'animal que vous avez tué, des vêtements de voyage et une bourse contenant 10 po.",
+      "feature": {
+        "name": "Éternel vagabond",
+        "description": "Vous avez une mémoire exceptionnelle de la géographie des lieux que vous avez traversés et vous retrouvez toujours votre chemin. De plus, vous êtes capable de trouver chaque jour de la nourriture et de l'eau fraîche pour vous-même et jusqu'à cinq autres personnes, à condition que la région en fournisse."
+      },
+      "personality_traits": [
+        "Parfaitement à l'aise dans la nature ; peut se passer des conforts de la civilisation pendant des semaines.",
+        "Ne reste jamais longtemps au même endroit, devient nerveux dès qu'il s'installe.",
+        "Méfiant envers les inconnus, n'accorde sa confiance qu'à ceux qui ont fait leurs preuves.",
+        "Ne comprend ni ne se soucie de la richesse comme le font les gens des villes.",
+        "Juge les gens à leurs actes, jamais à leurs paroles.",
+        "Se souvient des paysages et de la géographie avec une précision remarquable.",
+        "Préfère la compagnie des animaux à celle des gens, dans la plupart des situations.",
+        "A un passe-temps très particulier, comme tailler du bois ou chanter au vent."
+      ],
+      "ideals": [
+        "Le changement fait partie de l'ordre naturel des choses ; rien ne dure éternellement. (Chaotique)",
+        "La force prime ; seuls les plus forts survivent dans la nature sauvage. (Mauvais)",
+        "La vie ne vaut que ce que l'on en fait, ici et maintenant. (Ordre indifférent)",
+        "Le monde naturel importe davantage que ce que les gens construisent. (Neutre)",
+        "Ceux qui sont menacés méritent d'être protégés, quel qu'en soit le prix. (Bon)",
+        "Le respect se gagne par ses actes au sein du groupe, pas par le rang ou la naissance. (Loyal)"
+      ],
+      "bonds": [
+        "Vous êtes dévoué à votre tribu, votre famille ou votre clan d'exclus.",
+        "Une blessure infligée par une bête ou une créature maléfique appelle vengeance.",
+        "Il existe un lieu sauvage que vous appelez foyer et que vous défendriez au péril de votre vie.",
+        "Un guide ou un éclaireur vous a recueilli et vous a appris à survivre.",
+        "Vous êtes animé par le désir de trouver quelque chose qui vous échappe depuis toujours.",
+        "Quelqu'un vous a sauvé la vie dans la nature sauvage ; vous lui devez tout."
+      ],
+      "flaws": [
+        "A du mal à rester en place ; ressent l'envie de repartir dès qu'il s'installe quelque part.",
+        "Agressif au point de s'aliéner des gens bien intentionnés.",
+        "Ne fait confiance qu'à ce qu'il peut voir, entendre ou sentir de ses propres sens.",
+        "Superstitieux à l'excès, voit des présages là où il n'y en a pas.",
+        "Ignorant des usages et de l'étiquette, offense sans le vouloir.",
+        "Trop confiant dans ses propres talents de survie, méprise les mises en garde des autres."
+      ],
+      "detail_url": "https://www.aidedd.org/regles/historiques/sauvageon/",
+      "source": "Manuel des Joueurs (PHB 2014)",
+      "icon": "game-icons:wolf-howl"
+    },
+    {
+      "name": "Soldat",
+      "slug": "soldat",
+      "description": "Un personnage façonné par la guerre depuis son plus jeune âge, entraîné aux armes, à l'armure et à la survie sur le champ de bataille, au sein d'une organisation militaire dont il faut définir avec le MJ le rang et le parcours.",
+      "skill_proficiencies": [
+        "Athlétisme",
+        "Intimidation"
+      ],
+      "tool_proficiencies": [
+        "un type de jeu",
+        "véhicules (terrestre)"
+      ],
+      "languages_count": 0,
+      "languages_note": "",
+      "equipment": "un insigne de grade, un trophée pris sur un ennemi (une dague, une bannière brisée, etc.), un jeu de dés en os ou un jeu de cartes, des vêtements communs et une bourse contenant 10 po.",
+      "feature": {
+        "name": "Grade militaire",
+        "description": "Vous conservez une autorité reconnue parmi les soldats de votre ancienne organisation. Vous pouvez invoquer votre grade pour influencer d'autres soldats et réquisitionner temporairement du matériel simple ou des montures, et vous avez accès aux camps et forteresses militaires où votre rang est reconnu."
+      },
+      "personality_traits": [
+        "Évalue sans cesse les menaces et les issues de secours par pure habitude.",
+        "D'une politesse et d'un formalisme excessifs, même dans les situations les plus informelles.",
+        "A connu de véritables horreurs et peine à en parler.",
+        "A du mal à se sentir proche de ceux qui n'ont jamais connu la guerre.",
+        "Adore raconter ses vieilles histoires de bataille, qu'on l'écoute ou non.",
+        "Reste calme sous la pression ; plus grand-chose ne le déstabilise.",
+        "Juge la valeur d'une personne à sa force.",
+        "Utilise l'humour noir pour affronter les situations les plus sombres."
+      ],
+      "ideals": [
+        "Prêt à donner sa vie pour ceux qui ne peuvent pas se défendre eux-mêmes. (Bon)",
+        "Obéir aux ordres est ce qui maintient la cohésion de tout le reste. (Loyal)",
+        "Fidèle à soi-même avant tout, plus qu'à n'importe quelle bannière ou cause. (Chaotique)",
+        "La domination et la victoire comptent plus que les raisons qui les motivent. (Mauvais)",
+        "Il n'y a aucune gloire dans la guerre, seulement des souffrances à faire cesser. (Ordre indifférent)",
+        "Tout ce qu'il fait est au service de sa patrie. (Neutre)"
+      ],
+      "bonds": [
+        "Donnerait tout pour les soldats qui ont combattu à ses côtés autrefois.",
+        "Son honneur compte plus que sa propre vie.",
+        "Une défaite le hante encore et guide chacun de ses choix.",
+        "Quelqu'un a versé son sang à ses côtés ; il ferait n'importe quoi pour cette personne.",
+        "S'est juré de protéger les faibles face à l'oppression des puissants.",
+        "Répond encore à un officier ou à un vieux code d'honneur, même aujourd'hui."
+      ],
+      "flaws": [
+        "Des cauchemars et un malaise diffus continuent de le rattraper.",
+        "Méprise ceux qui n'ont jamais porté l'uniforme.",
+        "Une erreur commise au combat le hante et il ferait n'importe quoi pour l'enterrer.",
+        "Une haine tenace envers un ennemi précis obscurcit son jugement.",
+        "Suit les règles et les ordres même quand cela fait manifestement plus de mal que de bien.",
+        "Trop fier pour admettre ses torts, même quand cela lui coûte cher."
+      ],
+      "detail_url": "https://www.aidedd.org/regles/historiques/soldat/",
+      "source": "Manuel des Joueurs (PHB 2014)",
+      "icon": "game-icons:sword-brandish"
+    }
+  ]
+}

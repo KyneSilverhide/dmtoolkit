@@ -9,11 +9,11 @@ import HelpTip from '../HelpTip.vue'
 const MAX_COIN_AMOUNT = 99999
 
 const COINS = [
-  { key: 'pp', label: 'PP', name: 'Platine', color: '#e5e4e2', pcValue: 1000 },
-  { key: 'po', label: 'PO', name: 'Or', color: '#d4af37', pcValue: 100 },
-  { key: 'pe', label: 'PE', name: 'Electrum', color: '#80bfff', pcValue: 50 },
-  { key: 'pa', label: 'PA', name: 'Argent', color: '#c0c0c0', pcValue: 10 },
-  { key: 'pc', label: 'PC', name: 'Cuivre', color: '#b87333', pcValue: 1 },
+  { key: 'pp', label: 'PP', name: 'Platine', color: 'var(--coin-platinum)', pcValue: 1000 },
+  { key: 'po', label: 'PO', name: 'Or', color: 'var(--msg-swatch-gold)', pcValue: 100 },
+  { key: 'pe', label: 'PE', name: 'Electrum', color: 'var(--coin-electrum)', pcValue: 50 },
+  { key: 'pa', label: 'PA', name: 'Argent', color: 'var(--coin-silver)', pcValue: 10 },
+  { key: 'pc', label: 'PC', name: 'Cuivre', color: 'var(--coin-copper)', pcValue: 1 },
 ]
 
 const amounts = ref({ pp: 0, po: 0, pe: 0, pa: 0, pc: 0 })
@@ -554,7 +554,7 @@ function reset() {
 .group-toggle:hover, .group-toggle.grouped {
   border-color: var(--color-gold-dark);
   color: var(--color-gold-bright);
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(var(--msg-swatch-gold-rgb), 0.1);
 }
 
 .player-name {

@@ -83,9 +83,9 @@ function imageFullUrl(url) {
           title="Cliquer pour retirer"
           @click="emit('remove-custom-token', pid)"
         >
-          <span class="chip-initial" style="color:#6aaa44">{{ tokenPos.name?.[0]?.toUpperCase() || '?' }}</span>
+          <span class="chip-initial" style="color:var(--map-token-custom-border)">{{ tokenPos.name?.[0]?.toUpperCase() || '?' }}</span>
           <span class="chip-name">{{ tokenPos.name }}</span>
-          <span class="chip-badge" style="color:#6aaa44">✓</span>
+          <span class="chip-badge" style="color:var(--map-token-custom-border)">✓</span>
         </div>
       </template>
     </div>
@@ -118,19 +118,19 @@ function imageFullUrl(url) {
 }
 .token-chip:hover { border-color: var(--color-gold-dark); background: var(--surface-gold-soft); }
 .token-chip.placed { border-color: var(--color-gold-bright); background: var(--surface-gold-soft); }
-.token-chip.pending { border-color: #a78bfa; background: rgba(139,92,246,0.15); animation: pulse-pending 1s infinite; }
-@keyframes pulse-pending { 0%,100% { box-shadow: 0 0 0 0 rgba(139,92,246,0.4); } 50% { box-shadow: 0 0 0 4px rgba(139,92,246,0); } }
+.token-chip.pending { border-color: var(--color-pending); background: rgba(var(--color-pending-rgb), 0.15); animation: pulse-pending 1s infinite; }
+@keyframes pulse-pending { 0%,100% { box-shadow: 0 0 0 0 rgba(var(--color-pending-rgb), 0.4); } 50% { box-shadow: 0 0 0 4px rgba(var(--color-pending-rgb), 0); } }
 .chip-avatar {
   width: 26px; height: 26px; border-radius: 50%; overflow: hidden;
-  border: 1.5px solid var(--color-gold-dark); background: #111;
+  border: 1.5px solid var(--color-gold-dark); background: var(--color-media-letterbox);
   flex-shrink: 0; display: flex; align-items: center; justify-content: center;
 }
 .chip-img { width: 100%; height: 100%; object-fit: cover; }
 .chip-initial { font-family: var(--font-heading), sans-serif; font-size: 0.75rem; color: var(--color-gold-dark); }
 .chip-name { font-family: var(--font-heading), sans-serif; font-size: 0.65rem; letter-spacing: 0.05em; color: var(--color-text-dim); }
 .chip-badge { font-size: 0.7rem; color: var(--color-gold-bright); font-weight: bold; }
-.pending-badge { color: #a78bfa; }
-.placement-hint { color: #a78bfa !important; font-style: italic; }
+.pending-badge { color: var(--color-pending); }
+.placement-hint { color: var(--color-pending) !important; font-style: italic; }
 .custom-token-form { display: flex; gap: 0.4rem; align-items: center; }
 .custom-token-input {
   flex: 1; padding: 0.35rem 0.6rem;

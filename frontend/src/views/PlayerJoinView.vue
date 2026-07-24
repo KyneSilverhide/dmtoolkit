@@ -527,7 +527,7 @@ async function joinSession() {
 .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .demo-hint {
-  color: #f59e0b;
+  color: var(--color-demo-accent);
   font-style: italic;
 }
 </style>

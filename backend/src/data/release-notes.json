@@ -1,6 +1,17 @@
 {
   "notes": [
     {
+      "version": "1.0.114",
+      "date": "2026-07-24",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Aptitudes — nouvel onglet qui réunit tous les traits de classe et de sous-classe (Conduit divin, Paume frémissante…) dans une liste recherchable, avec un lien retour vers la classe d'origine ; inclut aussi les invocations occultes, la métamagie, les manœuvres et les styles de combat comme entrées individuelles." },
+        { "type": "improvement", "role": "admin", "text": "Contenu — les onglets Sorts, Objets, Objets magiques, Races, Classes, Origines et Aptitudes, ainsi que la recherche Ctrl+K, sont désormais accessibles sans avoir de session active." },
+        { "type": "improvement", "role": "admin", "text": "Contenu — Sorts, Objets, Objets magiques et Aptitudes affichent une liste complète paginée dès l'ouverture de l'onglet, sans avoir besoin de taper une recherche." },
+        { "type": "improvement", "role": "admin", "text": "Classes — les descriptions des traits de classe et de sous-classe ont été réécrites pour inclure tous les détails de règle (coûts, dés, dégâts, durées, prérequis…) au lieu d'un simple résumé." },
+        { "type": "fix", "role": "admin", "text": "Recherche — le texte tapé ne se propage plus d'un onglet de contenu à l'autre, le premier accès à un onglet depuis la palette de commande fonctionne désormais correctement, et les sorts d'une classe sont triés par niveau puis par ordre alphabétique." }
+      ]
+    },
+    {
       "version": "1.0.111",
       "date": "2026-06-23",
       "changes": [

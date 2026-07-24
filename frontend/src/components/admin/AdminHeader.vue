@@ -12,7 +12,7 @@ defineProps({
   hasActiveSession:       { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['logout', 'toggle-theme', 'toggle-session-panel'])
+const emit = defineEmits(['logout', 'toggle-theme', 'toggle-session-panel', 'open-search'])
 </script>
 
 <template>
@@ -27,6 +27,15 @@ const emit = defineEmits(['logout', 'toggle-theme', 'toggle-session-panel'])
           {{ admin.username }}
           <span class="app-version">v{{ appVersion }}</span>
         </p>
+        <button
+          class="search-trigger-btn"
+          @click="emit('open-search')"
+          data-testid="open-search-palette"
+        >
+          <AppIcon icon="lucide:search" size="0.9em" />
+          Rechercher
+          <kbd class="search-trigger-kbd">Ctrl K</kbd>
+        </button>
         <ReleaseNotesBell role="admin" />
         <button class="theme-toggle-btn" @click="emit('toggle-theme')" data-testid="theme-toggle">
           <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.9em" />
@@ -110,6 +119,37 @@ const emit = defineEmits(['logout', 'toggle-theme', 'toggle-session-panel'])
 .theme-toggle-btn:hover { border-color: var(--color-gold-dark); color: var(--color-gold-bright); }
 .logout-btn:hover { border-color: var(--color-danger-border); color: var(--color-danger); }
 
+.search-trigger-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--surface-gold-soft);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem 0.35rem 0.8rem;
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1px transparent;
+}
+.search-trigger-btn:hover {
+  background: var(--surface-gold-soft-strong);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-gold-dark) 25%, transparent);
+}
+.search-trigger-kbd {
+  font-family: var(--font-heading), sans-serif;
+  background: var(--gradient-panel);
+  border: 1px solid var(--border-gold-soft);
+  border-radius: 4px;
+  padding: 0 0.3rem;
+  font-size: 0.62rem;
+  color: var(--color-gold-dark);
+}
+
 .session-header-panel {
   margin: 0 0 0.75rem;
   border: 1px solid var(--color-border);
@@ -155,5 +195,6 @@ const emit = defineEmits(['logout', 'toggle-theme', 'toggle-session-panel'])
 @media (max-width: 767px) {
   .header-top { flex-wrap: wrap; gap: 0.5rem; }
   .admin-name { display: none; }
+  .search-trigger-kbd { display: none; }
 }
 </style>

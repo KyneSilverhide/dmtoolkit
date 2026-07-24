@@ -151,6 +151,9 @@ onUnmounted(() => {
           class="spell-desc"
           v-html="descriptionHtml(spell)"
         />
+        <div v-if="spell.classes?.length" class="classes-row">
+          <span v-for="cls in spell.classes" :key="cls" class="class-badge">{{ cls }}</span>
+        </div>
         <a :href="spell.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
       </article>
     </div>
@@ -228,7 +231,18 @@ onUnmounted(() => {
   font-weight: 600;
 }
 .spell-desc :deep(tbody tr:hover) {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-ghost);
 }
 .spell-link { display: inline-block; margin-top: 0.35rem; font-size: 0.65rem; color: var(--color-gold-dark); text-decoration: none; font-family: var(--font-heading), sans-serif; }
+.classes-row { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
+.class-badge {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.55rem;
+  letter-spacing: 0.05em;
+  color: var(--color-gold-dark);
+  background: var(--surface-gold-soft);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 20px;
+  padding: 0.08rem 0.45rem;
+}
 </style>

@@ -33,6 +33,6 @@ function onLoad(event) {
   flex: 1;
   width: 100%;
   border: none;
-  background: #000;
+  background: var(--color-media-letterbox);
 }
 </style>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { authStore } from '../stores/auth.js'
 import { sessionStore } from '../stores/session.js'
@@ -16,7 +16,13 @@ import AudioManager from '../components/admin/AudioManager.vue'
 import MerchantManager from '../components/admin/MerchantManager.vue'
 import PuzzleManager from '../components/admin/PuzzleManager.vue'
 import ReputationManager from '../components/admin/ReputationManager.vue'
-import SearchTool from '../components/admin/SearchTool.vue'
+import SpellSearch from '../components/admin/SpellSearch.vue'
+import ItemSearch from '../components/admin/ItemSearch.vue'
+import RaceSearch from '../components/admin/RaceSearch.vue'
+import ClassSearch from '../components/admin/ClassSearch.vue'
+import BackgroundSearch from '../components/admin/BackgroundSearch.vue'
+import AbilitySearch from '../components/admin/AbilitySearch.vue'
+import CommandPalette from '../components/admin/CommandPalette.vue'
 import MapManager from '../components/admin/MapManager.vue'
 import GoldDividerTool from '../components/admin/GoldDividerTool.vue'
 import GeneratorTool from '../components/admin/GeneratorTool.vue'
@@ -49,6 +55,26 @@ const tvMode = ref('lobby')
 const theme = ref(getThemePreference('admin', 'dark'))
 const isLightTheme = computed(() => theme.value === 'light')
 const isNavCollapsed = ref(false)
+const isPaletteOpen = ref(false)
+// Pré-remplissage transmis à SpellSearch/ItemSearch/RaceSearch/ClassSearch/
+// BackgroundSearch/AbilitySearch quand la palette de commande (Ctrl+K) redirige vers un
+// sort/objet précis, ou quand ClassSearch/AbilitySearch redirige vers l'onglet Sorts/
+// Classes filtré. `token` doit être
+// incrémenté à chaque navigation pour redéclencher le watcher même si la query est
+// identique à la fois précédente.
+// Chaque onglet a son propre objet de pré-remplissage (plutôt qu'un objet partagé) car
+// tous les composants sont gardés en vie par <KeepAlive> : avec un seul objet partagé,
+// leurs watchers restent actifs même inactifs, et une recherche dans un onglet
+// « fuitait » silencieusement dans le champ de recherche des autres onglets.
+const searchPrefillBySubTab = reactive({
+  spells: { query: '', classFilter: null, exactSlug: null, token: 0 },
+  equipment: { query: '', exactSlug: null, token: 0 },
+  magic: { query: '', exactSlug: null, token: 0 },
+  races: { query: '', exactSlug: null, token: 0 },
+  classes: { query: '', exactSlug: null, token: 0 },
+  backgrounds: { query: '', exactSlug: null, token: 0 },
+  abilities: { query: '', exactSlug: null, token: 0 },
+})
 
 // ── Tab → component mapping (for <KeepAlive>) ───────────────────────────
 const tabComponents = {
@@ -66,7 +92,13 @@ const tabComponents = {
   puzzle: PuzzleManager,
   reputation: ReputationManager,
   tresor: GoldDividerTool,
-  search: SearchTool,
+  spells: SpellSearch,
+  equipment: ItemSearch,
+  magic: ItemSearch,
+  races: RaceSearch,
+  classes: ClassSearch,
+  backgrounds: BackgroundSearch,
+  abilities: AbilitySearch,
   generator: GeneratorTool,
 }
 const currentTabComponent = computed(() => tabComponents[activeTab.value] || null)
@@ -171,15 +203,37 @@ const tabs = [
   { key: 'puzzle',    label: 'Puzzles',       icon: 'lucide:puzzle' },
   { key: 'reputation',label: 'Réputations',   icon: 'lucide:shield' },
   { key: 'tresor',    label: 'Trésor',        icon: 'game-icons:coins' },
-  { key: 'search',    label: 'Recherche',     icon: 'lucide:search' },
+  { key: 'spells',    label: 'Sorts',         icon: 'lucide:sparkles' },
+  { key: 'equipment', label: 'Objets',        icon: 'lucide:package' },
+  { key: 'magic',     label: 'Objets magiques', icon: 'lucide:gem' },
+  { key: 'races',     label: 'Races',         icon: 'game-icons:vitruvian-man' },
+  { key: 'classes',   label: 'Classes',       icon: 'game-icons:round-shield' },
+  { key: 'backgrounds', label: 'Origines',    icon: 'game-icons:quill-ink' },
+  { key: 'abilities', label: 'Aptitudes',     icon: 'lucide:zap' },
   { key: 'generator', label: 'Générateur',    icon: 'lucide:wand-2' },
 ]
 
-const navGroups = [
+// Onglets « Contenu » : fiches de référence D&D 5e statiques, indépendantes de toute
+// session (ne lisent ni n'écrivent aucun état de session) — accessibles même sans
+// session active, contrairement aux autres groupes.
+const CONTENT_TABS = ['spells', 'equipment', 'magic', 'races', 'classes', 'backgrounds', 'abilities']
+const isContentTab = computed(() => CONTENT_TABS.includes(activeTab.value))
+
+const NAV_GROUPS_FULL = [
   { label: 'En jeu',  items: ['players', 'message', 'dice', 'journal'] },
   { label: 'Scène',   items: ['tension', 'vote', 'images', 'videos', 'audio', 'map', 'merchants', 'puzzle', 'reputation'] },
-  { label: 'Outils',  items: ['tresor', 'search', 'generator'] },
+  { label: 'Contenu', items: CONTENT_TABS },
+  { label: 'Outils',  items: ['tresor', 'generator'] },
 ]
+// Sans session active, seuls les onglets de contenu ont un sens : le reste du menu
+// dépend d'une session (joueurs, scène TV, trésor de la session, etc.).
+const navGroups = computed(() => (
+  sessionStore.activeSession ? NAV_GROUPS_FULL : NAV_GROUPS_FULL.filter(g => g.label === 'Contenu')
+))
+// Transmis à CommandPalette pour que ses résultats de section (Ctrl+K) restent alignés
+// sur le menu affiché : pas de raccourci vers un onglet caché (ex: « Joueurs » sans
+// session active), même si la palette elle-même est utilisable sans session.
+const visibleTabKeys = computed(() => navGroups.value.flatMap(g => g.items))
 
 // ── TV modes ─────────────────────────────────────────────────────────────
 const tvModes = computed(() => ([
@@ -219,6 +273,32 @@ function logout() {
   resetSocket()
   authStore.logout()
   router.push('/')
+}
+
+// ── Palette de commande (recherche globale, Ctrl+K) ─────────────────────
+function openPalette() { isPaletteOpen.value = true }
+function closePalette() { isPaletteOpen.value = false }
+
+function handlePaletteGoTab(tabKey) {
+  activeTab.value = tabKey
+}
+
+function handlePaletteGoSearch({ subTab, query, classFilter, exactSlug }) {
+  activeTab.value = subTab // 'spells' | 'equipment' | 'magic' | 'races' | 'classes' | 'backgrounds' | 'abilities'
+  const target = searchPrefillBySubTab[subTab]
+  if (!target) return
+  target.query = query || ''
+  target.classFilter = classFilter || null
+  target.exactSlug = exactSlug || null
+  target.token += 1
+}
+
+function onGlobalKeydown(e) {
+  const isK = e.key === 'k' || e.key === 'K'
+  if (isK && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault()
+    isPaletteOpen.value = !isPaletteOpen.value
+  }
 }
 
 function toggleTheme() {
@@ -303,6 +383,7 @@ async function loadConfig() {
 // ── Lifecycle ─────────────────────────────────────────────────────────────
 onMounted(() => {
   document.body.classList.add('page-admin')
+  window.addEventListener('keydown', onGlobalKeydown)
   loadSessions()
   loadConfig()
   releaseNotesStore.load()
@@ -384,6 +465,7 @@ watch(
 
 onUnmounted(() => {
   document.body.classList.remove('page-admin')
+  window.removeEventListener('keydown', onGlobalKeydown)
   if (_socket) {
     _socket.off('connect')
     _socket.off(PLAYER_JOINED)
@@ -428,11 +510,11 @@ onUnmounted(() => {
       @logout="logout"
       @toggle-theme="toggleTheme"
       @toggle-session-panel="isSessionPanelCollapsed = !isSessionPanelCollapsed"
+      @open-search="openPalette"
     />
 
     <div class="admin-body">
       <AdminNavSidebar
-        v-if="sessionStore.activeSession"
         :tabs="tabs"
         :nav-groups="navGroups"
         :active-tab="activeTab"
@@ -446,17 +528,27 @@ onUnmounted(() => {
       <div class="admin-content-area">
         <div class="admin-main-grid">
           <section class="admin-main">
-            <template v-if="sessionStore.activeSession">
+            <template v-if="sessionStore.activeSession || isContentTab">
               <Transition name="tab-fade" mode="out-in">
                 <KeepAlive>
                   <component
                     :is="currentTabComponent"
-                    v-bind="activeTab === 'puzzle' ? { activePuzzle } : {}"
+                    :key="activeTab"
+                    v-bind="activeTab === 'puzzle' ? { activePuzzle }
+                      : activeTab === 'spells' ? { prefill: searchPrefillBySubTab.spells }
+                      : activeTab === 'equipment' ? { prefill: searchPrefillBySubTab.equipment, category: 'equipment' }
+                      : activeTab === 'magic' ? { prefill: searchPrefillBySubTab.magic, category: 'magic' }
+                      : activeTab === 'races' ? { prefill: searchPrefillBySubTab.races }
+                      : activeTab === 'classes' ? { prefill: searchPrefillBySubTab.classes }
+                      : activeTab === 'backgrounds' ? { prefill: searchPrefillBySubTab.backgrounds }
+                      : activeTab === 'abilities' ? { prefill: searchPrefillBySubTab.abilities }
+                      : {}"
+                    @go-search="handlePaletteGoSearch"
                   />
                 </KeepAlive>
               </Transition>
             </template>
-            <p v-else class="no-session-msg">Sélectionnez ou créez une session pour accéder aux outils.</p>
+            <p v-else class="no-session-msg">Sélectionnez ou créez une session pour accéder aux outils de jeu — ou consultez Sorts, Objets, Races, Classes et Origines dans le menu « Contenu » à gauche, sans session.</p>
           </section>
 
           <AdminTvSidebar
@@ -478,6 +570,14 @@ onUnmounted(() => {
       @dismiss="dismissPlayerRollToast"
       @pause="pauseToast"
       @resume="resumeToast"
+    />
+
+    <CommandPalette
+      :open="isPaletteOpen"
+      :visible-tab-keys="visibleTabKeys"
+      @close="closePalette"
+      @go-tab="handlePaletteGoTab"
+      @go-search="handlePaletteGoSearch"
     />
   </div>
 </template>

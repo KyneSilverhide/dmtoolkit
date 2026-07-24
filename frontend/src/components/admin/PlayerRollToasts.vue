@@ -59,13 +59,13 @@ const emit = defineEmits(['dismiss', 'pause', 'resume'])
   border-radius: 10px;
   border: 1px solid var(--color-gold-dark);
   background: var(--gradient-panel-soft);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  box-shadow: var(--shadow-soft);
   cursor: pointer;
   min-width: 200px;
   max-width: 300px;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.player-roll-toast:hover { border-color: var(--color-gold-bright); box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+.player-roll-toast:hover { border-color: var(--color-gold-bright); box-shadow: var(--shadow-medium); }
 .player-roll-toast.hidden { border-color: var(--color-info-border); }
 /* noinspection CssUnusedSymbol */
 .roll-toast-enter-active, .roll-toast-leave-active { transition: opacity 0.3s, transform 0.3s; }

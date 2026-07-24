@@ -335,6 +335,7 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.1rem;
+  height: 1.6rem;
 }
 
 .form-input--sm {
@@ -357,7 +358,7 @@ onUnmounted(() => {
 }
 
 .faction-card {
-  background: var(--admin-panel-bg);
+  background: var(--admin-panel-bg, var(--gradient-panel));
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0.75rem 0.85rem;
@@ -400,7 +401,7 @@ onUnmounted(() => {
 }
 
 .remove-btn:hover {
-  color: var(--admin-danger-text);
+  color: var(--admin-danger-text, var(--color-danger));
 }
 
 .fc-bar-row {
@@ -410,7 +411,7 @@ onUnmounted(() => {
 }
 
 .adj-btn {
-  background: var(--admin-control-bg);
+  background: var(--admin-control-bg, var(--surface-raised));
   border: 1px solid var(--color-border);
   color: var(--color-text);
   border-radius: 4px;
@@ -425,7 +426,7 @@ onUnmounted(() => {
 }
 
 .adj-btn:hover:not(:disabled) {
-  background: var(--admin-panel-highlight-bg);
+  background: var(--admin-panel-highlight-bg, var(--gradient-panel-soft));
 }
 
 .adj-btn:disabled {

@@ -19,9 +19,9 @@ function hpColor(player) {
 }
 function hpGlow(player) {
   const pct = hpPercent(player)
-  if (pct > 50) return 'rgba(47,184,150,0.18)'
-  if (pct > 20) return 'rgba(240,165,0,0.18)'
-  return 'rgba(255,107,107,0.22)'
+  if (pct > 50) return 'rgba(var(--color-success-rgb), 0.18)'
+  if (pct > 20) return 'rgba(var(--color-warning-rgb), 0.18)'
+  return 'rgba(var(--color-danger-rgb), 0.22)'
 }
 
 const CONDITION_LABELS = DND_CONDITIONS_MAP

@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import AppIcon from '../AppIcon.vue'
 
 const props = defineProps({
@@ -11,6 +11,14 @@ const props = defineProps({
   // du markup simple (<code>) — contenu défini en dur, jamais une entrée utilisateur.
   lockedTabs:      { type: Object, default: () => ({}) },
   isCollapsed:     { type: Boolean, default: false },
+})
+
+// La tab bar mobile doit refléter les mêmes onglets que la sidebar desktop (dérivés de
+// navGroups, pas de la liste complète `tabs`) — sinon elle affiche des onglets qui n'ont
+// pas de sens dans le contexte courant (ex: onglets de session sans session active).
+const visibleTabs = computed(() => {
+  const keys = props.navGroups.flatMap(g => g.items)
+  return keys.map(key => props.tabs.find(t => t.key === key)).filter(Boolean)
 })
 
 const emit = defineEmits(['update:activeTab', 'update:isCollapsed'])
@@ -98,7 +106,7 @@ function selectTab(key) {
   <!-- ── Tab bar mobile (< 768px) ──────────────────────────────────────── -->
   <nav class="admin-nav-mobile" role="tablist">
     <button
-      v-for="tab in tabs"
+      v-for="tab in visibleTabs"
       :key="tab.key"
       class="mobile-nav-btn"
       :class="{

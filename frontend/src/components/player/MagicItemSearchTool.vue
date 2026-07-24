@@ -1,6 +1,7 @@
 ﻿<script setup>
 import { ref, watch, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
+import { itemTypeStyle } from '@/utils/itemTypes.js'
 
 import { BACKEND_URL } from '@/config.js'
 
@@ -27,11 +28,11 @@ function descriptionHtml(item) {
 
 const RARITY_COLORS = {
   'commun': 'var(--color-text-dim)',
-  'peu commun': '#1eff00',
-  'rare': '#0070dd',
-  'tres rare': '#a335ee',
-  'legendaire': '#ff8000',
-  'artefact': '#e6cc80',
+  'peu commun': 'var(--rarity-uncommon)',
+  'rare': 'var(--rarity-rare)',
+  'tres rare': 'var(--rarity-epic)',
+  'legendaire': 'var(--rarity-legendary)',
+  'artefact': 'var(--rarity-artifact)',
 }
 
 function stripAccents(str) {
@@ -45,6 +46,14 @@ function rarityColor(rarity) {
     if (key.includes(k)) return v
   }
   return 'var(--color-text-dim)'
+}
+
+function itemTypeIcon(itemType) {
+  return itemTypeStyle(itemType).icon
+}
+
+function itemTypeColor(itemType) {
+  return itemTypeStyle(itemType).color
 }
 
 async function search() {
@@ -110,7 +119,12 @@ onUnmounted(() => {
     </p>
 
     <div class="item-list">
-      <article v-for="item in results" :key="item.slug" class="item-card">
+      <article
+        v-for="item in results"
+        :key="item.slug"
+        class="item-card"
+        :style="{ '--item-type-color': itemTypeColor(item.item_type) }"
+      >
         <div class="item-head">
           <h4 class="item-name">{{ item.name }}</h4>
           <div class="item-badges">
@@ -119,11 +133,14 @@ onUnmounted(() => {
           </div>
         </div>
         <p class="item-meta">
-          <span class="item-type">{{ item.item_type }}</span>
+          <span class="item-type" :style="{ color: itemTypeColor(item.item_type) }">
+            <AppIcon :icon="itemTypeIcon(item.item_type)" size="1.1em" /> {{ item.item_type }}
+          </span>
           <span
             class="item-rarity"
             :style="{ color: rarityColor(item.rarity) }"
           > • {{ item.rarity }}</span>
+          <span v-if="item.list_data?.prix" class="item-price"> • {{ item.list_data.prix }}</span>
         </p>
         <div
           v-if="item.description_html || item.description"
@@ -162,7 +179,7 @@ onUnmounted(() => {
 .no-results { margin: 0; color: var(--color-text-dim); font-size: 0.85rem; }
 .item-list { display: flex; flex-direction: column; gap: 0.6rem; }
 .item-card {
-  border: 1px solid var(--color-border);
+  border: 1px solid color-mix(in oklab, var(--item-type-color, var(--color-text-dim)) 55%, var(--color-border));
   border-radius: 10px;
   padding: 0.75rem;
   background: var(--player-control-bg-muted, var(--surface-ghost));
@@ -173,7 +190,7 @@ onUnmounted(() => {
 .item-badge-standard {
   font-size: 0.6rem;
   color: var(--color-gold-dark);
-  background: rgba(180, 140, 60, 0.12);
+  background: var(--surface-gold-soft);
   border: 1px solid var(--color-gold-dark);
   border-radius: 20px;
   padding: 0.1rem 0.45rem;
@@ -193,8 +210,9 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 .item-meta { margin: 0.15rem 0 0; font-size: 0.76rem; }
-.item-type { color: var(--color-gold-dark); font-family: var(--font-heading), sans-serif; }
+.item-type { display: inline-flex; align-items: center; gap: 0.25rem; font-family: var(--font-heading), sans-serif; }
 .item-rarity { font-family: var(--font-heading), sans-serif; }
+.item-price { font-family: var(--font-heading), sans-serif; color: var(--color-gold-bright); }
 .item-desc {
   margin: 0.15rem 0 0;
   color: var(--color-text-dim);
@@ -231,7 +249,7 @@ onUnmounted(() => {
   font-weight: 600;
 }
 .item-desc :deep(tbody tr:hover) {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-ghost);
 }
 .item-link { display: inline-block; margin-top: 0.35rem; font-size: 0.65rem; color: var(--color-gold-dark); text-decoration: none; font-family: var(--font-heading), sans-serif; }
 </style>

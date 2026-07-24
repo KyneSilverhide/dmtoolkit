@@ -26,6 +26,11 @@ function getSpells() {
 // Pre-load on module import
 getSpells()
 
+function handleList(req, res) {
+  const all = [...getSpells()].sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+  return res.json(all)
+}
+
 function handleSearch(req, res) {
   const q = (req.query.q || '').trim().toLowerCase()
   if (!q) return res.json([])
@@ -50,7 +55,39 @@ function handleSearch(req, res) {
   return res.json([...nameMatches, ...otherMatches].slice(0, 50))
 }
 
+// Parsing du niveau depuis le champ "école" (ex: "niveau 3 - évocation", "tour de magie -
+// évocation") — même logique que frontend/src/utils/spellSchool.js#parseEcole, dupliquée
+// ici car ce module ESM n'est pas importable depuis le backend CommonJS.
+function parseSpellLevel(ecole) {
+  if (!ecole) return null
+  const match = ecole.match(/niveau\s+(\d+)/i)
+  if (match) return parseInt(match[1], 10)
+  if (/tour de magie/i.test(ecole)) return 0
+  return null
+}
+
+function handleByClass(req, res) {
+  const className = (req.params.className || '').trim().toLowerCase()
+  if (!className) return res.json([])
+
+  const matches = getSpells().filter(spell =>
+    (spell.classes || []).some(c => c.toLowerCase() === className)
+  )
+  matches.sort((a, b) => {
+    const levelA = parseSpellLevel(a.attributes?.ecole)
+    const levelB = parseSpellLevel(b.attributes?.ecole)
+    const la = levelA === null ? 99 : levelA
+    const lb = levelB === null ? 99 : levelB
+    if (la !== lb) return la - lb
+    return a.name.localeCompare(b.name, 'fr')
+  })
+
+  return res.json(matches)
+}
+
+router.get('/', authenticateToken, handleList)
 router.get('/search', authenticateToken, handleSearch)
 router.get('/public/search', handleSearch)
+router.get('/by-class/:className', authenticateToken, handleByClass)
 
 module.exports = router

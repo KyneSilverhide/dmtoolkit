@@ -1,0 +1,250 @@
+{
+  "races": [
+    {
+      "name": "Humain",
+      "slug": "humain",
+      "icon": "game-icons:farmer",
+      "size": "Moyenne (1,55 m à 1,85 m et plus)",
+      "speed": "9 m",
+      "age": "Adulte vers 20 ans ; vit rarement plus de 100 ans",
+      "languages": ["Commun", "1 langue au choix"],
+      "ability_bonus": "Toutes les caractéristiques +1",
+      "traits": [],
+      "subraces": [
+        {
+          "name": "Humain (variante)",
+          "ability_bonus": "2 caractéristiques différentes au choix +1",
+          "traits": [
+            { "name": "Compétence supplémentaire", "description": "Maîtrise d'une compétence au choix." },
+            { "name": "Don", "description": "Obtention d'un don au choix (règle optionnelle)." }
+          ]
+        }
+      ],
+      "detail_url": "https://www.aidedd.org/regles/races/humain/",
+      "source": "Manuel des Joueurs (PHB 2014)"
+    },
+    {
+      "name": "Elfe",
+      "slug": "elfe",
+      "icon": "game-icons:elf-helmet",
+      "size": "Moyenne (1,50 m à 1,80 m)",
+      "speed": "9 m",
+      "age": "Adulte vers 100 ans ; vit jusqu'à 750 ans",
+      "languages": ["Commun", "Elfique"],
+      "ability_bonus": "Dextérité +2",
+      "traits": [
+        { "name": "Vision dans le noir", "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)." },
+        { "name": "Sens aiguisés", "description": "Maîtrise de la compétence Perception." },
+        { "name": "Ascendance féerique", "description": "Avantage aux jets de sauvegarde contre la charme et immunité au sommeil magique." },
+        { "name": "Transe", "description": "N'a pas besoin de dormir ; médite 4 heures par jour à la place." }
+      ],
+      "subraces": [
+        {
+          "name": "Haut-elfe",
+          "ability_bonus": "Intelligence +1",
+          "traits": [
+            { "name": "Entraînement aux armes elfiques", "description": "Maîtrise de l'épée longue, l'épée courte, l'arc long et l'arc court." },
+            { "name": "Sort de mage mineur", "description": "Connaît un tour de magie au choix dans la liste du magicien." },
+            { "name": "Langue supplémentaire", "description": "Une langue additionnelle au choix." }
+          ]
+        },
+        {
+          "name": "Elfe des bois",
+          "ability_bonus": "Sagesse +1",
+          "traits": [
+            { "name": "Entraînement aux armes elfiques", "description": "Maîtrise de l'épée longue, l'épée courte, l'arc long et l'arc court." },
+            { "name": "Vitesse accrue", "description": "Vitesse de base portée à 10,5 m." },
+            { "name": "Masque de la nature", "description": "Peut tenter de se cacher même en n'étant que légèrement dissimulé par le feuillage, la pluie, la neige, etc." }
+          ]
+        },
+        {
+          "name": "Elfe noir (Drow)",
+          "ability_bonus": "Charisme +1",
+          "traits": [
+            { "name": "Vision dans le noir supérieure", "description": "Portée de la vision dans le noir étendue à 36 m." },
+            { "name": "Sensibilité à la lumière du soleil", "description": "Désavantage aux jets d'attaque et de Perception basés sur la vue en plein soleil." },
+            { "name": "Magie draconique... féerique", "description": "Connaît Lumières dansantes ; à partir du niveau 3, lance Feu de fée 1 fois par repos long ; à partir du niveau 5, lance Ténèbres 1 fois par repos long (Charisme)." },
+            { "name": "Entraînement aux armes drow", "description": "Maîtrise de la rapière, l'épée courte et l'arbalète de poing." }
+          ]
+        }
+      ],
+      "detail_url": "https://www.aidedd.org/regles/races/elfe/",
+      "source": "Manuel des Joueurs (PHB 2014)"
+    },
+    {
+      "name": "Nain",
+      "slug": "nain",
+      "icon": "game-icons:dwarf-face",
+      "size": "Moyenne (1,20 m à 1,50 m)",
+      "speed": "7,5 m (non réduite par le port d'une armure lourde)",
+      "age": "Adulte vers 50 ans ; vit environ 350 ans",
+      "languages": ["Commun", "Nain"],
+      "ability_bonus": "Constitution +2",
+      "traits": [
+        { "name": "Vision dans le noir", "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)." },
+        { "name": "Résistance naine", "description": "Avantage aux jets de sauvegarde contre le poison et résistance aux dégâts de poison." },
+        { "name": "Entraînement au combat nain", "description": "Maîtrise de la hachette, la hache d'armes, le marteau léger et le marteau de guerre." },
+        { "name": "Maîtrise d'outils", "description": "Outils de forgeron, de brasseur ou de maçon (au choix)." },
+        { "name": "Connaissance de la pierre", "description": "Maîtrise doublée en Histoire pour les jets liés aux ouvrages de pierre." }
+      ],
+      "subraces": [
+        {
+          "name": "Nain des collines",
+          "ability_bonus": "Sagesse +1",
+          "traits": [
+            { "name": "Ténacité naine", "description": "+1 point de vie maximum, et +1 supplémentaire à chaque niveau gagné." }
+          ]
+        },
+        {
+          "name": "Nain des montagnes",
+          "ability_bonus": "Force +2",
+          "traits": [
+            { "name": "Entraînement aux armures naines", "description": "Maîtrise des armures légères et intermédiaires." }
+          ]
+        }
+      ],
+      "detail_url": "https://www.aidedd.org/regles/races/nain/",
+      "source": "Manuel des Joueurs (PHB 2014)"
+    },
+    {
+      "name": "Halfelin",
+      "slug": "halfelin",
+      "icon": "game-icons:barefoot",
+      "size": "Petite (environ 90 cm)",
+      "speed": "7,5 m",
+      "age": "Adulte vers 20 ans ; vit environ 150 ans",
+      "languages": ["Commun", "Halfelin"],
+      "ability_bonus": "Dextérité +2",
+      "traits": [
+        { "name": "Chanceux", "description": "Relance les 1 obtenus aux jets d'attaque, de caractéristique ou de sauvegarde, et doit garder le nouveau résultat." },
+        { "name": "Brave", "description": "Avantage aux jets de sauvegarde contre la peur." },
+        { "name": "Agilité halfeline", "description": "Peut se déplacer à travers l'espace occupé par une créature de taille supérieure à la sienne." }
+      ],
+      "subraces": [
+        {
+          "name": "Pied-léger",
+          "ability_bonus": "Charisme +1",
+          "traits": [
+            { "name": "Discrétion naturelle", "description": "Peut tenter de se cacher même en n'étant dissimulé que par une créature d'au moins une catégorie de taille plus grande que soi." }
+          ]
+        },
+        {
+          "name": "Robuste",
+          "ability_bonus": "Constitution +1",
+          "traits": [
+            { "name": "Résistance robuste", "description": "Avantage aux jets de sauvegarde contre le poison et résistance aux dégâts de poison." }
+          ]
+        }
+      ],
+      "detail_url": "https://www.aidedd.org/regles/races/halfelin/",
+      "source": "Manuel des Joueurs (PHB 2014)"
+    },
+    {
+      "name": "Demi-elfe",
+      "slug": "demi-elfe",
+      "icon": "game-icons:elf-ear",
+      "size": "Moyenne (1,50 m à 1,85 m)",
+      "speed": "9 m",
+      "age": "Adulte vers 20 ans ; vit plus de 180 ans",
+      "languages": ["Commun", "Elfique", "1 langue au choix"],
+      "ability_bonus": "Charisme +2, et 2 autres caractéristiques au choix +1",
+      "traits": [
+        { "name": "Vision dans le noir", "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)." },
+        { "name": "Ascendance féerique", "description": "Avantage aux jets de sauvegarde contre la charme et immunité au sommeil magique." },
+        { "name": "Polyvalence de compétences", "description": "Maîtrise de deux compétences au choix." }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/regles/races/demi-elfe/",
+      "source": "Manuel des Joueurs (PHB 2014)"
+    },
+    {
+      "name": "Demi-orc",
+      "slug": "demi-orc",
+      "icon": "game-icons:orc-head",
+      "size": "Moyenne (1,55 m à 1,85 m et plus)",
+      "speed": "9 m",
+      "age": "Adulte vers 14 ans ; vit rarement au-delà de 75 ans",
+      "languages": ["Commun", "Orc"],
+      "ability_bonus": "Force +2, Constitution +1",
+      "traits": [
+        { "name": "Vision dans le noir", "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)." },
+        { "name": "Menaçant", "description": "Maîtrise de la compétence Intimidation." },
+        { "name": "Endurance implacable", "description": "Une fois par repos long, si des dégâts le réduisent à 0 point de vie sans le tuer, il tombe à 1 point de vie à la place." },
+        { "name": "Attaques sauvages", "description": "En cas de coup critique au corps à corps, relance un des dés de dégâts de l'arme et ajoute le résultat aux dégâts supplémentaires." }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/regles/races/demi-orc/",
+      "source": "Manuel des Joueurs (PHB 2014)"
+    },
+    {
+      "name": "Gnome",
+      "slug": "gnome",
+      "icon": "game-icons:bad-gnome",
+      "size": "Petite (environ 90 cm à 1,20 m)",
+      "speed": "7,5 m",
+      "age": "Adulte vers 40 ans ; vit de 350 à 500 ans",
+      "languages": ["Commun", "Gnome"],
+      "ability_bonus": "Intelligence +2",
+      "traits": [
+        { "name": "Vision dans le noir", "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)." },
+        { "name": "Ruse gnome", "description": "Avantage aux jets de sauvegarde d'Intelligence, de Sagesse et de Charisme contre la magie." }
+      ],
+      "subraces": [
+        {
+          "name": "Gnome des forêts",
+          "ability_bonus": "Dextérité +1",
+          "traits": [
+            { "name": "Illusionniste-né", "description": "Connaît le tour de magie Illusion mineure." },
+            { "name": "Discussion avec les petites bêtes", "description": "Peut communiquer des idées simples aux bêtes de taille P ou inférieure." }
+          ]
+        },
+        {
+          "name": "Gnome des roches",
+          "ability_bonus": "Constitution +1",
+          "traits": [
+            { "name": "Savoir de l'artificier", "description": "Maîtrise doublée en Histoire pour les objets magiques, alchimiques ou technologiques." },
+            { "name": "Bricolage", "description": "Maîtrise des outils d'artisan (mécanismes) ; peut fabriquer de petits objets mécaniques (jouet à remontoir, briquet, boîte à musique, etc.)." }
+          ]
+        }
+      ],
+      "detail_url": "https://www.aidedd.org/regles/races/gnome/",
+      "source": "Manuel des Joueurs (PHB 2014)"
+    },
+    {
+      "name": "Drakéide",
+      "slug": "drakeide",
+      "icon": "game-icons:dragon-head",
+      "size": "Moyenne (plus de 1,80 m)",
+      "speed": "9 m",
+      "age": "Adulte vers 15 ans ; vit environ 80 ans",
+      "languages": ["Commun", "Draconique"],
+      "ability_bonus": "Force +2, Charisme +1",
+      "traits": [
+        { "name": "Ascendance draconique", "description": "Choix d'un type de dragon déterminant le type de dégâts du souffle et la résistance associée (par ex. rouge/or = feu, bleu/bronze = foudre, blanc/argent = froid, noir/cuivre = acide, vert = poison)." },
+        { "name": "Arme de souffle", "description": "Action : souffle en ligne (1,5 m x 9 m) ou en cône (4,5 m) infligeant 2d6 dégâts (progresse à 3d6 au niveau 6, 4d6 au niveau 11, 5d6 au niveau 16) ; jet de sauvegarde (DEX ou CON selon le type) DD = 8 + bonus de maîtrise + modificateur de Constitution, moitié des dégâts en cas de réussite. Une fois utilisée, nécessite un repos court ou long." },
+        { "name": "Résistance aux dégâts", "description": "Résistance au type de dégâts associé à l'ascendance draconique." }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/regles/races/drakeide/",
+      "source": "Manuel des Joueurs (PHB 2014)"
+    },
+    {
+      "name": "Tieffelin",
+      "slug": "tieffelin",
+      "icon": "game-icons:devil-mask",
+      "size": "Moyenne",
+      "speed": "9 m",
+      "age": "Mûrit au même rythme qu'un humain ; vit un peu plus longtemps",
+      "languages": ["Commun", "Infernal"],
+      "ability_bonus": "Intelligence +1, Charisme +2",
+      "traits": [
+        { "name": "Vision dans le noir", "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)." },
+        { "name": "Résistance infernale", "description": "Résistance aux dégâts de feu." },
+        { "name": "Héritage infernal", "description": "Connaît le tour de magie Thaumaturgie. À partir du niveau 3, lance Ordre fielleux (2ᵉ cercle) 1 fois par repos long. À partir du niveau 5, lance Ténèbres 1 fois par repos long. Le Charisme est la caractéristique d'incantation." }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/regles/races/tieffelin/",
+      "source": "Manuel des Joueurs (PHB 2014)"
+    }
+  ]
+}

@@ -622,7 +622,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: flex-end;
   gap: 0.15rem;
-  background: rgba(0, 0, 0, 0.75);
+  background: var(--overlay-scrim-strong);
   border: 1px solid var(--tv-danger-border);
   border-radius: 12px;
   padding: 0.5rem 0.85rem;
@@ -653,7 +653,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: flex-end;
   gap: 0.15rem;
-  background: rgba(0, 0, 0, 0.75);
+  background: var(--overlay-scrim-strong);
   border: 1px solid var(--tv-info-border);
   border-radius: 12px;
   padding: 0.5rem 0.85rem;
@@ -683,7 +683,7 @@ onUnmounted(() => {
 :root[data-theme='light'] .timer-overlay-time,
 :root[data-theme='light'] .doom-overlay-title,
 :root[data-theme='light'] .doom-overlay-timer {
-  color: #9ed3ff;
+  color: var(--color-overlay-bright-text);
 }
 
 @keyframes overlayPulse {
@@ -719,12 +719,12 @@ onUnmounted(() => {
 }
 
 .rep-toast {
-  background: rgba(8, 6, 2, 0.93);
-  border: 2px solid rgba(255,255,255,0.15);
+  background: var(--overlay-scrim-strong);
+  border: 2px solid var(--overlay-border);
   border-radius: 18px;
   padding: 1.1rem 1.75rem 1.25rem;
   backdrop-filter: blur(16px);
-  box-shadow: 0 12px 48px rgba(0,0,0,0.7);
+  box-shadow: var(--overlay-shadow);
   min-width: 360px;
 }
 
@@ -732,7 +732,7 @@ onUnmounted(() => {
   font-family: var(--font-heading), sans-serif;
   font-size: 1rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--overlay-text-dim);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-bottom: 0.75rem;
@@ -747,7 +747,7 @@ onUnmounted(() => {
 .rep-toast-bar-track {
   flex: 1;
   height: 14px;
-  background: rgba(255,255,255,0.1);
+  background: var(--overlay-track-bg);
   border-radius: 99px;
   overflow: hidden;
 }

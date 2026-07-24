@@ -644,7 +644,7 @@ onMounted(loadSessions)
   height: 130px;
   border: 2px solid var(--color-gold-dark);
   border-radius: 6px;
-  background: white;
+  background: var(--color-invariant-white);
   padding: 3px;
 }
 

@@ -1,79 +1,63 @@
-﻿<script setup>
-import { ref, watch, onUnmounted } from 'vue'
+<script setup>
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { authStore } from '@/stores/auth.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
+import ContentPagination from './ContentPagination.vue'
+import { parseEcole, levelLabel, schoolColor } from '@/utils/spellSchool.js'
 
 import { BACKEND_URL } from '@/config.js'
 
-// ── Sub-tab ──────────────────────────────────────────────────────────────
-const activeSubTab = ref('spells') // 'spells' | 'items'
+const props = defineProps({
+  // Pré-remplissage déclenché depuis la palette de commande globale :
+  // { query, token }. `token` doit changer à chaque nouvelle requête pour
+  // que le watcher se déclenche même si `query` est identique à la dernière fois.
+  prefill: { type: Object, default: null },
+})
 
-// ── Shared state (reset on tab switch) ───────────────────────────────────
 const query = ref('')
 const results = ref([])
 const loading = ref(false)
 const searched = ref(false)
+const activeClassFilter = ref(null)
+// Slug exact ciblé depuis la palette de commande (Ctrl+K) : si renseigné, les résultats
+// sont réduits à ce seul sort plutôt qu'à tous les sorts correspondant au texte recherché.
+const exactMatchSlug = ref(null)
 const spellCache = new Map()
-const itemCache = new Map()
 const MIN_AUTO_SEARCH_LENGTH = 3
 let autoSearchTimer = null
+let suppressQueryWatch = false
 
-function switchSubTab(tab) {
-  activeSubTab.value = tab
-  query.value = ''
-  results.value = []
-  searched.value = false
-  loading.value = false
-}
+// Mode "parcourir" : liste paginée de tous les sorts quand aucune recherche n'est en cours.
+const allSpells = ref([])
+const page = ref(1)
+const PAGE_SIZE = 20
 
-// ── Spells helpers ────────────────────────────────────────────────────────
-function parseEcole(ecole) {
-  if (!ecole) return { level: null, school: '', ritual: false }
-  const rituel = ecole.toLowerCase().includes('rituel')
-  const match = ecole.match(/niveau\s+(\d+)\s*[-–]\s*(.+)/i)
-  if (match) {
-    let school = match[2].replace(/\s*\(rituel\)/i, '').trim()
-    school = school.charAt(0).toUpperCase() + school.slice(1)
-    return { level: parseInt(match[1]), school, ritual: rituel }
+async function loadAllSpells() {
+  loading.value = true
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/spells`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    if (res.ok) allSpells.value = await res.json()
+  } catch (err) {
+    console.error(err)
+  } finally {
+    loading.value = false
   }
-  // Cantrip / tour de magie
-  const cantrip = ecole.match(/tour de magie\s*[-–]?\s*(.*)/i)
-  if (cantrip) {
-    let school = cantrip[1].replace(/\s*\(rituel\)/i, '').trim()
-    return { level: 0, school: school || ecole, ritual: rituel }
-  }
-  return { level: null, school: ecole, ritual: rituel }
 }
+onMounted(loadAllSpells)
 
-function levelLabel(level) {
-  if (level === null) return ''
-  if (level === 0) return 'Tour de magie'
-  return `Niveau ${level}`
-}
-
-const SCHOOL_COLORS = {
-  abjuration: 'var(--school-abjuration)',
-  divination: 'var(--school-divination)',
-  enchantement: 'var(--school-enchantement)',
-  evocation: 'var(--school-evocation)',
-  illusion: 'var(--school-illusion)',
-  invocation: 'var(--school-invocation)',
-  necromancie: 'var(--school-necromancie)',
-  transmutation: 'var(--school-transmutation)',
-}
-
-function stripAccents(str) {
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-}
-
-function schoolColor(school) {
-  const key = stripAccents(school.toLowerCase())
-  for (const [k, v] of Object.entries(SCHOOL_COLORS)) {
-    if (key.includes(k)) return v
-  }
-  return 'var(--school-default)'
-}
+const isBrowsing = computed(() =>
+  !activeClassFilter.value && !exactMatchSlug.value && query.value.trim().length < MIN_AUTO_SEARCH_LENGTH
+)
+const totalPages = computed(() => Math.max(1, Math.ceil(allSpells.value.length / PAGE_SIZE)))
+const pagedSpells = computed(() => {
+  const start = (page.value - 1) * PAGE_SIZE
+  return allSpells.value.slice(start, start + PAGE_SIZE)
+})
+const displayItems = computed(() => (isBrowsing.value ? pagedSpells.value : results.value))
+watch(isBrowsing, (browsing) => { if (browsing) page.value = 1 })
 
 function shortComponent(composantes) {
   if (!composantes) return ''
@@ -81,7 +65,6 @@ function shortComponent(composantes) {
   return m ? m[1] : composantes
 }
 
-// ── Description HTML helpers ──────────────────────────────────────────────
 function toHtml(entry) {
   if (entry.description_html) return entry.description_html
   if (!entry.description) return ''
@@ -94,47 +77,24 @@ function toHtml(entry) {
   return `<p>${escaped}</p>`
 }
 
-const RARITY_COLORS = {
-  'commun': 'var(--color-text-dim)',
-  'peu commun': '#1eff00',
-  'rare': '#0070dd',
-  'tres rare': '#a335ee',
-  'legendaire': '#ff8000',
-  'artefact': '#e6cc80',
-}
-
-function rarityColor(rarity) {
-  if (!rarity) return 'var(--color-text-dim)'
-  const key = stripAccents(rarity.toLowerCase())
-  for (const [k, v] of Object.entries(RARITY_COLORS)) {
-    if (key.includes(k)) return v
-  }
-  return 'var(--color-text-dim)'
-}
-
-// ── Search ────────────────────────────────────────────────────────────────
 async function search() {
   const q = query.value.trim()
   if (!q) return
-  const cache = activeSubTab.value === 'spells' ? spellCache : itemCache
-  if (cache.has(q)) {
-    results.value = cache.get(q)
+  if (spellCache.has(q)) {
+    results.value = spellCache.get(q)
     searched.value = true
     return
   }
   loading.value = true
   searched.value = false
   try {
-    const endpoint = activeSubTab.value === 'spells'
-      ? `/api/spells/search?q=${encodeURIComponent(q)}`
-      : `/api/magic-items/search?q=${encodeURIComponent(q)}`
-    const res = await fetch(`${BACKEND_URL}${endpoint}`, {
+    const res = await fetch(`${BACKEND_URL}/api/spells/search?q=${encodeURIComponent(q)}`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     if (res.ok) {
       const data = await res.json()
       results.value = data
-      cache.set(q, data)
+      spellCache.set(q, data)
     }
   } catch (err) {
     console.error(err)
@@ -144,7 +104,41 @@ async function search() {
   }
 }
 
+async function searchByClass(className) {
+  if (autoSearchTimer) clearTimeout(autoSearchTimer)
+  activeClassFilter.value = className
+  loading.value = true
+  searched.value = false
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/spells/by-class/${encodeURIComponent(className)}`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    if (res.ok) {
+      results.value = await res.json()
+    }
+  } catch (err) {
+    console.error(err)
+  } finally {
+    loading.value = false
+    searched.value = true
+  }
+}
+
+function clearClassFilter() {
+  activeClassFilter.value = null
+  results.value = []
+  searched.value = false
+}
+
+function clearExactMatch() {
+  exactMatchSlug.value = null
+  search()
+}
+
 watch(query, () => {
+  if (suppressQueryWatch) { suppressQueryWatch = false; return }
+  if (activeClassFilter.value) activeClassFilter.value = null
+  exactMatchSlug.value = null
   if (autoSearchTimer) clearTimeout(autoSearchTimer)
   const q = query.value.trim()
   if (q.length < MIN_AUTO_SEARCH_LENGTH) {
@@ -158,6 +152,33 @@ watch(query, () => {
   }, 250)
 })
 
+// Pré-remplissage depuis la palette de commande globale (voir CommandPalette.vue)
+// ou depuis le bouton « Voir les sorts » d'une fiche de classe (ClassSearch.vue).
+// `immediate: true` est nécessaire pour que le tout premier accès à cet onglet depuis
+// la palette fonctionne : au montage initial, `prefill.token` vaut déjà la valeur
+// « nouvelle » (pas de changement détectable), donc un watcher non-immédiat ne se
+// déclencherait jamais.
+watch(() => props.prefill?.token, (token) => {
+  if (!token) return
+  if (autoSearchTimer) clearTimeout(autoSearchTimer)
+  if (props.prefill.classFilter) {
+    suppressQueryWatch = true
+    query.value = ''
+    exactMatchSlug.value = null
+    searchByClass(props.prefill.classFilter)
+    return
+  }
+  activeClassFilter.value = null
+  exactMatchSlug.value = props.prefill.exactSlug || null
+  suppressQueryWatch = true
+  query.value = props.prefill.query || ''
+  search().then(() => {
+    if (exactMatchSlug.value) {
+      results.value = results.value.filter(s => s.slug === exactMatchSlug.value)
+    }
+  })
+}, { immediate: true })
+
 onUnmounted(() => {
   if (autoSearchTimer) clearTimeout(autoSearchTimer)
 })
@@ -165,24 +186,13 @@ onUnmounted(() => {
 
 <template>
   <div class="search-tool">
-    <h2 class="section-title"><AppIcon icon="lucide:search" size="0.9em" /> Recherche</h2>
-
-    <!-- Sub-tabs -->
-    <div class="sub-tabs">
-      <button
-        class="sub-tab"
-        :class="{ active: activeSubTab === 'spells' }"
-        @click="switchSubTab('spells')"
-      ><AppIcon icon="lucide:sparkles" size="0.85em" /> Sorts</button>
-      <button class="sub-tab" :class="{ active: activeSubTab === 'items' }" @click="switchSubTab('items')"
-      ><AppIcon icon="lucide:gem" size="0.85em" /> Objets & Objets magiques</button>
-    </div>
+    <h2 class="section-title"><AppIcon icon="lucide:sparkles" size="0.9em" /> Sorts</h2>
 
     <div class="search-bar">
       <input
         v-model="query"
         class="search-input"
-        :placeholder="activeSubTab === 'spells' ? 'Nom du sort, école, description…' : 'Nom, type, rareté, description…'"
+        placeholder="Nom du sort, école, description…"
         @keydown.enter="search"
       />
       <button class="search-btn" :disabled="loading || !query.trim()" @click="search">
@@ -196,21 +206,35 @@ onUnmounted(() => {
       <span class="loading-dot">●</span>
     </div>
 
-    <div v-else-if="searched && results.length === 0" class="no-results">
+    <div v-else-if="!isBrowsing && searched && results.length === 0" class="no-results">
       <p class="no-results-icon"><AppIcon icon="lucide:mail-x" size="2.5rem" color="var(--color-text-dim)" /></p>
-      <p class="no-results-text">
-        Aucun {{ activeSubTab === 'spells' ? 'sort' : 'objet magique' }} trouvé pour « {{ query }} »
-      </p>
+      <p class="no-results-text">Aucun sort trouvé pour « {{ activeClassFilter || query }} »</p>
     </div>
 
-    <div v-else-if="results.length > 0" class="results-info">
-      {{ results.length }} {{ activeSubTab === 'spells' ? 'sort(s)' : 'objet(s) magique(s)' }} trouvé(s)
-      <span v-if="results.length === 50"> (premiers 50 résultats)</span>
+    <div v-else-if="displayItems.length > 0" class="results-info">
+      <template v-if="isBrowsing">
+        {{ allSpells.length }} sort(s) au total
+      </template>
+      <template v-else-if="activeClassFilter">
+        {{ results.length }} sort(s) de la classe {{ activeClassFilter }}
+        <button class="clear-filter-btn" type="button" @click="clearClassFilter">
+          <AppIcon icon="lucide:x" size="0.7em" /> Réinitialiser
+        </button>
+      </template>
+      <template v-else-if="exactMatchSlug">
+        Correspondance exacte
+        <button class="clear-filter-btn" type="button" @click="clearExactMatch">
+          <AppIcon icon="lucide:x" size="0.7em" /> Voir tous les résultats
+        </button>
+      </template>
+      <template v-else>
+        {{ results.length }} sort(s) trouvé(s)
+        <span v-if="results.length === 50"> (premiers 50 résultats)</span>
+      </template>
     </div>
 
-    <!-- Spells results -->
-    <div v-if="activeSubTab === 'spells'" class="results-grid">
-      <div v-for="spell in results" :key="spell.slug" class="spell-card">
+    <div class="results-grid">
+      <div v-for="spell in displayItems" :key="spell.slug" class="spell-card">
         <div class="spell-header">
           <div class="spell-title-row">
             <h3 class="spell-name">{{ spell.name }}</h3>
@@ -245,31 +269,15 @@ onUnmounted(() => {
           </div>
         </div>
         <div v-if="spell.description_html || spell.description" class="spell-desc" v-html="toHtml(spell)" />
+        <div v-if="spell.classes?.length" class="classes-row">
+          <AppIcon icon="game-icons:vitruvian-man" size="0.7em" class="classes-icon" />
+          <span v-for="cls in spell.classes" :key="cls" class="class-badge">{{ cls }}</span>
+        </div>
         <a :href="spell.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
       </div>
     </div>
 
-    <!-- Magic items results -->
-    <div v-if="activeSubTab === 'items'" class="results-grid">
-      <div v-for="item in results" :key="item.slug" class="spell-card">
-        <div class="spell-header">
-          <div class="spell-title-row">
-            <h3 class="spell-name">{{ item.name }}</h3>
-            <span v-if="item.requires_attunement" class="ritual-badge">Harmonisation <HelpTip id="search.harmonisation" /></span>
-          </div>
-          <div class="spell-meta-row">
-            <span class="item-type-badge">{{ item.item_type }}</span>
-            <span
-              class="rarity-badge"
-              :style="{ '--rarity-color': rarityColor(item.rarity) }"
-            >{{ item.rarity }}</span>
-          </div>
-        </div>
-        <div v-if="item.description_html || item.description" class="item-desc" v-html="toHtml(item)" />
-        <div v-if="item.source" class="item-source"><AppIcon icon="lucide:library" size="0.8em" /> {{ item.source }}</div>
-        <a :href="item.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
-      </div>
-    </div>
+    <ContentPagination v-if="isBrowsing && totalPages > 1" :page="page" :total-pages="totalPages" @update:page="page = $event" />
   </div>
 </template>
 
@@ -287,30 +295,6 @@ onUnmounted(() => {
   text-transform: uppercase;
   color: var(--color-gold-dark);
   margin: 0;
-}
-
-/* Sub-tabs */
-.sub-tabs {
-  display: flex;
-  gap: 0.4rem;
-}
-.sub-tab {
-  padding: 0.4rem 0.85rem;
-  background: var(--surface-ghost);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  color: var(--color-text-dim);
-  font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.sub-tab:hover { border-color: var(--color-gold-dark); color: var(--color-gold-dark); }
-.sub-tab.active {
-  background: var(--surface-gold-soft);
-  border-color: var(--color-gold-dark);
-  color: var(--color-gold-bright);
 }
 
 .search-bar {
@@ -389,7 +373,7 @@ onUnmounted(() => {
   gap: 1rem;
 }
 
-/* Spell / item card */
+/* Spell card */
 .spell-card {
   background: var(--gradient-panel-soft);
   border: 1px solid var(--color-border);
@@ -466,32 +450,6 @@ onUnmounted(() => {
   padding: 0.1rem 0.5rem;
 }
 
-.item-type-badge {
-  font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-gold-dark);
-  background: var(--surface-gold-soft);
-  border: 1px solid var(--color-gold-dark);
-  border-radius: 20px;
-  padding: 0.1rem 0.5rem;
-}
-
-.rarity-badge {
-  --rarity-color: var(--color-text-dim);
-  font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  border: 1px solid;
-  border-radius: 20px;
-  padding: 0.1rem 0.5rem;
-  color: var(--rarity-color);
-  border-color: color-mix(in oklab, var(--rarity-color) 50%, transparent);
-  background: color-mix(in oklab, var(--rarity-color) 14%, transparent);
-}
-
 /* Attributes */
 .spell-attrs {
   display: grid;
@@ -518,9 +476,8 @@ onUnmounted(() => {
   word-break: break-word;
 }
 
-/* Description sorts + objets magiques (HTML riche) */
-.spell-desc,
-.item-desc {
+/* Description */
+.spell-desc {
   font-family: var(--font-body), sans-serif;
   font-size: 0.8rem;
   color: var(--color-text-dim);
@@ -529,46 +486,73 @@ onUnmounted(() => {
   overflow-y: auto;
   padding-right: 0.25rem;
 }
-.spell-desc :deep(p), .item-desc :deep(p) { margin: 0.3rem 0; }
-.spell-desc :deep(p:first-child), .item-desc :deep(p:first-child) { margin-top: 0; }
-.spell-desc :deep(br), .item-desc :deep(br) { display: block; content: ''; margin-top: 0.2rem; }
-.spell-desc :deep(strong), .spell-desc :deep(b),
-.item-desc :deep(strong), .item-desc :deep(b) { color: var(--color-parchment); font-weight: 600; }
-.spell-desc :deep(em), .spell-desc :deep(i),
-.item-desc :deep(em), .item-desc :deep(i) { font-style: italic; color: var(--color-gold-dark); }
-.spell-desc :deep(ul), .spell-desc :deep(ol),
-.item-desc :deep(ul), .item-desc :deep(ol) { margin: 0.3rem 0; padding-left: 1.2rem; }
-.spell-desc :deep(li), .item-desc :deep(li) { margin: 0.1rem 0; }
-.spell-desc :deep(table), .item-desc :deep(table) {
+.spell-desc :deep(p) { margin: 0.3rem 0; }
+.spell-desc :deep(p:first-child) { margin-top: 0; }
+.spell-desc :deep(br) { display: block; content: ''; margin-top: 0.2rem; }
+.spell-desc :deep(strong), .spell-desc :deep(b) { color: var(--color-parchment); font-weight: 600; }
+.spell-desc :deep(em), .spell-desc :deep(i) { font-style: italic; color: var(--color-gold-dark); }
+.spell-desc :deep(ul), .spell-desc :deep(ol) { margin: 0.3rem 0; padding-left: 1.2rem; }
+.spell-desc :deep(li) { margin: 0.1rem 0; }
+.spell-desc :deep(table) {
   border-collapse: collapse;
   width: 100%;
   margin: 0.5rem 0;
   font-size: 0.75rem;
 }
-.spell-desc :deep(th), .spell-desc :deep(td),
-.item-desc :deep(th), .item-desc :deep(td) {
+.spell-desc :deep(th), .spell-desc :deep(td) {
   border: 1px solid var(--color-border);
   padding: 0.25rem 0.5rem;
   text-align: left;
   vertical-align: top;
 }
-.spell-desc :deep(th), .item-desc :deep(th) {
+.spell-desc :deep(th) {
   background: var(--surface-raised, rgba(255,255,255,0.05));
   color: var(--color-gold-dark);
   font-family: var(--font-heading), sans-serif;
   font-weight: 600;
 }
-.spell-desc :deep(tbody tr:hover), .item-desc :deep(tbody tr:hover) {
-  background: rgba(255, 255, 255, 0.03);
+.spell-desc :deep(tbody tr:hover) {
+  background: var(--surface-ghost);
 }
 
-.item-source {
+/* Classes badges */
+.classes-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.classes-icon { color: var(--color-text-dim); flex-shrink: 0; }
+.class-badge {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  color: var(--color-gold-dark);
+  background: var(--surface-gold-soft);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 20px;
+  padding: 0.1rem 0.5rem;
+}
+
+/* Filtre classe actif */
+.clear-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 0.1rem 0.5rem;
+  color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
-  letter-spacing: 0.08em;
-  color: var(--color-text-dim);
-  opacity: 0.7;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
 }
+.clear-filter-btn:hover { color: var(--color-gold-bright); border-color: var(--color-gold-dark); }
 
 /* Link */
 .spell-link {

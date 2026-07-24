@@ -25,6 +25,11 @@ const mapContainerRef = ref(null)
 const mapFogCanvas = ref(null)
 const mapImageSize = ref({ w: 0, h: 0 })
 
+// Couleur du brouillard : theme-invariant (voir style.css), lue via getComputedStyle.
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
 // Rebuild local Set on fogCells prop change (O(1) lookup during render)
 let fogCellsSet = new Set()
 watch(() => props.fogCells, (cells) => {
@@ -134,7 +139,7 @@ function renderMapFog() {
         ctx.lineTo(offsetX + points[i].nx * imgW, offsetY + points[i].ny * imgH)
       }
       ctx.closePath()
-      ctx.fillStyle = 'rgba(0,0,0,1)'
+      ctx.fillStyle = cssVar('--color-media-letterbox')
       ctx.fill()
     }
     ctx.restore()
@@ -142,7 +147,7 @@ function renderMapFog() {
   }
 
   ctx.globalCompositeOperation = 'source-over'
-  ctx.fillStyle = 'rgba(0,0,0,1)'
+  ctx.fillStyle = cssVar('--color-media-letterbox')
   ctx.fillRect(0, 0, W, H)
   if (props.fogStrokes.length === 0) return
   ctx.globalCompositeOperation = 'destination-out'
@@ -154,7 +159,7 @@ function renderMapFog() {
       stroke.nr * natW * totalScale,
       0, Math.PI * 2
     )
-    ctx.fillStyle = 'rgba(0,0,0,1)'
+    ctx.fillStyle = cssVar('--color-media-letterbox')
     ctx.fill()
   }
   ctx.globalCompositeOperation = 'source-over'
@@ -193,7 +198,7 @@ onUnmounted(() => window.removeEventListener('resize', renderMapFog))
       >
         <div
           class="token-circle"
-          :style="String(pid).startsWith('custom_') ? { borderColor: '#6aaa44', boxShadow: '0 0 20px rgba(0,0,0,0.9), 0 0 12px rgba(106,170,68,0.5)' } : {}"
+          :style="String(pid).startsWith('custom_') ? { borderColor: 'var(--map-token-custom-border)', boxShadow: 'var(--map-token-shadow-custom)' } : {}"
         >
           <img
             v-if="getPlayerById(pid)?.avatar_url"
@@ -216,7 +221,7 @@ onUnmounted(() => window.removeEventListener('resize', renderMapFog))
   flex: 1;
   position: relative;
   overflow: hidden;
-  background: #000;
+  background: var(--color-media-letterbox);
 }
 .map-image {
   position: absolute;
@@ -251,30 +256,30 @@ onUnmounted(() => window.removeEventListener('resize', renderMapFog))
 .token-circle {
   width: 84px; height: 84px;
   border-radius: 50%;
-  border: 4px solid #c9a227;
+  border: 4px solid var(--map-token-player-border);
   overflow: hidden;
-  background: #1a1230;
+  background: var(--map-token-player-bg);
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 20px rgba(0,0,0,0.9), 0 0 12px rgba(201,162,39,0.5);
+  box-shadow: var(--map-token-shadow-player);
   flex-shrink: 0;
 }
 .token-avatar-img { width: 100%; height: 100%; object-fit: cover; }
 .token-initial-letter {
   font-family: var(--font-heading), sans-serif;
   font-size: 2.4rem;
-  color: #c9a227;
+  color: var(--map-token-player-border);
   font-weight: 700;
   line-height: 1;
 }
 .token-label {
   font-family: var(--font-heading), sans-serif;
   font-size: clamp(0.6rem, 1.2vw, 0.85rem);
-  color: #fff;
-  text-shadow: 0 1px 4px #000, 0 0 8px #000;
+  color: var(--map-token-label-color);
+  text-shadow: var(--map-token-label-shadow);
   letter-spacing: 0.06em;
   text-align: center;
   white-space: nowrap;
-  background: rgba(0,0,0,0.55);
+  background: var(--map-token-label-bg);
   padding: 1px 6px;
   border-radius: 4px;
 }

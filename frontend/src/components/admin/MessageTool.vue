@@ -8,6 +8,10 @@ import HelpTip from '../HelpTip.vue'
 
 import { BACKEND_URL } from '@/config.js'
 
+// Valeurs hexadécimales réelles requises : alimentent <input type="color"> (natif,
+// n'accepte pas var()) et sont envoyées telles quelles au serveur/joueur via le socket.
+// Valeurs centralisées dans style.css (--msg-swatch-*) à titre de référence/cohérence
+// pour les autres usages CSS statiques (ex. MessageCard.vue), mais gardées littérales ici.
 const COLOR_PALETTE = [
   { value: '#d4af37', label: 'Or' },
   { value: '#60a5fa', label: 'Azur' },
@@ -665,7 +669,7 @@ async function sendMessage() {
 .inbox-entry:last-child { border-bottom: none; }
 
 .inbox-entry.player-msg { border-left: 3px solid var(--color-gold-dark); }
-.inbox-entry.player-roll { border-left: 3px solid #c084fc; }
+.inbox-entry.player-roll { border-left: 3px solid var(--msg-swatch-arcane); }
 
 .inbox-entry-header {
   display: flex;
@@ -700,7 +704,7 @@ async function sendMessage() {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  color: #c084fc;
+  color: var(--msg-swatch-arcane);
   font-size: 0.85rem;
 }
 

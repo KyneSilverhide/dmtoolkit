@@ -77,6 +77,12 @@ let draggingTokenId = null
 let tokenDragThrottleFrame = null
 
 // ── Canvas helpers ─────────────────────────────────────────────────────────
+// Couleurs du brouillard/grille/jetons : theme-invariant (voir style.css),
+// lues via getComputedStyle plutôt que codées en dur ici.
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
 function imageFullUrl(url) {
   if (!url) return ''
   if (url.startsWith('http')) return url
@@ -160,9 +166,9 @@ function renderFogFromMask() {
   const h = fogCanvas.height
   fCtx.clearRect(0, 0, w, h)
   fCtx.globalCompositeOperation = 'source-over'
-  fCtx.fillStyle = 'rgba(30, 20, 60, 0.22)'
+  fCtx.fillStyle = cssVar('--color-fog-wash')
   fCtx.fillRect(0, 0, w, h)
-  fCtx.strokeStyle = 'rgba(180, 140, 255, 0.18)'
+  fCtx.strokeStyle = cssVar('--color-fog-hatch')
   fCtx.lineWidth = 2
   const step = 36
   for (let i = -h; i < w + h; i += step) {
@@ -215,8 +221,8 @@ function renderGridFog(ctx, layout) {
     ctx.moveTo(canvasPoints[0].x, canvasPoints[0].y)
     for (let i = 1; i < canvasPoints.length; i++) ctx.lineTo(canvasPoints[i].x, canvasPoints[i].y)
     ctx.closePath()
-    if (!isRevealed) { ctx.fillStyle = 'rgba(30, 20, 60, 0.75)'; ctx.fill() }
-    ctx.strokeStyle = isRevealed ? 'rgba(180, 140, 255, 0.25)' : 'rgba(180, 140, 255, 0.45)'
+    if (!isRevealed) { ctx.fillStyle = cssVar('--color-fog-cell-fill'); ctx.fill() }
+    ctx.strokeStyle = isRevealed ? cssVar('--color-fog-cell-border-revealed') : cssVar('--color-fog-cell-border')
     ctx.lineWidth = 1
     ctx.stroke()
   }
@@ -245,7 +251,7 @@ function renderGridPreview(ctx, layout) {
     ctx.moveTo(canvasPoints[0].x, canvasPoints[0].y)
     for (let i = 1; i < canvasPoints.length; i++) ctx.lineTo(canvasPoints[i].x, canvasPoints[i].y)
     ctx.closePath()
-    ctx.strokeStyle = 'rgba(255, 215, 0, 0.7)'
+    ctx.strokeStyle = cssVar('--color-grid-preview-line')
     ctx.lineWidth = 1.5
     ctx.stroke()
   }
@@ -289,9 +295,9 @@ function drawToken(ctx, pid, tokenPos, layout) {
   ctx.save()
   ctx.beginPath()
   ctx.arc(tx, ty, TOKEN_RADIUS, 0, Math.PI * 2)
-  ctx.fillStyle = isCustom ? '#1e2a1a' : '#1a1230'
+  ctx.fillStyle = isCustom ? cssVar('--map-token-custom-bg') : cssVar('--map-token-player-bg')
   ctx.fill()
-  ctx.strokeStyle = isCustom ? '#6aaa44' : '#c9a227'
+  ctx.strokeStyle = isCustom ? cssVar('--map-token-custom-border') : cssVar('--map-token-player-border')
   ctx.lineWidth = 2.5
   ctx.stroke()
   ctx.restore()
@@ -308,7 +314,7 @@ function drawToken(ctx, pid, tokenPos, layout) {
     ctx.font = `bold ${TOKEN_RADIUS}px sans-serif`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillStyle = isCustom ? '#6aaa44' : '#c9a227'
+    ctx.fillStyle = isCustom ? cssVar('--map-token-custom-border') : cssVar('--map-token-player-border')
     ctx.fillText(name[0]?.toUpperCase() || '?', tx, ty)
     ctx.restore()
   }
@@ -317,9 +323,9 @@ function drawToken(ctx, pid, tokenPos, layout) {
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
   ctx.lineWidth = 3
-  ctx.strokeStyle = 'rgba(0,0,0,0.85)'
+  ctx.strokeStyle = cssVar('--map-token-label-halo')
   ctx.strokeText(name, tx, ty + TOKEN_RADIUS + 3)
-  ctx.fillStyle = '#fff'
+  ctx.fillStyle = cssVar('--map-token-label-color')
   ctx.fillText(name, tx, ty + TOKEN_RADIUS + 3)
   ctx.restore()
 }
@@ -333,7 +339,7 @@ function render() {
   if (!layout) return
   const { offsetX, offsetY, imgW, imgH } = layout
   ctx.clearRect(0, 0, canvas.width, canvas.height)
-  ctx.fillStyle = '#111'
+  ctx.fillStyle = cssVar('--color-media-letterbox')
   ctx.fillRect(0, 0, canvas.width, canvas.height)
   ctx.drawImage(mapImage, offsetX, offsetY, imgW, imgH)
   if (showGridConfig.value && gridType.value !== 'none') {
@@ -890,7 +896,7 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
 .drop-overlay {
   position: absolute; inset: 0; z-index: 10;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem;
-  background: rgba(0, 0, 0, 0.65); border: 2px dashed var(--color-gold-dark); border-radius: 10px;
+  background: var(--overlay-scrim); border: 2px dashed var(--color-gold-dark); border-radius: 10px;
   color: var(--color-gold-bright); font-family: var(--font-heading), sans-serif; font-size: 0.9rem;
   letter-spacing: 0.12em; text-transform: uppercase; pointer-events: none;
 }
@@ -906,7 +912,7 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
 .map-controls-col { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; max-height: 80vh; overflow-y: auto; scrollbar-width: thin; }
 
 .canvas-hint { margin: 0; }
-.canvas-container { width: 100%; height: 72vh; border-radius: 8px; border: 1px solid var(--color-border); overflow: hidden; background: #000; user-select: none; }
+.canvas-container { width: 100%; height: 72vh; border-radius: 8px; border: 1px solid var(--color-border); overflow: hidden; background: var(--color-media-letterbox); user-select: none; }
 .map-canvas { width: 100%; height: 100%; display: block; touch-action: none; }
 .hint-text { font-family: var(--font-body), sans-serif; font-size: 0.75rem; color: var(--color-text-dim); margin: 0; }
 

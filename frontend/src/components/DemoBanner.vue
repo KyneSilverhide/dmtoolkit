@@ -18,8 +18,8 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.45rem 1rem;
-  background: linear-gradient(90deg, #92400e 0%, #b45309 50%, #92400e 100%);
-  color: #fef3c7;
+  background: var(--demo-banner-gradient);
+  color: var(--demo-banner-text);
   font-family: var(--font-heading, sans-serif);
   font-size: 0.75rem;
   letter-spacing: 0.06em;
@@ -27,7 +27,7 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  border-bottom: 1px solid #f59e0b;
+  border-bottom: 1px solid var(--color-demo-accent);
   text-align: center;
 }
 

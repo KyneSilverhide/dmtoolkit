@@ -164,7 +164,7 @@ function handleFileUpload(event) {
   position: absolute;
   top: 4px; right: 4px;
   width: 20px; height: 20px;
-  background: rgba(0,0,0,0.7);
+  background: var(--overlay-scrim);
   border: 1px solid var(--color-danger, #e74c3c);
   border-radius: 50%;
   color: var(--color-danger, #e74c3c);
@@ -181,7 +181,7 @@ function handleFileUpload(event) {
 .grid-badge {
   position: absolute;
   top: 4px; left: 4px;
-  background: rgba(0,0,0,0.7);
+  background: var(--overlay-scrim);
   border: 1px solid var(--color-gold-dark);
   border-radius: 4px;
   padding: 2px 4px;

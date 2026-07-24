@@ -27,7 +27,7 @@ function resolveMediaUrl(url) {
   display: flex;
   justify-content: center;
   overflow: hidden;
-  background: #000;
+  background: var(--color-media-letterbox);
 }
 .tv-image {
   max-width: 100%;
@@ -39,7 +39,7 @@ function resolveMediaUrl(url) {
   top: 1rem;
   left: 1rem;
   padding: 0.4rem 0.9rem;
-  background: rgba(0,0,0,0.7);
+  background: var(--overlay-scrim);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   font-family: var(--font-heading), sans-serif;

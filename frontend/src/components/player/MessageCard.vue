@@ -91,7 +91,7 @@ function resolvedText() {
         <span class="card-time">{{ formatTime(message.sentAt) }}</span>
       </div>
       <div class="gold-content">
-        <span class="gold-icon"><AppIcon icon="game-icons:coins" size="1.6rem" color="#d4af37" /></span>
+        <span class="gold-icon"><AppIcon icon="game-icons:coins" size="1.6rem" color="var(--msg-swatch-gold)" /></span>
         <span class="gold-text">{{ message.content }}</span>
       </div>
     </div>
@@ -145,7 +145,7 @@ function resolvedText() {
 
 .gold-card {
   padding: 1rem 1.25rem;
-  border-left: 3px solid #d4af37;
+  border-left: 3px solid var(--msg-swatch-gold);
   background: var(--player-panel-highlight-bg, var(--gradient-panel-soft));
 }
 
@@ -164,7 +164,7 @@ function resolvedText() {
 .gold-text {
   font-family: var(--font-heading), sans-serif;
   font-size: 0.95rem;
-  color: #d4af37;
+  color: var(--msg-swatch-gold);
   letter-spacing: 0.06em;
 }
 

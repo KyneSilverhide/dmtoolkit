@@ -33,7 +33,7 @@ function onLoad(event) {
   width: 100%;
   height: 100%;
   border: none;
-  background: #d8cfb2;
+  background: var(--color-puzzle-bg);
   display: block;
 }
 </style>

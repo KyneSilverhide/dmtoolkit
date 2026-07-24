@@ -115,7 +115,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 .rn-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: var(--overlay-scrim);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -136,7 +136,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(201, 162, 39, 0.1);
+  box-shadow: 0 24px 60px var(--overlay-scrim), 0 0 0 1px var(--surface-gold-soft);
   overflow: hidden;
 }
 
@@ -204,8 +204,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--color-gold-bright);
-  background: rgba(201, 168, 76, 0.12);
-  border: 1px solid rgba(201, 168, 76, 0.25);
+  background: var(--surface-gold-soft);
+  border: 1px solid var(--border-gold-soft);
   border-radius: 4px;
   padding: 0.1rem 0.45rem;
   letter-spacing: 0.04em;
@@ -251,8 +251,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   gap: 0.25rem;
   font-size: 0.7rem;
   color: var(--color-success);
-  background: rgba(47, 184, 150, 0.1);
-  border: 1px solid rgba(47, 184, 150, 0.2);
+  background: var(--color-success-soft);
+  border: 1px solid var(--color-success-border);
   border-radius: 4px;
   padding: 0.05rem 0.35rem;
 }
@@ -263,7 +263,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   align-items: center;
   gap: 0.5rem;
   padding-top: 0.25rem;
-  border-top: 1px solid rgba(201, 162, 39, 0.15);
+  border-top: 1px solid var(--border-gold-soft);
 }
 
 .rn-btn-history {
@@ -271,7 +271,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   align-items: center;
   gap: 0.4rem;
   background: none;
-  border: 1px solid rgba(201, 162, 39, 0.2);
+  border: 1px solid var(--border-gold-soft);
   border-radius: 8px;
   color: var(--color-text-dim);
   font-family: var(--font-ui), sans-serif;
@@ -283,14 +283,14 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 .rn-btn-history:hover {
   color: var(--color-parchment);
-  border-color: rgba(201, 162, 39, 0.45);
+  border-color: var(--border-gold-strong);
 }
 
 .rn-btn-close {
   background: var(--gradient-accent-action, linear-gradient(135deg, #c9a84c, #8b6914));
   border: none;
   border-radius: 8px;
-  color: #1a0e00;
+  color: var(--color-dark-text-on-gold);
   font-family: var(--font-ui), sans-serif;
   font-size: 0.85rem;
   font-weight: 600;

@@ -304,7 +304,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
-  background: rgba(0, 0, 0, 0.65);
+  background: var(--overlay-scrim);
   border: 2px dashed var(--color-gold-dark);
   border-radius: 10px;
   color: var(--color-gold-bright);
@@ -504,7 +504,7 @@ onUnmounted(() => {
   position: absolute;
   top: 4px; right: 4px;
   width: 20px; height: 20px;
-  background: rgba(0,0,0,0.7);
+  background: var(--overlay-scrim);
   border: 1px solid var(--color-danger, #e74c3c);
   border-radius: 50%;
   color: var(--color-danger, #e74c3c);
@@ -527,7 +527,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.85);
+  background: var(--overlay-scrim-strong);
   cursor: zoom-out;
 }
 .zoom-image {
@@ -547,13 +547,13 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--overlay-scrim);
   border: 1px solid var(--color-gold-dark);
   border-radius: 50%;
   color: var(--color-gold-bright);
   cursor: pointer;
 }
-.zoom-close-btn:hover { background: rgba(0, 0, 0, 0.8); }
+.zoom-close-btn:hover { background: var(--overlay-scrim-strong); }
 
 .lobby-btn {
   margin-top: 0.2rem;

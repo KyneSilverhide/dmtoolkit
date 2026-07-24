@@ -1665,7 +1665,7 @@ onUnmounted(() => {
   font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
   font-weight: 700;
-  color: white;
+  color: var(--color-invariant-white);
   display: flex; align-items: center; justify-content: center;
 }
 .tab-badge-urgent {

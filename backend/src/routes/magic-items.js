@@ -27,6 +27,11 @@ function getAllItems() {
 
 getAllItems()
 
+function handleList(req, res) {
+  const all = [...getAllItems()].sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+  return res.json(all)
+}
+
 function handleSearch(req, res) {
   const q = (req.query.q || '').trim().toLowerCase()
   if (!q) return res.json([])
@@ -54,6 +59,7 @@ function handleSearch(req, res) {
   return res.json([...nameMatches, ...otherMatches].slice(0, 80))
 }
 
+router.get('/', authenticateToken, handleList)
 router.get('/search', authenticateToken, handleSearch)
 router.get('/public/search', handleSearch)
 

@@ -344,7 +344,7 @@ async function login() {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: var(--overlay-scrim);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -361,7 +361,7 @@ async function login() {
   padding: 2rem;
   width: 100%;
   max-width: 380px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(201, 162, 39, 0.1);
+  box-shadow: 0 24px 60px var(--overlay-scrim), 0 0 0 1px var(--surface-gold-soft);
 }
 
 .modal-close {
@@ -478,8 +478,8 @@ async function login() {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  background: rgba(201, 162, 39, 0.08);
-  border: 1px solid rgba(201, 162, 39, 0.25);
+  background: var(--surface-gold-soft);
+  border: 1px solid var(--border-gold-soft);
   border-radius: 8px;
   padding: 0.55rem 0.75rem;
   font-family: var(--font-body), sans-serif;
