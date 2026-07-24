@@ -8,7 +8,10 @@
         { "type": "improvement", "role": "admin", "text": "Contenu — les onglets Sorts, Objets, Objets magiques, Races, Classes, Origines et Aptitudes, ainsi que la recherche Ctrl+K, sont désormais accessibles sans avoir de session active." },
         { "type": "improvement", "role": "admin", "text": "Contenu — Sorts, Objets, Objets magiques et Aptitudes affichent une liste complète paginée dès l'ouverture de l'onglet, sans avoir besoin de taper une recherche." },
         { "type": "improvement", "role": "admin", "text": "Classes — les descriptions des traits de classe et de sous-classe ont été réécrites pour inclure tous les détails de règle (coûts, dés, dégâts, durées, prérequis…) au lieu d'un simple résumé." },
-        { "type": "fix", "role": "admin", "text": "Recherche — le texte tapé ne se propage plus d'un onglet de contenu à l'autre, le premier accès à un onglet depuis la palette de commande fonctionne désormais correctement, et les sorts d'une classe sont triés par niveau puis par ordre alphabétique." }
+        { "type": "fix", "role": "admin", "text": "Recherche — le texte tapé ne se propage plus d'un onglet de contenu à l'autre, le premier accès à un onglet depuis la palette de commande fonctionne désormais correctement, et les sorts d'une classe sont triés par niveau puis par ordre alphabétique." },
+        { "type": "improvement", "role": "player", "text": "Recherche de sorts et d'objets magiques (joueur) — icônes et couleurs par type d'objet, et badges des classes pouvant lancer chaque sort, désormais alignés sur la présentation côté MJ." },
+        { "type": "improvement", "role": "admin", "text": "Journal de session — les événements sont désormais regroupés par jour (Aujourd'hui, Hier, puis par date) pour une lecture plus claire des sessions longues." },
+        { "type": "improvement", "role": "all", "text": "Interface — de nombreuses couleurs codées en dur (bannière démo, cloche de notes de version, carte, jetons, conditions, marqueurs de messages…) ont été remplacées par des variables de thème partagées, pour un rendu plus cohérent entre les thèmes clair et sombre." }
       ]
     },
     {
