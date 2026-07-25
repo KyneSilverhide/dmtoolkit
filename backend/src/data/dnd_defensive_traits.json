@@ -1,0 +1,368 @@
+{
+  "races": {
+    "elfe": {
+      "senses": [
+        "Vision dans le noir (18 m)"
+      ],
+      "immunities": [
+        "sommeil magique"
+      ],
+      "advantages": [
+        "Charme"
+      ]
+    },
+    "nain": {
+      "senses": [
+        "Vision dans le noir (18 m)"
+      ],
+      "resistances": [
+        "poison"
+      ],
+      "advantages": [
+        "Poison"
+      ]
+    },
+    "halfelin": {
+      "advantages": [
+        "Peur"
+      ]
+    },
+    "demi-elfe": {
+      "senses": [
+        "Vision dans le noir (18 m)"
+      ],
+      "immunities": [
+        "sommeil magique"
+      ],
+      "advantages": [
+        "Charme"
+      ]
+    },
+    "demi-orc": {
+      "senses": [
+        "Vision dans le noir (18 m)"
+      ]
+    },
+    "gnome": {
+      "senses": [
+        "Vision dans le noir (18 m)"
+      ],
+      "advantages": [
+        "Magie (Intelligence, Sagesse ou Charisme)"
+      ]
+    },
+    "drakeide": {
+      "resistances": [
+        "type de dégâts de l'ascendance draconique (variable selon le dragon choisi)"
+      ]
+    },
+    "tieffelin": {
+      "senses": [
+        "Vision dans le noir (18 m)"
+      ],
+      "resistances": [
+        "feu"
+      ]
+    },
+    "drakeide-chromatique-ua": {
+      "resistances": [
+        "type de dégâts de l'ascendance chromatique (variable)"
+      ]
+    },
+    "drakeide-diamantin-ua": {
+      "resistances": [
+        "type de dégâts de l'ascendance diamantine (variable)"
+      ]
+    },
+    "kobold": {
+      "senses": [
+        "Vision dans le noir (18 m)"
+      ]
+    },
+    "hobgobelin-de-feerie": {
+      "senses": [
+        "Vision dans le noir (18 m)"
+      ],
+      "advantages": [
+        "Charmé"
+      ]
+    },
+    "hiboulin": {
+      "senses": [
+        "Vision dans le noir supérieure (27 m)"
+      ]
+    },
+    "dhampire": {
+      "senses": [
+        "Vision dans le noir (18 m)"
+      ]
+    },
+    "sang-maudit": {
+      "senses": [
+        "Vision dans le noir (18 m)"
+      ],
+      "immunities": [
+        "sommeil magique"
+      ],
+      "advantages": [
+        "Charme"
+      ]
+    },
+    "ressuscite": {
+      "senses": [
+        "Vision dans le noir (18 m)"
+      ],
+      "resistances": [
+        "poison"
+      ],
+      "advantages": [
+        "Maladie",
+        "Poison",
+        "Mort"
+      ]
+    },
+    "kender": {
+      "immunities": [
+        "effrayé"
+      ]
+    },
+    "elfe-astral": {
+      "senses": [
+        "Vision dans le noir (18 m)"
+      ],
+      "advantages": [
+        "Charme"
+      ]
+    },
+    "autognome": {
+      "resistances": [
+        "poison"
+      ],
+      "immunities": [
+        "maladies"
+      ],
+      "advantages": [
+        "Paralysie",
+        "Poison"
+      ]
+    },
+    "plasmoide": {
+      "senses": [
+        "Vision dans le noir (18 m)"
+      ],
+      "resistances": [
+        "acide",
+        "poison"
+      ],
+      "advantages": [
+        "Poison"
+      ]
+    },
+    "thri-kreen": {
+      "senses": [
+        "Vision dans le noir (18 m)"
+      ]
+    }
+  },
+  "classes": {
+    "barbare": {
+      "advantages": [
+        "Dextérité (pièges et effets visibles, niveau 2+)"
+      ]
+    },
+    "clerc__domaine-de-la-guerre": {
+      "resistances": [
+        "contondant/perforant/tranchant non magiques"
+      ]
+    },
+    "clerc__domaine-de-la-protection": {
+      "resistances": [
+        "2 types de dégâts au choix parmi contondant/nécrotique/perforant/radiant/tranchant, modifiable à chaque repos"
+      ]
+    },
+    "clerc__domaine-de-la-forge": {
+      "immunities": [
+        "feu"
+      ],
+      "resistances": [
+        "contondant/perforant/tranchant non magiques (en armure lourde)"
+      ]
+    },
+    "clerc__domaine-du-crepuscule": {
+      "senses": [
+        "Vision dans le noir illimitée"
+      ]
+    },
+    "druide__cercle-de-la-terre": {
+      "immunities": [
+        "charmé/effrayé (par élémentaires et fées)",
+        "poisons",
+        "maladies"
+      ]
+    },
+    "druide__cercle-du-crepuscule": {
+      "resistances": [
+        "nécrotique",
+        "radiant"
+      ]
+    },
+    "druide__cercle-des-spores": {
+      "immunities": [
+        "aveuglé",
+        "assourdi",
+        "effrayé",
+        "empoisonné"
+      ]
+    },
+    "guerrier__chevalier-psi": {
+      "resistances": [
+        "poison",
+        "psychique"
+      ],
+      "immunities": [
+        "empoisonné"
+      ]
+    },
+    "moine": {
+      "immunities": [
+        "maladies",
+        "poisons"
+      ],
+      "other": [
+        "Immunisé au vieillissement magique (niveau 15)"
+      ]
+    },
+    "paladin": {
+      "immunities": [
+        "maladies"
+      ]
+    },
+    "paladin__serment-des-anciens": {
+      "resistances": [
+        "dégâts causés par les sorts"
+      ]
+    },
+    "paladin__serment-de-redemption": {
+      "resistances": [
+        "tous les dégâts infligés par autrui"
+      ]
+    },
+    "paladin__parjure": {
+      "resistances": [
+        "contondant/perforant/tranchant non magiques"
+      ]
+    },
+    "rodeur__chasseur-des-profondeurs": {
+      "senses": [
+        "Vision dans le noir (27 m)"
+      ]
+    },
+    "roublard__conspirateur": {
+      "immunities": [
+        "contrainte magique de dire la vérité"
+      ],
+      "other": [
+        "Pensées illisibles par télépathie"
+      ]
+    },
+    "ensorceleur__sorcellerie-de-la-mer": {
+      "resistances": [
+        "feu",
+        "contondant/perforant/tranchant"
+      ]
+    },
+    "ensorceleur__ombres": {
+      "senses": [
+        "Vision dans le noir (18 m)"
+      ]
+    },
+    "ensorceleur__sorcellerie-des-tempetes": {
+      "immunities": [
+        "foudre",
+        "tonnerre"
+      ]
+    },
+    "magicien__ecole-d-abjuration": {
+      "resistances": [
+        "dégâts de sorts"
+      ],
+      "advantages": [
+        "Jets de sauvegarde contre les sorts"
+      ]
+    },
+    "magicien__ecole-de-necromancie": {
+      "resistances": [
+        "nécrotique"
+      ]
+    },
+    "magicien__ecole-de-l-invention": {
+      "resistances": [
+        "force (en armure arcanomécanique)"
+      ]
+    },
+    "occultiste__l-archifee": {
+      "immunities": [
+        "charmé"
+      ]
+    },
+    "occultiste__le-fielon": {
+      "resistances": [
+        "1 type de dégâts au choix (changeable à chaque repos)"
+      ]
+    },
+    "occultiste__le-grand-ancien": {
+      "resistances": [
+        "psychique"
+      ],
+      "other": [
+        "Pensées illisibles par télépathie"
+      ]
+    },
+    "occultiste__le-chercheur": {
+      "resistances": [
+        "froid",
+        "feu"
+      ]
+    },
+    "occultiste__la-reine-corneille": {
+      "immunities": [
+        "effroi"
+      ],
+      "resistances": [
+        "nécrotique"
+      ],
+      "advantages": [
+        "Jets de sauvegarde contre la mort"
+      ]
+    },
+    "occultiste__celui-qui-rode-dans-les-profondeurs": {
+      "resistances": [
+        "froid"
+      ]
+    },
+    "occultiste__le-genie": {
+      "resistances": [
+        "type de dégâts lié au génie (variable selon le patron)"
+      ]
+    },
+    "occultiste__le-mort-vivant": {
+      "resistances": [
+        "nécrotique"
+      ]
+    },
+    "occultiste__le-celeste": {
+      "resistances": [
+        "radiant"
+      ]
+    },
+    "artificier__alchimiste": {
+      "resistances": [
+        "acide",
+        "poison"
+      ],
+      "immunities": [
+        "empoisonné"
+      ]
+    }
+  }
+}

@@ -39,6 +39,13 @@ router.get('/', authenticateToken, (req, res) => {
   res.json(getRaces())
 })
 
+// Public (sans auth) — liste allégée nom uniquement, utilisée par l'écran de connexion
+// joueur (PlayerJoinView) pour peupler la liste déroulante race sans exposer les
+// descriptions complètes (contenu de référence) à un client non authentifié.
+router.get('/public', (req, res) => {
+  res.json(getRaces().map(race => ({ slug: race.slug, name: race.name })))
+})
+
 router.get('/search', authenticateToken, (req, res) => {
   const q = (req.query.q || '').trim().toLowerCase()
   const races = getRaces()

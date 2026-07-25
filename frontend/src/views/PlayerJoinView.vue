@@ -22,6 +22,27 @@ const selectedClass = ref('')
 const customClass = ref('')
 const isCustomClass = computed(() => selectedClass.value === '__custom__')
 const dndClass = computed(() => isCustomClass.value ? customClass.value.trim() : selectedClass.value)
+
+// Sous-classe : uniquement proposée quand la classe choisie est une classe connue avec
+// des sous-classes ; laissée vide si sans objet, ou saisie libre via « Autre ».
+const selectedSubclass = ref('')
+const customSubclass = ref('')
+const isCustomSubclass = computed(() => selectedSubclass.value === '__custom__')
+const subclass = computed(() => isCustomSubclass.value ? customSubclass.value.trim() : selectedSubclass.value)
+const selectedClassSubclasses = computed(() => {
+  if (isCustomClass.value || !selectedClass.value) return []
+  return classesList.value.find(c => c.name === selectedClass.value)?.subclasses || []
+})
+watch(selectedClass, () => {
+  selectedSubclass.value = ''
+  customSubclass.value = ''
+})
+
+const selectedRace = ref('')
+const customRace = ref('')
+const isCustomRace = computed(() => selectedRace.value === '__custom__')
+const race = computed(() => isCustomRace.value ? customRace.value.trim() : selectedRace.value)
+
 const avatarFile = ref(null)
 const avatarPreview = ref(null)
 const error = ref('')
@@ -38,22 +59,33 @@ function toggleTheme() {
 
 import { BACKEND_URL } from '@/config.js'
 
-const DND_CLASSES = [
-  'Barbare', 'Barde', 'Clerc', 'Druide', 'Guerrier',
-  'Moine', 'Paladin', 'Rôdeur', 'Roublard',
-  'Ensorceleur', 'Occultiste', 'Magicien',
-]
+// Listes de classes/races chargées depuis le contenu (public, sans auth — voir
+// GET /api/classes/public et /api/races/public) pour peupler les selects, avec repli sur
+// une saisie libre (voir isCustomClass/isCustomRace) si l'API est indisponible.
+const classesList = ref([])
+const racesList = ref([])
 
 // Pending socket handlers — saved so onUnmounted can remove them if the user
 // navigates away before the join completes (avoids stale callbacks).
 let _pendingJoinedHandler = null
 let _pendingErrorHandler = null
 
-onMounted(() => {
+onMounted(async () => {
   releaseNotesStore.load()
   if (sessionStore.activeSession && sessionStore.playerInfo) {
     const code = sessionStore.activeSession.code
     router.replace(code ? `/view/${code}` : '/player')
+    return
+  }
+  try {
+    const [classesRes, racesRes] = await Promise.all([
+      fetch(`${BACKEND_URL}/api/classes/public`),
+      fetch(`${BACKEND_URL}/api/races/public`),
+    ])
+    if (classesRes.ok) classesList.value = await classesRes.json()
+    if (racesRes.ok) racesList.value = await racesRes.json()
+  } catch {
+    // Selects restent vides ; l'utilisateur peut toujours saisir une classe/race libre.
   }
 })
 
@@ -75,12 +107,27 @@ watch(playerName, (name, prevName) => {
   const profile = getProfile(name)
   if (profile) {
     if (profile.dndClass) {
-      if (DND_CLASSES.includes(profile.dndClass)) {
+      const knownClass = classesList.value.find(c => c.name === profile.dndClass)
+      if (knownClass) {
         selectedClass.value = profile.dndClass
         customClass.value = ''
+        if (profile.subclass) {
+          const knownSubclass = knownClass.subclasses.some(sc => sc.name === profile.subclass)
+          selectedSubclass.value = knownSubclass ? profile.subclass : '__custom__'
+          customSubclass.value = knownSubclass ? '' : profile.subclass
+        }
       } else {
         selectedClass.value = '__custom__'
         customClass.value = profile.dndClass
+      }
+    }
+    if (profile.race) {
+      if (racesList.value.some(r => r.name === profile.race)) {
+        selectedRace.value = profile.race
+        customRace.value = ''
+      } else {
+        selectedRace.value = '__custom__'
+        customRace.value = profile.race
       }
     }
     if (profile.avatarUrl) avatarPreview.value = profile.avatarUrl
@@ -90,6 +137,10 @@ watch(playerName, (name, prevName) => {
     // Leaving a profile-loaded name → reset to defaults
     selectedClass.value = ''
     customClass.value = ''
+    selectedSubclass.value = ''
+    customSubclass.value = ''
+    selectedRace.value = ''
+    customRace.value = ''
     avatarPreview.value = null
     avatarFile.value = null
     hp.value = 20
@@ -158,6 +209,8 @@ async function joinSession() {
       // Persist profile to localStorage
       saveProfile(playerName.value, {
         dndClass: dndClass.value,
+        subclass: subclass.value,
+        race: race.value,
         avatarUrl: data.player.avatar_url || avatarUrl,
         hp: data.player.max_hp,
         ac: data.player.ac,
@@ -172,6 +225,8 @@ async function joinSession() {
           maxHp: data.player.max_hp,
           initiative: data.player.initiative,
           dndClass: data.player.dnd_class,
+          subclass: data.player.subclass,
+          race: data.player.race,
           avatarUrl: data.player.avatar_url,
         }
       sessionStore.activeMerchant = data.activeMerchant || null
@@ -181,6 +236,8 @@ async function joinSession() {
         hp: data.player.current_hp,
         maxHp: data.player.max_hp,
         dndClass: data.player.dnd_class,
+        subclass: data.player.subclass,
+        race: data.player.race,
         avatarUrl: data.player.avatar_url,
       })
       router.push(`/view/${data.session.code}`)
@@ -202,6 +259,8 @@ async function joinSession() {
       ac: ac.value,
       hp: hp.value,
       dndClass: dndClass.value || null,
+      subclass: subclass.value || null,
+      race: race.value || null,
       avatarUrl,
     })
   } catch {
@@ -246,7 +305,7 @@ async function joinSession() {
           </label>
           <select v-model="selectedClass" class="form-input form-select" data-testid="class-select">
             <option value="">— Choisir une classe —</option>
-            <option v-for="cls in DND_CLASSES" :key="cls" :value="cls">{{ cls }}</option>
+            <option v-for="cls in classesList" :key="cls.slug" :value="cls.name">{{ cls.name }}</option>
             <option value="__custom__">Autre (saisie libre)…</option>
           </select>
           <input
@@ -256,6 +315,46 @@ async function joinSession() {
             class="form-input"
             placeholder="Nom de votre classe…"
             data-testid="class-custom-input"
+            autocomplete="off"
+          />
+        </div>
+
+        <div v-if="selectedClassSubclasses.length > 0" class="form-group">
+          <label class="form-label">
+            <AppIcon icon="game-icons:round-shield" size="0.9rem" /> Sous-classe
+          </label>
+          <select v-model="selectedSubclass" class="form-input form-select" data-testid="subclass-select">
+            <option value="">— Aucune / pas encore —</option>
+            <option v-for="sc in selectedClassSubclasses" :key="sc.name" :value="sc.name">{{ sc.name }}</option>
+            <option value="__custom__">Autre (saisie libre)…</option>
+          </select>
+          <input
+            v-if="isCustomSubclass"
+            v-model="customSubclass"
+            type="text"
+            class="form-input"
+            placeholder="Nom de votre sous-classe…"
+            data-testid="subclass-custom-input"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <AppIcon icon="game-icons:vitruvian-man" size="0.9rem" /> Race
+          </label>
+          <select v-model="selectedRace" class="form-input form-select" data-testid="race-select">
+            <option value="">— Choisir une race —</option>
+            <option v-for="r in racesList" :key="r.slug" :value="r.name">{{ r.name }}</option>
+            <option value="__custom__">Autre (saisie libre)…</option>
+          </select>
+          <input
+            v-if="isCustomRace"
+            v-model="customRace"
+            type="text"
+            class="form-input"
+            placeholder="Nom de votre race…"
+            data-testid="race-custom-input"
             autocomplete="off"
           />
         </div>

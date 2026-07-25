@@ -384,7 +384,7 @@ function setupSocket(io) {
     console.log('Socket connected:', socket.id)
 
     // ── Player: join ────────────────────────────────────────────────────────
-    socket.on('join-session', async ({ code, playerName, ac, hp, maxHp, dndClass, avatarUrl }) => {
+    socket.on('join-session', async ({ code, playerName, ac, hp, maxHp, dndClass, race, subclass, avatarUrl }) => {
       try {
         const cleanName = sanitizePlayerName(playerName)
         if (!cleanName) {
@@ -404,6 +404,8 @@ function setupSocket(io) {
         // This prevents the bug where refreshing with 35/50 HP creates a player with max_hp=35.
         const maxHpVal = maxHp ? Math.max(1, parseInt(maxHp) || hpVal) : hpVal
         const classVal = dndClass || null
+        const raceVal = race || null
+        const subclassVal = subclass || null
         const avatarVal = avatarUrl || null
 
         const normalizedName = normalizePlayerName(cleanName)
@@ -424,19 +426,24 @@ function setupSocket(io) {
               return
             }
           }
+          // ac/hp/maxHp ne sont volontairement pas réécrits ici : ce sont des valeurs de
+          // partie en cours (dégâts subis, etc.), pas des valeurs à réinitialiser depuis le
+          // formulaire de connexion à chaque reconnexion. Classe/sous-classe/race sont en
+          // revanche des infos de fiche de personnage qu'un joueur doit pouvoir corriger en
+          // se reconnectant sous le même nom.
           const updated = await pool.query(
             `UPDATE players
-             SET socket_id = $1
-             WHERE id = $2
+             SET socket_id = $1, dnd_class = $2, race = $3, subclass = $4
+             WHERE id = $5
              RETURNING *`,
-            [socket.id, existingPlayer.id]
+            [socket.id, classVal, raceVal, subclassVal, existingPlayer.id]
           )
           player = updated.rows[0]
         } else {
           const playerResult = await pool.query(
-            `INSERT INTO players (session_id, player_name, socket_id, ac, max_hp, current_hp, dnd_class, avatar_url)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-            [session.id, cleanName, socket.id, acVal, maxHpVal, hpVal, classVal, avatarVal]
+            `INSERT INTO players (session_id, player_name, socket_id, ac, max_hp, current_hp, dnd_class, race, subclass, avatar_url)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+            [session.id, cleanName, socket.id, acVal, maxHpVal, hpVal, classVal, raceVal, subclassVal, avatarVal]
           )
           player = playerResult.rows[0]
         }
@@ -446,7 +453,7 @@ function setupSocket(io) {
 
         socket.emit('session-joined', {
           session: { id: session.id, name: session.name, code: session.code },
-          player: { id: player.id, player_name: player.player_name, ac: player.ac, max_hp: player.max_hp, current_hp: player.current_hp, dnd_class: player.dnd_class, avatar_url: player.avatar_url, initiative: player.initiative, conditions: player.conditions, is_concentrating: player.is_concentrating },
+          player: { id: player.id, player_name: player.player_name, ac: player.ac, max_hp: player.max_hp, current_hp: player.current_hp, dnd_class: player.dnd_class, race: player.race, subclass: player.subclass, avatar_url: player.avatar_url, initiative: player.initiative, conditions: player.conditions, is_concentrating: player.is_concentrating },
           activeMerchant: (session.current_merchant_id && session.tv_mode === 'merchant')
             ? await getMerchantData(session.current_merchant_id)
             : null,
@@ -592,7 +599,7 @@ function setupSocket(io) {
         if (!session) return
         socket.join(`admin:${sessionId}`)
         const playersResult = await pool.query(
-          `SELECT id, session_id, player_name, socket_id, joined_at, ac, max_hp, current_hp, conditions, is_concentrating, initiative
+          `SELECT id, session_id, player_name, socket_id, joined_at, ac, max_hp, current_hp, conditions, is_concentrating, initiative, dnd_class, race, subclass, avatar_url
            FROM players WHERE session_id = $1 ORDER BY joined_at ASC`, [sessionId])
         socket.emit('players-snapshot', { sessionId, players: playersResult.rows })
         socket.adminSessionId = sessionId

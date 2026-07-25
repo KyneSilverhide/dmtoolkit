@@ -57,6 +57,17 @@ router.get('/', authenticateToken, (req, res) => {
   res.json(getClasses())
 })
 
+// Public (sans auth) — liste allégée nom + sous-classes, utilisée par l'écran de
+// connexion joueur (PlayerJoinView) pour peupler les listes déroulantes classe/sous-classe
+// sans exposer les descriptions complètes (contenu de référence) à un client non authentifié.
+router.get('/public', (req, res) => {
+  res.json(getClasses().map(dndClass => ({
+    slug: dndClass.slug,
+    name: dndClass.name,
+    subclasses: (dndClass.subclasses || []).map(sc => ({ name: sc.name })),
+  })))
+})
+
 router.get('/search', authenticateToken, (req, res) => {
   const q = (req.query.q || '').trim().toLowerCase()
   const classes = getClasses()

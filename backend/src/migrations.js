@@ -273,6 +273,11 @@ ALTER TABLE sessions ADD COLUMN IF NOT EXISTS tv_theme VARCHAR(10) NOT NULL DEFA
 
 -- URL de la vidéo actuellement projetée sur la TV (tv_mode = 'video').
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_video_url VARCHAR(500);
+
+-- Race et sous-classe du joueur, choisies au login (liste de contenu ou saisie libre) —
+-- utilisées avec dnd_class pour le résumé des résistances/immunités affiché au MJ.
+ALTER TABLE players ADD COLUMN IF NOT EXISTS race VARCHAR(100);
+ALTER TABLE players ADD COLUMN IF NOT EXISTS subclass VARCHAR(100);
 `
 
 async function runMigrations() {

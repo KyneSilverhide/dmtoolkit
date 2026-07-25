@@ -34,6 +34,8 @@ export function saveProfile(name, profile) {
   const profiles = getAllProfiles()
   profiles[name.trim().toLowerCase()] = {
     dndClass: profile.dndClass || '',
+    subclass: profile.subclass || '',
+    race: profile.race || '',
     avatarUrl: profile.avatarUrl || null,
     displayName: name.trim(),
     hp: profile.hp ?? null,

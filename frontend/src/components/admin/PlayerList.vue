@@ -1,11 +1,41 @@
 ﻿<script setup>
+import { ref, onMounted } from 'vue'
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
 import { DND_CONDITIONS_MAP } from '@/utils/conditions.js'
+import { apiFetch } from '@/utils/apiFetch.js'
+import { getDefensiveSummary } from '@/utils/defensiveTraits.js'
 
 import { BACKEND_URL } from '@/config.js'
+
+// ── Résumé résistances/immunités/sens (voir defensiveTraits.js) ────────────
+const defensiveTraitsData = ref(null)
+onMounted(async () => {
+  try {
+    const res = await apiFetch('/api/defensive-traits')
+    if (res.ok) defensiveTraitsData.value = await res.json()
+  } catch (err) { console.error(err) }
+})
+
+const DEFENSE_CATEGORIES = [
+  { key: 'resistances', icon: 'lucide:shield-half', label: 'Résistance', color: 'var(--color-info-bright)' },
+  { key: 'immunities', icon: 'lucide:shield-check', label: 'Immunité', color: 'var(--color-success)' },
+  { key: 'senses', icon: 'lucide:eye', label: 'Sens', color: 'var(--color-gold-bright)' },
+  { key: 'advantages', icon: 'lucide:trending-up', label: 'Avantage JdS', color: 'var(--color-gold-dark)' },
+  { key: 'other', icon: 'lucide:info', label: 'Particularité', color: 'var(--color-text-dim)' },
+]
+
+function defensiveBadges(player) {
+  const summary = getDefensiveSummary(defensiveTraitsData.value, {
+    race: player.race, dndClass: player.dnd_class, subclass: player.subclass,
+  })
+  if (!summary) return []
+  return DEFENSE_CATEGORIES.flatMap(cat =>
+    (summary[cat.key] || []).map(value => ({ ...cat, value }))
+  )
+}
 
 function hpPercent(player) {
   if (!player.max_hp) return 100
@@ -79,7 +109,9 @@ function avatarSrc(player) {
           </div>
           <div class="card-identity">
             <span class="card-name" :data-testid="`player-name-${player.id}`">{{ player.player_name }}</span>
-            <span v-if="player.dnd_class" class="card-class">{{ player.dnd_class }}</span>
+            <span v-if="player.dnd_class || player.race" class="card-class">
+              {{ [player.dnd_class, player.subclass, player.race].filter(Boolean).join(' · ') }}
+            </span>
           </div>
           <div class="card-badges">
             <AppIcon v-if="player.is_concentrating" icon="game-icons:bullseye" size="1rem"
@@ -133,6 +165,19 @@ function avatarSrc(player) {
               size="0.75rem"
             />
             {{ CONDITION_LABELS[cid]?.label || cid }}
+          </span>
+        </div>
+
+        <!-- Résistances / immunités / sens (voir defensiveTraits.js) -->
+        <div v-if="defensiveBadges(player).length > 0" class="defense-row">
+          <span
+            v-for="(badge, idx) in defensiveBadges(player)"
+            :key="`${badge.key}-${idx}`"
+            class="defense-badge"
+            :title="badge.label"
+          >
+            <AppIcon :icon="badge.icon" :color="badge.color" size="0.75rem" />
+            {{ badge.value }}
           </span>
         </div>
 
@@ -319,6 +364,27 @@ function avatarSrc(player) {
   color: var(--admin-warning-text, var(--color-warning));
   background: var(--admin-warning-bg, var(--color-warning-soft));
   border: 1px solid var(--admin-warning-border, var(--color-warning-border));
+  border-radius: 20px;
+  padding: 0.1rem 0.4rem;
+  white-space: nowrap;
+}
+
+/* Résistances / immunités / sens */
+.defense-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.defense-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.58rem;
+  letter-spacing: 0.02em;
+  color: var(--color-text-dim);
+  background: var(--surface-raised);
+  border: 1px solid var(--color-border);
   border-radius: 20px;
   padding: 0.1rem 0.4rem;
   white-space: nowrap;

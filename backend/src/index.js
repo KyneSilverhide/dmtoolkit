@@ -23,6 +23,7 @@ const classRoutes = require('./routes/classes')
 const backgroundRoutes = require('./routes/backgrounds')
 const serviceRoutes = require('./routes/services')
 const conditionRoutes = require('./routes/conditions')
+const defensiveTraitsRoutes = require('./routes/defensive-traits')
 const setupSocket = require('./socket')
 
 const app = express()
@@ -100,6 +101,7 @@ app.use('/api/classes', isTest ? classRoutes : [apiLimiter, classRoutes])
 app.use('/api/backgrounds', isTest ? backgroundRoutes : [apiLimiter, backgroundRoutes])
 app.use('/api/services', isTest ? serviceRoutes : [apiLimiter, serviceRoutes])
 app.use('/api/conditions', isTest ? conditionRoutes : [apiLimiter, conditionRoutes])
+app.use('/api/defensive-traits', isTest ? defensiveTraitsRoutes : [apiLimiter, defensiveTraitsRoutes])
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
 app.get('/api/config', (req, res) => {
   const demoEnabled = process.env.DEMO_ENABLED !== 'false'

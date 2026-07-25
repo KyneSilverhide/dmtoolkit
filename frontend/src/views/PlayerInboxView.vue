@@ -134,6 +134,8 @@ function rememberCurrentPlayer(sessionCode = currentSessionCode()) {
     hp: currentHp.value,
     maxHp: maxHp.value,
     dndClass: playerInfo.value.dndClass,
+    subclass: playerInfo.value.subclass,
+    race: playerInfo.value.race,
     avatarUrl: playerInfo.value.avatarUrl,
   })
 }
@@ -148,6 +150,8 @@ function applyJoinedState(data) {
     maxHp: data.player.max_hp,
     initiative: data.player.initiative,
     dndClass: data.player.dnd_class,
+    subclass: data.player.subclass,
+    race: data.player.race,
     avatarUrl: data.player.avatar_url,
   }
   sessionStore.activeMerchant = data.activeMerchant || null
@@ -212,6 +216,8 @@ async function rejoinFromKnownPlayer(sessionCode) {
       hp: knownPlayer.hp,
       maxHp: knownPlayer.maxHp,
       dndClass: knownPlayer.dndClass || null,
+      subclass: knownPlayer.subclass || null,
+      race: knownPlayer.race || null,
       avatarUrl: knownPlayer.avatarUrl || null,
     })
   })
@@ -723,6 +729,8 @@ async function handleSocketReconnect() {
       hp: currentHp.value,
       maxHp: maxHp.value,
       dndClass: playerInfo.value.dndClass || null,
+      subclass: playerInfo.value.subclass || null,
+      race: playerInfo.value.race || null,
       avatarUrl: playerInfo.value.avatarUrl || null,
     })
   } catch (err) {
