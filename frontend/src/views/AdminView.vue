@@ -125,6 +125,12 @@ const lockedTabs = computed(() => {
       title: 'Indisponible en mode démo',
       text: 'L\'upload de vidéos n\'est pas disponible sur le compte de démonstration.',
     }
+    for (const tabKey of CONTENT_TABS) {
+      locked[tabKey] = {
+        title: 'Contenu masqué en mode démo',
+        text: 'Le contenu de référence D&amp;D (sorts, objets, races, classes...) n\'est pas accessible sur le compte de démonstration.',
+      }
+    }
   }
   return locked
 })
@@ -574,6 +580,7 @@ onUnmounted(() => {
     <CommandPalette
       :open="isPaletteOpen"
       :visible-tab-keys="visibleTabKeys"
+      :is-demo="!!authStore.admin?.is_demo"
       @close="closePalette"
     />
   </div>

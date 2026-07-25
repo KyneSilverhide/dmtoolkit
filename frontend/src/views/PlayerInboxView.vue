@@ -166,6 +166,7 @@ function applyJoinedState(data) {
   initiativeValue.value = data.player.initiative
   isConcentrating.value = !!data.player.is_concentrating
   isDemo.value = !!data.isDemo
+  if (isDemo.value && (activeTab.value === 'sorts' || activeTab.value === 'objets')) switchTab('combat')
   try {
     const rawConds = data.player.conditions
     const parsed = typeof rawConds === 'string' ? JSON.parse(rawConds) : rawConds
@@ -980,11 +981,11 @@ onUnmounted(() => {
           <span class="sidebar-icon"><AppIcon icon="lucide:notebook-pen" size="1.2rem" /></span>
           <span class="sidebar-label">Notes</span>
         </button>
-        <button class="sidebar-item" :class="{ active: activeTab === 'sorts' }" @click="switchTab('sorts')" aria-label="Sorts" data-testid="player-tab-sorts">
+        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'sorts' }" @click="switchTab('sorts')" aria-label="Sorts" data-testid="player-tab-sorts">
           <span class="sidebar-icon"><AppIcon icon="lucide:sparkles" size="1.2rem" /></span>
           <span class="sidebar-label">Sorts</span>
         </button>
-        <button class="sidebar-item" :class="{ active: activeTab === 'objets' }" @click="switchTab('objets')" aria-label="Objets" data-testid="player-tab-objets">
+        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'objets' }" @click="switchTab('objets')" aria-label="Objets" data-testid="player-tab-objets">
           <span class="sidebar-icon"><AppIcon icon="lucide:gem" size="1.2rem" /></span>
           <span class="sidebar-label">Objets</span>
         </button>
@@ -1110,7 +1111,7 @@ onUnmounted(() => {
             </div>
 
             <!-- ── SORTS tab ──────────────────────────────────────────────── -->
-            <div v-show="activeTab === 'sorts'" class="tab-panel">
+            <div v-show="activeTab === 'sorts' && !isDemo" class="tab-panel">
               <div class="panel">
                 <p class="panel-label"><AppIcon icon="lucide:search" size="0.85rem" /> Recherche de sorts</p>
                 <SpellSearchTool />
@@ -1118,10 +1119,19 @@ onUnmounted(() => {
             </div>
 
             <!-- ── OBJETS tab ─────────────────────────────────────────────── -->
-            <div v-show="activeTab === 'objets'" class="tab-panel">
+            <div v-show="activeTab === 'objets' && !isDemo" class="tab-panel">
               <div class="panel">
                 <p class="panel-label"><AppIcon icon="lucide:gem" size="0.85rem" color="var(--color-info-bright)" /> Objets & Objets magiques</p>
                 <MagicItemSearchTool />
+              </div>
+            </div>
+
+            <!-- ── SORTS/OBJETS masqués en mode démo ─────────────────────── -->
+            <div v-show="(activeTab === 'sorts' || activeTab === 'objets') && isDemo" class="tab-panel">
+              <div class="panel demo-locked-panel">
+                <AppIcon icon="lucide:lock" size="1.4em" />
+                <p class="panel-label">Contenu masqué en mode démo</p>
+                <p class="demo-locked-text">Le contenu de référence D&amp;D n'est pas accessible sur le compte de démonstration.</p>
               </div>
             </div>
 
@@ -1222,6 +1232,7 @@ onUnmounted(() => {
         <span class="tab-label">Notes</span>
       </button>
       <button
+        v-if="!isDemo"
         class="tab-item"
         :class="{ active: activeTab === 'sorts' }"
         @click="switchTab('sorts')"
@@ -1232,6 +1243,7 @@ onUnmounted(() => {
         <span class="tab-label">Sorts</span>
       </button>
       <button
+        v-if="!isDemo"
         class="tab-item"
         :class="{ active: activeTab === 'objets' }"
         @click="switchTab('objets')"
@@ -1590,6 +1602,24 @@ onUnmounted(() => {
 }
 .empty-icon { font-size: 2.5rem; opacity: 0.4; }
 .empty-text { font-family: var(--font-heading), sans-serif; font-size: 0.9rem; letter-spacing: 0.1em; color: var(--color-text-dim); }
+
+/* ── Contenu masqué en mode démo ─────────────────────────────────────── */
+.demo-locked-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--color-warning);
+}
+.demo-locked-text {
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.8rem;
+  color: var(--color-text-dim);
+  max-width: 360px;
+  margin: 0;
+}
 
 /* ── Tab bar ─────────────────────────────────────────────────────────── */
 .tab-bar {

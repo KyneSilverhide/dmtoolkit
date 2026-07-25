@@ -15,6 +15,9 @@ const props = defineProps({
   // non — voir AdminView.vue `navGroups`/`visibleTabKeys`). Les résultats de section sont
   // restreints à ces onglets pour ne jamais proposer un raccourci vers un onglet caché.
   visibleTabKeys: { type: Array, default: () => [] },
+  // Compte de démonstration : le contenu de référence (sorts/objets/races/...) est masqué,
+  // la recherche live ne doit donc jamais interroger ces endpoints (voir AdminView.vue lockedTabs).
+  isDemo: { type: Boolean, default: false },
 })
 const emit = defineEmits(['close'])
 const router = useRouter()
@@ -151,7 +154,7 @@ watch(query, () => {
   highlighted.value = 0
   if (liveTimer) clearTimeout(liveTimer)
   const q = query.value.trim()
-  if (q.length < 3) {
+  if (props.isDemo || q.length < 3) {
     liveResults.value = []
     liveLoading.value = false
     return

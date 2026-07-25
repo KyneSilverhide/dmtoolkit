@@ -302,7 +302,6 @@ function selectTab(key) {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-warning);
-  white-space: nowrap;
 }
 .glt-text {
   font-family: var(--font-body), sans-serif;
