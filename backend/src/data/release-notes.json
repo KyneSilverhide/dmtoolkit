@@ -1,6 +1,17 @@
 {
   "notes": [
     {
+      "version": "1.0.119",
+      "date": "2026-07-25",
+      "changes": [
+        { "type": "improvement", "role": "all", "text": "Mode démo — le contenu de référence (Sorts, Objets, Races, Classes, Origines, Aptitudes, Services, États) est désormais masqué à la fois côté MJ et côté joueur." },
+        { "type": "feature", "role": "player", "text": "Connexion — en rejoignant une session, vous pouvez désormais choisir votre classe (et sous-classe si applicable) et votre race depuis les listes du contenu, ou les saisir librement." },
+        { "type": "feature", "role": "admin", "text": "Joueurs — un résumé des résistances, immunités et sens (vision dans le noir…) découlant de la classe/sous-classe/race de chaque joueur est désormais affiché sur sa fiche." },
+        { "type": "improvement", "role": "admin", "text": "Services — les résultats sont désormais regroupés par catégorie (Main d'œuvre, Transport & voyage, Hébergement, Repas & boissons)." },
+        { "type": "improvement", "role": "admin", "text": "Classes — les traits de classe de base pointent désormais vers leur fiche dans l'onglet Aptitudes, comme les traits de sous-classe, au lieu d'afficher leur description directement." }
+      ]
+    },
+    {
       "version": "1.0.115",
       "date": "2026-07-25",
       "changes": [

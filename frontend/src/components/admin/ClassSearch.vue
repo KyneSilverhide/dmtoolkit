@@ -133,10 +133,10 @@ function isSpellListTrait(trait) {
   return SPELL_LIST_NAME_RE.test(trait.name)
 }
 
-// Payload "aptitude" pour le lien direct d'un trait de sous-classe vers sa propre fiche
-// (voir composants/RefLink.vue) — même forme que les entrées produites par
-// classAbilityCandidates(), construite directement ici pour éviter une recherche inverse
-// dans la liste de candidats.
+// Payload "aptitude" pour le lien direct d'un trait (de classe de base ou de sous-classe,
+// selon que `subclass` est null ou non) vers sa propre fiche (voir composants/RefLink.vue)
+// — même forme que les entrées produites par classAbilityCandidates(), construite
+// directement ici pour éviter une recherche inverse dans la liste de candidats.
 function abilityPayload(dndClass, subclass, trait) {
   return {
     id: traitId(dndClass, subclass, trait),
@@ -144,7 +144,7 @@ function abilityPayload(dndClass, subclass, trait) {
     description: trait.description,
     className: dndClass.name,
     classSlug: dndClass.slug,
-    subclassName: subclass.name,
+    subclassName: subclass ? subclass.name : null,
   }
 }
 
@@ -336,18 +336,24 @@ onUnmounted(() => {
           <AppIcon :icon="isExpanded(dndClass.slug, 'features') ? 'lucide:chevron-down' : 'lucide:chevron-right'" size="0.8em" />
           Traits de classe ({{ dndClass.features.length }})
         </button>
-        <ul v-if="isExpanded(dndClass.slug, 'features')" class="trait-list">
-          <li v-for="trait in dndClass.features" :key="trait.name" class="trait-item">
-            <span class="trait-name">{{ trait.name }}</span>
-            <span class="trait-level">niv. {{ trait.level }}</span>
-            <span class="trait-desc">
-              <LinkedText
-                :text="trait.description"
-                :candidates="refCandidates(dndClass)"
-                :exclude-id="traitId(dndClass, null, trait)"
-                :trait-name="trait.name"
-              />
-            </span>
+        <ul v-if="isExpanded(dndClass.slug, 'features')" class="trait-list trait-list-links">
+          <li v-for="trait in dndClass.features" :key="trait.name" class="trait-item" :class="isSpellListTrait(trait) ? '' : 'trait-item-link'">
+            <template v-if="isSpellListTrait(trait)">
+              <span class="trait-name">{{ trait.name }}</span>
+              <span class="trait-level">niv. {{ trait.level }}</span>
+              <span class="trait-desc">
+                <LinkedText
+                  :text="trait.description"
+                  :candidates="refCandidates(dndClass)"
+                  :exclude-id="traitId(dndClass, null, trait)"
+                  :trait-name="trait.name"
+                />
+              </span>
+            </template>
+            <template v-else>
+              <RefLink type="ability" :label="trait.name" :payload="abilityPayload(dndClass, null, trait)" />
+              <span class="trait-level">niv. {{ trait.level }}</span>
+            </template>
           </li>
         </ul>
 

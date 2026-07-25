@@ -56,6 +56,24 @@ const filteredServices = computed(() => {
   return services.value.filter(service => serviceMatches(service, q))
 })
 
+// Regroupe par catégorie (champ `category` de dnd_services.json) en conservant l'ordre
+// d'apparition dans les données plutôt qu'un tri alphabétique des groupes.
+const groupedServices = computed(() => {
+  const groups = []
+  const byCategory = new Map()
+  for (const service of filteredServices.value) {
+    const category = service.category || 'Autre'
+    let group = byCategory.get(category)
+    if (!group) {
+      group = { category, services: [] }
+      byCategory.set(category, group)
+      groups.push(group)
+    }
+    group.services.push(service)
+  }
+  return groups
+})
+
 function writeRouteQuery(q, slug) {
   lastAppliedKey = `${q || ''}|${slug || ''}`
   tabQuery.setParams({ q: q || null, slug: slug || null })
@@ -123,26 +141,33 @@ onUnmounted(() => {
       <p class="no-results-text">Aucun service trouvé pour « {{ query }} »</p>
     </div>
 
-    <div v-else class="results-info">
-      <template v-if="exactSlugFilter">
-        Correspondance exacte
-        <button class="clear-filter-btn" type="button" @click="clearExactMatch">
-          <AppIcon icon="lucide:x" size="0.7em" /> Voir tous les résultats
-        </button>
-      </template>
-      <template v-else>{{ filteredServices.length }} service(s)</template>
-    </div>
-
-    <div class="results-grid">
-      <div v-for="service in filteredServices" :key="service.slug" class="service-card">
-        <div class="service-header">
-          <h3 class="service-name">{{ service.name }}</h3>
-          <span class="price-badge"><AppIcon icon="lucide:coins" size="0.7em" /> {{ service.price }}</span>
-        </div>
-        <p class="service-desc">{{ service.description }}</p>
-        <a :href="service.detail_url" target="_blank" class="service-link">Voir sur AideDD ↗</a>
+    <template v-else>
+      <div class="results-info">
+        <template v-if="exactSlugFilter">
+          Correspondance exacte
+          <button class="clear-filter-btn" type="button" @click="clearExactMatch">
+            <AppIcon icon="lucide:x" size="0.7em" /> Voir tous les résultats
+          </button>
+        </template>
+        <template v-else>{{ filteredServices.length }} service(s)</template>
       </div>
-    </div>
+
+      <div class="category-groups">
+        <div v-for="group in groupedServices" :key="group.category" class="category-group">
+          <h3 class="category-title">{{ group.category }}</h3>
+          <div class="results-grid">
+            <div v-for="service in group.services" :key="service.slug" class="service-card">
+              <div class="service-header">
+                <h3 class="service-name">{{ service.name }}</h3>
+                <span class="price-badge"><AppIcon icon="lucide:coins" size="0.7em" /> {{ service.price }}</span>
+              </div>
+              <p class="service-desc">{{ service.description }}</p>
+              <a :href="service.detail_url" target="_blank" class="service-link">Voir sur AideDD ↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -223,6 +248,23 @@ onUnmounted(() => {
   transition: color 0.2s, border-color 0.2s;
 }
 .clear-filter-btn:hover { color: var(--color-gold-bright); border-color: var(--color-gold-dark); }
+
+.category-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.category-title {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-gold-dark);
+  margin: 0 0 0.6rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--color-border);
+}
 
 .results-grid {
   display: flex;
