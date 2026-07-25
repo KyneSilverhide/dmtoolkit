@@ -63,7 +63,7 @@
           "traits": [
             { "name": "Vision dans le noir supérieure", "description": "Portée de la vision dans le noir étendue à 36 m." },
             { "name": "Sensibilité à la lumière du soleil", "description": "Désavantage aux jets d'attaque et de Perception basés sur la vue en plein soleil." },
-            { "name": "Magie draconique... féerique", "description": "Connaît Lumières dansantes ; à partir du niveau 3, lance Feu de fée 1 fois par repos long ; à partir du niveau 5, lance Ténèbres 1 fois par repos long (Charisme)." },
+            { "name": "Magie féerique", "description": "Connaît Lumières dansantes ; à partir du niveau 3, lance Lueurs féeriques 1 fois par repos long ; à partir du niveau 5, lance Ténèbres 1 fois par repos long (Charisme)." },
             { "name": "Entraînement aux armes drow", "description": "Maîtrise de la rapière, l'épée courte et l'arbalète de poing." }
           ]
         }
@@ -240,7 +240,7 @@
       "traits": [
         { "name": "Vision dans le noir", "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)." },
         { "name": "Résistance infernale", "description": "Résistance aux dégâts de feu." },
-        { "name": "Héritage infernal", "description": "Connaît le tour de magie Thaumaturgie. À partir du niveau 3, lance Ordre fielleux (2ᵉ cercle) 1 fois par repos long. À partir du niveau 5, lance Ténèbres 1 fois par repos long. Le Charisme est la caractéristique d'incantation." }
+        { "name": "Héritage infernal", "description": "Connaît le tour de magie Thaumaturgie. À partir du niveau 3, lance Représailles infernales (2ᵉ cercle) 1 fois par repos long. À partir du niveau 5, lance Ténèbres 1 fois par repos long. Le Charisme est la caractéristique d'incantation." }
       ],
       "subraces": [],
       "detail_url": "https://www.aidedd.org/regles/races/tieffelin/",
