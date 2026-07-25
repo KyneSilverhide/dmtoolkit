@@ -1,21 +1,19 @@
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { authStore } from '@/stores/auth.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 import AppIcon from '../AppIcon.vue'
-import { BACKEND_URL } from '@/config.js'
+import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 
-const props = defineProps({
-  // Pré-remplissage déclenché depuis la palette de commande globale :
-  // { query, token }. `token` doit changer à chaque nouvelle requête pour
-  // que le watcher se déclenche même si `query` est identique à la dernière fois.
-  prefill: { type: Object, default: null },
-})
+const router = useRouter()
+const tabQuery = useContentTabQuery('classes')
+let writeTimer = null
 
-// Émis par le bouton « Voir les sorts » : redirige AdminView vers l'onglet
-// Sorts avec un filtrage par classe (voir SpellSearch.vue `by-class`).
-const emit = defineEmits(['go-search'])
+// Navigue directement vers l'onglet Sorts filtré par classe (voir SpellSearch.vue
+// `by-class`), au lieu de faire remonter un événement à AdminView.
 function goToClassSpells(dndClass) {
-  emit('go-search', { subTab: 'spells', classFilter: dndClass.name })
+  router.push({ path: '/admin/spells', query: { class: dndClass.name } })
 }
 
 const query = ref('')
@@ -45,7 +43,7 @@ async function loadClasses() {
   loading.value = true
   loadError.value = false
   try {
-    const res = await fetch(`${BACKEND_URL}/api/classes`, {
+    const res = await apiFetch('/api/classes', {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     if (res.ok) {
@@ -129,24 +127,44 @@ function spellSlotsLabel(row) {
   return parts.length ? parts.join(', ') : '—'
 }
 
+function writeRouteQuery(q, slug) {
+  lastAppliedKey = `${q || ''}|${slug || ''}`
+  tabQuery.setParams({ q: q || null, slug: slug || null })
+}
+
 watch(query, () => {
   if (suppressQueryWatch) { suppressQueryWatch = false; return }
   exactSlugFilter.value = null
+  if (writeTimer) clearTimeout(writeTimer)
+  writeTimer = setTimeout(() => writeRouteQuery(query.value.trim(), ''), 250)
 })
 
-// Pré-remplissage depuis la palette de commande globale (voir CommandPalette.vue).
-// `immediate: true` est nécessaire pour que le tout premier accès à cet onglet depuis
-// la palette fonctionne (voir SpellSearch.vue pour le détail du raisonnement).
-watch(() => props.prefill?.token, (token) => {
-  if (!token) return
+// Pré-remplissage depuis l'URL (?q=&slug=) : palette de commande globale
+// (CommandPalette.vue) ou bouton "Voir la classe" d'AbilitySearch.vue, qui naviguent
+// directement vers /admin/classes avec ces query params. Rejoué à l'activation car ce
+// composant reste monté en permanence via <KeepAlive> (voir SpellSearch.vue).
+let lastAppliedKey = ''
+function applyFromRoute() {
+  const q = tabQuery.param('q')
+  const slug = tabQuery.param('slug')
+  const key = `${q}|${slug}`
+  if (key === lastAppliedKey) return
+  lastAppliedKey = key
+  if (!q && !slug) return
   suppressQueryWatch = true
-  query.value = props.prefill.query || ''
-  exactSlugFilter.value = props.prefill.exactSlug || null
-}, { immediate: true })
+  query.value = q
+  exactSlugFilter.value = slug || null
+}
+tabQuery.onRouteParamsChange(applyFromRoute)
 
 function clearExactMatch() {
   exactSlugFilter.value = null
+  writeRouteQuery(query.value.trim(), '')
 }
+
+onUnmounted(() => {
+  if (writeTimer) clearTimeout(writeTimer)
+})
 </script>
 
 <template>

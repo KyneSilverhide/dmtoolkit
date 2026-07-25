@@ -12,6 +12,7 @@ import { useMapUpload } from '@/composables/useMapUpload.js'
 import { useMapSocket } from '@/composables/useMapSocket.js'
 import { getCellAt, getCellPolygon } from '@/utils/mapGrid.js'
 import { BACKEND_URL } from '@/config.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 
 const MAX_BRUSH_RADIUS = 100
 const MIN_BRUSH_RADIUS = 5
@@ -381,8 +382,8 @@ async function runGridDetection() {
   if (!selectedImageId.value || !sessionStore.activeSession) return
   gridDetecting.value = true
   try {
-    const res = await fetch(
-      `${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${selectedImageId.value}/detect-grid`,
+    const res = await apiFetch(
+      `/api/sessions/${sessionStore.activeSession.id}/images/${selectedImageId.value}/detect-grid`,
       { method: 'POST', headers: { Authorization: `Bearer ${authStore.token}` } }
     )
     if (!res.ok) return
@@ -456,8 +457,8 @@ async function saveGridConfig() {
       grid_cell_w: gridType.value !== 'none' ? gridCellW.value : null,
       grid_cell_h: gridType.value !== 'none' ? gridCellH.value : null,
     }
-    const res = await fetch(
-      `${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${selectedImageId.value}`,
+    const res = await apiFetch(
+      `/api/sessions/${sessionStore.activeSession.id}/images/${selectedImageId.value}`,
       { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authStore.token}` }, body: JSON.stringify(body) }
     )
     if (res.ok) {

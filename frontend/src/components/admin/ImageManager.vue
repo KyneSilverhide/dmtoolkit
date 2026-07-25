@@ -7,6 +7,7 @@ import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
 
 import { BACKEND_URL } from '@/config.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 
 const images = ref([])
 const selectedImageUrl = ref(null)
@@ -27,7 +28,7 @@ const filteredImages = computed(() => {
 async function loadImages() {
   if (!sessionStore.activeSession) return
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images?type=image`, {
+    const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/images?type=image`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     if (res.ok) images.value = await res.json()
@@ -133,7 +134,7 @@ function imageFullUrl(url) {
 
 async function saveTvLabel(img) {
   try {
-    await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${img.id}`, {
+    await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/images/${img.id}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ tv_label: img.tv_label || null }),
@@ -145,7 +146,7 @@ async function deleteImage(img, event) {
   event.stopPropagation()
   if (!confirm(`Supprimer "${img.original_name || img.url}" ?`)) return
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${img.id}`, {
+    const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/images/${img.id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${authStore.token}` },
     })

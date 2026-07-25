@@ -1,6 +1,15 @@
 {
   "notes": [
     {
+      "version": "1.0.115",
+      "date": "2026-07-25",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Navigation — chaque onglet admin (Sorts, Carte, Marchands, Aptitudes…) a désormais sa propre URL, tout comme les recherches et filtres en cours (ex : les sorts d'une classe, un sort précis) : partageable et conservée au rechargement de la page." },
+        { "type": "feature", "role": "player", "text": "Navigation (joueur) — chaque onglet (Combat, Sorts, Objets, Boutique…) a désormais sa propre URL, conservée au rechargement de la page." },
+        { "type": "improvement", "role": "admin", "text": "Sécurité — si votre session expire ou que votre compte n'existe plus, vous êtes automatiquement ramené à l'écran de connexion avec un message explicite, au lieu de rester bloqué sur des erreurs silencieuses." }
+      ]
+    },
+    {
       "version": "1.0.114",
       "date": "2026-07-24",
       "changes": [

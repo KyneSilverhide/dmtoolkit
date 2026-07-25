@@ -4,7 +4,7 @@ import { authStore } from '@/stores/auth.js'
 import { sessionStore } from '@/stores/session.js'
 import AppIcon from '../AppIcon.vue'
 
-import { BACKEND_URL } from '@/config.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 
 const sessionName = ref('')
 const loading = ref(false)
@@ -37,7 +37,7 @@ async function saveRename(id) {
   if (!renameValue.value.trim()) return
   renameLoading.value = true
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions/${id}/rename`, {
+    const res = await apiFetch(`/api/sessions/${id}/rename`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authStore.token}` },
       body: JSON.stringify({ name: renameValue.value.trim() }),
@@ -61,7 +61,7 @@ async function loadSessionQrCode(sessionId) {
     return
   }
 
-  const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionId}/qrcode`, {
+  const res = await apiFetch(`/api/sessions/${sessionId}/qrcode`, {
     headers: { Authorization: `Bearer ${authStore.token}` },
   })
   const data = await res.json()
@@ -81,7 +81,7 @@ async function createSession() {
   loading.value = true
   error.value = ''
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions`, {
+    const res = await apiFetch(`/api/sessions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -115,7 +115,7 @@ async function deleteSession(id) {
   if (!confirmed) return
 
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions/${id}`, {
+    const res = await apiFetch(`/api/sessions/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
@@ -139,7 +139,7 @@ async function deleteSession(id) {
 
 async function loadSessions() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions`, {
+    const res = await apiFetch(`/api/sessions`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     const data = await res.json()
@@ -149,7 +149,7 @@ async function loadSessions() {
 
 async function reopenSession(id) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions/${id}/reopen`, {
+    const res = await apiFetch(`/api/sessions/${id}/reopen`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
@@ -166,7 +166,7 @@ async function reopenSession(id) {
 
 async function closeSession(id) {
   try {
-    await fetch(`${BACKEND_URL}/api/sessions/${id}/close`, {
+    await apiFetch(`/api/sessions/${id}/close`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${authStore.token}` },
     })

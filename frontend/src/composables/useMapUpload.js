@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { authStore } from '@/stores/auth.js'
 import { sessionStore } from '@/stores/session.js'
 import { BACKEND_URL } from '@/config.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 
 export function useMapUpload() {
   const images = ref([])
@@ -13,7 +14,7 @@ export function useMapUpload() {
   async function loadImages() {
     if (!sessionStore.activeSession) return
     try {
-      const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images?type=map`, {
+      const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/images?type=map`, {
         headers: { Authorization: `Bearer ${authStore.token}` },
       })
       if (res.ok) images.value = await res.json()
@@ -80,7 +81,7 @@ export function useMapUpload() {
     if (!sessionStore.activeSession) return false
     if (!confirm(`Supprimer "${img.original_name || img.url}" ?`)) return false
     try {
-      const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${img.id}`, {
+      const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/images/${img.id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${authStore.token}` },
       })

@@ -13,7 +13,7 @@ import {
   parseGeneratorResult,
 } from '@/utils/generatorUtils.js'
 
-import { BACKEND_URL } from '@/config.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 
 const selectedType = ref(GENERATOR_TYPES[0].key)
 const options = ref(getDefaultOptions(GENERATOR_TYPES[0].key))
@@ -44,7 +44,7 @@ async function generate() {
   results.value = []
 
   try {
-    const res = await fetch(`${BACKEND_URL}/api/generate`, {
+    const res = await apiFetch(`/api/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

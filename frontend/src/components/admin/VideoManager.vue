@@ -8,6 +8,7 @@ import { getSocket } from '@/socket.js'
 import { SHOW_VIDEO, VIDEO_CONTROL } from '@/socket-events.js'
 
 import { BACKEND_URL } from '@/config.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 
 const videos = ref([])
 const selectedVideoUrl = ref(null)
@@ -31,7 +32,7 @@ const filteredVideos = computed(() => {
 async function loadVideos() {
   if (!sessionStore.activeSession) return
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images?type=video`, {
+    const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/images?type=video`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     if (res.ok) videos.value = await res.json()
@@ -144,7 +145,7 @@ async function deleteVideo(video, event) {
   event.stopPropagation()
   if (!confirm(`Supprimer "${video.original_name || video.url}" ?`)) return
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${video.id}`, {
+    const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/images/${video.id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${authStore.token}` },
     })

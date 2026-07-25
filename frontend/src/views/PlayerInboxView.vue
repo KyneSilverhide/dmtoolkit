@@ -52,8 +52,8 @@ const INITIATIVE_MAX = 99
 const TEMP_HP_COLOR = 'var(--player-info-text)'
 const MAX_HP_LIMIT = 9999
 
-// ── Active tab ───────────────────────────────────────────────────────────
-const activeTab = ref('combat')
+// ── Active tab (pilotée par l'URL : /view/:code/:tab ou /player/:tab) ─────
+const activeTab = computed(() => route.params.tab || 'combat')
 
 // ── Puzzle state ─────────────────────────────────────────────────────────
 const activePuzzle = ref(null)
@@ -277,7 +277,7 @@ function setReplyContext(msg) {
 }
 
 function switchTab(tab) {
-  activeTab.value = tab
+  router.push({ name: route.name, params: { ...route.params, tab } })
   tabAnimKey.value++
   showHeaderMenu.value = false
   if (tab === 'messages') unreadMessages.value = 0
@@ -584,7 +584,7 @@ const handleVoteStarted = (voteData) => {
 const handleVoteClosed = (voteData) => {
   activeVote.value = { ...voteData, isClosed: true }
   setTimeout(() => {
-    if (activeTab.value === 'vote') activeTab.value = 'combat'
+    if (activeTab.value === 'vote') router.replace({ name: route.name, params: { ...route.params, tab: 'combat' } })
     activeVote.value = null
     hasNewVote.value = false
   }, 5000)
@@ -603,7 +603,7 @@ const handleMerchantClosed = () => {
   activeMerchant.value = null
   cart.value = {}
   cartSending.value = false
-  if (activeTab.value === 'boutique') activeTab.value = 'combat'
+  if (activeTab.value === 'boutique') router.replace({ name: route.name, params: { ...route.params, tab: 'combat' } })
 }
 
 const handlePuzzleStarted = (data) => {
@@ -615,7 +615,7 @@ const handlePuzzleStarted = (data) => {
 
 const handlePuzzleClosed = () => {
   activePuzzle.value = null
-  if (activeTab.value === 'puzzle') activeTab.value = 'combat'
+  if (activeTab.value === 'puzzle') router.replace({ name: route.name, params: { ...route.params, tab: 'combat' } })
 }
 
 const handlePuzzleCellClicked = ({ path }) => {

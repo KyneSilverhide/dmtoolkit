@@ -1,9 +1,10 @@
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { authStore } from '../stores/auth.js'
 import { sessionStore } from '../stores/session.js'
 import { getSocket, resetSocket } from '../socket.js'
+import { apiFetch } from '../utils/apiFetch.js'
 import PlayerList from '../components/admin/PlayerList.vue'
 import MessageTool from '../components/admin/MessageTool.vue'
 import CriticalFailTool from '../components/admin/CriticalFailTool.vue'
@@ -26,6 +27,7 @@ import CommandPalette from '../components/admin/CommandPalette.vue'
 import MapManager from '../components/admin/MapManager.vue'
 import GoldDividerTool from '../components/admin/GoldDividerTool.vue'
 import GeneratorTool from '../components/admin/GeneratorTool.vue'
+import AppIcon from '../components/AppIcon.vue'
 import AdminHeader from '../components/admin/AdminHeader.vue'
 import AdminNavSidebar from '../components/admin/AdminNavSidebar.vue'
 import AdminTvSidebar from '../components/admin/AdminTvSidebar.vue'
@@ -44,10 +46,10 @@ import {
 } from '../socket-events.js'
 
 const router = useRouter()
+const route = useRoute()
 import { BACKEND_URL } from '@/config.js'
 // __APP_VERSION__ is injected at build time by Vite from frontend/package.json
 const appVersion = __APP_VERSION__
-const activeTab = ref('players')
 const generatorEnabled = ref(true) // optimistic default — updated by loadConfig()
 
 const isSessionPanelCollapsed = ref(false)
@@ -56,25 +58,6 @@ const theme = ref(getThemePreference('admin', 'dark'))
 const isLightTheme = computed(() => theme.value === 'light')
 const isNavCollapsed = ref(false)
 const isPaletteOpen = ref(false)
-// Pré-remplissage transmis à SpellSearch/ItemSearch/RaceSearch/ClassSearch/
-// BackgroundSearch/AbilitySearch quand la palette de commande (Ctrl+K) redirige vers un
-// sort/objet précis, ou quand ClassSearch/AbilitySearch redirige vers l'onglet Sorts/
-// Classes filtré. `token` doit être
-// incrémenté à chaque navigation pour redéclencher le watcher même si la query est
-// identique à la fois précédente.
-// Chaque onglet a son propre objet de pré-remplissage (plutôt qu'un objet partagé) car
-// tous les composants sont gardés en vie par <KeepAlive> : avec un seul objet partagé,
-// leurs watchers restent actifs même inactifs, et une recherche dans un onglet
-// « fuitait » silencieusement dans le champ de recherche des autres onglets.
-const searchPrefillBySubTab = reactive({
-  spells: { query: '', classFilter: null, exactSlug: null, token: 0 },
-  equipment: { query: '', exactSlug: null, token: 0 },
-  magic: { query: '', exactSlug: null, token: 0 },
-  races: { query: '', exactSlug: null, token: 0 },
-  classes: { query: '', exactSlug: null, token: 0 },
-  backgrounds: { query: '', exactSlug: null, token: 0 },
-  abilities: { query: '', exactSlug: null, token: 0 },
-})
 
 // ── Tab → component mapping (for <KeepAlive>) ───────────────────────────
 const tabComponents = {
@@ -101,7 +84,16 @@ const tabComponents = {
   abilities: AbilitySearch,
   generator: GeneratorTool,
 }
+// Onglet actif piloté par l'URL (/admin/:tab). Un segment inconnu retombe
+// silencieusement sur 'players' plutôt que de rediriger.
+const activeTab = computed(() => (
+  route.params.tab && tabComponents[route.params.tab] ? route.params.tab : 'players'
+))
 const currentTabComponent = computed(() => tabComponents[activeTab.value] || null)
+
+function goToTab(key) {
+  router.push({ name: 'admin', params: { tab: key } })
+}
 
 const hasActiveVote = ref(false)
 const hasActiveImage = ref(false)
@@ -279,20 +271,6 @@ function logout() {
 function openPalette() { isPaletteOpen.value = true }
 function closePalette() { isPaletteOpen.value = false }
 
-function handlePaletteGoTab(tabKey) {
-  activeTab.value = tabKey
-}
-
-function handlePaletteGoSearch({ subTab, query, classFilter, exactSlug }) {
-  activeTab.value = subTab // 'spells' | 'equipment' | 'magic' | 'races' | 'classes' | 'backgrounds' | 'abilities'
-  const target = searchPrefillBySubTab[subTab]
-  if (!target) return
-  target.query = query || ''
-  target.classFilter = classFilter || null
-  target.exactSlug = exactSlug || null
-  target.token += 1
-}
-
 function onGlobalKeydown(e) {
   const isK = e.key === 'k' || e.key === 'K'
   if (isK && (e.metaKey || e.ctrlKey)) {
@@ -360,7 +338,7 @@ function handleTvModeChanged(payload) {
 // ── Data loading ─────────────────────────────────────────────────────────
 async function loadSessions() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions`, {
+    const res = await apiFetch('/api/sessions', {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     const data = await res.json()
@@ -380,12 +358,27 @@ async function loadConfig() {
   } catch { /* silently ignore */ }
 }
 
+// Détecte un compte admin supprimé côté serveur (token toujours valide mais compte
+// disparu — /api/auth/me répond 404). Un token expiré/invalide est déjà géré par
+// apiFetch() lui-même (401).
+async function verifySession() {
+  try {
+    const res = await apiFetch('/api/auth/me')
+    if (res.status === 404) {
+      authStore.logout()
+      resetSocket()
+      router.push({ path: '/', query: { expired: '1' } })
+    }
+  } catch { /* erreur réseau — pas un problème d'auth */ }
+}
+
 // ── Lifecycle ─────────────────────────────────────────────────────────────
 onMounted(() => {
   document.body.classList.add('page-admin')
   window.addEventListener('keydown', onGlobalKeydown)
   loadSessions()
   loadConfig()
+  verifySession()
   releaseNotesStore.load()
   _socket = getSocket(authStore.token)
 
@@ -521,29 +514,29 @@ onUnmounted(() => {
         :tab-activity="tabActivity"
         :locked-tabs="lockedTabs"
         :is-collapsed="isNavCollapsed"
-        @update:active-tab="activeTab = $event"
+        @update:active-tab="goToTab"
         @update:is-collapsed="isNavCollapsed = $event"
       />
 
       <div class="admin-content-area">
         <div class="admin-main-grid">
           <section class="admin-main">
-            <template v-if="sessionStore.activeSession || isContentTab">
+            <div v-if="lockedTabs[activeTab]" class="locked-tab-panel">
+              <AppIcon icon="lucide:lock" size="1.4em" />
+              <p class="locked-tab-title">{{ lockedTabs[activeTab].title }}</p>
+              <!-- eslint-disable-next-line vue/no-v-html — contenu défini en dur, pas d'entrée utilisateur -->
+              <p class="locked-tab-text" v-html="lockedTabs[activeTab].text"></p>
+            </div>
+            <template v-else-if="sessionStore.activeSession || isContentTab">
               <Transition name="tab-fade" mode="out-in">
                 <KeepAlive>
                   <component
                     :is="currentTabComponent"
                     :key="activeTab"
                     v-bind="activeTab === 'puzzle' ? { activePuzzle }
-                      : activeTab === 'spells' ? { prefill: searchPrefillBySubTab.spells }
-                      : activeTab === 'equipment' ? { prefill: searchPrefillBySubTab.equipment, category: 'equipment' }
-                      : activeTab === 'magic' ? { prefill: searchPrefillBySubTab.magic, category: 'magic' }
-                      : activeTab === 'races' ? { prefill: searchPrefillBySubTab.races }
-                      : activeTab === 'classes' ? { prefill: searchPrefillBySubTab.classes }
-                      : activeTab === 'backgrounds' ? { prefill: searchPrefillBySubTab.backgrounds }
-                      : activeTab === 'abilities' ? { prefill: searchPrefillBySubTab.abilities }
+                      : activeTab === 'equipment' ? { category: 'equipment' }
+                      : activeTab === 'magic' ? { category: 'magic' }
                       : {}"
-                    @go-search="handlePaletteGoSearch"
                   />
                 </KeepAlive>
               </Transition>
@@ -576,8 +569,6 @@ onUnmounted(() => {
       :open="isPaletteOpen"
       :visible-tab-keys="visibleTabKeys"
       @close="closePalette"
-      @go-tab="handlePaletteGoTab"
-      @go-search="handlePaletteGoSearch"
     />
   </div>
 </template>
@@ -625,6 +616,38 @@ onUnmounted(() => {
 }
 
 .no-session-msg { font-size: 0.88rem; color: var(--color-text-dim); padding: 1rem 0; }
+
+.locked-tab-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--color-warning);
+}
+.locked-tab-title {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.locked-tab-text {
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.8rem;
+  color: var(--color-text-dim);
+  max-width: 360px;
+}
+.locked-tab-text :deep(code) {
+  font-family: monospace;
+  background: var(--surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  padding: 0 0.3rem;
+  font-size: 0.75rem;
+  color: var(--color-gold-bright);
+}
 
 /* noinspection CssUnusedSymbol */
 .tab-fade-enter-active, .tab-fade-leave-active { transition: opacity 0.15s ease; }

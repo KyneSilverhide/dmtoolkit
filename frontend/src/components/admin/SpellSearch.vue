@@ -1,19 +1,14 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { authStore } from '@/stores/auth.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
 import ContentPagination from './ContentPagination.vue'
 import { parseEcole, levelLabel, schoolColor } from '@/utils/spellSchool.js'
+import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 
-import { BACKEND_URL } from '@/config.js'
-
-const props = defineProps({
-  // Pré-remplissage déclenché depuis la palette de commande globale :
-  // { query, token }. `token` doit changer à chaque nouvelle requête pour
-  // que le watcher se déclenche même si `query` est identique à la dernière fois.
-  prefill: { type: Object, default: null },
-})
+const tabQuery = useContentTabQuery('spells')
 
 const query = ref('')
 const results = ref([])
@@ -36,7 +31,7 @@ const PAGE_SIZE = 20
 async function loadAllSpells() {
   loading.value = true
   try {
-    const res = await fetch(`${BACKEND_URL}/api/spells`, {
+    const res = await apiFetch('/api/spells', {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     if (res.ok) allSpells.value = await res.json()
@@ -88,7 +83,7 @@ async function search() {
   loading.value = true
   searched.value = false
   try {
-    const res = await fetch(`${BACKEND_URL}/api/spells/search?q=${encodeURIComponent(q)}`, {
+    const res = await apiFetch(`/api/spells/search?q=${encodeURIComponent(q)}`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     if (res.ok) {
@@ -110,7 +105,7 @@ async function searchByClass(className) {
   loading.value = true
   searched.value = false
   try {
-    const res = await fetch(`${BACKEND_URL}/api/spells/by-class/${encodeURIComponent(className)}`, {
+    const res = await apiFetch(`/api/spells/by-class/${encodeURIComponent(className)}`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     if (res.ok) {
@@ -124,15 +119,24 @@ async function searchByClass(className) {
   }
 }
 
+// Écrit l'état de recherche courant dans l'URL (?q=&class=&slug=) et met à jour le
+// déduplicateur pour que applyFromRoute() ne rejoue pas cette même valeur.
+function writeRouteQuery(q, classFilter, slug) {
+  lastAppliedKey = `${q || ''}|${classFilter || ''}|${slug || ''}`
+  tabQuery.setParams({ q: q || null, class: classFilter || null, slug: slug || null })
+}
+
 function clearClassFilter() {
   activeClassFilter.value = null
   results.value = []
   searched.value = false
+  writeRouteQuery('', '', '')
 }
 
 function clearExactMatch() {
   exactMatchSlug.value = null
   search()
+  writeRouteQuery(query.value.trim(), '', '')
 }
 
 watch(query, () => {
@@ -145,39 +149,49 @@ watch(query, () => {
     results.value = []
     searched.value = false
     loading.value = false
+    writeRouteQuery('', '', '')
     return
   }
   autoSearchTimer = setTimeout(() => {
     search()
+    writeRouteQuery(q, '', '')
   }, 250)
 })
 
-// Pré-remplissage depuis la palette de commande globale (voir CommandPalette.vue)
-// ou depuis le bouton « Voir les sorts » d'une fiche de classe (ClassSearch.vue).
-// `immediate: true` est nécessaire pour que le tout premier accès à cet onglet depuis
-// la palette fonctionne : au montage initial, `prefill.token` vaut déjà la valeur
-// « nouvelle » (pas de changement détectable), donc un watcher non-immédiat ne se
-// déclencherait jamais.
-watch(() => props.prefill?.token, (token) => {
-  if (!token) return
+// Pré-remplissage depuis l'URL (?q=&class=&slug=) : déclenché par la palette de
+// commande globale (CommandPalette.vue) ou par le bouton « Voir les sorts » d'une
+// fiche de classe (ClassSearch.vue), qui naviguent directement vers /admin/spells avec
+// ces query params. Rejoué à l'activation (onActivated) car ce composant reste monté
+// en permanence via <KeepAlive> — le mount initial ne se reproduit pas en revenant sur
+// l'onglet.
+let lastAppliedKey = ''
+function applyFromRoute() {
+  const q = tabQuery.param('q')
+  const classFilter = tabQuery.param('class')
+  const slug = tabQuery.param('slug')
+  const key = `${q}|${classFilter}|${slug}`
+  if (key === lastAppliedKey) return
+  lastAppliedKey = key
+  if (!q && !classFilter && !slug) return
   if (autoSearchTimer) clearTimeout(autoSearchTimer)
-  if (props.prefill.classFilter) {
+  if (classFilter) {
     suppressQueryWatch = true
     query.value = ''
     exactMatchSlug.value = null
-    searchByClass(props.prefill.classFilter)
+    searchByClass(classFilter)
     return
   }
   activeClassFilter.value = null
-  exactMatchSlug.value = props.prefill.exactSlug || null
+  exactMatchSlug.value = slug || null
   suppressQueryWatch = true
-  query.value = props.prefill.query || ''
+  query.value = q
   search().then(() => {
     if (exactMatchSlug.value) {
       results.value = results.value.filter(s => s.slug === exactMatchSlug.value)
     }
   })
-}, { immediate: true })
+}
+tabQuery.onRouteParamsChange(applyFromRoute)
 
 onUnmounted(() => {
   if (autoSearchTimer) clearTimeout(autoSearchTimer)

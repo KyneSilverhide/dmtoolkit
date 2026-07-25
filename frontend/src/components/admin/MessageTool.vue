@@ -7,6 +7,7 @@ import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
 
 import { BACKEND_URL } from '@/config.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 
 // Valeurs hexadécimales réelles requises : alimentent <input type="color"> (natif,
 // n'accepte pas var()) et sont envoyées telles quelles au serveur/joueur via le socket.
@@ -90,7 +91,7 @@ function formatInboxTime(dateStr) {
 async function loadGalleryImages() {
   if (!sessionStore.activeSession) return
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images?type=image`, {
+    const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/images?type=image`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     if (res.ok) galleryImages.value = await res.json()
@@ -159,7 +160,7 @@ async function sendMessage() {
       } else if (imageSource.value === 'pc' && imageFile.value) {
         const formData = new FormData()
         formData.append('file', imageFile.value)
-        const res = await fetch(`${BACKEND_URL}/api/uploads`, {
+        const res = await apiFetch(`/api/uploads`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${authStore.token}` },
           body: formData,

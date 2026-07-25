@@ -5,7 +5,7 @@ import { authStore } from '@/stores/auth.js'
 import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
-import { BACKEND_URL } from '@/config.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 
 const factions = ref([])
 const loading = ref(false)
@@ -52,7 +52,7 @@ async function loadFactions() {
   if (!sessionStore.activeSession?.id) return
   loading.value = true
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/factions`, {
+    const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/factions`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     if (res.ok) factions.value = await res.json()

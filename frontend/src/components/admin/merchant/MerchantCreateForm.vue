@@ -4,7 +4,7 @@ import AppIcon from '../../AppIcon.vue'
 import HelpTip from '../../HelpTip.vue'
 import MERCHANT_PRESETS from '../../../assets/merchantPresets.js'
 import { authStore } from '@/stores/auth.js'
-import { BACKEND_URL } from '@/config.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 
 const emit = defineEmits(['submit', 'cancel'])
 
@@ -30,7 +30,7 @@ async function runEquipSearch() {
   equipLoading.value = true
   equipError.value = false
   try {
-    const res = await fetch(`${BACKEND_URL}/api/equipment/search?q=${encodeURIComponent(q)}`, {
+    const res = await apiFetch(`/api/equipment/search?q=${encodeURIComponent(q)}`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     if (res.ok) {

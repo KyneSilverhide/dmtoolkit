@@ -1,15 +1,12 @@
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import { authStore } from '@/stores/auth.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 import AppIcon from '../AppIcon.vue'
-import { BACKEND_URL } from '@/config.js'
+import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 
-const props = defineProps({
-  // Pré-remplissage déclenché depuis la palette de commande globale :
-  // { query, token }. `token` doit changer à chaque nouvelle requête pour
-  // que le watcher se déclenche même si `query` est identique à la dernière fois.
-  prefill: { type: Object, default: null },
-})
+const tabQuery = useContentTabQuery('backgrounds')
+let writeTimer = null
 
 const query = ref('')
 const backgrounds = ref([])
@@ -34,7 +31,7 @@ async function loadBackgrounds() {
   loading.value = true
   loadError.value = false
   try {
-    const res = await fetch(`${BACKEND_URL}/api/backgrounds`, {
+    const res = await apiFetch('/api/backgrounds', {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     if (res.ok) {
@@ -70,24 +67,44 @@ const filteredBackgrounds = computed(() => {
   return backgrounds.value.filter(background => backgroundMatches(background, q))
 })
 
+function writeRouteQuery(q, slug) {
+  lastAppliedKey = `${q || ''}|${slug || ''}`
+  tabQuery.setParams({ q: q || null, slug: slug || null })
+}
+
 watch(query, () => {
   if (suppressQueryWatch) { suppressQueryWatch = false; return }
   exactSlugFilter.value = null
+  if (writeTimer) clearTimeout(writeTimer)
+  writeTimer = setTimeout(() => writeRouteQuery(query.value.trim(), ''), 250)
 })
 
-// Pré-remplissage depuis la palette de commande globale (voir CommandPalette.vue).
-// `immediate: true` est nécessaire pour que le tout premier accès à cet onglet depuis
-// la palette fonctionne (voir SpellSearch.vue pour le détail du raisonnement).
-watch(() => props.prefill?.token, (token) => {
-  if (!token) return
+// Pré-remplissage depuis l'URL (?q=&slug=) : palette de commande globale
+// (CommandPalette.vue) qui navigue directement vers /admin/backgrounds avec ces query
+// params. Rejoué à l'activation car ce composant reste monté en permanence via
+// <KeepAlive> (voir SpellSearch.vue pour le détail du raisonnement).
+let lastAppliedKey = ''
+function applyFromRoute() {
+  const q = tabQuery.param('q')
+  const slug = tabQuery.param('slug')
+  const key = `${q}|${slug}`
+  if (key === lastAppliedKey) return
+  lastAppliedKey = key
+  if (!q && !slug) return
   suppressQueryWatch = true
-  query.value = props.prefill.query || ''
-  exactSlugFilter.value = props.prefill.exactSlug || null
-}, { immediate: true })
+  query.value = q
+  exactSlugFilter.value = slug || null
+}
+tabQuery.onRouteParamsChange(applyFromRoute)
 
 function clearExactMatch() {
   exactSlugFilter.value = null
+  writeRouteQuery(query.value.trim(), '')
 }
+
+onUnmounted(() => {
+  if (writeTimer) clearTimeout(writeTimer)
+})
 </script>
 
 <template>

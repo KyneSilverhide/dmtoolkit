@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import AppIcon from '../AppIcon.vue'
 import { authStore } from '@/stores/auth.js'
-import { BACKEND_URL } from '@/config.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 import { COMMAND_INDEX } from '@/utils/commandIndex.js'
 import { itemTypeStyle } from '@/utils/itemTypes.js'
 import { rarityColor } from '@/utils/rarity.js'
@@ -15,7 +16,8 @@ const props = defineProps({
   // restreints à ces onglets pour ne jamais proposer un raccourci vers un onglet caché.
   visibleTabKeys: { type: Array, default: () => [] },
 })
-const emit = defineEmits(['close', 'go-tab', 'go-search'])
+const emit = defineEmits(['close'])
+const router = useRouter()
 
 const query = ref('')
 const inputRef = ref(null)
@@ -146,22 +148,22 @@ async function runLiveSearch(q) {
   liveLoading.value = true
   try {
     const [spellsRes, itemsRes, racesRes, classesRes, backgroundsRes, abilitiesRes] = await Promise.all([
-      fetch(`${BACKEND_URL}/api/spells/search?q=${encodeURIComponent(q)}`, {
+      apiFetch(`/api/spells/search?q=${encodeURIComponent(q)}`, {
         headers: { Authorization: `Bearer ${authStore.token}` },
       }),
-      fetch(`${BACKEND_URL}/api/magic-items/search?q=${encodeURIComponent(q)}`, {
+      apiFetch(`/api/magic-items/search?q=${encodeURIComponent(q)}`, {
         headers: { Authorization: `Bearer ${authStore.token}` },
       }),
-      fetch(`${BACKEND_URL}/api/races/search?q=${encodeURIComponent(q)}`, {
+      apiFetch(`/api/races/search?q=${encodeURIComponent(q)}`, {
         headers: { Authorization: `Bearer ${authStore.token}` },
       }),
-      fetch(`${BACKEND_URL}/api/classes/search?q=${encodeURIComponent(q)}`, {
+      apiFetch(`/api/classes/search?q=${encodeURIComponent(q)}`, {
         headers: { Authorization: `Bearer ${authStore.token}` },
       }),
-      fetch(`${BACKEND_URL}/api/backgrounds/search?q=${encodeURIComponent(q)}`, {
+      apiFetch(`/api/backgrounds/search?q=${encodeURIComponent(q)}`, {
         headers: { Authorization: `Bearer ${authStore.token}` },
       }),
-      fetch(`${BACKEND_URL}/api/classes/abilities/search?q=${encodeURIComponent(q)}`, {
+      apiFetch(`/api/classes/abilities/search?q=${encodeURIComponent(q)}`, {
         headers: { Authorization: `Bearer ${authStore.token}` },
       }),
     ])
@@ -192,9 +194,9 @@ async function runLiveSearch(q) {
 function selectEntry(entry) {
   if (!entry) return
   if (entry.kind === 'section') {
-    emit('go-tab', entry.tabKey)
+    router.push({ name: 'admin', params: { tab: entry.tabKey } })
   } else {
-    emit('go-search', { subTab: entry.subTab, query: entry.query, exactSlug: entry.slug })
+    router.push({ path: `/admin/${entry.subTab}`, query: { q: entry.query, slug: entry.slug } })
   }
   close()
 }

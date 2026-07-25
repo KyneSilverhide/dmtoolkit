@@ -4,7 +4,7 @@ import AppIcon from '../AppIcon.vue'
 import { authStore } from '@/stores/auth.js'
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
-import { BACKEND_URL } from '@/config.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 
 import MerchantRequestsBanner from './merchant/MerchantRequestsBanner.vue'
 import MerchantCreateForm from './merchant/MerchantCreateForm.vue'
@@ -26,10 +26,10 @@ async function loadMerchants() {
   loading.value = true
   try {
     const [mRes, pRes] = await Promise.all([
-      fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/merchants`, {
+      apiFetch(`/api/sessions/${sessionStore.activeSession.id}/merchants`, {
         headers: { Authorization: `Bearer ${authStore.token}` },
       }),
-      fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/purchase-requests`, {
+      apiFetch(`/api/sessions/${sessionStore.activeSession.id}/purchase-requests`, {
         headers: { Authorization: `Bearer ${authStore.token}` },
       }),
     ])

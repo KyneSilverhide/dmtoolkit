@@ -7,6 +7,7 @@ import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
 import { AUDIO_PLAY_REQUESTED, AUDIO_STOP_REQUESTED, AUDIO_LOOP_REQUESTED, AUDIO_VOLUME_REQUESTED } from '@/socket-events.js'
 import { BACKEND_URL } from '@/config.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 
 import AudioCategorySection from './audio/AudioCategorySection.vue'
 
@@ -105,8 +106,8 @@ const tracksByCategory = computed(() => {
 async function loadTracks() {
   if (!sessionStore.activeSession) return
   try {
-    const res = await fetch(
-      `${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images?type=audio`,
+    const res = await apiFetch(
+      `/api/sessions/${sessionStore.activeSession.id}/images?type=audio`,
       { headers: { Authorization: `Bearer ${authStore.token}` } }
     )
     if (res.ok) {
@@ -315,7 +316,7 @@ async function deleteAll() {
   playing.value = new Set()
   try {
     await Promise.all(tracks.value.map(t =>
-      fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${t.id}`,
+      apiFetch(`/api/sessions/${sessionStore.activeSession.id}/images/${t.id}`,
         { method: 'DELETE', headers: { Authorization: `Bearer ${authStore.token}` } })
     ))
   } catch (err) { console.error(err) }
@@ -332,7 +333,7 @@ async function deleteCategory(categoryTracks) {
   }
   try {
     await Promise.all(categoryTracks.map(t =>
-      fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${t.id}`,
+      apiFetch(`/api/sessions/${sessionStore.activeSession.id}/images/${t.id}`,
         { method: 'DELETE', headers: { Authorization: `Bearer ${authStore.token}` } })
     ))
   } catch (err) { console.error(err) }
@@ -346,8 +347,8 @@ async function deleteTrack(track) {
   disconnectTrack(track.id)
   playing.value = new Set([...playing.value].filter(id => id !== track.id))
   try {
-    await fetch(
-      `${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${track.id}`,
+    await apiFetch(
+      `/api/sessions/${sessionStore.activeSession.id}/images/${track.id}`,
       { method: 'DELETE', headers: { Authorization: `Bearer ${authStore.token}` } }
     )
     await loadTracks()
@@ -364,8 +365,8 @@ async function commitRename(track) {
   renamingId.value = null
   if (!name || name === track.original_name) return
   try {
-    const res = await fetch(
-      `${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${track.id}`,
+    const res = await apiFetch(
+      `/api/sessions/${sessionStore.activeSession.id}/images/${track.id}`,
       {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'application/json' },
@@ -381,8 +382,8 @@ async function commitRename(track) {
 
 async function changeCategory(track, newCat) {
   try {
-    const res = await fetch(
-      `${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/images/${track.id}`,
+    const res = await apiFetch(
+      `/api/sessions/${sessionStore.activeSession.id}/images/${track.id}`,
       {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'application/json' },
@@ -415,7 +416,7 @@ async function reclassifyAll() {
   try {
     for (let i = 0; i < allIds.length; i += RECLASSIFY_CHUNK) {
       const chunk = allIds.slice(i, i + RECLASSIFY_CHUNK)
-      const res = await fetch(`${BACKEND_URL}/api/uploads/audio/reclassify`, {
+      const res = await apiFetch(`/api/uploads/audio/reclassify`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: sessionStore.activeSession.id, ids: chunk }),

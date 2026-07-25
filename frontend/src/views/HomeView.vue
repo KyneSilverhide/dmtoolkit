@@ -1,6 +1,6 @@
 ﻿<script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { authStore } from '../stores/auth.js'
 import AppIcon from '../components/AppIcon.vue'
 import ReleaseNotesBell from '../components/ReleaseNotesBell.vue'
@@ -8,6 +8,7 @@ import { releaseNotesStore } from '../stores/releaseNotes.js'
 import { applyTheme, getLastUsedTheme, setThemePreference } from '../utils/themePreferences.js'
 
 const router = useRouter()
+const route = useRoute()
 import { BACKEND_URL } from '@/config.js'
 const theme = ref(getLastUsedTheme('dark'))
 const isLightTheme = computed(() => theme.value === 'light')
@@ -40,6 +41,12 @@ onMounted(async () => {
       demoPassword.value = cfg.demoPassword || ''
     }
   } catch { /* silently ignore */ }
+
+  if (route.query.expired) {
+    await openModal()
+    error.value = 'Votre session a expiré, veuillez vous reconnecter.'
+    router.replace({ path: '/' })
+  }
 })
 
 async function openModal() {

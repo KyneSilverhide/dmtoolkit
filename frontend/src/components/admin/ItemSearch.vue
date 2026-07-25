@@ -1,22 +1,21 @@
 <script setup>
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 import { authStore } from '@/stores/auth.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
 import ContentPagination from './ContentPagination.vue'
 import { itemTypeStyle } from '@/utils/itemTypes.js'
 import { rarityColor } from '@/utils/rarity.js'
-
-import { BACKEND_URL } from '@/config.js'
+import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 
 const props = defineProps({
   // 'equipment' (objets standard) ou 'magic' (objets magiques)
   category: { type: String, required: true },
-  // Pré-remplissage déclenché depuis la palette de commande globale :
-  // { query, token }. `token` doit changer à chaque nouvelle requête pour
-  // que le watcher se déclenche même si `query` est identique à la dernière fois.
-  prefill: { type: Object, default: null },
 })
+
+// La clé d'onglet correspond directement à la catégorie ('equipment' ou 'magic').
+const tabQuery = useContentTabQuery(props.category)
 
 const CATEGORY_META = {
   equipment: { label: 'Objets', icon: 'lucide:package', placeholder: 'Nom, type, description…', noun: 'objet', nounPlural: 'objet(s)' },
@@ -51,7 +50,7 @@ const PAGE_SIZE = 20
 async function loadAll() {
   loading.value = true
   try {
-    const res = await fetch(`${BACKEND_URL}/api/magic-items`, {
+    const res = await apiFetch('/api/magic-items', {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     if (res.ok) allRaw.value = await res.json()
@@ -103,7 +102,7 @@ async function search() {
   loading.value = true
   searched.value = false
   try {
-    const res = await fetch(`${BACKEND_URL}/api/magic-items/search?q=${encodeURIComponent(q)}`, {
+    const res = await apiFetch(`/api/magic-items/search?q=${encodeURIComponent(q)}`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     if (res.ok) {
@@ -119,6 +118,11 @@ async function search() {
   }
 }
 
+function writeRouteQuery(q, slug) {
+  lastAppliedKey = `${q || ''}|${slug || ''}`
+  tabQuery.setParams({ q: q || null, slug: slug || null })
+}
+
 watch(query, () => {
   if (suppressQueryWatch) { suppressQueryWatch = false; return }
   exactMatchSlug.value = null
@@ -128,32 +132,43 @@ watch(query, () => {
     results.value = []
     searched.value = false
     loading.value = false
+    writeRouteQuery('', '')
     return
   }
   autoSearchTimer = setTimeout(() => {
     search()
+    writeRouteQuery(q, '')
   }, 250)
 })
 
-// Pré-remplissage depuis la palette de commande globale (voir CommandPalette.vue).
-// `immediate: true` est nécessaire pour que le tout premier accès à cet onglet depuis
-// la palette fonctionne (voir SpellSearch.vue pour le détail du raisonnement).
-watch(() => props.prefill?.token, (token) => {
-  if (!token) return
+// Pré-remplissage depuis l'URL (?q=&slug=) : palette de commande globale
+// (CommandPalette.vue) qui navigue directement vers /admin/equipment ou /admin/magic
+// avec ces query params. Rejoué à l'activation car ce composant reste monté en
+// permanence via <KeepAlive> (voir SpellSearch.vue pour le détail du raisonnement).
+let lastAppliedKey = ''
+function applyFromRoute() {
+  const q = tabQuery.param('q')
+  const slug = tabQuery.param('slug')
+  const key = `${q}|${slug}`
+  if (key === lastAppliedKey) return
+  lastAppliedKey = key
+  if (!q && !slug) return
   if (autoSearchTimer) clearTimeout(autoSearchTimer)
-  exactMatchSlug.value = props.prefill.exactSlug || null
+  exactMatchSlug.value = slug || null
   suppressQueryWatch = true
-  query.value = props.prefill.query || ''
+  query.value = q
   search().then(() => {
     if (exactMatchSlug.value) {
       results.value = results.value.filter(item => item.slug === exactMatchSlug.value)
     }
   })
-}, { immediate: true })
+}
+tabQuery.onRouteParamsChange(applyFromRoute)
 
 function clearExactMatch() {
   exactMatchSlug.value = null
   search()
+  writeRouteQuery(query.value.trim(), '')
 }
 
 onUnmounted(() => {

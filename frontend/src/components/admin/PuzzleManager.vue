@@ -7,6 +7,7 @@ import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
 import { SHOW_PUZZLE, CLOSE_PUZZLE, PUZZLE_CELL_CLICKED } from '@/socket-events.js'
 import { BACKEND_URL } from '@/config.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 
 const props = defineProps({
   activePuzzle: { type: Object, default: null },
@@ -31,7 +32,7 @@ async function loadPuzzles() {
   if (!sessionId.value) return
   try {
     const token = authStore.token
-    const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionId.value}/images?type=puzzle`, {
+    const res = await apiFetch(`/api/sessions/${sessionId.value}/images?type=puzzle`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     if (!res.ok) return
@@ -50,7 +51,7 @@ async function uploadFile(file) {
     const formData = new FormData()
     formData.append('session_id', String(sessionId.value))
     formData.append('file', file)
-    const res = await fetch(`${BACKEND_URL}/api/uploads/puzzle`, {
+    const res = await apiFetch(`/api/uploads/puzzle`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${authStore.token}` },
       body: formData,
@@ -102,7 +103,7 @@ function closePuzzle() {
 async function deletePuzzle(puzzle) {
   if (!confirm(`Supprimer "${puzzle.original_name || `Puzzle #${puzzle.id}`}" ?`)) return
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionId.value}/images/${puzzle.id}`, {
+    const res = await apiFetch(`/api/sessions/${sessionId.value}/images/${puzzle.id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${authStore.token}` },
     })

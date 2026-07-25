@@ -6,7 +6,7 @@ import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
 
-import { BACKEND_URL } from '@/config.js'
+import { apiFetch } from '@/utils/apiFetch.js'
 
 const events = ref([])
 const summary = ref('')
@@ -168,7 +168,7 @@ async function clearJournal() {
   if (!hasSession.value) return
   clearingJournal.value = true
   try {
-    await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/journal`, {
+    await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/journal`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
@@ -186,7 +186,7 @@ async function resetSession() {
   if (!hasSession.value) return
   resettingSession.value = true
   try {
-    await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/journal`, {
+    await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/journal`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
@@ -207,7 +207,7 @@ async function generateSummary() {
   loadingSummary.value = true
   summary.value = ''
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionStore.activeSession.id}/journal`, {
+    const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/journal`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     const data = await res.json()
