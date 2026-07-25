@@ -11,7 +11,7 @@
       "tool_proficiencies": [],
       "languages_count": 2,
       "languages_note": "",
-      "equipment": "un symbole sacré (cadeau reçu lors de votre initiation religieuse), un livre de prières, 5 bâtons d'encens, des habits de cérémonie, des vêtements communs et une bourse contenant 15 po.",
+      "equipment": "un symbole sacré (cadeau reçu lors de votre initiation religieuse), un livre de prières, 5 bâtonnets d'encens, des habits de cérémonie, des vêtements communs et une bourse contenant 15 po.",
       "feature": {
         "name": "Abri du fidèle",
         "description": "Votre statut religieux vous vaut le respect des fidèles de votre culte et le droit de diriger les rituels sacrés. Vous et vos compagnons recevez des soins gratuits dans les lieux de culte de votre foi (composantes matérielles à votre charge), ainsi qu'un logis modeste auprès des croyants. Vous pouvez aussi conserver un lien avec un temple précis pouvant servir de résidence, dont les membres vous aident tant que la demande reste raisonnable et que vous restez en bons termes avec l'institution."
@@ -67,7 +67,7 @@
       ],
       "languages_count": 1,
       "languages_note": "",
-      "equipment": "un jeu d'outil d'artisan (de votre choix), une lettre de recommandation de votre guilde, des vêtements de voyage et une bourse contenant 15 po.",
+      "equipment": "un jeu d'outil d'artisan (de votre choix), une lettre de recommandation de votre guilde, des vêtements de voyageur et une bourse contenant 15 po.",
       "feature": {
         "name": "Membre de guilde",
         "description": "Votre appartenance à la guilde vous garantit un soutien concret de vos pairs : logement et nourriture en cas de besoin, funérailles prises en charge, et opportunités de réseautage professionnel. La guilde possède un poids politique et peut intervenir légalement en votre faveur, voire vous introduire auprès de figures influentes (contre rétribution). En contrepartie, vous devez verser une cotisation mensuelle de 5 po."
@@ -347,11 +347,11 @@
         "Religion"
       ],
       "tool_proficiencies": [
-        "Kit d'herboristerie"
+        "Kit d'herboriste"
       ],
       "languages_count": 1,
       "languages_note": "",
-      "equipment": "un étui à parchemins rempli de vos notes tirées de vos études ou de vos prières, une couverture d'hiver, des vêtements communs, un kit d'herboristerie et 5 po.",
+      "equipment": "un étui à parchemins rempli de vos notes tirées de vos études ou de vos prières, une couverture d'hiver, des vêtements communs, un kit d'herboriste et 5 po.",
       "feature": {
         "name": "Découverte",
         "description": "Les longues années passées dans la solitude ont permis au personnage de faire une découverte singulière et importante, à définir avec le MJ : une vérité cosmique, un savoir oublié, un lieu caché ou une information dangereuse. Cette révélation peut avoir un impact durable sur la campagne."
@@ -631,7 +631,7 @@
       ],
       "languages_count": 1,
       "languages_note": "",
-      "equipment": "un bâton, un piège à mâchoires, un trophée de l'animal que vous avez tué, des vêtements de voyage et une bourse contenant 10 po.",
+      "equipment": "un bâton, un piège à mâchoires, un trophée de l'animal que vous avez tué, des vêtements de voyageur et une bourse contenant 10 po.",
       "feature": {
         "name": "Éternel vagabond",
         "description": "Vous avez une mémoire exceptionnelle de la géographie des lieux que vous avez traversés et vous retrouvez toujours votre chemin. De plus, vous êtes capable de trouver chaque jour de la nourriture et de l'eau fraîche pour vous-même et jusqu'à cinq autres personnes, à condition que la région en fournisse."

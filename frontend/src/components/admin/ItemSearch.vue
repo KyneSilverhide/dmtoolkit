@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
 import AppIcon from '../AppIcon.vue'
@@ -8,6 +9,7 @@ import ContentPagination from './ContentPagination.vue'
 import { itemTypeStyle } from '@/utils/itemTypes.js'
 import { rarityColor } from '@/utils/rarity.js'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
+import { highlightGlossaryHtml } from '@/utils/textLinker.js'
 
 const props = defineProps({
   // 'equipment' (objets standard) ou 'magic' (objets magiques)
@@ -16,6 +18,7 @@ const props = defineProps({
 
 // La clé d'onglet correspond directement à la catégorie ('equipment' ou 'magic').
 const tabQuery = useContentTabQuery(props.category)
+const router = useRouter()
 
 const CATEGORY_META = {
   equipment: { label: 'Objets', icon: 'lucide:package', placeholder: 'Nom, type, description…', noun: 'objet', nounPlural: 'objet(s)' },
@@ -73,7 +76,7 @@ const displayItems = computed(() => (isBrowsing.value ? pagedItems.value : resul
 watch(isBrowsing, (browsing) => { if (browsing) page.value = 1 })
 
 function toHtml(entry) {
-  if (entry.description_html) return entry.description_html
+  if (entry.description_html) return highlightGlossaryHtml(entry.description_html)
   if (!entry.description) return ''
   const escaped = entry.description
     .replace(/&/g, '&amp;')
@@ -81,7 +84,15 @@ function toHtml(entry) {
     .replace(/>/g, '&gt;')
     .replace(/\n\n/g, '</p><p>')
     .replace(/\n/g, '<br>')
-  return `<p>${escaped}</p>`
+  return highlightGlossaryHtml(`<p>${escaped}</p>`)
+}
+
+// Voir SpellSearch.vue onDescClick — même délégation de clic pour les mentions d'état
+// rendues en HTML brut (data-condition-slug) au lieu d'un vrai composant RefLink.
+function onDescClick(e) {
+  const el = e.target.closest('[data-condition-slug]')
+  if (!el) return
+  router.push({ path: '/admin/conditions', query: { q: el.dataset.conditionName, slug: el.dataset.conditionSlug } })
 }
 
 function itemTypeIcon(itemType) {
@@ -245,7 +256,7 @@ onUnmounted(() => {
             </span>
           </div>
         </div>
-        <div v-if="item.description_html || item.description" class="item-desc" v-html="toHtml(item)" />
+        <div v-if="item.description_html || item.description" class="item-desc" v-html="toHtml(item)" @click="onDescClick" />
         <div v-if="item.source" class="item-source"><AppIcon icon="lucide:library" size="0.8em" /> {{ item.source }}</div>
         <a :href="item.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
       </div>

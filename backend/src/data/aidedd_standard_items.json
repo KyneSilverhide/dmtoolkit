@@ -1,7 +1,7 @@
 {
   "source_list_url": "https://www.aidedd.org/regles/",
   "generated_at": "2026-05-15T15:37:16.284447+00:00",
-  "count": 147,
+  "count": 169,
   "items": [
     {
       "name": "Gourdin",
@@ -2646,6 +2646,402 @@
       "source": "Player's Handbook (SRD)",
       "list_data": {
         "prix": "10 000 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Chalemie",
+      "slug": "chalemie",
+      "slug_vo": "shawm",
+      "name_vo": "Shawm",
+      "detail_url": "https://www.aidedd.org/regles/equipement/outils/",
+      "item_type": "Instrument de musique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Instrument à vent à anche double, de la famille des bois.",
+      "description_html": "<p>Instrument à vent à anche double, de la famille des bois.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "2 po",
+        "poids": "500 g"
+      }
+    },
+    {
+      "name": "Flûte de pan",
+      "slug": "flute-de-pan",
+      "slug_vo": "pan-flute",
+      "name_vo": "Pan flute",
+      "detail_url": "https://www.aidedd.org/regles/equipement/outils/",
+      "item_type": "Instrument de musique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Instrument à vent composé de plusieurs tuyaux de longueurs différentes.",
+      "description_html": "<p>Instrument à vent composé de plusieurs tuyaux de longueurs différentes.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "12 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Lyre",
+      "slug": "lyre",
+      "slug_vo": "lyre",
+      "name_vo": "Lyre",
+      "detail_url": "https://www.aidedd.org/regles/equipement/outils/",
+      "item_type": "Instrument de musique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Instrument à cordes pincées, tenu contre la poitrine.",
+      "description_html": "<p>Instrument à cordes pincées, tenu contre la poitrine.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "30 po",
+        "poids": "1 kg"
+      }
+    },
+    {
+      "name": "Tympanon",
+      "slug": "tympanon",
+      "slug_vo": "dulcimer",
+      "name_vo": "Dulcimer",
+      "detail_url": "https://www.aidedd.org/regles/equipement/outils/",
+      "item_type": "Instrument de musique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Instrument à cordes frappées à l'aide de petits maillets.",
+      "description_html": "<p>Instrument à cordes frappées à l'aide de petits maillets.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 po",
+        "poids": "5 kg"
+      }
+    },
+    {
+      "name": "Jeu des Dragons",
+      "slug": "jeu-des-dragons",
+      "slug_vo": "three-dragon-ante-set",
+      "name_vo": "Three-Dragon Ante set",
+      "detail_url": "https://www.aidedd.org/regles/equipement/outils/",
+      "item_type": "Outil",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Jeu de cartes misant sur des dragons imaginaires, apprécié dans les tavernes.",
+      "description_html": "<p>Jeu de cartes misant sur des dragons imaginaires, apprécié dans les tavernes.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "1 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Kit d'herboriste",
+      "slug": "kit-d-herboriste",
+      "slug_vo": "herbalism-kit",
+      "name_vo": "Herbalism kit",
+      "detail_url": "https://www.aidedd.org/regles/equipement/outils/",
+      "item_type": "Outil",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet d'identifier des herbes et de concocter des remèdes ; indispensable pour créer des potions de soins et des antidotes.",
+      "description_html": "<p>Permet d'identifier des herbes et de concocter des remèdes ; indispensable pour créer des potions de soins et des antidotes.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 po",
+        "poids": "1,5 kg"
+      }
+    },
+    {
+      "name": "Matériel de peintre",
+      "slug": "materiel-de-peintre",
+      "slug_vo": "painter-s-supplies",
+      "name_vo": "Painter's supplies",
+      "detail_url": "https://www.aidedd.org/regles/equipement/outils/",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permet de peindre des tableaux et des fresques.",
+      "description_html": "<p>Permet de peindre des tableaux et des fresques.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 po",
+        "poids": "2,5 kg"
+      }
+    },
+    {
+      "name": "Outils de bricoleur",
+      "slug": "outils-de-bricoleur",
+      "slug_vo": "tinker-s-tools",
+      "name_vo": "Tinker's tools",
+      "detail_url": "https://www.aidedd.org/regles/equipement/outils/",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permettent de réparer ou de fabriquer de petits objets mécaniques.",
+      "description_html": "<p>Permettent de réparer ou de fabriquer de petits objets mécaniques.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "50 po",
+        "poids": "5 kg"
+      }
+    },
+    {
+      "name": "Outils de souffleur de verre",
+      "slug": "outils-de-souffleur-de-verre",
+      "slug_vo": "glassblower-s-tools",
+      "name_vo": "Glassblower's tools",
+      "detail_url": "https://www.aidedd.org/regles/equipement/outils/",
+      "item_type": "Outil d'artisan",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Permettent de façonner des objets en verre.",
+      "description_html": "<p>Permettent de façonner des objets en verre.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "30 po",
+        "poids": "2,5 kg"
+      }
+    },
+    {
+      "name": "Éléphant",
+      "slug": "elephant",
+      "slug_vo": "elephant",
+      "name_vo": "Elephant",
+      "detail_url": "https://www.aidedd.org/dnd/monstres.php?vf=elephant",
+      "item_type": "Monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Taille : Très grande. Vitesse : 12 m. CA : 12. PV : 76. Force : 22.",
+      "description_html": "<p>Taille : Très grande. Vitesse : 12 m. CA : 12. PV : 76. Force : 22.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "200 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Molosse",
+      "slug": "molosse",
+      "slug_vo": "mastiff",
+      "name_vo": "Mastiff",
+      "detail_url": "https://www.aidedd.org/dnd/monstres.php?vf=molosse",
+      "item_type": "Monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Taille : Moyenne. Vitesse : 12 m. CA : 12. PV : 5. Force : 13.",
+      "description_html": "<p>Taille : Moyenne. Vitesse : 12 m. CA : 12. PV : 5. Force : 13.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Char",
+      "slug": "char",
+      "slug_vo": "chariot",
+      "name_vo": "Chariot",
+      "detail_url": "https://www.aidedd.org/regles/equipement/montures-et-marchandises/",
+      "item_type": "Véhicule terrestre",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Véhicule de guerre léger et rapide, tracté par des chevaux.",
+      "description_html": "<p>Véhicule de guerre léger et rapide, tracté par des chevaux.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "250 po",
+        "poids": "50 kg"
+      }
+    },
+    {
+      "name": "Carrosse",
+      "slug": "carrosse",
+      "slug_vo": "carriage",
+      "name_vo": "Carriage",
+      "detail_url": "https://www.aidedd.org/regles/equipement/montures-et-marchandises/",
+      "item_type": "Véhicule terrestre",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Véhicule fermé et confortable, tracté par des chevaux.",
+      "description_html": "<p>Véhicule fermé et confortable, tracté par des chevaux.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "100 po",
+        "poids": "300 kg"
+      }
+    },
+    {
+      "name": "Traîneau",
+      "slug": "traineau",
+      "slug_vo": "sled",
+      "name_vo": "Sled",
+      "detail_url": "https://www.aidedd.org/regles/equipement/montures-et-marchandises/",
+      "item_type": "Véhicule terrestre",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Véhicule tracté glissant sur la neige et la glace.",
+      "description_html": "<p>Véhicule tracté glissant sur la neige et la glace.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "20 po",
+        "poids": "150 kg"
+      }
+    },
+    {
+      "name": "Fourrage (par jour)",
+      "slug": "fourrage-par-jour",
+      "slug_vo": "feed",
+      "name_vo": "Feed",
+      "detail_url": "https://www.aidedd.org/regles/equipement/montures-et-marchandises/",
+      "item_type": "Équipement de monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Ration quotidienne de nourriture pour une monture.",
+      "description_html": "<p>Ration quotidienne de nourriture pour une monture.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 pc",
+        "poids": "5 kg"
+      }
+    },
+    {
+      "name": "Écurie (par jour)",
+      "slug": "ecurie-par-jour",
+      "slug_vo": "stabling",
+      "name_vo": "Stabling",
+      "detail_url": "https://www.aidedd.org/regles/equipement/montures-et-marchandises/",
+      "item_type": "Équipement de monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Hébergement quotidien pour une monture.",
+      "description_html": "<p>Hébergement quotidien pour une monture.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 pa",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Selle de bât",
+      "slug": "selle-de-bat",
+      "slug_vo": "pack-saddle",
+      "name_vo": "Pack saddle",
+      "detail_url": "https://www.aidedd.org/regles/equipement/montures-et-marchandises/",
+      "item_type": "Équipement de monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Selle conçue pour porter des charges plutôt qu'un cavalier.",
+      "description_html": "<p>Selle conçue pour porter des charges plutôt qu'un cavalier.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "5 po",
+        "poids": "7,5 kg"
+      }
+    },
+    {
+      "name": "Selle exotique",
+      "slug": "selle-exotique",
+      "slug_vo": "exotic-saddle",
+      "name_vo": "Exotic saddle",
+      "detail_url": "https://www.aidedd.org/regles/equipement/montures-et-marchandises/",
+      "item_type": "Équipement de monture",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Selle nécessaire pour monter une créature aquatique ou volante.",
+      "description_html": "<p>Selle nécessaire pour monter une créature aquatique ou volante.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "60 po",
+        "poids": "20 kg"
+      }
+    },
+    {
+      "name": "Bateau à fond plat",
+      "slug": "bateau-a-fond-plat",
+      "slug_vo": "keelboat",
+      "name_vo": "Keelboat",
+      "detail_url": "https://www.aidedd.org/regles/equipement/montures-et-marchandises/",
+      "item_type": "Véhicule nautique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Grande embarcation fluviale à voile, sans rames.",
+      "description_html": "<p>Grande embarcation fluviale à voile, sans rames.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "3 000 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Drakkar",
+      "slug": "drakkar",
+      "slug_vo": "longship",
+      "name_vo": "Longship",
+      "detail_url": "https://www.aidedd.org/regles/equipement/montures-et-marchandises/",
+      "item_type": "Véhicule nautique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Navire rapide à rames et à voile, long et étroit.",
+      "description_html": "<p>Navire rapide à rames et à voile, long et étroit.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "10 000 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Galère",
+      "slug": "galere",
+      "slug_vo": "galley",
+      "name_vo": "Galley",
+      "detail_url": "https://www.aidedd.org/regles/equipement/montures-et-marchandises/",
+      "item_type": "Véhicule nautique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Grand navire de guerre propulsé par des rames et une voile.",
+      "description_html": "<p>Grand navire de guerre propulsé par des rames et une voile.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "30 000 po",
+        "poids": "—"
+      }
+    },
+    {
+      "name": "Navire de guerre",
+      "slug": "navire-de-guerre",
+      "slug_vo": "warship",
+      "name_vo": "Warship",
+      "detail_url": "https://www.aidedd.org/regles/equipement/montures-et-marchandises/",
+      "item_type": "Véhicule nautique",
+      "rarity": "commun",
+      "requires_attunement": false,
+      "attunement_detail": "",
+      "description": "Navire de guerre rapide, à rames et à voile.",
+      "description_html": "<p>Navire de guerre rapide, à rames et à voile.</p>",
+      "source": "Player's Handbook (SRD)",
+      "list_data": {
+        "prix": "25 000 po",
         "poids": "—"
       }
     }

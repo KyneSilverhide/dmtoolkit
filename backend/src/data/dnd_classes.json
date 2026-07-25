@@ -307,6 +307,177 @@
               "description": "Au niveau 14, choix d'un animal totem conférant, en rage : Aigle — vitesse de vol égale à la vitesse au sol, avec chute en fin de tour si le barbare termine en l'air sans autre soutien ; Loup — par une action bonus, met à terre une créature de taille Grande ou inférieure touchée lors d'une attaque de corps à corps ; Ours — toute créature hostile à 1,50 mètre du barbare subit un désavantage à ses attaques contre une cible autre que le barbare ou un porteur de cette même capacité, sauf si elle ne peut ni le voir/l'entendre ni être effrayée."
             }
           ]
+        },
+        {
+          "name": "Voie du géant",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Force des géants",
+              "description": "Apprentissage de la langue des géants (ou une autre langue si le géant est déjà connu) et d'un sort mineur au choix (druidisme ou thaumaturgie, Sagesse)."
+            },
+            {
+              "level": 3,
+              "name": "Gigantisme",
+              "description": "En rage : Lancer fracassant (ajoute le bonus de dégâts de rage à une attaque à distance de lancer basée sur la Force) ; allonge +1,5 m et passage à la taille G (avec l'équipement) si la taille était inférieure et que l'espace le permet."
+            },
+            {
+              "level": 3,
+              "name": "Imprégnation élémentaire",
+              "description": "En entrant en rage, une arme tenue est imprégnée d'un type de dégâts élémentaire au choix (acide, froid, feu, tonnerre ou foudre) : +1d6 dégâts du type choisi, gagne la propriété lancer (portée 6/18 m, revient en main après le jet) ; le type peut être changé en action bonus ; les avantages disparaissent si une autre créature manie l'arme."
+            },
+            {
+              "level": 10,
+              "name": "Impulsion vigoureuse",
+              "description": "Action bonus en rage : déplace une créature de taille M ou moins vers un espace inoccupé visible dans un rayon de 9 m (JdS Force DD 8 + bonus de maîtrise + mod. Force pour une cible non consentante) ; chute et dégâts si la destination ne peut pas la soutenir."
+            },
+            {
+              "level": 14,
+              "name": "Démiurge colossal",
+              "description": "En rage : allonge +3 m, taille jusqu'à TG possible, Impulsion vigoureuse utilisable sur des créatures de taille G ou moins ; les dégâts d'Imprégnation élémentaire passent à 2d6."
+            }
+          ]
+        },
+        {
+          "name": "Voie de la magie sauvage",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Sens de la magie",
+              "description": "Action : détecte l'emplacement et l'école de tout sort ou objet magique dans un rayon de 18 m (hors abri total) jusqu'à la fin du prochain tour ; utilisations = bonus de maîtrise par repos long."
+            },
+            {
+              "level": 3,
+              "name": "Sursaut sauvage",
+              "description": "En entrant en rage, un d8 est lancé sur une table de 8 effets de magie sauvage (dégâts nécrotiques + PV temporaires, téléportation courte répétable, esprit explosif à dégâts de force, éclair aveuglant, représailles en dégâts de force, bonus de CA partagé, terrain difficile, ou arme imprégnée de dégâts de force avec propriété lancer)."
+            },
+            {
+              "level": 6,
+              "name": "Réserve de magie",
+              "description": "Action : touche une créature (soi inclus) pour un bonus au choix : d3 ajouté aux jets d'attaque/caractéristique pendant 10 minutes, ou récupération d'un emplacement de sort (niveau déterminé par un d3, 1 fois par repos long pour le bénéficiaire) ; utilisations = bonus de maîtrise par repos long."
+            },
+            {
+              "level": 10,
+              "name": "Réaction instable",
+              "description": "Réaction après avoir subi des dégâts ou raté un JdS en rage : relance la table de Magie sauvage, le nouvel effet remplaçant l'effet en cours."
+            },
+            {
+              "level": 14,
+              "name": "Sursaut contrôlé",
+              "description": "Sur la table de Magie sauvage, lance le dé deux fois et choisit l'effet (ou choisit librement en cas d'égalité)."
+            }
+          ]
+        },
+        {
+          "name": "Voie du gardien ancestral",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Protecteurs ancestraux",
+              "description": "En rage, la première créature touchée à chaque tour est ciblée par des esprits jusqu'au début du prochain tour ou la fin de la rage : désavantage à ses attaques ne vous visant pas, et toute créature autre que vous a une résistance aux dégâts de ses attaques."
+            },
+            {
+              "level": 6,
+              "name": "Bouclier spirituel",
+              "description": "En rage, réaction quand une créature visible à 9 m subit des dégâts : les réduit de 2d8 (3d8 au niveau 10, 4d8 au niveau 14)."
+            },
+            {
+              "level": 10,
+              "name": "Consultation des esprits",
+              "description": "Lance Clairvoyance sans emplacement de sort (esprit invisible au lieu d'un capteur) ; 1 utilisation par repos court ou long."
+            },
+            {
+              "level": 14,
+              "name": "Ancêtres vengeurs",
+              "description": "Lorsque Bouclier spirituel protège une créature touchée, l'attaquant subit des dégâts égaux à ceux empêchés."
+            }
+          ]
+        },
+        {
+          "name": "Voie du héraut des tempêtes",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Aura de tempête",
+              "description": "En rage, aura de 3 m (bloquée par abri total) activable à l'entrée en rage et réactivable en action bonus ; choix d'un environnement (désert, mer ou toundra, modifiable en montant de niveau). Désert : dégâts de feu croissants aux autres créatures de l'aura. Mer : une cible choisie subit un JdS Dextérité sous peine de dégâts de foudre croissants (moitié en cas de réussite). Toundra : créatures choisies gagnent des PV temporaires croissants."
+            },
+            {
+              "level": 6,
+              "name": "Âme des tempêtes",
+              "description": "Bénéfice passif selon l'environnement choisi : Désert (résistance au feu, immunité aux chaleurs extrêmes, action pour enflammer un objet inflammable non porté), Mer (résistance à la foudre, respire sous l'eau, vitesse de nage 9 m) ou Toundra (résistance au froid, immunité aux froids extrêmes, action pour geler un cube d'eau de 1,5 m)."
+            },
+            {
+              "level": 10,
+              "name": "Tempête protectrice",
+              "description": "Les créatures choisies dans l'Aura de tempête gagnent la résistance acquise via Âme des tempêtes."
+            },
+            {
+              "level": 14,
+              "name": "Tempête déchaînée",
+              "description": "Effet selon l'environnement : Désert (réaction sur une touche subie dans l'aura : JdS Dextérité ou dégâts de feu égaux à la moitié du niveau de barbare), Mer (réaction sur une touche infligée dans l'aura : JdS Force ou chute) ou Toundra (à chaque activation de l'aura, une cible visible JdS Force ou vitesse réduite à 0 jusqu'au prochain tour)."
+            }
+          ]
+        },
+        {
+          "name": "Voie du zélote",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Fureur divine",
+              "description": "En rage, la première créature touchée à chaque tour lors d'une attaque à l'arme subit +1d6 + moitié niveau de barbare dégâts nécrotiques ou radiants (type choisi à l'acquisition)."
+            },
+            {
+              "level": 3,
+              "name": "Guerrier des dieux",
+              "description": "Un sort qui vous ramène simplement à la vie (sans vous transformer en mort-vivant) n'exige pas de composantes matérielles de la part du lanceur."
+            },
+            {
+              "level": 6,
+              "name": "Obstination fanatique",
+              "description": "En rage, un jet de sauvegarde raté peut être relancé une fois par rage, le nouveau résultat devant être conservé."
+            },
+            {
+              "level": 10,
+              "name": "Présence zélatrice",
+              "description": "Action bonus : jusqu'à 10 créatures choisies à 18 m vous entendant gagnent l'avantage aux jets d'attaque et de sauvegarde jusqu'au début du prochain tour ; 1 utilisation par repos long."
+            },
+            {
+              "level": 14,
+              "name": "Enragé par-delà la mort",
+              "description": "En rage, tomber à 0 PV ne rend pas inconscient (les jets de sauvegarde de mort restent requis, et les dégâts subis à 0 PV s'appliquent normalement) ; la mort n'intervient qu'à la fin de la rage si toujours à 0 PV."
+            }
+          ]
+        },
+        {
+          "name": "Voie de la bête",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Forme de la bête",
+              "description": "En entrant en rage, choix d'une arme naturelle jusqu'à la fin de la rage : Morsure (1d8 perforant, régénère mod. Constitution min 1 PV une fois par tour sur une touche), Griffes (1d6 tranchant, attaque supplémentaire avec l'action Attaquer) ou Queue (1d12 perforant, allonge)."
+            },
+            {
+              "level": 6,
+              "name": "Âme de la bête",
+              "description": "Les armes naturelles comptent comme magiques ; à chaque repos, choix d'un avantage jusqu'au prochain repos : vitesse de nage égale à la marche et respiration aquatique, ou vitesse d'escalade égale à la marche sans jet requis, ou extension du saut via un jet d'Athlétisme (une fois par tour)."
+            },
+            {
+              "level": 10,
+              "name": "Furie contagieuse",
+              "description": "Sur une attaque naturelle touchée en rage, JdS Sagesse DD 8+mod. Constitution+bonus de maîtrise sous peine (au choix) d'attaquer un allié désigné en réaction ou de subir 2d12 dégâts psychiques ; utilisations = mod. Constitution (min 1) par repos long."
+            },
+            {
+              "level": 14,
+              "name": "Appel de la chasse",
+              "description": "En entrant en rage, un nombre de créatures consentantes visibles à 9 m (égal au mod. Constitution, min 1) gagnent Attaque téméraire jusqu'à la fin de la rage, et vous gagnez l'avantage aux JdS contre l'effroi et 5 PV temporaires par créature ; utilisations = mod. Constitution (min 1) par repos long."
+            }
+          ]
         }
       ],
       "detail_url": "https://www.aidedd.org/regles/classes/barbare/",
@@ -916,6 +1087,193 @@
               "description": "Au niveau 14, lancer un sort de barde en utilisant son action permet également de porter une attaque d'arme en action bonus."
             }
           ]
+        },
+        {
+          "name": "Collège de la satire",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Maîtrises supplémentaires",
+              "description": "Maîtrise des outils de voleur, de la compétence Escamotage et d'une compétence au choix (une autre compétence si ces maîtrises sont déjà acquises)."
+            },
+            {
+              "level": 3,
+              "name": "Fou cascadeur",
+              "description": "Action bonus : jusqu'à la fin du tour, bénéficie des effets de Foncer et Se Désengager, vitesse d'escalade égale à la vitesse actuelle, et ne subit que la moitié des dégâts de chute."
+            },
+            {
+              "level": 6,
+              "name": "Intuition du fou",
+              "description": "Lance Détection des pensées un nombre de fois égal au modificateur de Charisme par repos long ; en cas de réussite du jet de sauvegarde adverse, la cible subit tout de même un effet embarrassant public mineur (au choix du MJ)."
+            },
+            {
+              "level": 14,
+              "name": "Chance du fou",
+              "description": "Après un jet de caractéristique, de sauvegarde ou d'attaque raté, dépense une utilisation d'Inspiration bardique pour ajouter le résultat du dé au jet raté ; en cas de succès obtenu ainsi, le MJ pourra plus tard appliquer ce même résultat en malus à un jet (décrit comme une gaffe embarrassante) avant que la capacité puisse être réutilisée."
+            }
+          ]
+        },
+        {
+          "name": "Collège des épées",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Maîtrises supplémentaires",
+              "description": "Maîtrise des armures intermédiaires et des cimeterres ; une arme de corps à corps courante ou de guerre maîtrisée peut servir de focaliseur d'incantation."
+            },
+            {
+              "level": 3,
+              "name": "Style de combat",
+              "description": "Choix entre Combat à deux armes (mod. de caractéristique ajouté aux dégâts de la seconde attaque) et Duel (+2 dégâts avec une arme de corps à corps tenue seule en main)."
+            },
+            {
+              "level": 3,
+              "name": "Moulinet",
+              "description": "Avec l'action Attaquer : vitesse +3 m jusqu'à la fin du tour ; sur une attaque touchée dans le cadre de cette action, un Moulinet au choix (1 par tour) : Défensif (dépense une Inspiration bardique, dégâts supplémentaires égaux au résultat du dé, même bonus temporaire à la CA), Tranchant (dégâts supplémentaires à la cible touchée et à une autre créature à 1,5 m) ou Mobile (dégâts supplémentaires, repousse la cible de 1,5 m + résultat du dé/3, puis réaction pour se déplacer à 1,5 m de la cible)."
+            },
+            {
+              "level": 6,
+              "name": "Attaque supplémentaire",
+              "description": "Deux attaques au lieu d'une avec l'action Attaquer."
+            },
+            {
+              "level": 14,
+              "name": "Moulinet de maître",
+              "description": "Un d6 peut être lancé au lieu de dépenser une Inspiration bardique pour les options de Moulinet."
+            }
+          ]
+        },
+        {
+          "name": "Collège de la séduction",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Apparence inspirante",
+              "description": "Action bonus, dépense une Inspiration bardique : alliés visibles à 18 m (nombre = mod. Charisme, min 1) gagnent 2d6 (2d8 au niveau 5, 2d10 au niveau 10, 2d12 au niveau 15) PV temporaires et une réaction pour se déplacer vers vous sans attaque d'opportunité."
+            },
+            {
+              "level": 3,
+              "name": "Représentation envoûtante",
+              "description": "Après une représentation de 10 minutes ou plus, spectateurs humanoïdes visibles à 18 m (nombre = mod. Charisme, min 1) : JdS Sagesse DD sorts ou charme (protection et idéalisation de vous, 1h ou rompu par dégâts/attaque) ; 1 utilisation par repos court ou long."
+            },
+            {
+              "level": 6,
+              "name": "Apparence majestueuse",
+              "description": "Action bonus, 1 minute : lance Injonction en action bonus chaque tour sans emplacement de sort, JdS automatiquement raté si la cible est déjà charmée par vous ; 1 utilisation par repos long."
+            },
+            {
+              "level": 14,
+              "name": "Majesté inébranlable",
+              "description": "Lance Sanctuaire sur soi ; si une créature rate son JdS contre ce sort, avantage à tous les jets de Charisme contre elle pendant 1 minute et désavantage de ses JdS contre vos sorts au prochain tour ; 1 utilisation par repos court ou long."
+            }
+          ]
+        },
+        {
+          "name": "Collège des murmures",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Lames psychiques",
+              "description": "Sur une attaque à l'arme touchée, dépense une Inspiration bardique : +2d6 (3d6 au niveau 5, 5d6 au niveau 10, 8d6 au niveau 15) dégâts psychiques, une fois par round à votre tour."
+            },
+            {
+              "level": 3,
+              "name": "Mots de terreur",
+              "description": "Après une conversation en tête-à-tête d'au moins 1 minute avec un humanoïde : JdS Sagesse DD sorts sous peine d'effroi (envers vous ou une autre créature désignée) pendant 1h, rompu par une attaque ou des dégâts subis ; 1 utilisation par repos court ou long."
+            },
+            {
+              "level": 6,
+              "name": "Voile de murmures",
+              "description": "Réaction quand une créature meurt à 9 m : capture son ombre (jusqu'à usage ou repos long) ; action pour prendre son apparence pendant 1h (accès à ses informations superficielles, déguisement détectable par un jet d'Intuition opposé, +5 en votre faveur) ; 1 utilisation par repos court ou long."
+            },
+            {
+              "level": 14,
+              "name": "Savoir des ombres",
+              "description": "Action : chuchote à une créature choisie à 9 m vous entendant/comprenant ; JdS Sagesse DD sorts (échec automatique sans langue commune) sous peine de charme pendant 8h (rompu par dégâts, attaque ou JdS forcé), la cible croyant son secret connu et obéissant par peur sans se battre pour vous ; 1 utilisation par repos court ou long."
+            }
+          ]
+        },
+        {
+          "name": "Collège de l'éloquence",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Discours universel",
+              "description": "Action bonus, dépense une Inspiration bardique : un nombre de créatures visibles à 18 m égal au résultat du dé vous comprennent (quelle que soit la langue) pendant 10 minutes, avec avantage à vos jets de Charisme pour les influencer."
+            },
+            {
+              "level": 3,
+              "name": "Mots apaisants",
+              "description": "Lance Apaisement des émotions sans emplacement de sort ; utilisations = mod. Charisme par repos long."
+            },
+            {
+              "level": 6,
+              "name": "Logique incontestable",
+              "description": "Action bonus, dépense une Inspiration bardique : une créature visible à 18 m vous entendant subit, au choix, des dégâts psychiques égaux au résultat du dé (+ désavantage à son prochain JdS sur un JdS Intelligence raté), ou regagne des PV égaux au résultat du dé (+ avantage à son prochain JdS)."
+            },
+            {
+              "level": 14,
+              "name": "Inspiration contagieuse",
+              "description": "Un dé d'Inspiration bardique ajouté à un jet raté est conservé par la créature ; sur un jet réussi, réaction pour offrir gratuitement un dé d'Inspiration bardique à une autre créature entendante à 18 m ; utilisations = mod. Charisme (min 1) par repos long."
+            }
+          ]
+        },
+        {
+          "name": "Collège de la création",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Note de potentiel",
+              "description": "En donnant une Inspiration bardique, crée une Note flottante TP (dure jusqu'à dépense du dé) : Note de destruction (après un dé ajouté à une attaque, explosion : créatures à 1,5 m JdS Constitution DD sorts ou dégâts de tonnerre = résultat du dé), Note de protection (après un dé ajouté à un JdS : PV temporaires = résultat + mod. Charisme si aucun déjà présent) ou Note d'ingéniosité (sur un jet de caractéristique, relance un second dé et garde le meilleur)."
+            },
+            {
+              "level": 6,
+              "name": "Représentation d'animation",
+              "description": "Action : anime un objet non magique de taille G ou moins à 9 m en artificiel allié (PV = mod. Constitution + mod. Charisme + 5×niveau de barde, CA 16, vitesse 12 m, immunités poison/charmé/épuisement/effrayé/empoisonné, attaque à mod. sort au toucher, 1d10+Charisme dégâts de force) pendant 1h ou jusqu'à 0 PV, jouant après vous, limité à Esquiver sauf ordre en action bonus ; 1 utilisation par repos long ou emplacement de sort de niveau 3+, un seul objet actif à la fois."
+            },
+            {
+              "level": 14,
+              "name": "Représentation de création",
+              "description": "Action : crée un objet non magique choisi (valeur ≤ 20×niveau de barde, taille G ou moins) à 3 m, disparaissant à la fin du prochain tour sauf maintenu par action (jusqu'à 1 minute, puis persiste niveau de barde heures si maintenu la minute complète) ; 1 utilisation par repos long ou emplacement de sort de niveau 5+, un seul objet à la fois."
+            }
+          ]
+        },
+        {
+          "name": "Collège des esprits",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Murmures conseillants",
+              "description": "Connaît le sort mineur Assistance (portée 18 m), hors du nombre de sorts connus."
+            },
+            {
+              "level": 3,
+              "name": "Focaliseur spirituel",
+              "description": "Un objet spécial (bougie, boule de cristal, jeu de tarot, etc.) sert de focaliseur d'incantation ; au niveau 6, un sort de barde à dégâts ou de soin lancé via ce focaliseur ajoute 1d6 à l'un de ses dés."
+            },
+            {
+              "level": 3,
+              "name": "Contes de l'Au-delà",
+              "description": "Action bonus, dépense une Inspiration bardique avec le focaliseur : un d12 détermine un récit mémorisé (jusqu'à transmission ou repos), transmissible par action à une créature visible à 9 m (soi inclus), avec des effets variés (dégâts, soins, téléportation, PV temporaires, charme bref, invisibilité...) ; un nouveau lancer remplace le récit mémorisé."
+            },
+            {
+              "level": 6,
+              "name": "Séance de spiritisme",
+              "description": "Rituel d'une heure (pendant un repos), participants = bonus de maîtrise : apprend temporairement un sort de divination ou nécromancie de n'importe quelle liste (niveau ≤ nombre de participants et couvert par un emplacement disponible), traité comme sort de barde hors quota, connu jusqu'au prochain repos long ; 1 utilisation par repos long."
+            },
+            {
+              "level": 14,
+              "name": "Connexion mystique",
+              "description": "Pour Contes de l'Au-delà, un d6 peut être lancé au lieu de dépenser un dé d'Inspiration bardique (le dé d'Inspiration bardique sert toujours à déterminer l'effet, sans être dépensé)."
+            }
+          ]
         }
       ],
       "detail_url": "https://www.aidedd.org/regles/classes/barde/",
@@ -1435,6 +1793,11 @@
           "traits": [
             {
               "level": 1,
+              "name": "Sorts de domaine",
+              "description": "Charme-personne et Déguisement (1), Image miroir et Passage sans trace (3), Clignotement et Dissipation de la magie (5), Métamorphose et Porte dimensionnelle (7), Domination de personne et Modification de mémoire (9), toujours préparés."
+            },
+            {
+              "level": 1,
               "name": "Bénédiction de l'escroc",
               "description": "Une action pour toucher une créature consentante (autre que soi-même) et lui accorder l'avantage aux jets de Dextérité (Discrétion) ; l'effet dure 1 heure ou jusqu'à ce que la capacité soit réutilisée sur une autre cible."
             },
@@ -1464,6 +1827,11 @@
           "name": "Domaine de la Guerre",
           "unlocked_at_level": 1,
           "traits": [
+            {
+              "level": 1,
+              "name": "Sorts de domaine",
+              "description": "Bouclier de la foi et Faveur divine (1), Arme magique et Arme spirituelle (3), Aura du croisé et Esprits gardiens (5), Liberté de mouvement et Peau de pierre (7), Colonne de flamme et Immobilisation de monstre (9), toujours préparés."
+            },
             {
               "level": 1,
               "name": "Prêtre de guerre",
@@ -1497,6 +1865,11 @@
           "traits": [
             {
               "level": 1,
+              "name": "Sorts de domaine",
+              "description": "Lueurs féeriques et Mains brûlantes (1), Rayon ardent et Sphère de feu (3), Boule de feu et Lumière du jour (5), Gardien de la foi et Mur de feu (7), Colonne de flamme et Scrutation (9), toujours préparés."
+            },
+            {
+              "level": 1,
               "name": "Illumination protectrice",
               "description": "En réaction, lorsqu'une créature visible à 9 mètres ou moins attaque le clerc, un éclat de lumière impose le désavantage au jet d'attaque avant que le résultat ne soit connu ; les attaquants immunisés à l'aveuglement sont insensibles à cet effet. Utilisable un nombre de fois par repos long égal au modificateur de Sagesse (minimum 1)."
             },
@@ -1526,6 +1899,11 @@
           "name": "Domaine de la Nature",
           "unlocked_at_level": 1,
           "traits": [
+            {
+              "level": 1,
+              "name": "Sorts de domaine",
+              "description": "Amitié avec les animaux et Communication avec les animaux (1), Croissance d'épines et Peau d'écorce (3), Croissance végétale et Mur de vent (5), Domination de bête et Liane avide (7), Fléau d'insectes et Passage par les arbres (9), toujours préparés."
+            },
             {
               "level": 1,
               "name": "Acolyte de la nature",
@@ -1559,6 +1937,11 @@
           "traits": [
             {
               "level": 1,
+              "name": "Sorts de domaine",
+              "description": "Identification et Injonction (1), Augure et Suggestion (3), Antidétection et Communication avec les morts (5), Confusion et Oeil magique (7), Mythes et légendes et Scrutation (9), toujours préparés."
+            },
+            {
+              "level": 1,
               "name": "Bénédiction du savoir",
               "description": "Le clerc apprend deux langues et gagne la maîtrise de deux compétences au choix parmi Arcanes, Histoire, Nature ou Religion, avec un bonus de maîtrise doublé pour les jets de caractéristique utilisant l'une d'elles."
             },
@@ -1588,6 +1971,11 @@
           "name": "Domaine de la Tempête",
           "unlocked_at_level": 1,
           "traits": [
+            {
+              "level": 1,
+              "name": "Sorts de domaine",
+              "description": "Nappe de brouillard et Vague tonnante (1), Bourrasque et Fracassement (3), Appel de la foudre et Tempête de neige (5), Contrôle de l'eau et Tempête de grêle (7), Fléau d'insectes et Vague destructrice (9), toujours préparés."
+            },
             {
               "level": 1,
               "name": "Fureur de l'ouragan",
@@ -1621,6 +2009,11 @@
           "traits": [
             {
               "level": 1,
+              "name": "Sorts de domaine",
+              "description": "Bénédiction et Soins (1), Arme spirituelle et Restauration partielle (3), Lueur d'espoir et Retour à la vie (5), Gardien de la foi et Protection contre la mort (7), Rappel à la vie et Soins de groupe (9), toujours préparés."
+            },
+            {
+              "level": 1,
               "name": "Disciple de la vie",
               "description": "Chaque sort de niveau 1 ou supérieur utilisé pour redonner des points de vie restaure 2 points supplémentaires + le niveau du sort."
             },
@@ -1643,6 +2036,232 @@
               "level": 17,
               "name": "Guérison suprême",
               "description": "Tout dé normalement lancé pour déterminer des points de vie restaurés par un sort est remplacé par sa valeur maximale (par exemple, 2d6 devient 12)."
+            }
+          ]
+        },
+        {
+          "name": "Domaine de la protection",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Maîtrise supplémentaire",
+              "description": "Maîtrise des armures lourdes."
+            },
+            {
+              "level": 1,
+              "name": "Bouclier des fidèles",
+              "description": "Réaction : désavantage au jet d'attaque d'une créature visible qui attaque une cible autre que vous à 1,5 m ou moins de vous."
+            },
+            {
+              "level": 2,
+              "name": "Conduit divin : défense radiante",
+              "description": "Action : un allié visible à 9 m gagne une protection ; la première attaque le touchant dans la minute suivante inflige 2d10 + niveau de clerc dégâts radiants à l'attaquant."
+            },
+            {
+              "level": 6,
+              "name": "Guérisseur béni",
+              "description": "En lançant un sort avec emplacement qui rend des points de vie à autrui, régénère 2 + le niveau du sort en points de vie."
+            },
+            {
+              "level": 8,
+              "name": "Frappe divine",
+              "description": "Une fois par tour sur une attaque à l'arme réussie, +1d8 dégâts radiants (2d8 au niveau 14)."
+            },
+            {
+              "level": 17,
+              "name": "Défense indomptable",
+              "description": "Résistance à 2 types de dégâts au choix parmi contondant/nécrotique/perforant/radiant/tranchant (modifiable à chaque repos court ou long) ; transférable temporairement à une créature touchée par une action."
+            }
+          ]
+        },
+        {
+          "name": "Domaine de l'union",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Lien enhardissant",
+              "description": "Action : lien magique entre 2 créatures consentantes visibles à 9 m ; tant qu'elles restent à 9 m l'une de l'autre, chacune peut ajouter 1d4 à un jet (1 fois par tour) ; dure 1h ou jusqu'à nouvelle utilisation ; 1 utilisation gratuite par repos long, réutilisable via un emplacement de sort."
+            },
+            {
+              "level": 2,
+              "name": "Conduit divin : fardeau partagé",
+              "description": "Réaction quand une créature visible à 9 m subit des dégâts : répartit les dégâts entre elle et d'autres créatures consentantes visibles (nombre = mod. Sagesse, min 1), chacune subissant au moins 1 point (résistances appliquées après répartition)."
+            },
+            {
+              "level": 6,
+              "name": "Lien protecteur",
+              "description": "Les 2 créatures liées par Lien enhardissant peuvent, en réaction, s'accorder mutuellement une résistance à tous les dégâts jusqu'à la fin du tour en cours."
+            },
+            {
+              "level": 8,
+              "name": "Incantation puissante",
+              "description": "Le modificateur de Sagesse est ajouté aux dégâts des sorts mineurs de clerc."
+            },
+            {
+              "level": 17,
+              "name": "Union endurante",
+              "description": "Le lien fonctionne sur tout le plan d'existence ; si une créature liée tombe à 0 PV, son partenaire gagne pendant 1 minute (ou jusqu'à regain de PV) : avantage à tous ses jets, résistance à tous les dégâts, et peut (action) dépenser des dés de vie pour soigner le partenaire à distance par contact."
+            }
+          ]
+        },
+        {
+          "name": "Domaine de la forge",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Sorts de domaine",
+              "description": "Châtiment calcinant et Identification (1), Arme magique et Métal brûlant (3), Arme élémentaire et Protection contre une énergie (5), Fabrication et Mur de feu (7), Animation d'objets et Création (9), toujours préparés."
+            },
+            {
+              "level": 1,
+              "name": "Maîtrises supplémentaires",
+              "description": "Maîtrise des armures lourdes et des outils de forgeron."
+            },
+            {
+              "level": 1,
+              "name": "Bénédiction de la forge",
+              "description": "À la fin d'un repos long, une arme ou armure non magique touchée devient magique jusqu'au prochain repos long (+1 à la CA si armure, +1 à l'attaque et aux dégâts si arme) ; 1 utilisation entre deux repos longs."
+            },
+            {
+              "level": 2,
+              "name": "Conduit divin : bénédiction de l'artisan",
+              "description": "Rituel d'une heure créant un objet non magique en métal (arme, armure, munitions, outils...) d'une valeur maximale de 100 po, à partir de métal ou de pièces de valeur équivalente."
+            },
+            {
+              "level": 6,
+              "name": "Âme de la forge",
+              "description": "Résistance aux dégâts de feu ; +1 à la CA en armure lourde."
+            },
+            {
+              "level": 8,
+              "name": "Frappe divine",
+              "description": "Une fois par tour sur une attaque à l'arme réussie, +1d8 dégâts de feu (2d8 au niveau 14)."
+            },
+            {
+              "level": 17,
+              "name": "Saint de la forge et du feu",
+              "description": "Immunité aux dégâts de feu ; résistance aux dégâts contondants, perforants et tranchants d'origine non magique tant qu'une armure lourde est portée."
+            }
+          ]
+        },
+        {
+          "name": "Domaine de la tombe",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Maîtrise supplémentaire",
+              "description": "Maîtrise des armures lourdes."
+            },
+            {
+              "level": 1,
+              "name": "Cercle de la mort",
+              "description": "Les dés de soins d'un sort qui rend des PV à une créature à 0 PV sont traités comme ayant obtenu le résultat maximum ; le sort mineur Stabilisation, si connu, est lançable en action bonus."
+            },
+            {
+              "level": 1,
+              "name": "Œil de la tombe",
+              "description": "1 minute de contemplation ininterrompue révèle la présence, le nombre, la distance, la direction et le type le plus dangereux des morts-vivants dans un rayon de 1,5 km ; 1 utilisation par repos long."
+            },
+            {
+              "level": 2,
+              "name": "Conduit divin : chemin de la tombe",
+              "description": "Action : touche une créature ; la prochaine source de dégâts qu'elle subit (sort ou attaque, de vous ou d'un allié) la rend vulnérable à ce type de dégâts, ou lui retire résistance/immunité pour cette seule occurrence."
+            },
+            {
+              "level": 6,
+              "name": "La sentinelle aux portes de la mort",
+              "description": "Réaction : transforme un coup critique subi par vous ou un allié visible à 9 m en coup normal, annulant les effets liés au critique ; 1 utilisation par repos court ou long."
+            },
+            {
+              "level": 8,
+              "name": "Frappe divine",
+              "description": "Une fois par tour sur une attaque à l'arme touchée, +1d8 dégâts nécrotiques (2d8 au niveau 14)."
+            },
+            {
+              "level": 17,
+              "name": "Gardien des âmes",
+              "description": "Quand un ennemi visible à 9 m meurt, vous ou un allié choisi à 9 m regagne des PV égaux au nombre de dés de vie de l'ennemi ; au plus une fois par round."
+            }
+          ]
+        },
+        {
+          "name": "Domaine de l'ordre",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Maîtrise supplémentaire",
+              "description": "Maîtrise des armures lourdes."
+            },
+            {
+              "level": 1,
+              "name": "Voix d'autorité",
+              "description": "Immédiatement après avoir lancé un sort avec emplacement sur un allié, celui-ci peut utiliser sa réaction pour effectuer une attaque à l'arme contre une cible visible de votre choix ; si le sort cible plusieurs alliés, vous choisissez lequel attaque."
+            },
+            {
+              "level": 2,
+              "name": "Conduit divin : besoin d'ordre",
+              "description": "Action : chaque créature au choix vous voyant ou vous entendant à 9 m doit réussir un JdS de Sagesse sous peine d'être charmée jusqu'à la fin du prochain tour ou jusqu'à subir des dégâts (option : tomber à terre en cas d'échec)."
+            },
+            {
+              "level": 6,
+              "name": "Suprématie de l'ordre",
+              "description": "En lançant un sort d'enchantement avec un emplacement de niveau 2 ou plus, récupère un emplacement dépensé d'un niveau inférieur (maximum niveau 5)."
+            },
+            {
+              "level": 8,
+              "name": "Frappe divine",
+              "description": "Une fois par tour sur une attaque à l'arme touchée, +1d8 dégâts de force (2d8 au niveau 14)."
+            },
+            {
+              "level": 17,
+              "name": "Courroux de l'ordre",
+              "description": "Si Frappe divine touche une créature, celle-ci subit 2d8 dégâts de force supplémentaires la première fois par tour qu'un allié la touche en mêlée, jusqu'au début de votre prochain tour."
+            }
+          ]
+        },
+        {
+          "name": "Domaine du crépuscule",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Maîtrises supplémentaires",
+              "description": "Maîtrise des armes de guerre et des armures lourdes."
+            },
+            {
+              "level": 1,
+              "name": "Yeux de la nuit",
+              "description": "Vision dans le noir sans limite de distance ; action pour partager cette vision pendant 10 minutes à des créatures visibles à 3 m, utilisations = mod. Sagesse (min 1) par repos long."
+            },
+            {
+              "level": 1,
+              "name": "Bénédiction vigilante",
+              "description": "Action : une créature touchée (soi inclus) gagne l'avantage à son prochain jet d'initiative, perdu si la capacité est réutilisée avant."
+            },
+            {
+              "level": 2,
+              "name": "Conduit divin : sanctuaire du crépuscule",
+              "description": "Action : sphère de lumière faible de 9 m de rayon se déplaçant avec vous, 1 minute ou jusqu'à neutralisation/mort ; toute créature (vous inclus) finissant son tour dedans peut recevoir 1d8 PV temporaires ou la fin d'un effet charmé/effrayé."
+            },
+            {
+              "level": 6,
+              "name": "Pas du brave",
+              "description": "Avantage aux JdS contre l'effroi ; en lumière faible ou obscurité, action bonus : vitesse de vol égale à la vitesse de marche jusqu'à la fin du prochain tour."
+            },
+            {
+              "level": 8,
+              "name": "Frappe divine",
+              "description": "Une fois par tour sur une attaque à l'arme touchée, +1d8 dégâts psychiques (2d8 au niveau 14)."
+            },
+            {
+              "level": 17,
+              "name": "Linceul de minuit",
+              "description": "En lançant Ténèbres avec un emplacement de sort, un nombre de créatures visibles au choix (vous inclus, égal au mod. Sagesse, min 1) voient dans les ténèbres ainsi créées."
             }
           ]
         }
@@ -2229,6 +2848,218 @@
               "description": "Au niveau 14, quand une bête ou une plante attaque le druide, elle doit d'abord réussir un jet de sauvegarde de Sagesse contre le DD des sorts du druide (dont elle a conscience avant d'attaquer) sous peine de devoir cibler une autre créature ou de rater automatiquement son attaque ; un jet réussi rend la créature immunisée à cet effet pendant 24 heures."
             }
           ]
+        },
+        {
+          "name": "Cercle du primitif",
+          "unlocked_at_level": 2,
+          "traits": [
+            {
+              "level": 2,
+              "name": "Gardien de l'ancien temps",
+              "description": "Maîtrise de la compétence Histoire ; sur un jet d'Intelligence (Histoire), possibilité d'ajouter 1d4 au résultat."
+            },
+            {
+              "level": 2,
+              "name": "Compagnon primitif",
+              "description": "Par une action, dépense une utilisation de Forme sauvage pour invoquer un compagnon bestial (CA 13+bonus de maîtrise, PV 10+5×niveau, attaque +2+bonus de maîtrise, 1d8+bonus de maîtrise dégâts au choix) qui agit après vous à l'initiative, limité à Esquiver sauf ordre donné en action bonus ; disparaît à 0 PV ou à votre mort."
+            },
+            {
+              "level": 6,
+              "name": "Vecteur préhistorique",
+              "description": "Les sorts à portée non personnelle peuvent être lancés depuis le compagnon ; celui-ci bénéficie de l'avantage aux jets de sauvegarde contre vos sorts et ne subit aucun dégât en cas de réussite (moitié sans effet supplémentaire en cas d'échec)."
+            },
+            {
+              "level": 10,
+              "name": "Lien titanesque",
+              "description": "Le compagnon devient de taille G et gagne une vitesse de nage ou d'escalade ; une fois par tour, sur une touche ou des dégâts de sort infligés par vous, force un jet de sauvegarde de Sagesse pour effrayer la cible jusqu'à la fin du prochain tour."
+            },
+            {
+              "level": 14,
+              "name": "Fléau des temps anciens",
+              "description": "En commandant le compagnon par action bonus, dépense d'un emplacement de sort pour : taille TG et PV temporaires (10×niveau de l'emplacement), dégâts de Frappe +1d8+niveau de l'emplacement, vitesse augmentée ; effets pendant 1h ou jusqu'à disparition/nouvelle dépense."
+            }
+          ]
+        },
+        {
+          "name": "Cercle du crépuscule",
+          "unlocked_at_level": 2,
+          "traits": [
+            {
+              "level": 2,
+              "name": "Récolte de la faucheuse",
+              "description": "Réserve de d10 égale au niveau de druide ; en lançant un sort à dégâts, dépense jusqu'à la moitié du niveau en dés ajoutés en dégâts nécrotiques ; si un sort ainsi amplifié tue une créature hostile, récupère 2 PV par dé dépensé (5 PV si mort-vivant), pour soi ou un allié visible à 9 m ; dés récupérés après un repos long."
+            },
+            {
+              "level": 6,
+              "name": "Discours au-delà de la tombe",
+              "description": "Lance Communication avec les morts sans composantes matérielles, avec compréhension mutuelle même sans langue commune ; 1 utilisation par repos court ou long."
+            },
+            {
+              "level": 10,
+              "name": "Gardien du seuil",
+              "description": "Résistance aux dégâts nécrotiques et radiants ; les alliés à 9 m ont l'avantage aux jets de sauvegarde contre la mort tant que vous n'êtes pas neutralisé."
+            },
+            {
+              "level": 14,
+              "name": "Chemins des morts",
+              "description": "Lance Forme éthérée ; 1 utilisation par repos court ou long."
+            }
+          ]
+        },
+        {
+          "name": "Cercle des rêves",
+          "unlocked_at_level": 2,
+          "traits": [
+            {
+              "level": 2,
+              "name": "Baume de la cour d'Été",
+              "description": "Réserve de d6 égale au niveau de druide ; action bonus : un allié visible à 36 m regagne des PV (dés dépensés jusqu'à la moitié du niveau de druide, additionnés) et gagne 1 PV temporaire par dé dépensé ; dés récupérés après un repos long."
+            },
+            {
+              "level": 6,
+              "name": "Foyer de l'ombre et du clair de lune",
+              "description": "Pendant un repos, crée une sphère invisible de 9 m de rayon (bloquée par abri total) : +5 aux jets de Discrétion et Perception à l'intérieur, lumière de flamme invisible depuis l'extérieur ; dure le temps du repos ou jusqu'à en sortir."
+            },
+            {
+              "level": 10,
+              "name": "Chemins secrets",
+              "description": "Action bonus : téléportation jusqu'à 18 m vers un espace visible (coûte un mouvement équivalent), ou action pour téléporter une créature consentante touchée jusqu'à 18 m ; utilisations = mod. Sagesse (min 1) par repos long."
+            },
+            {
+              "level": 14,
+              "name": "Arpenteur des rêves",
+              "description": "Après un repos court, lance Songe (soi comme messager), Scrutation ou Cercle de téléportation (ouvre un portail vers le dernier lieu de repos long sur le plan actuel) sans emplacement de sort ni composantes matérielles ; 1 utilisation par repos long."
+            }
+          ]
+        },
+        {
+          "name": "Cercle du berger",
+          "unlocked_at_level": 2,
+          "traits": [
+            {
+              "level": 2,
+              "name": "Langage de la forêt",
+              "description": "Parle, lit et écrit le sylvestre ; comprend les bêtes, qui peuvent relayer ce qu'elles ont vu ou entendu récemment (sans amitié spéciale accordée)."
+            },
+            {
+              "level": 2,
+              "name": "Totem spirituel",
+              "description": "Action bonus : invoque un esprit incorporel (ours, faucon ou licorne) en un point visible à 18 m, créant une aura de 9 m ; déplaçable de 18 m en action bonus, dure 1 minute ou jusqu'à neutralisation, 1 utilisation par repos court ou long. Ours : PV temporaires (5+niveau) aux créatures choisies dans l'aura, avantage aux jets et JdS de Force dans l'aura. Faucon : réaction pour accorder l'avantage à un jet d'attaque visant une cible dans l'aura, avantage en Perception dans l'aura. Licorne : avantage aux jets de détection dans l'aura ; un sort de soin avec emplacement rend en plus des PV égaux au niveau de druide à chaque créature choisie dans l'aura."
+            },
+            {
+              "level": 6,
+              "name": "Puissant invocateur",
+              "description": "Les bêtes et fées invoquées ou créées par vos sorts gagnent +2 PV max par dé de vie et leurs attaques naturelles comptent comme magiques."
+            },
+            {
+              "level": 10,
+              "name": "Esprit protecteur",
+              "description": "Une bête ou fée invoquée qui termine son tour dans l'aura du Totem spirituel régénère des PV égaux à la moitié du niveau de druide."
+            },
+            {
+              "level": 14,
+              "name": "Convocations loyales",
+              "description": "En tombant à 0 PV ou en étant neutralisé contre son gré, bénéfice immédiat du sort Invocation d'animaux (niveau 9, 4 créatures FP 2 ou moins à 6 m, protection sans ordre requis, sans concentration, 1h ou fin volontaire sans action) ; 1 utilisation par repos long."
+            }
+          ]
+        },
+        {
+          "name": "Cercle des spores",
+          "unlocked_at_level": 2,
+          "traits": [
+            {
+              "level": 2,
+              "name": "Sorts de cercle",
+              "description": "Connaît le sort mineur Contact glacial ; apprend automatiquement (toujours préparés, hors quota) Préservation des morts et Rayon affaiblissant (niveau 3), Animation des morts et Forme gazeuse (niveau 5), Flétrissement et Confusion (niveau 7), Brume mortelle et Contagion (niveau 9)."
+            },
+            {
+              "level": 2,
+              "name": "Halo de spores",
+              "description": "Réaction : 3 dégâts de poison à une créature visible à 3 m (6 au niveau 6, 9 au niveau 10, 12 au niveau 14)."
+            },
+            {
+              "level": 2,
+              "name": "Entité symbiotique",
+              "description": "En utilisant Forme sauvage, peut réveiller ses spores à la place : PV temporaires égaux à 3×niveau de druide, dégâts du Halo de spores doublés, attaques de mêlée à l'arme +1d6 dégâts de poison ; dure 10 minutes ou jusqu'à nouvelle utilisation de Forme sauvage."
+            },
+            {
+              "level": 6,
+              "name": "Infestation fongique",
+              "description": "Un humanoïde tué par le Halo de spores devient un zombie à 1 PV à la fin du tour, agissant après vous, limité à une attaque de mêlée par tour sur ordre mental ; s'effondre après 1 heure."
+            },
+            {
+              "level": 10,
+              "name": "Dispersion de spores",
+              "description": "Action bonus : cube de 3 m d'arête à 9 m pendant 1 minute (Halo de spores indisponible pendant ce temps) ; chaque créature qui commence son tour dans le cube subit les dégâts du Halo de spores."
+            },
+            {
+              "level": 14,
+              "name": "Corps fongique",
+              "description": "Immunité aux états aveuglé, assourdi, effrayé et empoisonné ; les coups critiques subis n'infligent pas de dégâts supplémentaires."
+            }
+          ]
+        },
+        {
+          "name": "Cercle des fournaises",
+          "unlocked_at_level": 2,
+          "traits": [
+            {
+              "level": 2,
+              "name": "Sorts de cercle",
+              "description": "Connaît le sort mineur Trait de feu ; apprend automatiquement (toujours préparés, hors quota) Localisation d'animaux ou de plantes et Rayon ardent (niveau 3), Boule de feu et Croissance végétale (niveau 5), Aura de vie et Bouclier de feu (niveau 7), Colonne de flamme et Rappel à la vie (niveau 9)."
+            },
+            {
+              "level": 2,
+              "name": "Invocation d'un esprit des fournaises",
+              "description": "Action : dépense une utilisation de Forme sauvage pour invoquer un esprit élémentaire ami à 9 m (apparition : créatures à 3 m, JdS Dextérité DD sorts ou 2d10 dégâts de feu) ; agit après vous à l'initiative, limité à Esquiver sauf ordre donné en action bonus ; attaque à distance Germe de flamme et Téléportation fougueuse en réaction ; dure 1 heure, jusqu'à 0 PV ou nouvelle Forme sauvage."
+            },
+            {
+              "level": 6,
+              "name": "Lien amélioré",
+              "description": "En lançant un sort à dégâts de feu ou de soin alors que l'esprit est invoqué, +1d8 au jet du sort ; les sorts à portée non personnelle peuvent provenir de l'esprit."
+            },
+            {
+              "level": 10,
+              "name": "Flammes de vie",
+              "description": "Réaction quand une créature de taille P ou plus meurt à 9 m de vous ou de l'esprit : des flammes soignent (2d10+mod. Sagesse) ou blessent la première créature qui les touche, au choix ; utilisations = mod. Sagesse (min 1) par repos long."
+            },
+            {
+              "level": 14,
+              "name": "Endurance flamboyante",
+              "description": "En tombant à 0 PV sans mourir immédiatement : passe à 1 PV, gagne des PV temporaires égaux à 5×niveau de druide, et les créatures visibles choisies à 9 m subissent 2d10+niveau de druide dégâts de feu ; 1 utilisation par repos long."
+            }
+          ]
+        },
+        {
+          "name": "Cercle des astres",
+          "unlocked_at_level": 2,
+          "traits": [
+            {
+              "level": 2,
+              "name": "Carte des étoiles",
+              "description": "Objet TP servant de focaliseur d'incantation ; lance Augure et Éclair traçant sans emplacement de sort ni préparation via la carte, utilisations = mod. Sagesse (min 1) par repos long ; en cas de perte, une cérémonie d'une heure pendant un repos permet d'en créer une nouvelle."
+            },
+            {
+              "level": 2,
+              "name": "Forme étoilée",
+              "description": "Dépense une utilisation de Forme sauvage pour une forme lumineuse (lumière vive 3 m, faible 3 m supplémentaires), 10 minutes ou jusqu'à neutralisation ; choix d'une constellation à chaque activation : Calice (un sort de soin avec emplacement rend en plus 1d8+moitié niveau de druide PV à soi ou une autre créature à 9 m), Archer (action bonus : attaque de sort à distance 18 m, 1d8+mod. Sagesse dégâts radiants) ou Dragon (traite un résultat de 9 ou moins comme un 10 sur un JdS d'Intelligence/Sagesse/Constitution pour maintenir la concentration)."
+            },
+            {
+              "level": 6,
+              "name": "Présage cosmique",
+              "description": "À chaque repos long, un d6 détermine un présage : pair = Bonheur (réaction : +d6 à un jet d'attaque/sauvegarde/caractéristique d'une créature visible à 9 m), impair = Malheur (réaction : -d6 au même type de jet) ; utilisations = mod. Sagesse par repos long."
+            },
+            {
+              "level": 10,
+              "name": "Plein d'étoiles",
+              "description": "Sous Forme étoilée, résistance aux dégâts contondants, perforants et tranchants."
+            },
+            {
+              "level": 14,
+              "name": "Éclat des étoiles",
+              "description": "Action : sphère de 9 m de rayon à 36 m, téléporte les créatures consentantes qui s'y trouvent vers un espace inoccupé à 9 m ; celles qui restent subissent un JdS Constitution DD sorts sous peine de 4d10 dégâts radiants et d'aveuglement jusqu'à la fin du prochain tour ; 1 utilisation par repos long ou emplacement de sort de niveau 5+."
+            }
+          ]
         }
       ],
       "detail_url": "https://www.aidedd.org/regles/classes/druide/",
@@ -2634,6 +3465,346 @@
               "description": "Lorsque l'action est utilisée pour lancer n'importe quel sort, une attaque avec une arme peut être portée en action bonus."
             }
           ]
+        },
+        {
+          "name": "Chevalier",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Né en selle",
+              "description": "Monter/descendre coûte 1,5 m au lieu de la moitié de la vitesse ; avantage aux jets de sauvegarde contre le désarçonnement ; atterrit sur ses pieds si désarçonné et chute de moins de 3 m."
+            },
+            {
+              "level": 3,
+              "name": "Marque implacable",
+              "description": "Sur une attaque de mêlée réussie, marque la cible jusqu'à la fin du tour suivant (sans effet sur les créatures immunisées à la peur) : désavantage aux attaques de la cible contre d'autres que vous ; si la cible marquée à 1,5 m se déplace ou attaque avec désavantage, réaction pour une attaque de mêlée avec avantage (+dégâts égaux au niveau de guerrier si touché) ; 3 utilisations par repos court ou long."
+            },
+            {
+              "level": 7,
+              "name": "Équitation noble",
+              "description": "Maîtrise de 2 compétences au choix parmi Dressage/Histoire/Intuition/Persuasion/Religion (ou une langue à la place d'une compétence)."
+            },
+            {
+              "level": 10,
+              "name": "Rester en ligne",
+              "description": "Réaction : attaque de mêlée contre une créature se déplaçant d'au moins 30 cm à 1,5 m de vous ; en cas de touche, +dégâts égaux à la moitié du niveau de guerrier et vitesse de la cible réduite à 0 jusqu'à la fin du tour."
+            },
+            {
+              "level": 15,
+              "name": "Frappe éclair",
+              "description": "Renonce à un avantage sur une attaque pour effectuer une attaque supplémentaire en action bonus contre la même cible."
+            },
+            {
+              "level": 18,
+              "name": "Lame du défenseur",
+              "description": "Attaque d'opportunité utilisable même en ayant déjà utilisé sa réaction ce round (mais pas 2 fois ce tour) ; +1 à la CA en armure lourde."
+            }
+          ]
+        },
+        {
+          "name": "Tireur d'élite",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Objectif figé",
+              "description": "Action bonus : cible une créature visible à portée d'une arme à distance tenue ; jusqu'à la fin du tour, les attaques à distance contre elle ignorent les abris et infligent +2 + moitié du niveau de guerrier ; 3 utilisations par repos court ou long."
+            },
+            {
+              "level": 7,
+              "name": "Regard attentif",
+              "description": "L'action Chercher est réalisable en action bonus ; maîtrise d'une compétence au choix (Perception, Investigation ou Survie)."
+            },
+            {
+              "level": 10,
+              "name": "Tir rapproché",
+              "description": "Pas de désavantage aux attaques à distance à 1,5 m d'un ennemi ; une créature touchée à 1,5 m par une attaque à distance perd sa réaction jusqu'à la fin du tour."
+            },
+            {
+              "level": 15,
+              "name": "Frappe éclair",
+              "description": "Renonce à un avantage sur une attaque pour effectuer une attaque supplémentaire en action bonus contre la même cible."
+            },
+            {
+              "level": 18,
+              "name": "Tir instantané",
+              "description": "Attaque à distance supplémentaire lors du premier tour de combat en utilisant l'action Attaquer."
+            }
+          ]
+        },
+        {
+          "name": "Brute",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Force de la brute",
+              "description": "Dégâts supplémentaires sur une attaque à l'arme maîtrisée touchée, progressant avec le niveau (1d4 au niveau 3, 1d6 au niveau 10, 1d8 au niveau 16, 1d10 au niveau 20)."
+            },
+            {
+              "level": 7,
+              "name": "Résistance de la brute",
+              "description": "Ajoute 1d6 à un jet de sauvegarde ; un total de 20 ou plus obtenu ainsi sur un jet de sauvegarde de mort compte comme un 20 naturel."
+            },
+            {
+              "level": 10,
+              "name": "Style de combat supplémentaire",
+              "description": "Choix d'un second Style de combat."
+            },
+            {
+              "level": 15,
+              "name": "Critique dévastateur",
+              "description": "+niveau de guerrier aux dégâts d'un coup critique porté à l'arme."
+            },
+            {
+              "level": 18,
+              "name": "Survivant",
+              "description": "Régénère 5 + mod. Constitution PV (min 1) au début de chaque tour en combat, tant que les PV sont à la moitié ou moins du maximum."
+            }
+          ]
+        },
+        {
+          "name": "Éclaireur",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Maîtrises supplémentaires",
+              "description": "Maîtrise de 3 compétences au choix parmi Acrobaties, Athlétisme, Discrétion, Investigation, Médecine, Nature, Perception ou Survie (ou maîtrise des outils de voleur à la place d'une compétence)."
+            },
+            {
+              "level": 3,
+              "name": "Supériorité au combat",
+              "description": "4 dés de supériorité (d8, +1 au niveau 7 et 15, récupérés après un repos court ou long) dépensables pour : ajouter la moitié du résultat (arrondi sup.) à un jet d'Athlétisme/Nature/Perception/Survie ; ajouter le résultat à un jet d'attaque à l'arme ; ou, en réaction si touché en armure légère/intermédiaire, ajouter le résultat à la CA contre cette attaque (moitié des dégâts si elle touche quand même)."
+            },
+            {
+              "level": 3,
+              "name": "Explorateur-né",
+              "description": "Capacité de rôdeur Explorateur-né, avec un terrain favori supplémentaire choisi aux niveaux 7 et 15."
+            },
+            {
+              "level": 10,
+              "name": "Supériorité au combat améliorée",
+              "description": "Les dés de supériorité deviennent des d10."
+            },
+            {
+              "level": 15,
+              "name": "Implacable",
+              "description": "Un dé de supériorité est regagné si aucun n'est disponible lors d'un jet d'initiative."
+            },
+            {
+              "level": 18,
+              "name": "Supériorité au combat renforcée",
+              "description": "Les dés de supériorité deviennent des d12."
+            }
+          ]
+        },
+        {
+          "name": "Chasseur de monstres",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Maîtrises supplémentaires",
+              "description": "Maîtrise de 2 compétences au choix parmi Arcanes, Histoire, Intuition, Investigation, Nature ou Perception (ou un outil au choix à la place d'une compétence)."
+            },
+            {
+              "level": 3,
+              "name": "Supériorité au combat",
+              "description": "4 dés de supériorité (d8, +1 aux niveaux 7 et 15, récupérés par repos court ou long) dépensables pour ajouter le résultat à un jet d'attaque, à un jet de dégâts (imposant un désavantage au jet de sauvegarde de concentration de la cible), à un jet de sauvegarde d'Intelligence/Sagesse/Charisme, ou à un jet de Perception/Intuition."
+            },
+            {
+              "level": 3,
+              "name": "Mysticisme du chasseur",
+              "description": "Lance Détection de la magie en rituel et Protection contre le mal et le bien (Sagesse, 1 fois par repos long) ; apprend l'abyssal, le céleste ou l'infernal au choix."
+            },
+            {
+              "level": 7,
+              "name": "Pourfendeur de monstres",
+              "description": "Peut dépenser 2 dés de supériorité au lieu d'1 sur un jet de dégâts ; dégâts maximisés (au lieu d'être lancés) contre les aberrations, fées, fiélons et morts-vivants."
+            },
+            {
+              "level": 10,
+              "name": "Supériorité au combat améliorée",
+              "description": "Les dés de supériorité deviennent des d10 (d12 au niveau 18)."
+            },
+            {
+              "level": 15,
+              "name": "Implacable",
+              "description": "Un dé de supériorité est regagné si aucun n'est disponible lors d'un jet d'initiative."
+            }
+          ]
+        },
+        {
+          "name": "Archer arcanique",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Connaissances de l'archer arcanique",
+              "description": "Maîtrise de la compétence Arcanes ou Nature ; apprend le sort mineur Prestidigitation ou Druidisme."
+            },
+            {
+              "level": 3,
+              "name": "Tir arcanique",
+              "description": "2 options de Tir arcanique connues (DD 8+bonus de maîtrise+mod. Intelligence) applicables une fois par tour à une flèche d'arc court/long dans l'action Attaquer ; 2 utilisations par repos court ou long, +1 option aux niveaux 7/10/15/18, effets renforcés au niveau 18. Options : Flèche affaiblissante (2d6 nécrotique, réduit de moitié les dégâts d'arme de la cible sur JdS Constitution raté), Flèche agrippante (2d6 poison, vitesse -3 m, dégâts tranchants en cas de déplacement), Flèche de bannissement (JdS Charisme ou bannissement bref), Flèche chercheuse (sans jet d'attaque, poursuit une cible connue, +1d6 force et révèle sa position), Flèche d'ombres (2d6 psychique, aveuglement bref sur JdS Sagesse raté), Flèche envoûtante (2d6 psychique, charme temporaire vers un allié désigné), Flèche explosive (2d6 force en zone de 3 m) et Flèche perforante (sans jet d'attaque, ligne traversant les abris, +1d6 perforant)."
+            },
+            {
+              "level": 7,
+              "name": "Flèche magique",
+              "description": "Une flèche non magique tirée devient magique pour la résistance et l'immunité, jusqu'à ce qu'elle touche ou rate sa cible."
+            },
+            {
+              "level": 7,
+              "name": "Tir incurvé",
+              "description": "Action bonus après un jet d'attaque raté avec une flèche magique : relance contre une cible différente à 18 m ou moins de la cible d'origine."
+            },
+            {
+              "level": 15,
+              "name": "Toujours prêt à tirer",
+              "description": "Une utilisation de Tir arcanique est regagnée si aucune n'est disponible au moment de lancer l'initiative."
+            }
+          ]
+        },
+        {
+          "name": "Samouraï",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Esprit combatif",
+              "description": "Action bonus : avantage à tous les jets d'attaque et résistance aux dégâts tranchants, perforants et contondants jusqu'à la fin du prochain tour ; 3 utilisations par repos court ou long."
+            },
+            {
+              "level": 7,
+              "name": "Courtisan élégant",
+              "description": "Ajoute le mod. de Sagesse à un jet de Charisme pour persuader ou satisfaire un noble ou une personne de haut rang ; maîtrise d'une compétence au choix (Histoire, Intuition ou Persuasion) ou d'une langue."
+            },
+            {
+              "level": 10,
+              "name": "Volonté inébranlable",
+              "description": "Maîtrise des jets de sauvegarde de Sagesse (ou, si déjà acquise, d'Intelligence ou de Charisme au choix)."
+            },
+            {
+              "level": 15,
+              "name": "Frappe fulgurante",
+              "description": "Renonce à un avantage sur une attaque pour effectuer une attaque supplémentaire en action bonus contre la même cible."
+            },
+            {
+              "level": 18,
+              "name": "Solide face à la mort",
+              "description": "Peut retarder des dégâts qui feraient tomber à 0 PV pour effectuer immédiatement un tour de combat bonus (résistance, etc.) avant de les subir ; 1 utilisation par repos long."
+            }
+          ]
+        },
+        {
+          "name": "Chevalier runique",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Maîtrises supplémentaires",
+              "description": "Maîtrise des outils de forgeron ; parle, lit et écrit le géant."
+            },
+            {
+              "level": 3,
+              "name": "Magie runique",
+              "description": "2 runes connues au choix (Haug/collines, Ild/feu, Ise/givre, Skye/nuages, Stein/pierres, Uvar/tempêtes), inscrites sur des objets (arme/armure/bouclier) à chaque repos long, remplaçables en montant de niveau. Chaque rune procure un bonus passif et un effet invocable en action bonus ou réaction (1 fois par repos court ou long) : Haug (avantage JdS/résistance poison ; résistance contondant/perforant/tranchant 1 min), Ild (maîtrise d'outil doublée ; chaînes enflammées entravant et brûlant la cible), Ise (avantage Dressage/Intimidation ; Force +2 pendant 10 min, jusqu'à 30), Skye (avantage Escamotage/Tromperie ; réaction pour rediriger une attaque subie vers une autre cible à 9 m), Stein (avantage Intuition, vision dans le noir ; réaction pour charmer et neutraliser une créature 1 min) et Uvar (avantage Arcanes, jamais surpris ; réaction pour appliquer avantage/désavantage à un jet dans 18 m)."
+            },
+            {
+              "level": 3,
+              "name": "Gigantisme",
+              "description": "Action bonus, 1 minute : taille G si inférieure, avantage aux jets et JdS de Force, +1d6 dégâts aux attaques à l'arme ; 2 utilisations par repos long."
+            },
+            {
+              "level": 7,
+              "name": "Protection runique",
+              "description": "Réaction : +1+mod. Intelligence (min +2) à la CA d'un allié visible à 18 m touché par une attaque ; apprend une 3e rune."
+            },
+            {
+              "level": 10,
+              "name": "Grande carrure",
+              "description": "Le Gigantisme augmente la taille physique et porte les dégâts supplémentaires à 1d8 ; apprend une 4e rune."
+            },
+            {
+              "level": 15,
+              "name": "Maître de la mage runique",
+              "description": "Chaque rune invocable 2 fois au lieu d'1 (récupérées par repos court ou long) ; apprend une 5e rune."
+            },
+            {
+              "level": 18,
+              "name": "Bénédiction du Père de tous",
+              "description": "Le Gigantisme peut être partagé avec une créature consentante visible à 18 m."
+            }
+          ]
+        },
+        {
+          "name": "Cavalier",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Maîtrises supplémentaires",
+              "description": "Maîtrise d'une compétence au choix (Dressage, Histoire, Intuition, Représentation ou Persuasion) ou d'une langue."
+            },
+            {
+              "level": 3,
+              "name": "Né sur un cheval",
+              "description": "Avantage aux JdS contre le désarçonnement ; atterrit sur ses pieds en cas de chute de moins de 3 m après désarçonnement ; monter/descendre coûte 1,5 m au lieu de la moitié de la vitesse."
+            },
+            {
+              "level": 3,
+              "name": "Supériorité au combat",
+              "description": "4 dés de supériorité (d8, +1 aux niveaux 7 et 15, récupérés par repos court ou long) pour : Contrôler une monture (ajout à un jet de Dressage), Attaque de précision (ajout à un jet d'attaque), Faire tomber (dé ajouté aux dégâts + JdS Force pour une cible de taille G ou moins) ou Manœuvre de protection (réaction : dé ajouté à la CA d'une cible touchée à 1,5 m, résistance aux dégâts si l'attaque touche quand même)."
+            },
+            {
+              "level": 7,
+              "name": "Charge féroce",
+              "description": "Jusqu'à 2 dés de supériorité dépensables sur Faire tomber, imposant un désavantage au JdS de la cible."
+            },
+            {
+              "level": 10,
+              "name": "Supériorité au combat améliorée",
+              "description": "Les dés de supériorité deviennent des d10 (d12 au niveau 18)."
+            },
+            {
+              "level": 15,
+              "name": "Implacable",
+              "description": "Un dé de supériorité est regagné si aucun n'est disponible lors d'un jet d'initiative."
+            }
+          ]
+        },
+        {
+          "name": "Chevalier psi",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Talent psionique",
+              "description": "Dé de Talent psionique (d6, augmentant à d8/d10/d12 aux niveaux 5/11/17 ; diminue d'une taille sur le résultat maximum, augmente sur un 1, restauré par repos long ou action bonus 1 fois par repos long). Options : Champ de protection (réaction : réduit les dégâts subis par soi ou une créature visible à 9 m du dé + mod. Intelligence, min 1), Saut de psi (dé ajouté à la distance d'un saut, coût de mouvement réduit) et Frappe télékinétique (une fois par tour, +dégâts de force = dé après une attaque à l'arme touchée à 9 m)."
+            },
+            {
+              "level": 7,
+              "name": "Adepte télékinétique",
+              "description": "Poussée psionique : la Frappe télékinétique peut forcer un JdS Force sous peine de renversement ou déplacement de 6 m. Mouvement télékinétique : action pour déplacer de 6 m un objet non tenu de taille G ou moins, ou une créature consentante visible à 9 m ; le dé diminue d'une taille."
+            },
+            {
+              "level": 10,
+              "name": "Métabolisme amélioré par le psi",
+              "description": "Résistance aux dégâts de poison et psychiques ; immunité à l'état empoisonné."
+            },
+            {
+              "level": 15,
+              "name": "Rempart de force",
+              "description": "Action bonus : créatures choisies visibles à 9 m (nombre = mod. Intelligence, min 1) protégées par un abri partiel pendant 1 minute ; 1 utilisation par repos long, ou dé réduit d'une taille pour réutiliser."
+            },
+            {
+              "level": 18,
+              "name": "Maître télékinétique",
+              "description": "Si le dé est disponible, lance Télékinésie sans composantes (Intelligence) ; le dé diminue d'une taille."
+            }
+          ]
         }
       ],
       "detail_url": "https://www.aidedd.org/regles/classes/guerrier/",
@@ -2982,6 +4153,228 @@
               "level": 17,
               "name": "Disciplines supplémentaires",
               "description": "Débloque l'apprentissage d'une nouvelle discipline élémentaire au choix parmi les plus puissantes de la liste, réservées au niveau 17 (comme Défense de la montagne éternelle, Souffle de l'hiver, Torrent de flammes voraces ou Vague de terre grondante) ; une discipline déjà connue peut être remplacée à cette occasion."
+            }
+          ]
+        },
+        {
+          "name": "Voie de la tranquillité",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Voie de la tranquillité",
+              "description": "Lance Sanctuaire sur soi sans composantes (durée 8h, DD de sauvegarde = 8+bonus de maîtrise+mod. Sagesse) ; 1 utilisation, relançable après 1 minute d'attente."
+            },
+            {
+              "level": 3,
+              "name": "Mains guérisseuses",
+              "description": "Réserve de soin égale à 10 × niveau de moine (rechargée à chaque repos long) ; action : touche une créature pour puiser dans la réserve (soin, ou 5 points pour guérir une maladie/neutraliser un poison) ; substituable à une frappe du Déluge de coups ; sans effet sur les morts-vivants et artificiels."
+            },
+            {
+              "level": 6,
+              "name": "Émissaire de la paix",
+              "description": "Avantage aux jets de Charisme pour apaiser un conflit de bonne foi ; maîtrise de Représentation ou Persuasion."
+            },
+            {
+              "level": 11,
+              "name": "Apaiser les feux de la discorde",
+              "description": "Action : touche une créature (jet de sauvegarde de Sagesse DD 8+bonus de maîtrise+mod. Sagesse, échec automatique si ses PV sont entamés) ; en cas d'échec, incapable d'attaquer ou de lancer un sort à dégâts/jet de sauvegarde pendant 1 minute (rompu si elle-même ou un allié subit une attaque, des dégâts ou un jet de sauvegarde)."
+            },
+            {
+              "level": 17,
+              "name": "Colère d'une belle âme",
+              "description": "Réaction en voyant une créature réduite à 0 PV par un ennemi : bonus aux dégâts contre cet ennemi égal au niveau de moine, jusqu'à la fin du prochain tour ; 1 utilisation par repos court ou long."
+            }
+          ]
+        },
+        {
+          "name": "Voie du kensei",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Armes de kensei",
+              "description": "Choix de 2 types d'armes (une de mêlée, une à distance, courantes ou de guerre sans propriété lourde ni spéciale, l'arc long acceptable) devenant maîtrisées et considérées comme des armes de moine ; +1 type choisi aux niveaux 6, 11 et 17."
+            },
+            {
+              "level": 3,
+              "name": "Parade agile",
+              "description": "En cas d'attaque à mains nues avec une arme de kensei de mêlée en main dans le cadre de l'action Attaquer, +2 CA jusqu'au début du prochain tour tant que l'arme reste en main et que vous n'êtes pas neutralisé."
+            },
+            {
+              "level": 3,
+              "name": "Tir de kensei",
+              "description": "Action bonus : les attaques à distance à l'arme de kensei infligent +1d4 dégâts du type de l'arme jusqu'à la fin du tour."
+            },
+            {
+              "level": 3,
+              "name": "Voie du pinceau",
+              "description": "Maîtrise du matériel de calligraphe ou de peintre."
+            },
+            {
+              "level": 6,
+              "name": "Uni avec la lame",
+              "description": "Les armes de kensei comptent comme magiques ; Frappe habile : 1 point de ki dépensé sur une attaque touchée avec une arme de kensei pour infliger un dé d'Arts martiaux de dégâts supplémentaires, 1 fois par tour."
+            },
+            {
+              "level": 11,
+              "name": "Lame affûtée",
+              "description": "Action bonus : jusqu'à 3 points de ki dépensés pour accorder à une arme de kensei touchée un bonus égal aux points dépensés aux jets d'attaque et de dégâts, pendant 1 minute (sans effet sur une arme magique déjà bonifiée)."
+            },
+            {
+              "level": 17,
+              "name": "Précision infaillible",
+              "description": "Une fois par tour, un jet d'attaque manqué avec une arme de moine peut être relancé."
+            }
+          ]
+        },
+        {
+          "name": "Voie du maître ivre",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Maîtrise supplémentaire",
+              "description": "Maîtrise de la compétence Représentation et du matériel de brasseur."
+            },
+            {
+              "level": 3,
+              "name": "Technique de l'ivrogne",
+              "description": "Le Déluge de coups accorde en plus les effets de Se désengager et +3 m de vitesse jusqu'à la fin du tour."
+            },
+            {
+              "level": 6,
+              "name": "Balancement ivre",
+              "description": "Se remettre sur pied : se relever coûte 1,5 m de mouvement au lieu de la moitié de la vitesse. Rediriger une attaque : réaction (1 point de ki) pour rediriger une attaque de mêlée manquée vers une autre créature visible à 1,5 m."
+            },
+            {
+              "level": 11,
+              "name": "Chance de l'ivrogne",
+              "description": "2 points de ki dépensés pour annuler un désavantage sur un jet de caractéristique, d'attaque ou de sauvegarde."
+            },
+            {
+              "level": 17,
+              "name": "Frénésie ivre",
+              "description": "Le Déluge de coups peut inclure jusqu'à 3 attaques supplémentaires (total 5), à condition que chaque frappe touche une créature différente."
+            }
+          ]
+        },
+        {
+          "name": "Voie de l'astre intérieur",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Bras de l'astre intérieur",
+              "description": "Action bonus, 2 points de ki : bras spectraux pendant 10 minutes ; le mod. de Sagesse remplace la Force pour les jets et JdS de Force ; les bras sont des armes de moine à allonge 3 m infligeant des dégâts radiants ou nécrotiques (Sagesse pour l'attaque et les dégâts) ; attaque supplémentaire en action bonus après l'action Attaquer avec les bras (2 attaques au niveau 11, 3 au niveau 17)."
+            },
+            {
+              "level": 6,
+              "name": "Visage de l'astre intérieur",
+              "description": "Action bonus, 1 point de ki (ou combiné aux bras) : visage spectral pendant 10 minutes : avantage aux jets d'Intuition et d'Intimidation ; vision dans le noir jusqu'à 36 m, y compris à travers les ténèbres magiques."
+            },
+            {
+              "level": 11,
+              "name": "Éveil de l'astre intérieur",
+              "description": "Avec bras et visage actifs simultanément : Déviation d'énergie (réaction réduisant les dégâts acide/froid/feu/foudre/force subis de 1d10+mod. Sagesse+niveau de moine), Bras puissants (une fois par tour, +dé d'Arts martiaux de dégâts avec les bras) et Mot de l'esprit (parole dirigée vers une seule créature à 9 m, ou amplifiée jusqu'à 180 m, via le visage)."
+            },
+            {
+              "level": 17,
+              "name": "Astre intérieur complet",
+              "description": "Action bonus, 10 points de ki : corps spectral complet pendant 10 minutes : +2 CA tant que non neutralisé ; l'Attaque supplémentaire devient 3 attaques avec les bras astraux ; réaction quand une créature à 3 m tombe à 0 PV pour regagner mod. Sagesse (min 1) points de ki."
+            }
+          ]
+        },
+        {
+          "name": "Voie de la miséricorde",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Instruments de miséricorde",
+              "description": "Maîtrise des compétences Intuition et Médecine, et du kit d'herboriste ; port d'un masque distinctif (cosmétique)."
+            },
+            {
+              "level": 3,
+              "name": "Main guérisseuse",
+              "description": "Action, 1 point de ki : touche une créature pour lui rendre un dé d'Arts martiaux + mod. Sagesse PV ; substituable gratuitement à une frappe à mains nues du Déluge de coups."
+            },
+            {
+              "level": 3,
+              "name": "Main contaminante",
+              "description": "Sur une attaque à mains nues touchée, 1 point de ki dépensé pour infliger un dé d'Arts martiaux + mod. Sagesse dégâts nécrotiques ; une fois par tour."
+            },
+            {
+              "level": 6,
+              "name": "Toucher du médecin",
+              "description": "Main guérisseuse peut aussi mettre fin à une maladie ou à l'un des états aveuglé/assourdi/paralysé/empoisonné/étourdi ; Main contaminante peut infliger l'état empoisonné jusqu'à la fin du prochain tour."
+            },
+            {
+              "level": 11,
+              "name": "Déluge de guérison et de contamination",
+              "description": "Chaque frappe à mains nues du Déluge de coups peut devenir une Main guérisseuse gratuite ; une frappe peut en plus porter gratuitement la Main contaminante (toujours limitée à 1 fois par tour)."
+            },
+            {
+              "level": 17,
+              "name": "Main de l'ultime miséricorde",
+              "description": "Action, 5 points de ki : ressuscite un cadavre mort depuis moins de 24h avec 4d10+mod. Sagesse PV, sans les états aveuglé/assourdi/paralysé/empoisonné/étourdi affectant la créature à sa mort ; 1 utilisation par repos long."
+            }
+          ]
+        },
+        {
+          "name": "Voie du dragon ascendant",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Disciple draconique",
+              "description": "Le type de dégâts des frappes à mains nues peut être changé (acide/froid/feu/foudre/poison) ; apprend le draconique ; réaction pour relancer un jet de Charisme (Intimidation/Persuasion) raté, 1 fois jusqu'au prochain repos long après un succès obtenu ainsi."
+            },
+            {
+              "level": 3,
+              "name": "Souffle du dragon",
+              "description": "Remplace une attaque de l'action Attaquer par un souffle (cône de 6 m ou ligne de 9 m x 1,5 m), type de dégâts au choix, JdS Dextérité DD ki sous peine de deux dés d'Arts martiaux de dégâts (trois au niveau 11) ou moitié en cas de réussite ; utilisations = bonus de maîtrise par repos long, ou 1 point de ki si épuisées."
+            },
+            {
+              "level": 6,
+              "name": "Ailes déployées",
+              "description": "En utilisant Déplacement aérien, des ailes spectrales octroient une vitesse de vol égale à la vitesse de marche ; utilisations = bonus de maîtrise par repos long, ou 1 point de ki."
+            },
+            {
+              "level": 11,
+              "name": "Aspect du Grand ver",
+              "description": "Action bonus : aura de 9 m pendant 1 minute, type de dégâts au choix : résistance partagée avec les alliés dans l'aura ; réaction des alliés touchés dans l'aura pour renvoyer un dé d'Arts martiaux de dégâts à l'attaquant ; 1 utilisation par repos long, ou 4 points de ki."
+            },
+            {
+              "level": 17,
+              "name": "Aspect ascendant",
+              "description": "Vision aveugle jusqu'à 9 m ; le Souffle du dragon inflige en plus des dégâts persistants (un dé d'Arts martiaux par tour, JdS en fin de tour pour y mettre fin) ; l'Aspect du Grand ver peut infliger 4d10 dégâts explosifs aux créatures choisies dans l'aura."
+            }
+          ]
+        },
+        {
+          "name": "Voie de l'Âme radieuse",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Éclat solaire radiant",
+              "description": "Nouvelle option d'attaque à distance de sort (portée 9 m), maîtrisée, utilisant le mod. de Dextérité aux jets d'attaque et de dégâts ; dégâts radiants dont le dé suit la progression du dé d'Arts martiaux. Avec l'action Attaquer, 1 point de ki dépensé permet de l'utiliser deux fois en action bonus ; utilisable pour les attaques de l'Attaque supplémentaire."
+            },
+            {
+              "level": 6,
+              "name": "Frappe en arc brûlant",
+              "description": "Immédiatement après l'action Attaquer, 2 points de ki dépensés pour lancer Mains brûlantes en action bonus ; des points de ki supplémentaires peuvent augmenter le niveau du sort (maximum total = moitié du niveau de moine)."
+            },
+            {
+              "level": 11,
+              "name": "Explosion solaire ardente",
+              "description": "Action : orbe lancé jusqu'à 45 m, sphère de 6 m de rayon, JdS Constitution sous peine de 2d6 dégâts radiants (abri total opaque = pas de jet requis) ; dégâts +2d6 par point de ki dépensé, jusqu'à 3 points."
+            },
+            {
+              "level": 17,
+              "name": "Bouclier solaire",
+              "description": "Lumière vive dans un rayon de 9 m et faible sur 9 m supplémentaires, activable/désactivable en action bonus ; réaction sur une attaque de mêlée touchée : 5+mod. Sagesse dégâts radiants à l'attaquant."
             }
           ]
         }
@@ -3559,6 +4952,11 @@
           "traits": [
             {
               "level": 3,
+              "name": "Sorts de serment",
+              "description": "Protection contre le mal et le bien et Sanctuaire (3), Restauration partielle et Zone de vérité (5), Dissipation de la magie et Lueur d'espoir (9), Gardien de la foi et Liberté de mouvement (13), Colonne de flamme et Communion (17), toujours préparés."
+            },
+            {
+              "level": 3,
               "name": "Conduit divin : Arme sacrée",
               "description": "Une action permet d'imprégner l'arme tenue d'énergie positive pendant 1 minute : le modificateur de Charisme (minimum +1) s'ajoute aux jets d'attaque avec cette arme, qui devient temporairement magique si elle ne l'était pas et émet une lumière vive sur 6 mètres puis faible sur 6 mètres supplémentaires. L'effet peut être arrêté volontairement dans le cadre d'une autre action, et prend automatiquement fin si l'arme n'est plus tenue/portée ou si le paladin devient inconscient."
             },
@@ -3588,6 +4986,11 @@
           "name": "Serment des anciens",
           "unlocked_at_level": 3,
           "traits": [
+            {
+              "level": 3,
+              "name": "Sorts de serment",
+              "description": "Communication avec les animaux et Frappe piégeuse (3), Foulée brumeuse et Rayon de lune (5), Croissance végétale et Protection contre une énergie (9), Peau de pierre et Tempête de grêle (13), Communion avec la nature et Passage par les arbres (17), toujours préparés."
+            },
             {
               "level": 3,
               "name": "Conduit divin : Courroux de la nature",
@@ -3621,6 +5024,11 @@
           "traits": [
             {
               "level": 3,
+              "name": "Sorts de serment",
+              "description": "Fléau et Marque du chasseur (3), Foulée brumeuse et Immobilisation de personne (5), Hâte et Protection contre une énergie (9), Bannissement et Porte dimensionnelle (13), Immobilisation de monstre et Scrutation (17), toujours préparés."
+            },
+            {
+              "level": 3,
               "name": "Conduit divin : Conspuer l'ennemi",
               "description": "Une action, symbole sacré présenté, cible une créature visible à 18 mètres ou moins, qui doit réussir un jet de sauvegarde de Sagesse (sauf immunité à la peur ; désavantage pour un fiélon ou un mort-vivant) : en cas d'échec elle est effrayée pendant 1 minute ou jusqu'à subir des dégâts, sa vitesse tombant à 0 sans bonus possible ; en cas de réussite sa vitesse est simplement divisée par deux pour la même durée."
             },
@@ -3643,6 +5051,258 @@
               "level": 20,
               "name": "Ange de la vengeance",
               "description": "Une action déclenche 1 heure de transformation : des ailes procurent une vitesse de vol de 18 mètres, et une aura de menace de 9 mètres de rayon force toute créature y pénétrant ou y commençant son tour en combat à réussir un jet de sauvegarde de Sagesse sous peine d'être effrayée pendant 1 minute ou jusqu'à subir des dégâts ; les attaques contre une créature ainsi effrayée bénéficient d'un avantage. Nécessite un repos long entre deux utilisations."
+            }
+          ]
+        },
+        {
+          "name": "Serment de traîtrise",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Sorts de serment",
+              "description": "Charme-personne/Repli expéditif (3), Image miroir/Invisibilité (5), Forme gazeuse/Hâte (9), Confusion/Invisibilité supérieure (13), Domination de personne/Passe-muraille (17), toujours préparés."
+            },
+            {
+              "level": 3,
+              "name": "Conduit divin : Invocation de double",
+              "description": "Action : illusion de soi-même (1 min ou perte de concentration) déplaçable en action bonus, permettant de lancer des sorts depuis sa position ; avantage aux attaques si soi et l'illusion sont à 1,5 m d'une cible qui la voit."
+            },
+            {
+              "level": 3,
+              "name": "Conduit divin : Frappe empoisonnée",
+              "description": "Action bonus : empoisonne une arme ou une munition pendant 1 minute ; la prochaine touche inflige 2d10 + niveau de paladin dégâts de poison (20 + niveau si l'attaque avait un avantage)."
+            },
+            {
+              "level": 7,
+              "name": "Aura de traîtrise",
+              "description": "Avantage aux attaques de mêlée contre une cible ayant un allié à 1,5 m (Abattre le troupeau) ; réaction pour forcer un attaquant ayant raté son attaque à 1,5 m à la rediriger vers une autre créature à 1,5 m de lui (Frappe du traître, sans effet contre l'immunité au charme) ; 3 utilisations par repos court ou long."
+            },
+            {
+              "level": 15,
+              "name": "Évasion du chevalier noir",
+              "description": "Réaction après avoir été touché : invisibilité et téléportation jusqu'à 18 m, jusqu'à la fin du prochain tour ou jusqu'à une action offensive ; 1 utilisation par repos court ou long."
+            },
+            {
+              "level": 20,
+              "name": "Icône de la tromperie",
+              "description": "Action, 1 minute : invisibilité, contrôle de l'action d'une créature vous infligeant des dégâts (jet de sauvegarde de Sagesse DD sorts), +niveau de paladin aux dégâts en cas d'avantage ; 1 utilisation par repos long."
+            }
+          ]
+        },
+        {
+          "name": "Serment de conquête",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Sorts de serment",
+              "description": "Armure d'Agathys et Injonction (3), Arme spirituelle et Immobilisation de personne (5), Malédiction et Peur (9), Domination de bête et Peau de pierre (13), Domination de personne et Brume mortelle (17), toujours préparés."
+            },
+            {
+              "level": 3,
+              "name": "Conduit divin : Présence conquérante",
+              "description": "Action : créatures visibles au choix à 9 m, JdS Sagesse sous peine d'effroi 1 minute (relance possible en fin de tour)."
+            },
+            {
+              "level": 3,
+              "name": "Conduit divin : Frappe guidée",
+              "description": "+10 à un jet d'attaque, applicable après avoir vu le résultat mais avant l'annonce de la touche."
+            },
+            {
+              "level": 7,
+              "name": "Aura de conquête",
+              "description": "Rayon de 3 m (9 m au niveau 18) : une créature effrayée par vous dans l'aura a sa vitesse réduite à 0 et subit des dégâts psychiques égaux à la moitié du niveau de paladin au début de son tour."
+            },
+            {
+              "level": 15,
+              "name": "Blâme méprisant",
+              "description": "Une créature qui vous touche subit des dégâts psychiques égaux au mod. Charisme (min 1), tant que vous n'êtes pas neutralisé."
+            },
+            {
+              "level": 20,
+              "name": "Conquérant invincible",
+              "description": "Action, 1 minute : résistance à tous les dégâts, attaque supplémentaire avec l'action Attaquer, critique en mêlée sur 19-20 ; 1 utilisation par repos long."
+            }
+          ]
+        },
+        {
+          "name": "Serment de rédemption",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Sorts de serment",
+              "description": "Sanctuaire et Sommeil (3), Apaisement des émotions et Rayon affaiblissant (5), Contresort et Motif hypnotique (9), Peau de pierre et Sphère résiliente d'Otiluke (13), Immobilisation de monstre et Mur de force (17), toujours préparés."
+            },
+            {
+              "level": 3,
+              "name": "Conduit divin : Émissaire de paix",
+              "description": "Action bonus : +5 au prochain jet de Persuasion dans les 10 minutes suivantes."
+            },
+            {
+              "level": 3,
+              "name": "Conduit divin : Blâme du violent",
+              "description": "Réaction quand un ennemi à 9 m inflige des dégâts de mêlée à une autre créature que vous : JdS Sagesse sous peine de subir des dégâts radiants égaux aux dégâts infligés (moitié en cas de réussite)."
+            },
+            {
+              "level": 7,
+              "name": "Aura du gardien",
+              "description": "Rayon de 3 m (9 m au niveau 18) : réaction pour prendre à votre place les dégâts subis par un allié dans l'aura, sans réduction ni transfert des autres effets."
+            },
+            {
+              "level": 15,
+              "name": "Esprit protecteur",
+              "description": "Régénère 1d6 + moitié niveau de paladin si les PV sont à la moitié ou moins en fin de tour de combat, tant que vous n'êtes pas neutralisé."
+            },
+            {
+              "level": 20,
+              "name": "Émissaire de la rédemption",
+              "description": "Résistance à tous les dégâts infligés par autrui ; toute créature qui vous touche subit en retour la moitié des dégâts en radiants ; ces deux avantages sont perdus contre une cible que vous attaquez ou blessez, jusqu'au prochain repos long."
+            }
+          ]
+        },
+        {
+          "name": "Serment d'héroïsme",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Sorts de serment",
+              "description": "Repli expéditif et Éclair traçant (3), Amélioration de caractéristique et Discours captivant (5), Hâte et Protection contre une énergie (9), Compulsion et Liberté de mouvement (13), Communion et Invocation de volée (17), toujours préparés."
+            },
+            {
+              "level": 3,
+              "name": "Conduit divin : Athlète hors pair",
+              "description": "Action bonus : avantage à tous les jets de Force (Athlétisme) et Dextérité (Acrobaties) pendant 10 minutes."
+            },
+            {
+              "level": 3,
+              "name": "Conduit divin : Frappe légendaire",
+              "description": "Action bonus, 1 minute : critique en mêlée sur 19-20."
+            },
+            {
+              "level": 7,
+              "name": "Action puissante",
+              "description": "Sur un critique infligé ou une créature réduite à 0 PV, un nombre de créatures visibles au choix à 9 m (égal au mod. Charisme, min 1) gagnent des PV temporaires (1d6+mod. Charisme, min 1) ou doivent réussir un JdS Sagesse sous peine d'effroi jusqu'au début du prochain tour ; réutilisable au début du prochain tour."
+            },
+            {
+              "level": 15,
+              "name": "Défense glorieuse",
+              "description": "Réaction : +mod. Charisme (min +1) à la CA contre une attaque touchée ; en cas d'échec de l'attaque, attaque de mêlée en réponse contre l'attaquant."
+            },
+            {
+              "level": 20,
+              "name": "Mythe vivant",
+              "description": "Action bonus, 10 minutes : avantage à tous les jets de Charisme ; une fois par tour, une attaque à l'arme manquée peut être transformée en touche ; réaction pour réussir automatiquement un JdS raté ; 1 utilisation par repos court ou long."
+            }
+          ]
+        },
+        {
+          "name": "Serment des guetteurs",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Sorts de serment",
+              "description": "Alarme et Orbe chromatique (3), Augure et Rayon de lune (5), Contresort et Antidétection (9), Aura de pureté et Bannissement (13), Immobilisation de monstre et Sanctification (17), toujours préparés."
+            },
+            {
+              "level": 3,
+              "name": "Conduit divin : Volonté du guetteur",
+              "description": "Action : créatures visibles au choix à 9 m (nombre égal au mod. Charisme, min 1) gagnent l'avantage aux JdS d'Intelligence, de Sagesse et de Charisme pendant 1 minute."
+            },
+            {
+              "level": 3,
+              "name": "Conduit divin : Conspuer l'extraplanaire",
+              "description": "Action : chaque élémentaire, fée, fiélon ou aberration à 9 m vous entendant doit réussir un JdS Sagesse sous peine d'être repoussé pendant 1 minute (ou jusqu'à subir des dégâts), incapable d'approcher à moins de 9 m, limité à Foncer/tenter de s'échapper (ou Esquiver si bloqué)."
+            },
+            {
+              "level": 7,
+              "name": "Aura de la sentinelle",
+              "description": "Rayon de 3 m (9 m au niveau 18) : vous-même et les créatures choisies dans l'aura gagnent un bonus d'initiative égal au mod. Charisme (min +1)."
+            },
+            {
+              "level": 15,
+              "name": "Représailles attentives",
+              "description": "Réaction quand vous ou un allié visible à 9 m réussit un JdS contre un sort : le lanceur subit 2d8+mod. Charisme dégâts de force."
+            },
+            {
+              "level": 20,
+              "name": "Rempart mortel",
+              "description": "Action bonus, 1 minute : vision véritable 36 m ; avantage aux attaques contre élémentaires/fées/fiélons/aberrations ; une touche infligeant des dégâts force en plus un JdS Charisme sous peine de bannissement vers le plan natal (immunité 24h en cas de réussite) ; 1 utilisation par repos long."
+            }
+          ]
+        },
+        {
+          "name": "Serment de la Couronne",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Sorts de serment",
+              "description": "Injonction et Duel forcé (3), Lien de protection et Zone de vérité (5), Aura de vitalité et Esprits gardiens (9), Bannissement et Gardien de la foi (13), Cercle de pouvoir et Quête (17), toujours préparés."
+            },
+            {
+              "level": 3,
+              "name": "Conduit divin : Défi du champion",
+              "description": "Action bonus : des créatures visibles au choix à 9 m doivent réussir un JdS de Sagesse sous peine de ne plus pouvoir s'éloigner volontairement de plus de 9 m de vous, jusqu'à votre neutralisation, votre mort, ou leur éloignement au-delà de 9 m."
+            },
+            {
+              "level": 3,
+              "name": "Conduit divin : Retourner la marée",
+              "description": "Action bonus : des créatures vous entendant au choix à 9 m ayant la moitié ou moins de leurs PV regagnent 1d6 + mod. Charisme (min 1) PV."
+            },
+            {
+              "level": 7,
+              "name": "Allégeance divine",
+              "description": "Réaction quand une créature à 1,5 m subit des dégâts : vous subissez ces dégâts à sa place (sans réduction ni prévention possible)."
+            },
+            {
+              "level": 15,
+              "name": "Saint inébranlable",
+              "description": "Avantage aux jets de sauvegarde contre la paralysie et l'étourdissement."
+            },
+            {
+              "level": 20,
+              "name": "Champion exalté",
+              "description": "Action, 1 heure : résistance aux dégâts contondants, perforants et tranchants non magiques ; les alliés à 9 m ont l'avantage aux jets de sauvegarde de mort ; vous et vos alliés à 9 m avez l'avantage aux jets de sauvegarde de Sagesse ; 1 utilisation par repos long."
+            }
+          ]
+        },
+        {
+          "name": "Parjure",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Sorts de serment",
+              "description": "Représailles infernales et Blessure (3), Couronne du dément et Ténèbres (5), Animation des morts et Malédiction (9), Flétrissement et Confusion (13), Contagion et Domination de personne (17), toujours préparés."
+            },
+            {
+              "level": 3,
+              "name": "Conduit divin : Contrôle des morts-vivants",
+              "description": "Action : un mort-vivant visible à 9 m doit réussir un JdS de Sagesse sous peine d'obéir à vos ordres pendant 24h ou jusqu'à réutilisation de cette capacité ; immunité si son facteur de puissance est égal ou supérieur à votre niveau de paladin."
+            },
+            {
+              "level": 3,
+              "name": "Conduit divin : Aspect terrifiant",
+              "description": "Action : des créatures visibles au choix à 9 m doivent réussir un JdS de Sagesse sous peine d'effroi pendant 1 minute ; un nouveau jet est possible en fin de tour si la créature termine à plus de 9 m de vous."
+            },
+            {
+              "level": 7,
+              "name": "Aura de haine",
+              "description": "Rayon de 3 m (9 m au niveau 18) : vous-même, ainsi que les fiélons et morts-vivants dans l'aura, gagnez un bonus aux dégâts de mêlée égal au mod. Charisme (min +1) ; une créature ne peut bénéficier de cet effet que d'un seul paladin à la fois."
+            },
+            {
+              "level": 15,
+              "name": "Résistance surnaturelle",
+              "description": "Résistance aux dégâts contondants, perforants et tranchants non magiques."
+            },
+            {
+              "level": 20,
+              "name": "Seigneur de l'effroi",
+              "description": "Action, 1 minute : aura de 9 m réduisant la lumière vive en lumière faible ; un ennemi effrayé par vous commençant son tour dans l'aura subit 4d10 dégâts psychiques ; les créatures choisies dans l'aura bénéficient d'une ombre gênant les attaques basées sur la vue contre elles ; action bonus : attaque de mêlée avec un sort contre une cible dans l'aura, 3d10+mod. Charisme dégâts nécrotiques en cas de touche ; 1 utilisation par repos long."
             }
           ]
         }
@@ -4266,6 +5926,243 @@
               "description": "Au niveau 15, lorsque le rôdeur lance un sort qui le cible lui-même, il peut choisir d'en faire aussi bénéficier son compagnon animal si celui-ci se trouve à 9 m ou moins de lui."
             }
           ]
+        },
+        {
+          "name": "Gardien primitif",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Magie gardienne",
+              "description": "Sorts supplémentaires hors quota : Enchevêtrement (3), Amélioration de caractéristique (5), Invocation d'animaux (9), Insecte géant (13), Fléau d'insectes (17)."
+            },
+            {
+              "level": 3,
+              "name": "Âme du gardien",
+              "description": "Action bonus : forme de gardien (jusqu'à interruption volontaire ou neutralisation) : taille G si inférieure, vitesse réduite à 1,5 m si supérieure, allonge +1,5 m, PV temporaires égaux à la moitié du niveau de rôdeur au début de chaque tour (perdus à la fin de la forme)."
+            },
+            {
+              "level": 3,
+              "name": "Épines pointues",
+              "description": "Une fois par tour, +1d6 dégâts perforants sur une attaque à l'arme touchée."
+            },
+            {
+              "level": 7,
+              "name": "Endurance primale",
+              "description": "PV maximum et actuels +2/niveau en forme de gardien (retour à la normale à la fin, sans perte de PV temporaires sauf dépassement du nouveau maximum)."
+            },
+            {
+              "level": 11,
+              "name": "Défense enracinée",
+              "description": "En forme de gardien, le sol dans un rayon de 6 m devient un terrain difficile pour les ennemis."
+            },
+            {
+              "level": 15,
+              "name": "Aura du gardien",
+              "description": "Un allié blessé (moitié ou moins de ses PV) commençant son tour à 6 m de la forme de gardien regagne des PV égaux à la moitié du niveau de rôdeur (sans effet sur les morts-vivants et artificiels)."
+            }
+          ]
+        },
+        {
+          "name": "Gardien de drake",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Don draconique",
+              "description": "Apprend le sort mineur Thaumaturgie (sort de rôdeur) ; apprend à parler, lire et écrire le draconique ou une autre langue au choix."
+            },
+            {
+              "level": 3,
+              "name": "Compagnon drake",
+              "description": "Action : invoque un drake compagnon (CA 14+BM, PV 5+5×niveau, morsure +3+BM au toucher, 1d6+BM dégâts perforants, immunité au type de dégâts choisi parmi acide/froid/feu/foudre/poison) qui agit après vous à l'initiative, limité à Esquiver sauf ordre donné en action bonus ; disparaît à 0 PV, à une nouvelle invocation ou à votre mort ; réinvocable après un repos long ou en dépensant un emplacement de sort de niveau 1+."
+            },
+            {
+              "level": 7,
+              "name": "Lien du croc et d'écailles",
+              "description": "Le drake gagne une vitesse de vol égale à sa vitesse de marche, atteint la taille M et devient chevauchable ; sa morsure inflige 1d6 dégâts supplémentaires du type choisi ; vous gagnez la résistance à ce type de dégâts tant qu'il est invoqué."
+            },
+            {
+              "level": 11,
+              "name": "Souffle de drake",
+              "description": "Action : cône de 9 m infligeant 8d6 dégâts (10d6 au niveau 15) d'un type au choix (acide/froid/feu/foudre/poison), JdS Dextérité DD sorts pour moitié dégâts ; utilisable par vous ou le drake ; 1 utilisation par repos long ou emplacement de sort de niveau 3+."
+            },
+            {
+              "level": 15,
+              "name": "Lien parfait",
+              "description": "La morsure du drake inflige 2d6 dégâts supplémentaires au total ; le drake atteint la taille G ; réaction pour transférer une résistance aux dégâts entre vous et le drake s'il est à moins de 9 m."
+            }
+          ]
+        },
+        {
+          "name": "Arpenteur de l'horizon",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Magie planaire",
+              "description": "Apprend automatiquement (hors quota) Protection contre le mal et le bien (3), Modification d'apparence (5), Protection contre une énergie (9), Bannissement (13), Cercle de téléportation (17)."
+            },
+            {
+              "level": 3,
+              "name": "Guerrier planaire",
+              "description": "Action bonus : une créature visible à 6 m est ciblée ; jusqu'à la fin du tour, les attaques contre elle ignorent sa résistance aux dégâts, et la prochaine touche inflige +1d6 dégâts de force."
+            },
+            {
+              "level": 3,
+              "name": "Connaissance des portails",
+              "description": "Action : détecte les portails planaires dans un rayon de 300 m (distance, direction, plan de destination, sauf masquage magique) ; 1 utilisation par repos court ou long, ou emplacement de sort de niveau 2+."
+            },
+            {
+              "level": 7,
+              "name": "Pas éthéré",
+              "description": "Action bonus : Forme éthérée jusqu'à la fin du tour ; 1 utilisation par repos court ou long."
+            },
+            {
+              "level": 11,
+              "name": "Frappe lointaine",
+              "description": "Avec l'action Attaquer, téléportation de 3 m avant chaque attaque (destination visible requise) ; en touchant au moins 2 créatures différentes, attaque supplémentaire contre une 3e."
+            },
+            {
+              "level": 15,
+              "name": "Défense spectrale",
+              "description": "Réaction sur des dégâts subis : les réduit de moitié."
+            }
+          ]
+        },
+        {
+          "name": "Tueur de monstres",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Magie du tueur de monstres",
+              "description": "Apprend automatiquement (hors quota) Protection contre le mal et le bien (3), Zone de vérité (5), Cercle magique (9), Bannissement (13), Immobilisation de monstre (17)."
+            },
+            {
+              "level": 3,
+              "name": "Sens du chasseur",
+              "description": "Action bonus : une créature visible à 18 m révèle ses vulnérabilités, résistances et immunités (aucune si insensible aux divinations) ; utilisations = mod. Sagesse (min 1) par repos long."
+            },
+            {
+              "level": 3,
+              "name": "Proie du tueur",
+              "description": "Action bonus : désigne une créature visible à 18 m ; la prochaine touche à l'arme sur elle inflige +1d6 dégâts, jusqu'à un repos ou une nouvelle désignation."
+            },
+            {
+              "level": 7,
+              "name": "Défense surnaturelle",
+              "description": "+1d6 à un JdS ou un jet de Force (lutte) déclenché par la cible de Proie du tueur."
+            },
+            {
+              "level": 11,
+              "name": "Némésis d'utilisateur de la magie",
+              "description": "Réaction en voyant une créature lancer un sort ou se téléporter à 18 m : JdS Sagesse DD sorts sous peine d'échec du sort ou de la téléportation ; 1 utilisation par repos court ou long."
+            },
+            {
+              "level": 15,
+              "name": "Contre-attaque du tueur",
+              "description": "Réaction si la cible de Proie du tueur vous force à un JdS : attaque immédiate avant le jet ; le JdS réussit automatiquement si l'attaque touche."
+            }
+          ]
+        },
+        {
+          "name": "Gardien des nuées",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Magie du gardien des nuées",
+              "description": "Connaît le sort mineur Main de mage (prenant la forme d'une nuée) ; apprend automatiquement (hors quota) Lueurs féeriques (3), Toile d'araignée (5), Forme gazeuse (9), Insecte géant (13), Fléau d'insectes (17)."
+            },
+            {
+              "level": 3,
+              "name": "Nuée groupée",
+              "description": "Action bonus, 1 minute : une fois par tour, une attaque à l'arme touchée inflige +1d6 (2d6 au niveau 11) dégâts de force et déplace la cible de 1,5 m vers ou loin de vous ; utilisations = mod. Sagesse (min 1) par repos long."
+            },
+            {
+              "level": 7,
+              "name": "Marée grouillante",
+              "description": "Choix à l'activation : vitesse +3 m et Se désengager en action bonus, ou vitesse d'escalade égale à la vitesse de marche (surfaces difficiles et plafonds sans jet), ou vitesse de vol de 3 m avec vol stationnaire."
+            },
+            {
+              "level": 11,
+              "name": "Yeux patrouilleurs",
+              "description": "Action : esprit prenant la forme d'une bête TP pendant 1h, vitesse 12 m (tous modes de déplacement), sens partagés par télépathie, parole possible à travers lui, Se cacher via votre bonus de Discrétion, CA 18 ; JdS Sagesse DD 10 ou moitié des dégâts subis sous peine de disparition ; renvoi prématuré permettant une téléportation de 1,5 m ; 1 utilisation par repos long ou emplacement de sort de niveau 3+."
+            },
+            {
+              "level": 15,
+              "name": "Tempête de serviteurs",
+              "description": "Action : sphère de 3 m à 36 m pendant 1 minute, terrain difficile pour les autres ; chaque créature commençant son tour dedans subit un JdS Constitution DD sorts sous peine de 2d8 dégâts nécrotiques et d'aveuglement (moitié sans aveuglement en cas de réussite) ; régénère 1d8 PV si une créature de taille P+ est touchée en début de tour ; déplaçable de 9 m en action bonus ; créatures épargnables à l'activation ; 1 utilisation par repos long ou emplacement de sort de niveau 4+."
+            }
+          ]
+        },
+        {
+          "name": "Vagabond féerique",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Magie du vagabond féerique",
+              "description": "Apprend automatiquement (hors quota) Charme-personne (3), Foulée brumeuse (5), Dissipation de la magie (9), Bannissement (13), Double illusoire (17)."
+            },
+            {
+              "level": 3,
+              "name": "Volonté astucieuse",
+              "description": "Avantage aux JdS contre le charme et l'effroi ; maîtrise d'une compétence au choix (Persuasion, Représentation ou Tromperie)."
+            },
+            {
+              "level": 3,
+              "name": "Frappes épouvantables",
+              "description": "Action bonus : les armes tenues sont imprégnées jusqu'à la fin du tour (magiques, +1d6 dégâts psychiques, une fois par tour et par créature) ; en combat à deux armes, la même action bonus imprègne les deux."
+            },
+            {
+              "level": 7,
+              "name": "Bénédictions des Cours",
+              "description": "Une fois par tour, sur une attaque à l'arme touchée : dépense un emplacement de sort pour 3d6 dégâts psychiques et JdS Sagesse DD sorts sous peine d'effroi jusqu'à la fin du prochain tour ; +mod. Sagesse ajouté aux jets de Charisme."
+            },
+            {
+              "level": 11,
+              "name": "Torsion séduisante",
+              "description": "Réaction quand une créature visible à 36 m réussit un JdS contre le charme ou l'effroi : force une autre créature visible à 36 m à un JdS Sagesse DD sorts sous peine de charme/effroi 1 minute (relance en fin de tour) ou de 3d10 dégâts psychiques, au choix."
+            },
+            {
+              "level": 15,
+              "name": "Présence brumeuse",
+              "description": "Action bonus : une créature visible à 9 m subit un JdS Sagesse DD sorts sous peine de ne plus pouvoir vous voir ni entendre pendant 24h (nouveau jet possible si elle est touchée, forcée à un JdS ou blessée par vous) ; immunité de 7 jours en cas de réussite ; 1 utilisation par repos long ou emplacement de sort de niveau 4+."
+            }
+          ]
+        },
+        {
+          "name": "Chasseur des profondeurs",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Explorateur d'Outreterre",
+              "description": "Premier tour de combat : +3 m de vitesse, attaque supplémentaire si l'action Attaquer est utilisée ; tours suivants : action bonus pour tenter de se cacher en fin de tour si les conditions habituelles sont remplies."
+            },
+            {
+              "level": 3,
+              "name": "Magie du chasseur des profondeurs",
+              "description": "Vision dans le noir 27 m ; apprend automatiquement (hors quota) Déguisement (3), Corde enchantée (5), Glyphe de protection (9), Invisibilité supérieure (13), Apparence trompeuse (17)."
+            },
+            {
+              "level": 7,
+              "name": "Esprit d'acier",
+              "description": "Maîtrise des jets de sauvegarde de Sagesse."
+            },
+            {
+              "level": 11,
+              "name": "Déluge du chasseur",
+              "description": "Sur une attaque manquée durant le tour, une attaque supplémentaire immédiate est possible, une fois par tour."
+            },
+            {
+              "level": 15,
+              "name": "Esquive du chasseur",
+              "description": "Réaction avant de connaître le résultat d'une attaque sans avantage : désavantage imposé à cette attaque."
+            }
+          ]
         }
       ],
       "detail_url": "https://www.aidedd.org/regles/classes/rodeur/",
@@ -4618,6 +6515,197 @@
               "level": 17,
               "name": "Voleur de sort",
               "description": "Au niveau 17, en réaction juste après avoir été ciblé ou inclus dans la zone d'un sort, force le lanceur à un jet de sauvegarde de sa caractéristique d'incantation contre le DD de sauvegarde du roublard ; en cas d'échec, l'effet du sort est nié et, s'il est de niveau 1 ou plus et d'un niveau lançable par le roublard, sa connaissance est volée pour 8 heures (le lanceur original ne peut plus le lancer durant ce délai). Utilisable une fois par repos long."
+            }
+          ]
+        },
+        {
+          "name": "Conspirateur",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Maître des intrigues",
+              "description": "Maîtrise du kit de déguisement, du kit de contrefaçon et d'un jeu au choix ; apprentissage de 2 langues au choix ; imitation infaillible d'un accent entendu pendant au moins 1 minute."
+            },
+            {
+              "level": 3,
+              "name": "Maître des tactiques",
+              "description": "L'action Aider est réalisable en action bonus ; en aidant un allié à attaquer, la cible peut être à 9 m au lieu de 1,5 m si elle vous voit ou vous entend."
+            },
+            {
+              "level": 9,
+              "name": "Manipulateur perspicace",
+              "description": "Après 1 minute d'observation ou d'interaction hors combat, révèle si une créature est égale/supérieure/inférieure à vous sur 2 caractéristiques au choix parmi Intelligence, Sagesse, Charisme, niveau de classe."
+            },
+            {
+              "level": 13,
+              "name": "Redirection",
+              "description": "Réaction : une créature à 1,5 m offrant un abri contre une attaque vous ciblant devient la nouvelle cible de cette attaque."
+            },
+            {
+              "level": 17,
+              "name": "Âme de trompeur",
+              "description": "Pensées illisibles par télépathie sans consentement (jet de Tromperie opposé possible pour présenter de fausses pensées) ; immunité à la contrainte magique de dire la vérité, la magie de détection de mensonge indiquant que vous dites vrai si vous le souhaitez."
+            }
+          ]
+        },
+        {
+          "name": "Enquêteur",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Ouïe de la tromperie",
+              "description": "Un jet d'Intuition pour détecter un mensonge utilise le meilleur entre le résultat obtenu et 8+mod. Sagesse ; +bonus de maîtrise si la compétence est maîtrisée (doublé avec Expertise)."
+            },
+            {
+              "level": 3,
+              "name": "Vue du détail",
+              "description": "L'action bonus de Ruse peut servir à faire un jet de Perception, un jet d'Investigation, ou à utiliser Combat perspicace."
+            },
+            {
+              "level": 3,
+              "name": "Combat perspicace",
+              "description": "Action (ou action bonus via Vue du détail) : jet d'Intuition opposé à un jet de Tromperie d'une créature visible non neutralisée ; en cas de succès, l'Attaque sournoise devient utilisable contre elle sans avantage ni allié proche requis (même avec désavantage), pendant 1 minute ou jusqu'à un nouveau succès contre une autre cible."
+            },
+            {
+              "level": 9,
+              "name": "Vue solide",
+              "description": "Avantage aux jets de Perception pour repérer une créature ou un objet caché si aucun déplacement n'a lieu pendant le tour (choix fait avant de savoir si l'on bouge)."
+            },
+            {
+              "level": 13,
+              "name": "Vue infaillible",
+              "description": "Action : détecte la présence d'illusions, de métamorphes hors de leur vraie forme et d'autres tromperies sensorielles dans un rayon de 9 m, sans révéler leur nature exacte."
+            },
+            {
+              "level": 17,
+              "name": "Vue de la faiblesse",
+              "description": "Contre une cible affectée par Combat perspicace, +2d6 aux dégâts d'Attaque sournoise."
+            }
+          ]
+        },
+        {
+          "name": "Bretteur",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Jeu de jambes sophistiqué",
+              "description": "Après une attaque de mêlée sur une créature durant votre tour, celle-ci ne peut plus faire d'attaque d'opportunité contre vous pour le reste du tour."
+            },
+            {
+              "level": 3,
+              "name": "Audace désinvolte",
+              "description": "Mod. Charisme ajouté à l'initiative ; l'Attaque sournoise est utilisable sans avantage si aucune autre créature que la cible n'est à 1,5 m et sans désavantage au jet."
+            },
+            {
+              "level": 9,
+              "name": "Panache",
+              "description": "Action : jet de Charisme (Persuasion) opposé à un jet de Sagesse (Intuition) d'une créature entendante partageant une langue. Cible hostile en cas de succès : désavantage à ses attaques contre d'autres que vous et pas d'attaque d'opportunité contre d'autres, 1 minute. Cible non hostile : charme 1 minute, rompu par une nuisance."
+            },
+            {
+              "level": 13,
+              "name": "Manœuvre élégante",
+              "description": "Action bonus : avantage au prochain jet d'Acrobaties ou d'Athlétisme du même tour."
+            },
+            {
+              "level": 17,
+              "name": "Maître duelliste",
+              "description": "Sur une attaque manquée, relance le jet avec avantage ; 1 utilisation par repos court ou long."
+            }
+          ]
+        },
+        {
+          "name": "Éclaireur",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Survivaliste",
+              "description": "Maîtrise des compétences Nature et Survie, avec bonus de maîtrise doublé sur ces jets."
+            },
+            {
+              "level": 3,
+              "name": "Escarmouche",
+              "description": "Réaction quand un ennemi termine son tour à 1,5 m : déplacement de la moitié de la vitesse sans provoquer d'attaque d'opportunité."
+            },
+            {
+              "level": 9,
+              "name": "Mobilité supérieure",
+              "description": "Vitesse +3 m (ainsi que les vitesses d'escalade ou de nage, le cas échéant)."
+            },
+            {
+              "level": 13,
+              "name": "Maître de l'embuscade",
+              "description": "Si un ennemi est surpris au premier round : action bonus pour donner +5 d'initiative aux alliés visibles (plafonné à la vôtre) jusqu'à la fin du combat, et +3 m de vitesse jusqu'à la fin de leur prochain tour."
+            },
+            {
+              "level": 17,
+              "name": "Frappe soudaine",
+              "description": "Action bonus : attaque supplémentaire avec l'action Attaquer, pouvant bénéficier de l'Attaque sournoise même si déjà utilisée ce tour, à condition d'être la seule attaque contre cette cible ce tour."
+            }
+          ]
+        },
+        {
+          "name": "Fantôme",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Murmures des morts",
+              "description": "À chaque repos court ou long : maîtrise d'une compétence ou d'un outil au choix, jusqu'à réutilisation de la capacité."
+            },
+            {
+              "level": 3,
+              "name": "Gémissements de la tombe",
+              "description": "Après avoir infligé une Attaque sournoise, cible une seconde créature visible à 9 m de la première : dégâts psychiques égaux à la moitié des dés d'Attaque sournoise (arrondi sup.) ; utilisations = bonus de maîtrise par repos long."
+            },
+            {
+              "level": 9,
+              "name": "Marques des disparus",
+              "description": "Réaction quand une créature visible meurt à 9 m : une babiole d'âme TP apparaît, procurant l'avantage aux JdS de mort et de Constitution tant qu'elle est portée (maximum = bonus de maîtrise) ; action pour détruire une babiole et interroger brièvement l'esprit associé (peut mentir)."
+            },
+            {
+              "level": 13,
+              "name": "Marche fantôme",
+              "description": "Action bonus : forme spectrale pendant 10 minutes (vol 3 m stationnaire, désavantage aux attaques contre vous, traverse créatures/objets, 1d10 dégâts de force si le tour se termine dedans) ; 1 utilisation par repos long, ou en détruisant une babiole d'âme."
+            },
+            {
+              "level": 17,
+              "name": "Glas mortuaire",
+              "description": "Gémissements de la tombe inflige aussi des dégâts psychiques à la première créature touchée."
+            }
+          ]
+        },
+        {
+          "name": "Âme acérée",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Talent psionique",
+              "description": "Dé de Talent psionique (d6, augmentant à d8/d10/d12 aux niveaux 5/11/17 ; diminue d'une taille sur le résultat maximum, augmente sur un 1, restauré par repos long ou action bonus 1 fois par repos long). Options : Truc de psi (dé ajouté à un jet de compétence/outil maîtrisé raté) et Murmures psychiques (action : liaison télépathique 1h avec un nombre de créatures visibles égal au résultat du dé, portée 1,5 km)."
+            },
+            {
+              "level": 3,
+              "name": "Lames psychiques",
+              "description": "Une attaque à l'arme peut être remplacée par une lame psychique invoquée (arme courante avec finesse et lancer, portée 18 m, 1d6+mod. dégâts psychiques, disparaît après le jet) ; une seconde lame en action bonus (1d4) si l'autre main est libre."
+            },
+            {
+              "level": 9,
+              "name": "Lames de l'âme",
+              "description": "Frappes autoguidées : le dé peut être ajouté à un jet d'attaque manqué avec les lames (réduit d'une taille si l'attaque touche ainsi). Téléportation psychique : action bonus, dé disponible : lance une lame jusqu'à 1,5×sa taille maximale et se téléporte à sa position, dé réduit d'une taille."
+            },
+            {
+              "level": 13,
+              "name": "Voile psionique",
+              "description": "Action : invisibilité (avec équipement) pendant 10 minutes ou fin volontaire, rompue par des dégâts infligés ou un JdS forcé ; 1 utilisation par repos long, ou dé réduit d'une taille."
+            },
+            {
+              "level": 17,
+              "name": "Esprit déchiré",
+              "description": "Sur des dégâts d'Attaque sournoise infligés via les lames : JdS Sagesse DD 8+bonus de maîtrise+mod. Dextérité sous peine d'étourdissement jusqu'à la fin du prochain tour ; 1 utilisation par repos long, ou dé réduit d'une taille."
             }
           ]
         }
@@ -5214,6 +7302,326 @@
               "level": 18,
               "name": "Bombardement de sort",
               "description": "Lorsqu'un jet de dégâts de sort obtient la valeur maximale sur au moins un dé, ce dé peut être relancé et son nouveau résultat ajouté aux dégâts totaux ; utilisable une fois par tour."
+            }
+          ]
+        },
+        {
+          "name": "Sorcellerie lunaire",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Feu lunaire",
+              "description": "Apprentissage du sort Flamme sacrée (hors du nombre de sorts mineurs connus) ; le sort peut cibler deux créatures proches l'une de l'autre (1,5 m) au lieu d'une seule."
+            },
+            {
+              "level": 1,
+              "name": "Incarnation lunaire",
+              "description": "À chaque repos long, choix d'une phase lunaire (pleine, nouvelle ou croissante) parmi trois listes de sorts supplémentaires gagnés par paliers de niveau (1/3/5/7/9) ; le sort associé à la phase active est lançable une fois gratuitement par repos long, en plus des emplacements de sort normaux."
+            },
+            {
+              "level": 6,
+              "name": "Bénédictions lunaires",
+              "description": "Utiliser une Métamagie sur un sort d'Incarnation lunaire ou sur un sort de l'école associée à la phase active (abjuration/invocation en pleine lune, évocation/nécromancie en nouvelle lune, divination/transmutation en lune croissante) réduit son coût en points de sorcellerie de 1 (minimum 0), un nombre de fois égal au bonus de maîtrise par repos long."
+            },
+            {
+              "level": 6,
+              "name": "Croissance et décroissance",
+              "description": "Action bonus : dépense de 1 point de sorcellerie pour changer immédiatement de phase lunaire."
+            },
+            {
+              "level": 14,
+              "name": "Amélioration lunaire",
+              "description": "Bénéfice passif selon la phase active : pleine lune (lumière alentour et avantage aux jets de sauvegarde des créatures dans cette lumière), nouvelle lune (avantage en Discrétion et désavantage aux attaques contre soi dans l'obscurité/lumière faible), ou lune croissante (résistance aux dégâts nécrotiques et radiants)."
+            },
+            {
+              "level": 18,
+              "name": "Phénomène lunaire",
+              "description": "Action bonus (ou lors du changement de phase) : effet selon la phase active — pleine lune (JdS Constitution DD sorts ou aveuglement + 3d8 PV rendus à une créature choisie), nouvelle lune (JdS Dextérité DD sorts, 3d10 dégâts nécrotiques et vitesse à 0, puis invisibilité jusqu'au prochain tour), ou lune croissante (téléportation jusqu'à 18 m et résistance à tous les dégâts jusqu'au prochain tour) ; 1 utilisation par repos long, ou 5 points de sorcellerie pour une utilisation supplémentaire."
+            }
+          ]
+        },
+        {
+          "name": "Sorcellerie du phœnix",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Enflammer",
+              "description": "Action : enflamme magiquement un objet touché (torche, amadou, tissu...)."
+            },
+            {
+              "level": 1,
+              "name": "Manteau de flammes",
+              "description": "Action bonus, 1 minute : lumière vive 9 m et faible 9 m supplémentaires ; toute créature touchant ou frappant en mêlée à 1,5 m subit des dégâts de feu égaux au mod. Charisme ; ajoute le mod. Charisme aux dégâts de feu infligés à son tour ; 1 utilisation par repos long."
+            },
+            {
+              "level": 6,
+              "name": "Étincelle du phœnix",
+              "description": "Réaction en tombant à 0 PV : passe à 1 PV, les créatures à 3 m subissent des dégâts de feu égaux à la moitié du niveau d'ensorceleur + mod. Charisme (niveau + 2×mod. Charisme et fin du Manteau de flammes si celui-ci est actif) ; 1 utilisation par repos long."
+            },
+            {
+              "level": 14,
+              "name": "Feu nourricier",
+              "description": "En dépensant un emplacement pour un sort à dégâts de feu, régénère des PV égaux au niveau de l'emplacement + mod. Charisme."
+            },
+            {
+              "level": 18,
+              "name": "Aspect du phœnix",
+              "description": "Sous Manteau de flammes : vitesse de vol de 12 m (vol stationnaire), résistance à tous les dégâts, et Étincelle du phœnix inflige 20 dégâts de feu supplémentaires."
+            }
+          ]
+        },
+        {
+          "name": "Sorcellerie de la mer",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Âme de la mer",
+              "description": "Respire sous l'eau ; vitesse de nage égale à la vitesse de marche."
+            },
+            {
+              "level": 1,
+              "name": "Malédiction de la mer",
+              "description": "Sur une attaque de sort mineur touchée ou un jet de sauvegarde raté contre un sort mineur, maudit la cible jusqu'à la fin du prochain tour (remplaçable) ; une fois par tour, en infligeant des dégâts de froid/foudre ou un déplacement forcé via un sort, applique un effet supplémentaire (vitesse -4,5 m si froid ; dégâts de foudre +mod. Charisme ; déplacement forcé +4,5 m) ; la malédiction prend fin si le sort n'est pas mineur."
+            },
+            {
+              "level": 6,
+              "name": "Défense liquide",
+              "description": "Résistance aux dégâts de feu ; réaction sur une attaque contondante/perforante/tranchante : réduit les dégâts d'un montant égal au niveau d'ensorceleur + Charisme, puis déplacement de 9 m sans attaque d'opportunité ; 1 utilisation par repos court ou long."
+            },
+            {
+              "level": 14,
+              "name": "Forme fluide",
+              "description": "Ne subit que la moitié des dégâts d'attaque d'opportunité en se déplaçant ; peut traverser l'espace d'un ennemi et se faufiler dans un espace de 7,5 cm sans être à l'étroit."
+            },
+            {
+              "level": 18,
+              "name": "Âme d'eau",
+              "description": "Plus besoin de boire, manger ou dormir ; les coups critiques contre soi deviennent des coups normaux ; résistance aux dégâts contondants, perforants et tranchants."
+            }
+          ]
+        },
+        {
+          "name": "Sorcellerie de la pierre",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Maîtrises supplémentaires",
+              "description": "Maîtrise des boucliers, des armes courantes et des armes de guerre."
+            },
+            {
+              "level": 1,
+              "name": "Magie du métal",
+              "description": "Accès à une liste de sorts martiaux additionnelle (Duel forcé, châtiments, Arme magique, Arme élémentaire...) pouvant être choisis comme sorts d'ensorceleur connus."
+            },
+            {
+              "level": 1,
+              "name": "Résistance de la pierre",
+              "description": "+1 point de vie maximum par niveau d'ensorceleur ; action pour obtenir une CA de 13 + mod. Constitution sans armure (peau rocailleuse), jusqu'à interruption volontaire, neutralisation ou port d'une armure autre qu'un bouclier."
+            },
+            {
+              "level": 6,
+              "name": "Égide de pierre",
+              "description": "Action bonus : protège un allié visible à 18 m, réduisant les dégâts contondants/perforants/tranchants de 2 + niveau d'ensorceleur/4 pendant 1 minute ; réaction pour se téléporter à 1,5 m d'un attaquant touchant la cible protégée et le frapper en mêlée (+1d10 dégâts de force, 2d10 au niveau 11, 3d10 au niveau 17)."
+            },
+            {
+              "level": 14,
+              "name": "Bout de roche",
+              "description": "Une créature blessée par un sort à dégâts subit en plus des dégâts de force égaux à la moitié du niveau d'ensorceleur (1 fois par sort)."
+            },
+            {
+              "level": 18,
+              "name": "Égide de la Terre",
+              "description": "Égide de pierre protège jusqu'à 3 créatures simultanément."
+            }
+          ]
+        },
+        {
+          "name": "Âme du géant",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Résistance de Jotun",
+              "description": "+1 point de vie maximum par niveau d'ensorceleur."
+            },
+            {
+              "level": 1,
+              "name": "Marque de l'Ordning",
+              "description": "Choix d'un type de géant (nuages, feu, givre, collines, pierres ou tempêtes) octroyant 2 sorts d'ensorceleur supplémentaires (niveaux 1 et 3), hors du nombre de sorts connus."
+            },
+            {
+              "level": 6,
+              "name": "Âme de l'Ostoria perdue",
+              "description": "Bonus selon le type de géant choisi en lançant un sort de la Marque de l'Ordning (téléportation courte, bonus de dégâts, PV temporaires, cibles repoussées, bonus de CA, ou dégâts de foudre à 3 cibles)."
+            },
+            {
+              "level": 14,
+              "name": "Rage de l'Ostoria déchue",
+              "description": "En lançant un sort avec emplacement, augmente sa taille d'un cran pendant 1 minute : PV max/actuels +1/niveau, allonge et vitesse +1,5 m, avantage aux jets et JdS de Force, bonus aux dégâts de mêlée égal au mod. Constitution ; 1 utilisation par repos court ou long."
+            },
+            {
+              "level": 18,
+              "name": "Bénédiction du Père de Tout",
+              "description": "Constitution +2 (max 22) ; Rage de l'Ostoria déchue utilisable 2 fois entre repos (effets cumulables si réutilisée en étant déjà active), maximum 1 fois par tour."
+            }
+          ]
+        },
+        {
+          "name": "Élu divin",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Magie divine",
+              "description": "Les sorts mineurs et sorts de niveau 1+ appris peuvent être choisis dans la liste de sorts de clerc en plus de celle d'ensorceleur (mêmes restrictions) et deviennent des sorts d'ensorceleur ; apprend en plus le sort Soins, hors du nombre de sorts connus."
+            },
+            {
+              "level": 1,
+              "name": "Favori des dieux",
+              "description": "Réaction sur un jet de sauvegarde ou d'attaque raté : ajoute 2d4 au total ; 1 utilisation par repos court ou long."
+            },
+            {
+              "level": 6,
+              "name": "Soins améliorés",
+              "description": "Dépense 1 point de sorcellerie pour relancer tous les dés de soins d'un sort d'ensorceleur lancé."
+            },
+            {
+              "level": 14,
+              "name": "Apparence angélique",
+              "description": "Apparence surréelle au choix (beauté, jeunesse, gentillesse ou présence imposante) ; action bonus : ailes spectrales octroyant une vitesse de vol de 9 m tant qu'elles sont présentes."
+            },
+            {
+              "level": 18,
+              "name": "Récupération surnaturelle",
+              "description": "Action bonus quand les PV sont à la moitié ou moins du maximum : régénère la moitié du maximum de PV ; 1 utilisation par repos long."
+            }
+          ]
+        },
+        {
+          "name": "Âme mécanique",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Magie du mécanisme",
+              "description": "Apprend automatiquement (hors quota, non remplaçables) Alarme et Protection contre le mal et le bien (niveau 1), Sens des pièges et Métal brûlant (niveau 3), Contresort et Glyphe de protection (niveau 5), Oeil magique et Sphère résiliente d'Otiluke (niveau 7), Animation d'objets et Mur de force (niveau 9)."
+            },
+            {
+              "level": 1,
+              "name": "Rétablissement d'équilibre",
+              "description": "Réaction : empêche qu'un d20 lancé avec avantage ou désavantage par une créature visible à 18 m en soit affecté ; utilisations = mod. Charisme (min 1) par repos long."
+            },
+            {
+              "level": 6,
+              "name": "Rempart de la loi",
+              "description": "Action : dépense 1 à 5 points de sorcellerie pour créer une protection (dés d8 = points dépensés) sur soi ou une créature visible à 9 m, jusqu'au prochain repos long ou nouvelle utilisation ; la créature protégée peut, en réaction, dépenser des dés pour réduire les dégâts subis."
+            },
+            {
+              "level": 14,
+              "name": "Transe de l'ordre",
+              "description": "Action bonus, 1 minute : les jets d'attaque contre vous ne peuvent pas bénéficier d'un avantage ; traite un résultat de 9 ou moins comme un 10 sur vos jets d'attaque, de caractéristique ou de sauvegarde ; 1 utilisation par repos long, ou 5 points de sorcellerie pour la réutiliser."
+            },
+            {
+              "level": 18,
+              "name": "Cavalcade du mécanisme",
+              "description": "Action : cube de 9 m centré sur vous où des esprits soignent jusqu'à 100 PV répartis à volonté, réparent les objets endommagés et dissipent les sorts de niveau 6 ou moins sur les cibles choisies ; 1 utilisation par repos long, ou 7 points de sorcellerie pour la réutiliser."
+            }
+          ]
+        },
+        {
+          "name": "Ombres",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Yeux des ténèbres",
+              "description": "Vision dans le noir 18 m ; lance Ténèbres pour 1 point de sorcellerie et voit à travers."
+            },
+            {
+              "level": 1,
+              "name": "Force de la tombe",
+              "description": "En tombant à 0 PV (sauf par dégâts radiants ou coup critique) : JdS Constitution DD 5+dégâts subis pour passer à 1 PV."
+            },
+            {
+              "level": 6,
+              "name": "Chien de mauvais augure",
+              "description": "Action bonus, 3 points de sorcellerie : invoque un chien spectral (traverse créatures/objets, connaît toujours la position de sa cible même cachée) à 9 m d'une cible visible ; agit à sa propre initiative, limité à poursuivre/attaquer sa cible ; cible désavantagée aux JdS contre vos sorts tant que le chien est à 1,5 m ; disparaît à 0 PV, à la mort de la cible ou après 5 minutes."
+            },
+            {
+              "level": 14,
+              "name": "Traverser des ombres",
+              "description": "En lumière faible ou obscurité, action bonus : téléportation jusqu'à 36 m vers un espace visible également en lumière faible ou obscurité."
+            },
+            {
+              "level": 18,
+              "name": "Forme d'ombre",
+              "description": "Action bonus, 3 points de sorcellerie : résistance à tous les dégâts sauf de force, traverse créatures et objets (5 dégâts de force si le tour se termine dedans) ; dure 1 minute."
+            }
+          ]
+        },
+        {
+          "name": "Sorcellerie des tempêtes",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Langage du vent",
+              "description": "Parle, lit et écrit le primordial ; comprend l'aérien, l'aquatique, l'igné et le terreux."
+            },
+            {
+              "level": 1,
+              "name": "Magie tumultueuse",
+              "description": "Action bonus juste avant ou après un sort de niveau 1+ : vol de 3 m sans provoquer d'attaque d'opportunité."
+            },
+            {
+              "level": 6,
+              "name": "Cœur de la tempête",
+              "description": "Résistance aux dégâts de foudre et de tonnerre ; en lançant un sort de niveau 1+ à dégâts de foudre/tonnerre, les créatures choisies visibles à 3 m subissent des dégâts (type au choix) égaux à la moitié du niveau d'ensorceleur."
+            },
+            {
+              "level": 6,
+              "name": "Guide des tempêtes",
+              "description": "Action pour stopper la pluie dans un rayon de 6 m (fin par action bonus) ; action bonus par round pour orienter le vent dans un rayon de 30 m jusqu'à la fin du prochain tour (sans changer sa vitesse)."
+            },
+            {
+              "level": 14,
+              "name": "Fureur de la tempête",
+              "description": "Réaction sur une attaque de mêlée touchée : dégâts de foudre égaux au niveau d'ensorceleur à l'attaquant, qui doit réussir un JdS Force DD sorts sous peine d'être repoussé de 6 m."
+            },
+            {
+              "level": 18,
+              "name": "Âme du vent",
+              "description": "Immunité aux dégâts de foudre et de tonnerre ; vitesse de vol 18 m ; action pour réduire sa vitesse de vol à 9 m pendant 1h et partager une vitesse de vol de 9 m à 3+mod. Charisme créatures visibles à 9 m ; 1 utilisation par repos court ou long."
+            }
+          ]
+        },
+        {
+          "name": "Âme psionique",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Talent psionique",
+              "description": "Dé de Talent psionique (d6, augmentant à d8/d10/d12 aux niveaux 5/11/17 ; diminue d'une taille sur le résultat maximum, augmente sur un 1, restauré par repos long ou action bonus 1 fois par repos long). Options : Découverte psionique (10 min de méditation : apprend temporairement un sort de divination/enchantement couvert par un emplacement, pour un nombre d'heures = résultat du dé), Sorcellerie psychique (dé lancé en incantant : pas de composante verbale, et pas de composante somatique/matérielle si le résultat ≥ niveau du sort) et Discours télépathique (action bonus : liaison télépathique avec une créature visible, durée en heures et portée en km ×1,5 déterminées par le dé)."
+            },
+            {
+              "level": 6,
+              "name": "Frappe psychique",
+              "description": "Une fois par tour, sur un sort d'ensorceleur à dégâts avec emplacement touché : +dégâts psychiques égaux au résultat du dé de Talent psionique."
+            },
+            {
+              "level": 14,
+              "name": "L'esprit avant le corps",
+              "description": "Action bonus : dépense 1 ou plusieurs points de sorcellerie pour une transformation dont la durée en heures est déterminée par le dé, octroyant un avantage par point dépensé (vision des invisibles 18 m, vol=vitesse de marche stationnaire, nage=2×vitesse+respiration aquatique, ou souplesse pour se faufiler/s'échapper d'entraves)."
+            },
+            {
+              "level": 18,
+              "name": "Aura psychique",
+              "description": "Action bonus, dé disponible : aura de 9 m pendant 1 minute ; chaque créature y entrant ou y commençant son tour subit des dégâts psychiques (dé + mod. Charisme) et voit sa vitesse divisée par deux jusqu'à son prochain tour."
             }
           ]
         }
@@ -5960,6 +8368,269 @@
               "description": "À partir du niveau 14, une action permet de consumer entièrement la pierre du transmutateur (détruite, non recréable avant un repos long) pour déclencher un effet au choix : Jouvence (réduit l'âge apparent d'une créature touchée de 3d10 années, minimum 13 ans, sans effet sur son espérance de vie), Panacée (guérit toutes les maladies, malédictions et poisons d'une créature en contact et lui rend tous ses points de vie), Restitution de vie (lance rappel à la vie sur une créature touchée sans emplacement de sort ni besoin de connaître le sort), ou Transformation majeure (transmute, après 10 minutes de manipulation, un objet non magique d'au plus 1,50 mètre de côté en un autre objet non magique de taille et masse similaires et de valeur égale ou inférieure)."
             }
           ]
+        },
+        {
+          "name": "Faiseur de runes",
+          "unlocked_at_level": 2,
+          "traits": [
+            {
+              "level": 2,
+              "name": "Compréhension des runes",
+              "description": "Compréhension des langues toujours préparé, lançable sans emplacement de sort, hors du nombre de sorts préparés."
+            },
+            {
+              "level": 2,
+              "name": "Renforcement runique",
+              "description": "En lançant un sort avec emplacement, invocation d'une rune : Rune de vie (PV temporaires égaux à 5×niveau de l'emplacement à une cible visible à 9 m), Rune de guerre (+moitié du niveau de l'emplacement, arrondi sup., min +1, aux jets d'attaque contre une cible visible jusqu'à la fin du prochain tour) ou Rune du vent (vitesse +5×niveau de l'emplacement×0,3 m et pas d'attaque d'opportunité jusqu'au prochain tour) ; 1 rune par sort ; utilisations = bonus de maîtrise par repos long."
+            },
+            {
+              "level": 6,
+              "name": "Sceaux de protection",
+              "description": "Réaction sur un jet de sauvegarde de Force/Dextérité/Constitution raté : dépense une utilisation de Renforcement runique pour réussir le jet à la place."
+            },
+            {
+              "level": 10,
+              "name": "Expertise runique",
+              "description": "Restauration magique récupère aussi des utilisations de Renforcement runique (maximum = moitié du modificateur d'Intelligence arrondi sup., minimum 1)."
+            },
+            {
+              "level": 14,
+              "name": "Hostilité runique",
+              "description": "Action bonus : marque une créature visible à 18 m (jet de sauvegarde de Sagesse DD sorts) d'une rune d'hostilité pendant 1 minute ou perte de concentration : désavantage aux jets de sauvegarde contre vos sorts, ne peut pas devenir invisible, et (action bonus) malédiction infligeant 1d8 dégâts de force au prochain allié qui la touche ; 1 marquage par repos long sauf dépense d'un emplacement de niveau 3 ou plus."
+            }
+          ]
+        },
+        {
+          "name": "Maîtrise du savoir",
+          "unlocked_at_level": 2,
+          "traits": [
+            {
+              "level": 2,
+              "name": "Maître du savoir",
+              "description": "Bonus de maîtrise doublé pour les jets d'Arcanes/Histoire/Nature/Religion maîtrisés ; l'initiative se base sur l'Intelligence ou la Dextérité au choix."
+            },
+            {
+              "level": 2,
+              "name": "Sorts secrets",
+              "description": "En lançant un sort à emplacement, peut changer le type de dégâts (parmi acide/feu/foudre/force/froid/nécrotique/radiant/tonnerre) ou la caractéristique d'un jet de sauvegarde requis (1 changement de jet de sauvegarde par repos court ou long)."
+            },
+            {
+              "level": 6,
+              "name": "Incantation alchimique",
+              "description": "En sacrifiant un emplacement supplémentaire lors d'une incantation à emplacement : niveau 1 = +2d10 dégâts de force lors de la première résolution ; niveau 2 = portée étendue à 1,5 km si elle était d'au moins 9 m ; niveau 3 = DD de sauvegarde +2."
+            },
+            {
+              "level": 10,
+              "name": "Mémoire prodigieuse",
+              "description": "Action bonus (1 fois par repos court ou long) : remplace un sort préparé par un autre du grimoire."
+            },
+            {
+              "level": 14,
+              "name": "Maître de la magie",
+              "description": "Action bonus (1 fois par repos long) : lance un sort de n'importe quelle liste de classe (niveau couvert par un emplacement disponible, non préparé), traité comme un sort de magicien, oublié après incantation ou fin du tour."
+            }
+          ]
+        },
+        {
+          "name": "École de l'invention",
+          "unlocked_at_level": 2,
+          "traits": [
+            {
+              "level": 2,
+              "name": "Outils de l'inventeur",
+              "description": "Maîtrise de deux outils au choix."
+            },
+            {
+              "level": 2,
+              "name": "Armure arcanomécanique",
+              "description": "Maîtrise des armures légères ; armure magique personnelle liée (CA 12 + Dextérité, 4 kg, résistance aux dégâts de force) recréable après chaque repos long à partir d'une armure de cuir clouté non magique."
+            },
+            {
+              "level": 2,
+              "name": "Magie insouciante",
+              "description": "Action : lance un sort mineur ou de niveau 1+ non préparé, déterminé aléatoirement sur une table par niveau (2 tirages simultanés possibles en dépensant l'emplacement, un double 10 annule le lancer)."
+            },
+            {
+              "level": 6,
+              "name": "Alchimie magique",
+              "description": "En portant l'armure liée, sacrifice d'un emplacement de niveau 1 (change le type de dégâts entre acide/froid/feu/foudre/tonnerre) ou de niveau 2 (+2d10 dégâts de force sur une cible)."
+            },
+            {
+              "level": 10,
+              "name": "Inspiration prodigieuse",
+              "description": "Action bonus (1 fois par repos court ou long) : remplace un sort préparé par un autre du grimoire."
+            },
+            {
+              "level": 14,
+              "name": "Maîtrise du chaos",
+              "description": "La Magie insouciante utilise la table du niveau supérieur à l'emplacement dépensé (sauf pour les sorts mineurs)."
+            }
+          ]
+        },
+        {
+          "name": "Onomancie",
+          "unlocked_at_level": 2,
+          "traits": [
+            {
+              "level": 2,
+              "name": "Maîtrises supplémentaires",
+              "description": "Apprentissage d'une langue au choix et maîtrise du matériel de calligraphe."
+            },
+            {
+              "level": 2,
+              "name": "Extraction du nom",
+              "description": "Action bonus : cible visible à 18 m, jet de sauvegarde de Sagesse DD sorts ; en cas d'échec, charme la cible jusqu'à la fin du prochain tour et révèle son vrai nom ; utilisations = mod. Intelligence (min 1) par repos long."
+            },
+            {
+              "level": 2,
+              "name": "Nom fatidique",
+              "description": "Fléau et Bénédiction sont ajoutés au grimoire, toujours préparés hors quota ; lançables sans emplacement en prononçant le vrai nom d'une cible ; utilisations = mod. Intelligence (min 1) par repos long."
+            },
+            {
+              "level": 6,
+              "name": "Résonances",
+              "description": "2 résonances connues (remplaçables à chaque niveau) parmi Absorption (PV temporaires 3d6, +1d6 aux niveaux 10/14), Dévastation (désavantage au premier jet de sauvegarde), Dissolution (+2d8 dégâts de force, +1d8 aux niveaux 10/14), Annulation (détecte et peut dissiper un sort actif sur la cible), Marionnettes (renverse ou déplace la cible de 3 m) ou Sympathie (cible atteignable sans la voir, malgré un abri total) ; activable en prononçant le vrai nom d'une cible lors d'un sort à emplacement ; utilisations = moitié du niveau de magicien (arrondi inf.) par repos long."
+            },
+            {
+              "level": 10,
+              "name": "Prononciation inexorable",
+              "description": "2 résonances supplémentaires apprises."
+            },
+            {
+              "level": 14,
+              "name": "Nom implacable",
+              "description": "En prononçant le vrai nom d'une cible, un sort à dégâts peut infliger des dégâts de force ou psychiques à la place de son type normal."
+            }
+          ]
+        },
+        {
+          "name": "Théurgie",
+          "unlocked_at_level": 2,
+          "traits": [
+            {
+              "level": 2,
+              "name": "Inspiration divine",
+              "description": "Choix d'un domaine divin (Connaissance, Lumière ou Arcanes suggérés)."
+            },
+            {
+              "level": 2,
+              "name": "Initié des arcanes",
+              "description": "À chaque niveau de magicien, un sort ajouté au grimoire peut être remplacé par un sort de clerc du domaine choisi (ou de la liste de clerc une fois le domaine épuisé), dans la limite du niveau d'emplacement disponible ; traité comme un sort de magicien."
+            },
+            {
+              "level": 2,
+              "name": "Canalisation arcanique",
+              "description": "Capacité de Conduit divin (DD = DD de sauvegarde de magicien) débloquant Arcanes divines (action bonus : +2 à l'attaque ou au DD du prochain sort lancé) et l'option de niveau 2 du domaine choisi ; 1 utilisation par repos court ou long (2 au niveau 6, 3 au niveau 18)."
+            },
+            {
+              "level": 6,
+              "name": "Acolyte des arcanes",
+              "description": "Bénéfice de niveau 1 du domaine choisi (hors maîtrises d'armes/armures)."
+            },
+            {
+              "level": 10,
+              "name": "Prêtre des arcanes",
+              "description": "Bénéfice de niveau 6 du domaine choisi."
+            },
+            {
+              "level": 14,
+              "name": "Grand prêtre des arcanes",
+              "description": "Bénéfice de niveau 17 du domaine choisi."
+            }
+          ]
+        },
+        {
+          "name": "Magie de guerre",
+          "unlocked_at_level": 2,
+          "traits": [
+            {
+              "level": 2,
+              "name": "Déviation arcanique",
+              "description": "Réaction sur une attaque touchée ou un JdS raté : +2 CA contre cette attaque ou +4 au JdS ; seuls des sorts mineurs peuvent être lancés jusqu'à la fin du prochain tour après usage."
+            },
+            {
+              "level": 2,
+              "name": "Esprit tactique",
+              "description": "Bonus au jet d'initiative égal au mod. d'Intelligence."
+            },
+            {
+              "level": 6,
+              "name": "Surtension",
+              "description": "Réserve de surtensions (max = mod. Intelligence, min 1, retombant à 1 par repos long, +1 par dissipation/contresort réussi, ou par repos court sans surtension) ; une fois par tour, dépense une surtension sur un sort à dégâts touché pour +moitié niveau de magicien dégâts de force supplémentaires."
+            },
+            {
+              "level": 10,
+              "name": "Magie durable",
+              "description": "+2 CA et à tous les jets de sauvegarde tant que la concentration sur un sort est maintenue."
+            },
+            {
+              "level": 14,
+              "name": "Voile de déviation",
+              "description": "En utilisant Déviation arcanique, jusqu'à 3 créatures visibles à 9 m subissent des dégâts de force égaux à la moitié du niveau de magicien."
+            }
+          ]
+        },
+        {
+          "name": "Ordre des scribes",
+          "unlocked_at_level": 2,
+          "traits": [
+            {
+              "level": 2,
+              "name": "Plume magique",
+              "description": "Action bonus : plume TP produisant de l'encre sans besoin d'encrier ; réduit de moitié le coût et le temps de transcription d'un sort dans le grimoire ; efface un texte écrit à 1,5 m en action bonus ; disparaît si remplacée ou à la mort."
+            },
+            {
+              "level": 2,
+              "name": "Grimoire éveillé",
+              "description": "Le grimoire sert de focaliseur d'incantation ; en lançant un sort avec emplacement, son type de dégâts peut être remplacé par celui d'un autre sort du grimoire ; un rituel peut être lancé au temps d'incantation normal (sans les +10 minutes habituelles), 1 fois par repos long ; remplaçable pendant un repos court via la Plume magique."
+            },
+            {
+              "level": 6,
+              "name": "Maître scribe",
+              "description": "À chaque repos long, crée un parchemin (sort de niveau 1 ou 2, temps d'incantation 1 action, du grimoire) renforcé d'un niveau, lisible et lançable par vous seul, disparaissant à l'usage ou au prochain repos long ; maîtrise la création de parchemins de sorts (GdM) à coût et temps réduits de moitié avec la Plume magique."
+            },
+            {
+              "level": 10,
+              "name": "Manifestation d'esprit",
+              "description": "Action bonus : esprit spectral TP (PV = niveau de magicien + mod. Intelligence, CA et JdS identiques aux vôtres, vision dans le noir 18 m) déplaçable de 18 m en action bonus ; peut voir/entendre à sa place, et les sorts de magicien peuvent être lancés depuis sa position ; utilisations = bonus de maîtrise par repos long ; disparaît à plus de 90 m, à 0 PV, à votre mort ou par dissipation."
+            },
+            {
+              "level": 14,
+              "name": "Maître des mots",
+              "description": "Action : téléportation échangeant votre position avec celle de l'esprit ; utilisations = bonus de maîtrise par repos long. Si vous mourez alors qu'il reste des sorts dans le grimoire, retour à la vie 1 minute après à 1,5 m du livre avec 1 PV, au prix de sorts perdus définitivement (niveaux combinés déterminés par 3d6), sauf restauration par le sort Souhait."
+            }
+          ]
+        },
+        {
+          "name": "Chant des lames",
+          "unlocked_at_level": 2,
+          "traits": [
+            {
+              "level": 2,
+              "name": "Entraînement à la guerre et au chant",
+              "description": "Maîtrise des armures légères, d'une arme de corps à corps à une main au choix, et de la compétence Représentation (si non déjà acquise)."
+            },
+            {
+              "level": 2,
+              "name": "Chant des lames",
+              "description": "Sans armure intermédiaire/lourde ni bouclier, action bonus pour invoquer le Chant des lames (1 minute, fin anticipée si neutralisé, si une armure intermédiaire/lourde ou un bouclier est revêtu, ou si une arme à deux mains est utilisée ; dissipable à tout moment sans action) : +mod. Intelligence (min +1) à la CA ; vitesse +3 m ; avantage aux jets de Dextérité (Acrobaties) ; +mod. Intelligence (min +1) à un JdS de Constitution pour maintenir la concentration. Utilisations = bonus de maîtrise par repos long."
+            },
+            {
+              "level": 6,
+              "name": "Attaque supplémentaire",
+              "description": "Deux attaques au lieu d'une avec l'action Attaquer ; un sort mineur peut remplacer l'une de ces attaques."
+            },
+            {
+              "level": 10,
+              "name": "Chant de défense",
+              "description": "Réaction sur des dégâts subis pendant le Chant des lames : dépense un emplacement de sort pour réduire les dégâts d'un montant égal à 5×le niveau de l'emplacement."
+            },
+            {
+              "level": 14,
+              "name": "Chant de victoire",
+              "description": "+mod. Intelligence (min +1) aux dégâts des attaques de mêlée pendant le Chant des lames."
+            }
+          ]
         }
       ],
       "detail_url": "https://www.aidedd.org/regles/classes/magicien/",
@@ -5994,7 +8665,7 @@
           "Tromperie"
         ]
       },
-      "starting_equipment": "Choix entre arbalète légère et carreaux ou arme courante, besace de composantes ou focaliseur arcanique, sac d'érudit ou sac d'aventurier, plus une armure de cuir, une arme courante et deux dagues.",
+      "starting_equipment": "Choix entre arbalète légère et carreaux ou arme courante, sacoche à composantes ou focaliseur arcanique, sac d'érudit ou sac d'aventurier, plus une armure de cuir, une arme courante et deux dagues.",
       "spellcasting": {
         "ability": "Charisme",
         "type": "pact",
@@ -6431,6 +9102,11 @@
           "traits": [
             {
               "level": 1,
+              "name": "Liste de sorts étendue",
+              "description": "Accès supplémentaire à Lueurs féeriques, Sommeil, Apaisement des émotions, Force fantasmagorique, Clignotement, Croissance végétale, Domination de bête, Invisibilité supérieure, Apparence trompeuse, Domination de personne."
+            },
+            {
+              "level": 1,
               "name": "Présence féerique",
               "description": "Par une action, oblige toute créature comprise dans un cube de 3 mètres de côté centré sur soi à effectuer un jet de sauvegarde de Sagesse contre le DD des sorts d'occultiste, sous peine d'être charmée ou effrayée (au choix) jusqu'à la fin du prochain tour. Utilisable une fois entre deux repos courts ou longs."
             },
@@ -6455,6 +9131,11 @@
           "name": "Le Fiélon",
           "unlocked_at_level": 1,
           "traits": [
+            {
+              "level": 1,
+              "name": "Liste de sorts étendue",
+              "description": "Accès supplémentaire à Injonction, Mains brûlantes, Cécité/Surdité, Rayon ardent, Boule de feu, Nuage nauséabond, Bouclier de feu, Mur de feu, Colonne de flamme, Sanctification."
+            },
             {
               "level": 1,
               "name": "Bénédiction du ténébreux",
@@ -6483,6 +9164,11 @@
           "traits": [
             {
               "level": 1,
+              "name": "Liste de sorts étendue",
+              "description": "Accès supplémentaire à Fou rire de Tasha, Murmures dissonants, Détection des pensées, Force fantasmagorique, Clairvoyance, Communication à distance, Domination de bête, Tentacules noirs d'Evard, Domination de personne, Télékinésie."
+            },
+            {
+              "level": 1,
               "name": "Esprit éveillé",
               "description": "Permet de communiquer télépathiquement avec toute créature visible dans un rayon de 9 mètres, sans besoin de langue commune, la cible devant seulement être capable de comprendre au moins une langue."
             },
@@ -6500,6 +9186,248 @@
               "level": 14,
               "name": "Asservissement",
               "description": "Par une action, le contact avec un humanoïde incapable d'agir permet de le charmer indéfiniment, jusqu'à ce qu'un sort de délivrance des malédictions le libère, que la condition charmé lui soit retirée autrement, ou que cette capacité soit réutilisée. Une communication télépathique avec la créature charmée reste possible tant que les deux se trouvent sur le même plan d'existence."
+            }
+          ]
+        },
+        {
+          "name": "Le Chercheur",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Liste de sorts étendue",
+              "description": "Accès supplémentaire à Feuille morte, Saut, Lévitation, Localisation d'objet, Clairvoyance, Communication à distance, Oeil magique, Localisation de créature, Mythes et légendes, Passe-muraille."
+            },
+            {
+              "level": 1,
+              "name": "Aurore protectrice",
+              "description": "Action bonus : résistance à tous les dégâts jusqu'à la fin du prochain tour ; les créatures hostiles finissant leur tour à 3 m subissent des dégâts radiants égaux au niveau d'occultiste + mod. Charisme ; 1 utilisation par repos court ou long."
+            },
+            {
+              "level": 3,
+              "name": "Faveur de pacte : Pacte de la Chaîne étoilée",
+              "description": "Alternative aux Faveurs de pacte classiques : connaît et peut lancer Augure en rituel (hors quota) tant que la chaîne est portée ; avantage sur un jet d'Intelligence, 1 fois par repos court ou long."
+            },
+            {
+              "level": 6,
+              "name": "Refuge astral",
+              "description": "Action : bascule brièvement dans le plan astral, permettant de lancer 2 sorts ciblant seulement soi-même avant de revenir (fin du tour)."
+            },
+            {
+              "level": 10,
+              "name": "Voyageur lointain",
+              "description": "Plus besoin de respirer ; résistance aux dégâts de froid et de feu."
+            },
+            {
+              "level": 14,
+              "name": "Isolement astral",
+              "description": "Rituel de 5 minutes : isole jusqu'à 10 créatures consentantes dans le plan astral pour un repos court hors du temps ; 1 utilisation par repos long."
+            }
+          ]
+        },
+        {
+          "name": "La Reine corneille",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Liste de sorts étendue",
+              "description": "Accès supplémentaire à Sanctuaire, Simulacre de vie, Arme spirituelle, Silence, Communication avec les morts, Mort simulée, Localisation de créature, Tempête de grêle, Communion, Cône de froid."
+            },
+            {
+              "level": 1,
+              "name": "Corbeau sentinelle",
+              "description": "Esprit familier sous forme de corbeau (ordres télépathiques à 30 m, vision dans le noir 9 m via lui, bonus de Charisme à la Perception, invulnérable tant qu'il est perché) ; rappelable à la fin d'un repos ; avantage aux attaques contre son tueur pendant 24h s'il meurt."
+            },
+            {
+              "level": 6,
+              "name": "Âme du corbeau",
+              "description": "Action bonus : fusion avec le corbeau perché (taille TP, vitesse du corbeau, actions limitées à Foncer/Se désengager/Esquiver/Aider/Se cacher) ; retour à la normale par une action."
+            },
+            {
+              "level": 10,
+              "name": "Protection du corbeau",
+              "description": "Avantage aux jets de sauvegarde contre la mort, immunité à l'effroi, résistance aux dégâts nécrotiques."
+            },
+            {
+              "level": 14,
+              "name": "Main droite de la Reine",
+              "description": "Lance Doigt de mort ; 1 utilisation par repos long."
+            }
+          ]
+        },
+        {
+          "name": "Celui qui rôde dans les profondeurs",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Liste de sorts étendue",
+              "description": "Accès supplémentaire à Création ou destruction d'eau, Vague tonnante, Bourrasque, Silence, Éclair, Tempête de neige, Contrôle de l'eau, Tentacules noirs d'Evard, Communion avec la nature, Cône de froid."
+            },
+            {
+              "level": 1,
+              "name": "Étreinte des profondeurs",
+              "description": "Action bonus : tentacule spectral à 18 m infligeant 1d8 (2d8 au niveau 10) dégâts de froid ou de foudre et réduisant la vitesse de 3 m ; déplaçable de 3 m et réutilisable en action bonus ; utilisations = mod. Charisme (min 1) par repos long."
+            },
+            {
+              "level": 1,
+              "name": "Rejeton des profondeurs",
+              "description": "Télépathie avec les aberrations/bêtes/élémentaires/monstruosités dotées d'une vitesse de nage innée à 36 m."
+            },
+            {
+              "level": 6,
+              "name": "Âme insondable",
+              "description": "Respire dans l'air et sous l'eau ; vitesse de nage égale à la vitesse de marche ; résistance aux dégâts de froid."
+            },
+            {
+              "level": 6,
+              "name": "Étreinte protectrice",
+              "description": "Réaction : réduit de moitié les dégâts subis par soi ou un allié à 3 m du tentacule, qui disparaît ensuite."
+            },
+            {
+              "level": 10,
+              "name": "Gueule dévorante",
+              "description": "Action : zone de 3 m pendant 1 minute, jet de sauvegarde de Force DD sorts sous peine d'entrave ; dégâts de foudre/froid (3d6) au début du tour de chaque créature dans la zone ; PV temporaires égaux au niveau d'occultiste au début du tour si une créature est présente ; 1 utilisation par repos court ou long."
+            },
+            {
+              "level": 14,
+              "name": "Profondeurs déchaînées",
+              "description": "Action, 1 utilisation par repos long : Transport (téléportation de groupe vers un lieu visité dans les 24h, jusqu'à 150 km) ou Fureur (jet de sauvegarde de Dextérité DD sorts, 6d10 dégâts de froid/foudre et chute à terre en cas d'échec, sur 5 cibles à 9 m)."
+            }
+          ]
+        },
+        {
+          "name": "Le Génie",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Liste de sorts étendue",
+              "description": "Accès supplémentaire à Détection du mal et du bien (1), Force fantasmagorique (2), Création de nourriture et d'eau (3), Assassin imaginaire (4) et Création (5), plus un sort additionnel par niveau selon le type de génie du pacte : Sanctuaire, Croissance d'épines, Fusion dans la pierre, Façonnage de la pierre et Mur de pierre (Dao) ; Vague tonnante, Bourrasque, Mur de vent, Invisibilité supérieure et Apparence trompeuse (Djinn) ; Mains brûlantes, Rayon ardent, Boule de feu, Bouclier de feu et Colonne de flamme (Éfrit) ; ou Nappe de brouillard, Flou, Tempête de neige, Contrôle de l'eau et Cône de froid (Maride)."
+            },
+            {
+              "level": 1,
+              "name": "Catalyseur de Génie",
+              "description": "Objet TP servant de focaliseur arcanique : Répit embouteillé (action, espace extra-dimensionnel confortable pendant 2×bonus de maîtrise heures, 1 fois par repos long) et Ire du génie (une fois par tour sur une attaque touchée, +bonus de maîtrise en dégâts d'un type lié au patron : contondant/tonnerre/feu/froid selon dao/djinn/éfrit/maride)."
+            },
+            {
+              "level": 6,
+              "name": "Présent élémentaire",
+              "description": "Résistance au type de dégâts du patron ; action bonus : vitesse de vol de 9 m (vol stationnaire) pendant 10 minutes, utilisations = bonus de maîtrise par repos long."
+            },
+            {
+              "level": 10,
+              "name": "Sanctuaire du génie",
+              "description": "Le Répit embouteillé peut emmener jusqu'à 5 créatures consentantes visibles à 9 m ; action bonus pour éjecter des occupants ; un séjour de 10 minutes ou plus dans le catalyseur procure les bienfaits d'un repos court (bonus de maîtrise ajouté aux dés de vie dépensés)."
+            },
+            {
+              "level": 14,
+              "name": "Souhait limité",
+              "description": "Action : réplique un sort de niveau 6 ou moins (temps d'incantation 1 action, de n'importe quelle liste de classe) sans composantes ; 1 utilisation, récupérée après 1d4 repos longs."
+            }
+          ]
+        },
+        {
+          "name": "La Lame maudite",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Liste de sorts étendue",
+              "description": "Accès supplémentaire à Bouclier, Châtiment courroucé, Châtiment révélateur, Flou, Arme élémentaire, Clignotement, Assassin imaginaire, Châtiment débilitant, Cône de froid, Châtiment du ban."
+            },
+            {
+              "level": 1,
+              "name": "Guerrier maudit",
+              "description": "Maîtrise des armures intermédiaires, des boucliers et des armes de guerre ; à chaque repos long, une arme maîtrisée sans propriété à deux mains touchée utilise le mod. de Charisme au lieu de Force/Dextérité pour l'attaque et les dégâts jusqu'à la fin du repos (s'étend aux armes de pacte si Pacte de la lame est acquis)."
+            },
+            {
+              "level": 1,
+              "name": "Malédiction de la Lame maudite",
+              "description": "Action bonus : maudit une créature visible à 9 m pendant 1 minute (ou jusqu'à mort/neutralisation) : +bonus de maîtrise aux dégâts contre elle, critique sur 19-20, et régénère niveau d'occultiste + mod. Charisme (min 1) PV si elle meurt ; 1 utilisation par repos court ou long."
+            },
+            {
+              "level": 6,
+              "name": "Spectre maudit",
+              "description": "En tuant un humanoïde, son esprit peut devenir un spectre allié (PV temporaires = moitié niveau d'occultiste, initiative propre, bonus d'attaque = mod. Charisme min +0) jusqu'à la fin du prochain repos long ; 1 utilisation par repos long."
+            },
+            {
+              "level": 10,
+              "name": "Armure de malédictions",
+              "description": "Réaction si la cible maudite vous touche : lance 1d6, 4+ fait rater l'attaque."
+            },
+            {
+              "level": 14,
+              "name": "Maître des malédictions",
+              "description": "Si la créature maudite meurt, la malédiction est transférable à une autre créature visible à 9 m (sans régénération de PV cette fois)."
+            }
+          ]
+        },
+        {
+          "name": "Le Mort-vivant",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Liste de sorts étendue",
+              "description": "Accès supplémentaire à Fléau, Simulacre de vie, Cécité/Surdité, Force fantasmagorique, Communication avec les morts, Monture fantôme, Protection contre la mort, Invisibilité supérieure, Coquille antivie, Brume mortelle."
+            },
+            {
+              "level": 1,
+              "name": "Forme d'effroi",
+              "description": "Action bonus, 1 minute : PV temporaires 1d10+niveau d'occultiste ; une fois par tour après une attaque touchée, JdS Sagesse ou effroi jusqu'à la fin du prochain tour ; immunité à l'effroi pendant l'effet ; utilisations = bonus de maîtrise par repos long."
+            },
+            {
+              "level": 6,
+              "name": "Un pied dans la tombe",
+              "description": "Plus besoin de manger, boire ou respirer ; les dégâts d'une attaque touchée peuvent être remplacés par des dégâts nécrotiques, avec un dé supplémentaire sous Forme d'effroi."
+            },
+            {
+              "level": 10,
+              "name": "Explosion mortelle",
+              "description": "Résistance aux dégâts nécrotiques (immunité sous Forme d'effroi) ; en tombant à 0 PV, explosion infligeant 2d10+niveau d'occultiste dégâts nécrotiques à 9 m, puis réanimation à 1 PV avec un niveau d'épuisement supplémentaire ; 1 utilisation par 1d4 repos longs."
+            },
+            {
+              "level": 14,
+              "name": "Projection spirituelle",
+              "description": "Action : projette l'esprit hors du corps (inconscient, en animation suspendue) pendant 1h ou jusqu'à rupture de concentration ; résistance contondant/perforant/tranchant pour le corps et l'esprit ; sorts de conjuration/nécromancie sans composantes (hors coût en or) ; vol égal à la vitesse de marche avec vol stationnaire, traversée des créatures/objets (1d10 dégâts de force si le tour se termine à l'intérieur) ; sous Forme d'effroi, la moitié des dégâts nécrotiques infligés est régénérée en PV."
+            }
+          ]
+        },
+        {
+          "name": "Le Céleste",
+          "unlocked_at_level": 1,
+          "traits": [
+            {
+              "level": 1,
+              "name": "Liste de sorts étendue",
+              "description": "Accès supplémentaire à Éclair traçant, Soins, Sphère de feu, Restauration partielle, Lumière du jour, Retour à la vie, Gardien de la foi, Mur de feu, Colonne de flamme, Restauration supérieure."
+            },
+            {
+              "level": 1,
+              "name": "Sorts mineurs supplémentaires",
+              "description": "Apprend Flamme sacrée et Lumière, hors du nombre de sorts mineurs connus."
+            },
+            {
+              "level": 1,
+              "name": "Lumière de guérison",
+              "description": "Réserve de d6 égale à 1+niveau d'occultiste ; action bonus : soigne une créature visible à 18 m en dépensant jusqu'à mod. Charisme (min 1) dés ; réserve récupérée par repos long."
+            },
+            {
+              "level": 6,
+              "name": "Âme radiante",
+              "description": "Résistance aux dégâts radiants ; en lançant un sort à dégâts radiants ou de feu, +mod. Charisme à un dé de dégâts."
+            },
+            {
+              "level": 10,
+              "name": "Résilience céleste",
+              "description": "À chaque repos court ou long : PV temporaires = niveau d'occultiste + mod. Charisme pour soi ; jusqu'à 5 créatures visibles choisies gagnent des PV temporaires égaux à la moitié du niveau d'occultiste + mod. Charisme."
+            },
+            {
+              "level": 14,
+              "name": "Vengeance brûlante",
+              "description": "Au lieu d'un JdS de mort, régénère la moitié du PV maximum et se relève si souhaité ; créatures choisies à 9 m subissent 2d8+mod. Charisme dégâts radiants et sont aveuglées jusqu'à la fin du tour ; 1 utilisation par repos long."
             }
           ]
         }
@@ -7148,6 +10076,47 @@
               "level": 15,
               "name": "Défenseur amélioré",
               "description": "Au niveau 15, les dégâts ou soins de Décharge arcanique passent à 4d6, le défenseur d'acier gagne +2 à la CA, et lorsqu'il utilise sa Parade d'attaque, l'assaillant subit 1d4 + mod. Intelligence dégâts de force."
+            }
+          ]
+        },
+        {
+          "name": "Armurier",
+          "unlocked_at_level": 3,
+          "traits": [
+            {
+              "level": 3,
+              "name": "Outils du métier",
+              "description": "Maîtrise des armures lourdes et des outils de forgeron (ou d'un autre outil d'artisan au choix si déjà maîtrisés)."
+            },
+            {
+              "level": 3,
+              "name": "Sorts de l'armurier",
+              "description": "Apprend automatiquement (hors quota) Projectile magique et Vague tonnante (3), Image miroir et Fracassement (5), Motif hypnotique et Éclair (9), Bouclier de feu et Invisibilité supérieure (13), Passe-muraille et Mur de force (17)."
+            },
+            {
+              "level": 3,
+              "name": "Armure arcanique",
+              "description": "Action (outils de forgeron en main) : transforme une armure portée en Armure arcanique, sans exigence de Force, utilisable comme focaliseur d'incantation, se scellant au corps (retirable seulement par une action volontaire), avec un casque rétractable en action bonus et remplaçant les membres manquants ; reste active jusqu'à ce qu'une autre armure soit portée ou jusqu'à la mort."
+            },
+            {
+              "level": 3,
+              "name": "Modèle d'armure",
+              "description": "Choix entre Gardien et Infiltrateur (changeable à chaque repos, outils en main), chacun avec une arme spéciale utilisant l'Intelligence au lieu de la Force/Dextérité pour l'attaque et les dégâts. Gardien : Gantelets tonnerre (arme courante de mêlée, 1d8 dégâts de tonnerre, cible touchée désavantagée pour ses attaques contre d'autres que vous jusqu'au prochain tour) et Champ défensif (action bonus, PV temporaires = niveau de classe, perdus si l'armure est retirée, utilisations = bonus de maîtrise par repos long). Infiltrateur : Lance-éclair (arme courante à distance 27 m/90 m, 1d6 dégâts de foudre, +1d6 supplémentaire une fois par tour sur une touche), Pas motorisés (+1,5 m de vitesse) et Champ amortissant (avantage en Discrétion)."
+            },
+            {
+              "level": 5,
+              "name": "Attaque supplémentaire",
+              "description": "Deux attaques au lieu d'une avec l'action Attaquer."
+            },
+            {
+              "level": 9,
+              "name": "Modifications de l'armure",
+              "description": "L'Armure arcanique compte comme 4 objets distincts pour l'Infusion d'objets (armure, bottes, casque, arme spéciale), transférables lors d'un changement de modèle ; le nombre maximum d'objets infusés simultanément augmente de 2 (réservés à l'Armure arcanique)."
+            },
+            {
+              "level": 15,
+              "name": "Armure perfectionnée",
+              "description": "Bonus selon le modèle. Gardien : réaction quand une créature de taille TG ou moins visible termine son tour à 9 m, JdS Force DD sorts sous peine d'être tirée jusqu'à 7,5 m vers un espace inoccupé (avec attaque de mêlée possible si elle finit à 1,5 m) ; utilisations = bonus de maîtrise par repos long. Infiltrateur : une cible touchée par le Lance-éclair scintille jusqu'au prochain tour (lumière faible, désavantage à ses attaques contre vous, prochaine attaque contre elle avec avantage et +1d6 dégâts de foudre en cas de touche)."
             }
           ]
         }

@@ -23,6 +23,8 @@ import RaceSearch from '../components/admin/RaceSearch.vue'
 import ClassSearch from '../components/admin/ClassSearch.vue'
 import BackgroundSearch from '../components/admin/BackgroundSearch.vue'
 import AbilitySearch from '../components/admin/AbilitySearch.vue'
+import ServiceSearch from '../components/admin/ServiceSearch.vue'
+import ConditionSearch from '../components/admin/ConditionSearch.vue'
 import CommandPalette from '../components/admin/CommandPalette.vue'
 import MapManager from '../components/admin/MapManager.vue'
 import GoldDividerTool from '../components/admin/GoldDividerTool.vue'
@@ -82,6 +84,8 @@ const tabComponents = {
   classes: ClassSearch,
   backgrounds: BackgroundSearch,
   abilities: AbilitySearch,
+  services: ServiceSearch,
+  conditions: ConditionSearch,
   generator: GeneratorTool,
 }
 // Onglet actif piloté par l'URL (/admin/:tab). Un segment inconnu retombe
@@ -202,13 +206,15 @@ const tabs = [
   { key: 'classes',   label: 'Classes',       icon: 'game-icons:round-shield' },
   { key: 'backgrounds', label: 'Origines',    icon: 'game-icons:quill-ink' },
   { key: 'abilities', label: 'Aptitudes',     icon: 'lucide:zap' },
+  { key: 'services',  label: 'Services',      icon: 'lucide:hand-coins' },
+  { key: 'conditions', label: 'États',        icon: 'lucide:skull' },
   { key: 'generator', label: 'Générateur',    icon: 'lucide:wand-2' },
 ]
 
 // Onglets « Contenu » : fiches de référence D&D 5e statiques, indépendantes de toute
 // session (ne lisent ni n'écrivent aucun état de session) — accessibles même sans
 // session active, contrairement aux autres groupes.
-const CONTENT_TABS = ['spells', 'equipment', 'magic', 'races', 'classes', 'backgrounds', 'abilities']
+const CONTENT_TABS = ['spells', 'equipment', 'magic', 'races', 'classes', 'backgrounds', 'abilities', 'services', 'conditions']
 const isContentTab = computed(() => CONTENT_TABS.includes(activeTab.value))
 
 const NAV_GROUPS_FULL = [

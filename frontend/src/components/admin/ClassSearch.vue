@@ -4,7 +4,11 @@ import { useRouter } from 'vue-router'
 import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
 import AppIcon from '../AppIcon.vue'
+import LinkedText from '../LinkedText.vue'
+import RefLink from '../RefLink.vue'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
+import { spellCandidates, classAbilityCandidates, itemCandidates, SPELL_LIST_NAME_RE, withGlossary } from '@/utils/textLinker.js'
+import { slugify } from '@/utils/slugify.js'
 
 const router = useRouter()
 const tabQuery = useContentTabQuery('classes')
@@ -59,7 +63,90 @@ async function loadClasses() {
   }
 }
 
-onMounted(loadClasses)
+// Chargée pour transformer les mentions de sorts dans les descriptions de traits en liens
+// cliquables avec aperçu (voir LinkedText.vue / RefLink.vue) — même mécanisme que le
+// bouton "Voir les sorts de cette classe", mais au niveau du texte.
+const spells = ref([])
+async function loadSpells() {
+  try {
+    const res = await apiFetch('/api/spells', {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    if (res.ok) spells.value = await res.json()
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+// Chargés pour lier les mentions d'objets d'équipement standard dans le texte
+// d'équipement de départ (voir plus bas) vers leur fiche dans l'onglet Objets.
+const items = ref([])
+async function loadItems() {
+  try {
+    const res = await apiFetch('/api/magic-items', {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    if (res.ok) items.value = (await res.json()).filter(i => i.source_category !== 'magic')
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+onMounted(() => { loadClasses(); loadSpells(); loadItems() })
+
+const spellRefCandidates = computed(() => spellCandidates(spells.value))
+// N'est utilisé QUE pour le texte d'équipement de départ (voir template), jamais fusionné
+// dans refCandidates() ci-dessous : de nombreux noms d'objets sont des mots courants d'un
+// seul mot qui apparaissent partout ailleurs dans les descriptions de traits avec un tout
+// autre sens (ex: "Lance" l'objet vs "Lance Détection des pensées" = lance le sort ; "Acide"
+// l'objet vs "dégâts d'acide" le type de dégâts) — les y lier produirait énormément de faux
+// positifs, contrairement au texte d'équipement où ces mots désignent bien l'objet.
+const equipmentCandidates = computed(() => withGlossary(itemCandidates(items.value)))
+
+// Candidats "aptitude" par classe (traits/features de CETTE classe uniquement), pour lier
+// une mention d'une aptitude vers sa fiche plutôt que de répéter sa description ailleurs
+// sur la même fiche de classe.
+const abilityCandidatesBySlug = computed(() => {
+  const map = {}
+  for (const dndClass of classes.value) {
+    map[dndClass.slug] = classAbilityCandidates(dndClass, slugify)
+  }
+  return map
+})
+
+function refCandidates(dndClass) {
+  return withGlossary([...spellRefCandidates.value, ...(abilityCandidatesBySlug.value[dndClass.slug] || [])])
+}
+
+function traitId(dndClass, subclass, trait) {
+  return [dndClass.slug, subclass ? slugify(subclass.name) : null, slugify(trait.name), trait.level]
+    .filter(Boolean).join('__')
+}
+
+// Un trait de sous-classe qui donne un accès à des sorts (Sorts de serment/de domaine,
+// Liste de sorts étendue, Sorts de cercle/d'alchimiste/…) n'est pas une aptitude "normale"
+// répétée ailleurs sur la fiche de classe : son contenu utile est justement la liste des
+// sorts qu'il donne. On ne le transforme donc pas en lien vers l'onglet Aptitudes (ça
+// masquerait ces noms de sorts derrière une seule fiche) — on affiche son nom en clair et
+// sa description passe par LinkedText pour lier individuellement chaque sort mentionné.
+function isSpellListTrait(trait) {
+  return SPELL_LIST_NAME_RE.test(trait.name)
+}
+
+// Payload "aptitude" pour le lien direct d'un trait de sous-classe vers sa propre fiche
+// (voir composants/RefLink.vue) — même forme que les entrées produites par
+// classAbilityCandidates(), construite directement ici pour éviter une recherche inverse
+// dans la liste de candidats.
+function abilityPayload(dndClass, subclass, trait) {
+  return {
+    id: traitId(dndClass, subclass, trait),
+    name: trait.name,
+    description: trait.description,
+    className: dndClass.name,
+    classSlug: dndClass.slug,
+    subclassName: subclass.name,
+  }
+}
 
 function classMatches(dndClass, q) {
   if (stripAccents(dndClass.name.toLowerCase()).includes(q)) return true
@@ -226,7 +313,7 @@ onUnmounted(() => {
           <span class="class-attr"><AppIcon icon="lucide:sparkle" size="0.75em" /> Compétences : {{ dndClass.skill_choices.count }} parmi {{ dndClass.skill_choices.options.join(', ') }}</span>
         </div>
 
-        <p class="starting-equipment"><AppIcon icon="lucide:backpack" size="0.8em" /> {{ dndClass.starting_equipment }}</p>
+        <p class="starting-equipment"><AppIcon icon="lucide:backpack" size="0.8em" /> <LinkedText :text="dndClass.starting_equipment" :candidates="equipmentCandidates" /></p>
 
         <!-- Aperçu du trait qui matche la recherche -->
         <div v-if="traitPreviews[dndClass.slug]" class="matched-trait-preview">
@@ -235,7 +322,13 @@ onUnmounted(() => {
             <span class="matched-trait-name">{{ traitPreviews[dndClass.slug].name }}</span>
             <span class="matched-trait-source">{{ traitPreviews[dndClass.slug].source }}</span>
           </div>
-          <p class="matched-trait-desc">{{ traitPreviews[dndClass.slug].description }}</p>
+          <p class="matched-trait-desc">
+            <LinkedText
+              :text="traitPreviews[dndClass.slug].description"
+              :candidates="refCandidates(dndClass)"
+              :trait-name="traitPreviews[dndClass.slug].name"
+            />
+          </p>
         </div>
 
         <!-- Traits -->
@@ -247,7 +340,14 @@ onUnmounted(() => {
           <li v-for="trait in dndClass.features" :key="trait.name" class="trait-item">
             <span class="trait-name">{{ trait.name }}</span>
             <span class="trait-level">niv. {{ trait.level }}</span>
-            <span class="trait-desc">{{ trait.description }}</span>
+            <span class="trait-desc">
+              <LinkedText
+                :text="trait.description"
+                :candidates="refCandidates(dndClass)"
+                :exclude-id="traitId(dndClass, null, trait)"
+                :trait-name="trait.name"
+              />
+            </span>
           </li>
         </ul>
 
@@ -294,11 +394,24 @@ onUnmounted(() => {
               <AppIcon :icon="isExpanded(dndClass.slug, `sub:${subclass.name}`) ? 'lucide:chevron-down' : 'lucide:chevron-right'" size="0.8em" />
               {{ subclass.name }} <span class="subclass-unlock">(dès le niveau {{ subclass.unlocked_at_level }})</span>
             </button>
-            <ul v-if="isExpanded(dndClass.slug, `sub:${subclass.name}`)" class="trait-list">
-              <li v-for="trait in subclass.traits" :key="trait.name" class="trait-item">
-                <span class="trait-name">{{ trait.name }}</span>
-                <span class="trait-level">niv. {{ trait.level }}</span>
-                <span class="trait-desc">{{ trait.description }}</span>
+            <ul v-if="isExpanded(dndClass.slug, `sub:${subclass.name}`)" class="trait-list trait-list-links">
+              <li v-for="trait in subclass.traits" :key="trait.name" class="trait-item" :class="isSpellListTrait(trait) ? '' : 'trait-item-link'">
+                <template v-if="isSpellListTrait(trait)">
+                  <span class="trait-name">{{ trait.name }}</span>
+                  <span class="trait-level">niv. {{ trait.level }}</span>
+                  <span class="trait-desc">
+                    <LinkedText
+                      :text="trait.description"
+                      :candidates="refCandidates(dndClass)"
+                      :exclude-id="traitId(dndClass, subclass, trait)"
+                      :trait-name="trait.name"
+                    />
+                  </span>
+                </template>
+                <template v-else>
+                  <RefLink type="ability" :label="trait.name" :payload="abilityPayload(dndClass, subclass, trait)" />
+                  <span class="trait-level">niv. {{ trait.level }}</span>
+                </template>
               </li>
             </ul>
           </div>
@@ -571,6 +684,12 @@ onUnmounted(() => {
   margin-right: 0.4rem;
 }
 .trait-desc { color: var(--color-text-dim); }
+
+.trait-item-link {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
 
 .level-table {
   display: flex;

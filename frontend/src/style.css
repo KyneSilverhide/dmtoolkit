@@ -323,6 +323,26 @@ body {
   color: inherit;
 }
 
+/* Glossaire de règles D&D dans les descriptions (voir utils/textLinker.js withGlossary()/
+   highlightGlossaryHtml()) — classes globales car injectées à la fois par LinkedText.vue
+   (texte brut, span Vue) et par du HTML pré-rendu via v-html (sorts/objets). */
+.concept-term {
+  font-weight: 600;
+  color: var(--color-text-dim);
+}
+.glossary-term {
+  cursor: help;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+  color: var(--color-pending);
+}
+.condition-term {
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+  color: var(--color-danger);
+}
+
 button,
 .home-btn,
 .send-btn,

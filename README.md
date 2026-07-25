@@ -27,7 +27,9 @@ Déploie automatiquement le backend, le frontend et une base de données Postgre
 - **Gestionnaire d'images** : upload, galerie en grille, filtrage par nom, projection sur TV avec label optionnel
 - **Gestionnaire audio** : upload MP3/WAV/OGG, catégories IA, lecture multi-piste, filtrage par nom
 - **Sorts** : recherche parmi 477 sorts D&D 5e en français
-- **Équipement** : recherche d'objets standard (147) et magiques D&D 5e
+- **Équipement** : recherche d'objets standard (169) et magiques D&D 5e
+- **Services** : prix des services courants (embauche, messager, péage, transport, hébergement, repas et boissons)
+- **États** : fiche des 15 états D&D 5e (aveuglé, entravé, épuisement...), liés automatiquement depuis les descriptions de sorts
 - **Générateur IA** : génération de noms de PNJ, lieux, auberges, accroches de quêtes et descriptions via GitHub Models (gpt-4o-mini)
 - **Multi-tenant** : isolation complète des sessions et des fichiers uploadés par administrateur
 - **Compte démo** : compte `demo` (mot de passe `demo`) disponible par défaut ; son contenu est effacé et réinitialisé automatiquement chaque nuit à minuit — un bandeau d'avertissement est affiché dans toutes les interfaces

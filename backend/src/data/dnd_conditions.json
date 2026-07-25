@@ -1,0 +1,125 @@
+{
+  "count": 15,
+  "conditions": [
+    {
+      "name": "À terre",
+      "slug": "a-terre",
+      "name_vo": "Prone",
+      "aliases": [],
+      "description": "Ne peut se déplacer qu'en rampant, à moins de se relever (ce qui met fin à l'état). Subit le désavantage aux jets d'attaque. Les attaques contre elle ont l'avantage si l'attaquant est à 1,50 m ou moins, sinon elles ont le désavantage.",
+      "detail_url": "https://www.aidedd.org/regles/etats/"
+    },
+    {
+      "name": "Agrippé",
+      "slug": "agrippe",
+      "name_vo": "Grappled",
+      "aliases": ["Agrippée", "Agrippés", "Agrippées"],
+      "description": "Sa vitesse tombe à 0 et elle ne peut bénéficier d'aucun bonus de vitesse. L'état prend fin si l'agrippeur devient incapable d'agir, ou si un effet écarte la créature agrippée hors de portée de l'agrippeur.",
+      "detail_url": "https://www.aidedd.org/regles/etats/"
+    },
+    {
+      "name": "Assourdi",
+      "slug": "assourdi",
+      "name_vo": "Deafened",
+      "aliases": ["Assourdie", "Assourdis", "Assourdies"],
+      "description": "N'entend rien et rate automatiquement tout jet de caractéristique nécessitant l'ouïe.",
+      "detail_url": "https://www.aidedd.org/regles/etats/"
+    },
+    {
+      "name": "Aveuglé",
+      "slug": "aveugle",
+      "name_vo": "Blinded",
+      "aliases": ["Aveuglée", "Aveuglés", "Aveuglées"],
+      "description": "Ne voit rien et rate automatiquement tout jet de caractéristique nécessitant la vue. Les attaques contre cette créature ont l'avantage, et ses propres attaques ont le désavantage.",
+      "detail_url": "https://www.aidedd.org/regles/etats/"
+    },
+    {
+      "name": "Charmé",
+      "slug": "charme",
+      "name_vo": "Charmed",
+      "aliases": ["Charmée", "Charmés", "Charmées"],
+      "description": "Ne peut ni attaquer le charmeur ni le cibler avec une capacité ou un effet magique nuisible. Le charmeur bénéficie de l'avantage aux jets de caractéristique pour interagir socialement avec elle.",
+      "detail_url": "https://www.aidedd.org/regles/etats/"
+    },
+    {
+      "name": "Effrayé",
+      "slug": "effraye",
+      "name_vo": "Frightened",
+      "aliases": ["Effrayée", "Effrayés", "Effrayées"],
+      "description": "Subit le désavantage aux jets de caractéristique et aux jets d'attaque tant que la source de sa peur reste dans son champ de vision, et ne peut pas s'en approcher volontairement.",
+      "detail_url": "https://www.aidedd.org/regles/etats/"
+    },
+    {
+      "name": "Empoisonné",
+      "slug": "empoisonne",
+      "name_vo": "Poisoned",
+      "aliases": ["Empoisonnée", "Empoisonnés", "Empoisonnées"],
+      "description": "Subit le désavantage aux jets d'attaque et aux jets de caractéristique.",
+      "detail_url": "https://www.aidedd.org/regles/etats/"
+    },
+    {
+      "name": "Entravé",
+      "slug": "entrave",
+      "name_vo": "Restrained",
+      "aliases": ["Entravée", "Entravés", "Entravées"],
+      "description": "Sa vitesse tombe à 0 sans qu'aucun bonus de vitesse ne s'applique. Les attaques contre elle ont l'avantage, ses propres attaques ont le désavantage, et elle subit le désavantage à ses jets de sauvegarde de Dextérité.",
+      "detail_url": "https://www.aidedd.org/regles/etats/"
+    },
+    {
+      "name": "Étourdi",
+      "slug": "etourdi",
+      "name_vo": "Stunned",
+      "aliases": ["Étourdie", "Étourdis", "Étourdies"],
+      "description": "Incapable d'agir, ne peut plus bouger et ne parle que de façon hésitante. Échoue automatiquement ses jets de sauvegarde de Force et de Dextérité. Les attaques contre elle ont l'avantage.",
+      "detail_url": "https://www.aidedd.org/regles/etats/"
+    },
+    {
+      "name": "Épuisement",
+      "slug": "epuisement",
+      "name_vo": "Exhaustion",
+      "aliases": ["Épuisé", "Épuisée", "Épuisés", "Épuisées"],
+      "description": "État cumulable en six niveaux, chacun ajoutant l'effet des niveaux inférieurs : 1 — désavantage aux jets de caractéristique ; 2 — vitesse réduite de moitié ; 3 — désavantage aux jets d'attaque et de sauvegarde ; 4 — maximum de points de vie réduit de moitié ; 5 — vitesse réduite à 0 ; 6 — mort. Terminer un repos long en ayant mangé et bu réduit le niveau d'épuisement de 1.",
+      "detail_url": "https://www.aidedd.org/regles/etats/"
+    },
+    {
+      "name": "Incapable d'agir",
+      "slug": "incapable-d-agir",
+      "name_vo": "Incapacitated",
+      "aliases": ["Neutralisé", "Neutralisée", "Neutralisés", "Neutralisées", "Incapables d'agir"],
+      "description": "Ne peut effectuer aucune action ni réaction.",
+      "detail_url": "https://www.aidedd.org/regles/etats/"
+    },
+    {
+      "name": "Inconscient",
+      "slug": "inconscient",
+      "name_vo": "Unconscious",
+      "aliases": ["Inconsciente", "Inconscients", "Inconscientes"],
+      "description": "Incapable d'agir, ne peut plus bouger ni parler, inconsciente de son environnement, et lâche tout ce qu'elle tenait en tombant à terre. Échoue automatiquement ses jets de sauvegarde de Force et de Dextérité ; les attaques contre elle ont l'avantage et sont critiques si l'attaquant est à 1,50 m ou moins.",
+      "detail_url": "https://www.aidedd.org/regles/etats/"
+    },
+    {
+      "name": "Invisible",
+      "slug": "invisible",
+      "name_vo": "Invisible",
+      "aliases": ["Invisibles"],
+      "description": "Ne peut être vue sans magie ni sens particulier ; sa position ne peut être détectée que par le bruit qu'elle fait ou les traces qu'elle laisse. Les attaques contre elle ont le désavantage, ses propres attaques ont l'avantage.",
+      "detail_url": "https://www.aidedd.org/regles/etats/"
+    },
+    {
+      "name": "Paralysé",
+      "slug": "paralyse",
+      "name_vo": "Paralyzed",
+      "aliases": ["Paralysée", "Paralysés", "Paralysées"],
+      "description": "Incapable d'agir, ne peut plus bouger ni parler. Échoue automatiquement ses jets de sauvegarde de Force et de Dextérité ; les attaques contre elle ont l'avantage et sont critiques si l'attaquant est à 1,50 m ou moins.",
+      "detail_url": "https://www.aidedd.org/regles/etats/"
+    },
+    {
+      "name": "Pétrifié",
+      "slug": "petrifie",
+      "name_vo": "Petrified",
+      "aliases": ["Pétrifiée", "Pétrifiés", "Pétrifiées"],
+      "description": "Transformée, avec tout objet non magique porté, en une substance solide inanimée (généralement de la pierre) ; son poids est multiplié par dix et elle cesse de vieillir. Incapable d'agir, ne peut plus bouger ni parler, inconsciente de son environnement. Échoue automatiquement ses jets de sauvegarde de Force et de Dextérité ; les attaques contre elle ont l'avantage. Bénéficie de la résistance à tous les types de dégâts et de l'immunité au poison et à la maladie (un poison ou une maladie déjà présent est seulement suspendu, pas neutralisé).",
+      "detail_url": "https://www.aidedd.org/regles/etats/"
+    }
+  ]
+}

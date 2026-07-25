@@ -3,7 +3,9 @@ import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
 import AppIcon from '../AppIcon.vue'
+import LinkedText from '../LinkedText.vue'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
+import { spellCandidates, itemCandidates, withGlossary } from '@/utils/textLinker.js'
 
 const tabQuery = useContentTabQuery('backgrounds')
 let writeTimer = null
@@ -47,7 +49,41 @@ async function loadBackgrounds() {
   }
 }
 
-onMounted(loadBackgrounds)
+const spells = ref([])
+async function loadSpells() {
+  try {
+    const res = await apiFetch('/api/spells', {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    if (res.ok) spells.value = await res.json()
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+// Chargés pour lier les mentions d'objets d'équipement standard dans le texte
+// d'équipement de départ (voir plus bas) vers leur fiche dans l'onglet Objets.
+const items = ref([])
+async function loadItems() {
+  try {
+    const res = await apiFetch('/api/magic-items', {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    if (res.ok) items.value = (await res.json()).filter(i => i.source_category !== 'magic')
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+onMounted(() => { loadBackgrounds(); loadSpells(); loadItems() })
+
+const refCandidates = computed(() => withGlossary(spellCandidates(spells.value)))
+// N'est utilisé QUE pour le texte d'équipement de départ (voir template), jamais fusionné
+// dans refCandidates ci-dessus : de nombreux noms d'objets sont des mots courants d'un seul
+// mot qui apparaissent ailleurs avec un tout autre sens (ex: "Lance" l'objet vs "lance un
+// sort" ; "Acide" l'objet vs "dégâts d'acide" le type de dégâts) — les y lier produirait des
+// faux positifs, contrairement au texte d'équipement où ces mots désignent bien l'objet.
+const equipmentCandidates = computed(() => withGlossary(itemCandidates(items.value)))
 
 function backgroundMatches(background, q) {
   if (stripAccents(background.name.toLowerCase()).includes(q)) return true
@@ -166,11 +202,11 @@ onUnmounted(() => {
           <span v-if="background.languages_note" class="bg-attr">{{ background.languages_note }}</span>
         </div>
 
-        <p class="bg-equipment"><AppIcon icon="lucide:backpack" size="0.8em" /> {{ background.equipment }}</p>
+        <p class="bg-equipment"><AppIcon icon="lucide:backpack" size="0.8em" /> <LinkedText :text="background.equipment" :candidates="equipmentCandidates" /></p>
 
         <div v-if="background.feature" class="feature-block">
           <span class="feature-name"><AppIcon icon="lucide:star" size="0.75em" /> {{ background.feature.name }}</span>
-          <p class="feature-desc">{{ background.feature.description }}</p>
+          <p class="feature-desc"><LinkedText :text="background.feature.description" :candidates="refCandidates" :trait-name="background.feature.name" /></p>
         </div>
 
         <!-- Personnalité suggérée -->

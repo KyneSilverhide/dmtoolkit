@@ -1,10 +1,11 @@
 ﻿<script setup>
 import { computed, ref, watch, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
+import { highlightGlossaryHtml } from '@/utils/textLinker.js'
 
 function descriptionHtml(spell) {
   if (spell.description_html) {
-    return spell.description_html
+    return highlightGlossaryHtml(spell.description_html)
   }
   if (!spell.description) return ''
   const escaped = spell.description
@@ -13,7 +14,7 @@ function descriptionHtml(spell) {
     .replace(/>/g, '&gt;')
     .replace(/\n\n/g, '</p><p>')
     .replace(/\n/g, '<br>')
-  return `<p>${escaped}</p>`
+  return highlightGlossaryHtml(`<p>${escaped}</p>`)
 }
 
 import { BACKEND_URL } from '@/config.js'

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
 import AppIcon from '../AppIcon.vue'
@@ -7,8 +8,10 @@ import HelpTip from '../HelpTip.vue'
 import ContentPagination from './ContentPagination.vue'
 import { parseEcole, levelLabel, schoolColor } from '@/utils/spellSchool.js'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
+import { highlightGlossaryHtml } from '@/utils/textLinker.js'
 
 const tabQuery = useContentTabQuery('spells')
+const router = useRouter()
 
 const query = ref('')
 const results = ref([])
@@ -61,7 +64,7 @@ function shortComponent(composantes) {
 }
 
 function toHtml(entry) {
-  if (entry.description_html) return entry.description_html
+  if (entry.description_html) return highlightGlossaryHtml(entry.description_html)
   if (!entry.description) return ''
   const escaped = entry.description
     .replace(/&/g, '&amp;')
@@ -69,7 +72,16 @@ function toHtml(entry) {
     .replace(/>/g, '&gt;')
     .replace(/\n\n/g, '</p><p>')
     .replace(/\n/g, '<br>')
-  return `<p>${escaped}</p>`
+  return highlightGlossaryHtml(`<p>${escaped}</p>`)
+}
+
+// Les mentions d'état (voir highlightGlossaryHtml) sont rendues en HTML brut avec un
+// data-condition-slug plutôt qu'un vrai composant RefLink (impossible à monter dans un
+// v-html) — on délègue donc le clic depuis le conteneur pour naviguer vers la fiche état.
+function onDescClick(e) {
+  const el = e.target.closest('[data-condition-slug]')
+  if (!el) return
+  router.push({ path: '/admin/conditions', query: { q: el.dataset.conditionName, slug: el.dataset.conditionSlug } })
 }
 
 async function search() {
@@ -282,7 +294,7 @@ onUnmounted(() => {
             <span class="attr-val">{{ shortComponent(spell.attributes.composantes) }}</span>
           </div>
         </div>
-        <div v-if="spell.description_html || spell.description" class="spell-desc" v-html="toHtml(spell)" />
+        <div v-if="spell.description_html || spell.description" class="spell-desc" v-html="toHtml(spell)" @click="onDescClick" />
         <div v-if="spell.classes?.length" class="classes-row">
           <AppIcon icon="game-icons:vitruvian-man" size="0.7em" class="classes-icon" />
           <span v-for="cls in spell.classes" :key="cls" class="class-badge">{{ cls }}</span>

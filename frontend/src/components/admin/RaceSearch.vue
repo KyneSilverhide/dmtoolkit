@@ -3,7 +3,9 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
 import AppIcon from '../AppIcon.vue'
+import LinkedText from '../LinkedText.vue'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
+import { spellCandidates, withGlossary } from '@/utils/textLinker.js'
 
 const tabQuery = useContentTabQuery('races')
 let writeTimer = null
@@ -41,7 +43,21 @@ async function loadRaces() {
   }
 }
 
-onMounted(loadRaces)
+const spells = ref([])
+async function loadSpells() {
+  try {
+    const res = await apiFetch('/api/spells', {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    if (res.ok) spells.value = await res.json()
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+onMounted(() => { loadRaces(); loadSpells() })
+
+const refCandidates = computed(() => withGlossary(spellCandidates(spells.value)))
 
 function raceMatches(race, q) {
   if (stripAccents(race.name.toLowerCase()).includes(q)) return true
@@ -157,7 +173,7 @@ onUnmounted(() => {
         <ul v-if="race.traits.length" class="trait-list">
           <li v-for="trait in race.traits" :key="trait.name" class="trait-item">
             <span class="trait-name">{{ trait.name }}</span>
-            <span class="trait-desc">{{ trait.description }}</span>
+            <span class="trait-desc"><LinkedText :text="trait.description" :candidates="refCandidates" :trait-name="trait.name" /></span>
           </li>
         </ul>
 
@@ -170,7 +186,7 @@ onUnmounted(() => {
             <ul class="trait-list">
               <li v-for="trait in subrace.traits" :key="trait.name" class="trait-item">
                 <span class="trait-name">{{ trait.name }}</span>
-                <span class="trait-desc">{{ trait.description }}</span>
+                <span class="trait-desc"><LinkedText :text="trait.description" :candidates="refCandidates" :trait-name="trait.name" /></span>
               </li>
             </ul>
           </div>

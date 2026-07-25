@@ -4,8 +4,10 @@ import { useRouter } from 'vue-router'
 import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
 import AppIcon from '../AppIcon.vue'
+import LinkedText from '../LinkedText.vue'
 import ContentPagination from './ContentPagination.vue'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
+import { spellCandidates, withGlossary } from '@/utils/textLinker.js'
 
 const router = useRouter()
 const tabQuery = useContentTabQuery('abilities')
@@ -53,7 +55,21 @@ async function loadAbilities() {
   }
 }
 
-onMounted(loadAbilities)
+const spells = ref([])
+async function loadSpells() {
+  try {
+    const res = await apiFetch('/api/spells', {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    if (res.ok) spells.value = await res.json()
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+onMounted(() => { loadAbilities(); loadSpells() })
+
+const refCandidates = computed(() => withGlossary(spellCandidates(spells.value)))
 
 function abilityMatches(ability, q) {
   if (stripAccents(ability.name.toLowerCase()).includes(q)) return true
@@ -178,7 +194,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <p class="ability-desc">{{ ability.description }}</p>
+        <p class="ability-desc"><LinkedText :text="ability.description" :candidates="refCandidates" :trait-name="ability.name" /></p>
 
         <div class="ability-footer">
           <button class="go-class-btn" type="button" @click="goToClass(ability)">

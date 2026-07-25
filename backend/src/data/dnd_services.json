@@ -1,0 +1,194 @@
+{
+  "count": 27,
+  "services": [
+    {
+      "name": "Embauche (non qualifié)",
+      "slug": "embauche-non-qualifie",
+      "price": "2 pa par jour",
+      "description": "Rémunération d'une personne engagée pour un travail domestique ne demandant aucune compétence particulière : ouvrier, porteur, domestique, et autres tâches similaires.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Embauche (qualifié)",
+      "slug": "embauche-qualifie",
+      "price": "2 po par jour",
+      "description": "Rémunération minimale d'une personne engagée pour une tâche impliquant une maîtrise (armes, outils ou compétence) : mercenaire, artisan, scribe, etc. Certains experts exigent un salaire plus élevé.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Messager",
+      "slug": "messager",
+      "price": "2 pc par 1,5 kilomètre",
+      "description": "Coût pour faire porter un message ou un petit colis sur une distance donnée.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Péage routier ou porte",
+      "slug": "peage-routier-ou-porte",
+      "price": "1 pc",
+      "description": "Droit de passage sur une route à péage, ou pour franchir la porte d'une ville fortifiée.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Transport (en ville)",
+      "slug": "transport-en-ville",
+      "price": "1 pc",
+      "description": "Coût d'un trajet en véhicule à l'intérieur d'une même ville.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Transport (entre deux villes)",
+      "slug": "transport-entre-deux-villes",
+      "price": "3 pc par 1,5 kilomètre",
+      "description": "Coût d'un trajet en véhicule entre deux localités.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Voyage en bateau",
+      "slug": "voyage-en-bateau",
+      "price": "1 pa par 1,5 kilomètre",
+      "description": "Coût d'un passage à bord d'un navire, calculé par distance parcourue.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Auberge, sordide (par jour)",
+      "slug": "auberge-sordide-par-jour",
+      "price": "7 pc",
+      "description": "Coût d'une nuit d'hébergement en auberge, pour un confort sordide.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Auberge, pauvre (par jour)",
+      "slug": "auberge-pauvre-par-jour",
+      "price": "1 pa",
+      "description": "Coût d'une nuit d'hébergement en auberge, pour un confort pauvre.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Auberge, modeste (par jour)",
+      "slug": "auberge-modeste-par-jour",
+      "price": "5 pa",
+      "description": "Coût d'une nuit d'hébergement en auberge, pour un confort modeste.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Auberge, confortable (par jour)",
+      "slug": "auberge-confortable-par-jour",
+      "price": "8 pa",
+      "description": "Coût d'une nuit d'hébergement en auberge, pour un confort agréable.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Auberge, riche (par jour)",
+      "slug": "auberge-riche-par-jour",
+      "price": "2 po",
+      "description": "Coût d'une nuit d'hébergement en auberge, pour un confort riche.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Auberge, aristocratique (par jour)",
+      "slug": "auberge-aristocratique-par-jour",
+      "price": "4 po",
+      "description": "Coût d'une nuit d'hébergement en auberge, pour un confort aristocratique.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Banquet (par personne)",
+      "slug": "banquet-par-personne",
+      "price": "10 po",
+      "description": "Repas fastueux organisé pour un invité, prix par personne.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Bière (chope)",
+      "slug": "biere-chope",
+      "price": "4 pc",
+      "description": "Prix d'une chope de bière servie au comptoir.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Bière (cruche)",
+      "slug": "biere-cruche",
+      "price": "2 pa",
+      "description": "Prix d'une cruche de bière.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Fromage (gros morceau)",
+      "slug": "fromage-gros-morceau",
+      "price": "1 pa",
+      "description": "Prix d'un gros morceau de fromage.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Pain (miche)",
+      "slug": "pain-miche",
+      "price": "2 pc",
+      "description": "Prix d'une miche de pain.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Repas, sordide (par jour)",
+      "slug": "repas-sordide-par-jour",
+      "price": "3 pc",
+      "description": "Coût d'un repas quotidien, pour un confort sordide.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Repas, pauvre (par jour)",
+      "slug": "repas-pauvre-par-jour",
+      "price": "6 pc",
+      "description": "Coût d'un repas quotidien, pour un confort pauvre.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Repas, modeste (par jour)",
+      "slug": "repas-modeste-par-jour",
+      "price": "3 pa",
+      "description": "Coût d'un repas quotidien, pour un confort modeste.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Repas, confortable (par jour)",
+      "slug": "repas-confortable-par-jour",
+      "price": "5 pa",
+      "description": "Coût d'un repas quotidien, pour un confort agréable.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Repas, riche (par jour)",
+      "slug": "repas-riche-par-jour",
+      "price": "8 pa",
+      "description": "Coût d'un repas quotidien, pour un confort riche.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Repas, aristocratique (par jour)",
+      "slug": "repas-aristocratique-par-jour",
+      "price": "2 po",
+      "description": "Coût d'un repas quotidien, pour un confort aristocratique.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Viande (gros morceau)",
+      "slug": "viande-gros-morceau",
+      "price": "3 pa",
+      "description": "Prix d'un gros morceau de viande.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Vin ordinaire (pichet)",
+      "slug": "vin-ordinaire-pichet",
+      "price": "2 pa",
+      "description": "Prix d'un pichet de vin ordinaire.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    },
+    {
+      "name": "Vin fin (bouteille)",
+      "slug": "vin-fin-bouteille",
+      "price": "10 po",
+      "description": "Prix d'une bouteille de vin fin.",
+      "detail_url": "https://www.aidedd.org/regles/equipement/depenses/"
+    }
+  ]
+}

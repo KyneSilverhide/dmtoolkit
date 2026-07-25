@@ -7,7 +7,10 @@
       "size": "Moyenne (1,55 m à 1,85 m et plus)",
       "speed": "9 m",
       "age": "Adulte vers 20 ans ; vit rarement plus de 100 ans",
-      "languages": ["Commun", "1 langue au choix"],
+      "languages": [
+        "Commun",
+        "1 langue au choix"
+      ],
       "ability_bonus": "Toutes les caractéristiques +1",
       "traits": [],
       "subraces": [
@@ -15,8 +18,14 @@
           "name": "Humain (variante)",
           "ability_bonus": "2 caractéristiques différentes au choix +1",
           "traits": [
-            { "name": "Compétence supplémentaire", "description": "Maîtrise d'une compétence au choix." },
-            { "name": "Don", "description": "Obtention d'un don au choix (règle optionnelle)." }
+            {
+              "name": "Compétence supplémentaire",
+              "description": "Maîtrise d'une compétence au choix."
+            },
+            {
+              "name": "Don",
+              "description": "Obtention d'un don au choix (règle optionnelle)."
+            }
           ]
         }
       ],
@@ -30,41 +39,168 @@
       "size": "Moyenne (1,50 m à 1,80 m)",
       "speed": "9 m",
       "age": "Adulte vers 100 ans ; vit jusqu'à 750 ans",
-      "languages": ["Commun", "Elfique"],
+      "languages": [
+        "Commun",
+        "Elfique"
+      ],
       "ability_bonus": "Dextérité +2",
       "traits": [
-        { "name": "Vision dans le noir", "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)." },
-        { "name": "Sens aiguisés", "description": "Maîtrise de la compétence Perception." },
-        { "name": "Ascendance féerique", "description": "Avantage aux jets de sauvegarde contre la charme et immunité au sommeil magique." },
-        { "name": "Transe", "description": "N'a pas besoin de dormir ; médite 4 heures par jour à la place." }
+        {
+          "name": "Vision dans le noir",
+          "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)."
+        },
+        {
+          "name": "Sens aiguisés",
+          "description": "Maîtrise de la compétence Perception."
+        },
+        {
+          "name": "Ascendance féerique",
+          "description": "Avantage aux jets de sauvegarde contre la charme et immunité au sommeil magique."
+        },
+        {
+          "name": "Transe",
+          "description": "N'a pas besoin de dormir ; médite 4 heures par jour à la place."
+        }
       ],
       "subraces": [
         {
           "name": "Haut-elfe",
           "ability_bonus": "Intelligence +1",
           "traits": [
-            { "name": "Entraînement aux armes elfiques", "description": "Maîtrise de l'épée longue, l'épée courte, l'arc long et l'arc court." },
-            { "name": "Sort de mage mineur", "description": "Connaît un tour de magie au choix dans la liste du magicien." },
-            { "name": "Langue supplémentaire", "description": "Une langue additionnelle au choix." }
+            {
+              "name": "Entraînement aux armes elfiques",
+              "description": "Maîtrise de l'épée longue, l'épée courte, l'arc long et l'arc court."
+            },
+            {
+              "name": "Sort de mage mineur",
+              "description": "Connaît un tour de magie au choix dans la liste du magicien."
+            },
+            {
+              "name": "Langue supplémentaire",
+              "description": "Une langue additionnelle au choix."
+            }
           ]
         },
         {
           "name": "Elfe des bois",
           "ability_bonus": "Sagesse +1",
           "traits": [
-            { "name": "Entraînement aux armes elfiques", "description": "Maîtrise de l'épée longue, l'épée courte, l'arc long et l'arc court." },
-            { "name": "Vitesse accrue", "description": "Vitesse de base portée à 10,5 m." },
-            { "name": "Masque de la nature", "description": "Peut tenter de se cacher même en n'étant que légèrement dissimulé par le feuillage, la pluie, la neige, etc." }
+            {
+              "name": "Entraînement aux armes elfiques",
+              "description": "Maîtrise de l'épée longue, l'épée courte, l'arc long et l'arc court."
+            },
+            {
+              "name": "Vitesse accrue",
+              "description": "Vitesse de base portée à 10,5 m."
+            },
+            {
+              "name": "Masque de la nature",
+              "description": "Peut tenter de se cacher même en n'étant que légèrement dissimulé par le feuillage, la pluie, la neige, etc."
+            }
           ]
         },
         {
           "name": "Elfe noir (Drow)",
           "ability_bonus": "Charisme +1",
           "traits": [
-            { "name": "Vision dans le noir supérieure", "description": "Portée de la vision dans le noir étendue à 36 m." },
-            { "name": "Sensibilité à la lumière du soleil", "description": "Désavantage aux jets d'attaque et de Perception basés sur la vue en plein soleil." },
-            { "name": "Magie féerique", "description": "Connaît Lumières dansantes ; à partir du niveau 3, lance Lueurs féeriques 1 fois par repos long ; à partir du niveau 5, lance Ténèbres 1 fois par repos long (Charisme)." },
-            { "name": "Entraînement aux armes drow", "description": "Maîtrise de la rapière, l'épée courte et l'arbalète de poing." }
+            {
+              "name": "Vision dans le noir supérieure",
+              "description": "Portée de la vision dans le noir étendue à 36 m."
+            },
+            {
+              "name": "Sensibilité à la lumière du soleil",
+              "description": "Désavantage aux jets d'attaque et de Perception basés sur la vue en plein soleil."
+            },
+            {
+              "name": "Magie féerique",
+              "description": "Connaît Lumières dansantes ; à partir du niveau 3, lance Lueurs féeriques 1 fois par repos long ; à partir du niveau 5, lance Ténèbres 1 fois par repos long (Charisme)."
+            },
+            {
+              "name": "Entraînement aux armes drow",
+              "description": "Maîtrise de la rapière, l'épée courte et l'arbalète de poing."
+            }
+          ]
+        },
+        {
+          "name": "Éladrin (UA)",
+          "ability_bonus": "Intelligence ou Charisme +1 (au choix)",
+          "traits": [
+            {
+              "name": "Pas féerique",
+              "description": "Action bonus : téléportation jusqu'à 9 m vers un endroit visible ; 1 utilisation, récupérée après un repos court ou long."
+            },
+            {
+              "name": "Changement de saison",
+              "description": "À la fin d'un repos, choix d'une saison (automne/hiver/printemps/été) octroyant l'un des sorts mineurs Amis, Contact glacial, Illusion mineure ou Trait de feu ; Intelligence ou Charisme comme caractéristique d'incantation."
+            }
+          ]
+        },
+        {
+          "name": "Avariel",
+          "ability_bonus": "Aucun bonus de caractéristique supplémentaire",
+          "traits": [
+            {
+              "name": "Vol",
+              "description": "Vitesse de vol de 9 m tant qu'aucune armure intermédiaire ou lourde n'est portée."
+            },
+            {
+              "name": "Langue aérienne",
+              "description": "Parle, lit et écrit également l'aérien."
+            }
+          ]
+        },
+        {
+          "name": "Grugach",
+          "ability_bonus": "Force +1",
+          "traits": [
+            {
+              "name": "Entraînement aux armes grugachs",
+              "description": "Maîtrise de la lance, de l'arc court, de l'arc long et du filet."
+            },
+            {
+              "name": "Sort mineur",
+              "description": "Connaît un sort mineur de druide au choix (Sagesse comme caractéristique d'incantation)."
+            },
+            {
+              "name": "Langue sylvestre",
+              "description": "Parle, lit et écrit le sylvestre à la place du commun."
+            }
+          ]
+        },
+        {
+          "name": "Elfe aquatique",
+          "ability_bonus": "Constitution +1",
+          "traits": [
+            {
+              "name": "Entraînement aux armes des elfes aquatiques",
+              "description": "Maîtrise de la lance, du trident, de l'arbalète légère et du filet."
+            },
+            {
+              "name": "Enfant de la mer",
+              "description": "Vitesse de nage de 9 m ; respire sous l'eau comme dans l'air."
+            },
+            {
+              "name": "Ami de la mer",
+              "description": "Communication gestuelle simple avec les créatures de taille P ou moins dotées d'une vitesse de nage innée."
+            },
+            {
+              "name": "Langue aquatique",
+              "description": "Parle, lit et écrit également l'aquatique."
+            }
+          ]
+        },
+        {
+          "name": "Shadar-kai",
+          "ability_bonus": "Charisme +1",
+          "traits": [
+            {
+              "name": "Sorts mineurs",
+              "description": "Connaît un sort mineur au choix parmi contact glacial, stabilisation et thaumaturgie (Charisme)."
+            },
+            {
+              "name": "Bénédiction de la Reine corneille",
+              "description": "Action bonus : téléportation jusqu'à 4,5 m vers un espace visible et résistance à tous les dégâts jusqu'au début du prochain tour ; 1 utilisation, récupérée après un repos court ou long."
+            }
           ]
         }
       ],
@@ -78,28 +214,52 @@
       "size": "Moyenne (1,20 m à 1,50 m)",
       "speed": "7,5 m (non réduite par le port d'une armure lourde)",
       "age": "Adulte vers 50 ans ; vit environ 350 ans",
-      "languages": ["Commun", "Nain"],
+      "languages": [
+        "Commun",
+        "Nain"
+      ],
       "ability_bonus": "Constitution +2",
       "traits": [
-        { "name": "Vision dans le noir", "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)." },
-        { "name": "Résistance naine", "description": "Avantage aux jets de sauvegarde contre le poison et résistance aux dégâts de poison." },
-        { "name": "Entraînement au combat nain", "description": "Maîtrise de la hachette, la hache d'armes, le marteau léger et le marteau de guerre." },
-        { "name": "Maîtrise d'outils", "description": "Outils de forgeron, de brasseur ou de maçon (au choix)." },
-        { "name": "Connaissance de la pierre", "description": "Maîtrise doublée en Histoire pour les jets liés aux ouvrages de pierre." }
+        {
+          "name": "Vision dans le noir",
+          "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)."
+        },
+        {
+          "name": "Résistance naine",
+          "description": "Avantage aux jets de sauvegarde contre le poison et résistance aux dégâts de poison."
+        },
+        {
+          "name": "Entraînement au combat nain",
+          "description": "Maîtrise de la hachette, la hache d'armes, le marteau léger et le marteau de guerre."
+        },
+        {
+          "name": "Maîtrise d'outils",
+          "description": "Outils de forgeron, de brasseur ou de maçon (au choix)."
+        },
+        {
+          "name": "Connaissance de la pierre",
+          "description": "Maîtrise doublée en Histoire pour les jets liés aux ouvrages de pierre."
+        }
       ],
       "subraces": [
         {
           "name": "Nain des collines",
           "ability_bonus": "Sagesse +1",
           "traits": [
-            { "name": "Ténacité naine", "description": "+1 point de vie maximum, et +1 supplémentaire à chaque niveau gagné." }
+            {
+              "name": "Ténacité naine",
+              "description": "+1 point de vie maximum, et +1 supplémentaire à chaque niveau gagné."
+            }
           ]
         },
         {
           "name": "Nain des montagnes",
           "ability_bonus": "Force +2",
           "traits": [
-            { "name": "Entraînement aux armures naines", "description": "Maîtrise des armures légères et intermédiaires." }
+            {
+              "name": "Entraînement aux armures naines",
+              "description": "Maîtrise des armures légères et intermédiaires."
+            }
           ]
         }
       ],
@@ -113,26 +273,44 @@
       "size": "Petite (environ 90 cm)",
       "speed": "7,5 m",
       "age": "Adulte vers 20 ans ; vit environ 150 ans",
-      "languages": ["Commun", "Halfelin"],
+      "languages": [
+        "Commun",
+        "Halfelin"
+      ],
       "ability_bonus": "Dextérité +2",
       "traits": [
-        { "name": "Chanceux", "description": "Relance les 1 obtenus aux jets d'attaque, de caractéristique ou de sauvegarde, et doit garder le nouveau résultat." },
-        { "name": "Brave", "description": "Avantage aux jets de sauvegarde contre la peur." },
-        { "name": "Agilité halfeline", "description": "Peut se déplacer à travers l'espace occupé par une créature de taille supérieure à la sienne." }
+        {
+          "name": "Chanceux",
+          "description": "Relance les 1 obtenus aux jets d'attaque, de caractéristique ou de sauvegarde, et doit garder le nouveau résultat."
+        },
+        {
+          "name": "Brave",
+          "description": "Avantage aux jets de sauvegarde contre la peur."
+        },
+        {
+          "name": "Agilité halfeline",
+          "description": "Peut se déplacer à travers l'espace occupé par une créature de taille supérieure à la sienne."
+        }
       ],
       "subraces": [
         {
           "name": "Pied-léger",
           "ability_bonus": "Charisme +1",
           "traits": [
-            { "name": "Discrétion naturelle", "description": "Peut tenter de se cacher même en n'étant dissimulé que par une créature d'au moins une catégorie de taille plus grande que soi." }
+            {
+              "name": "Discrétion naturelle",
+              "description": "Peut tenter de se cacher même en n'étant dissimulé que par une créature d'au moins une catégorie de taille plus grande que soi."
+            }
           ]
         },
         {
           "name": "Robuste",
           "ability_bonus": "Constitution +1",
           "traits": [
-            { "name": "Résistance robuste", "description": "Avantage aux jets de sauvegarde contre le poison et résistance aux dégâts de poison." }
+            {
+              "name": "Résistance robuste",
+              "description": "Avantage aux jets de sauvegarde contre le poison et résistance aux dégâts de poison."
+            }
           ]
         }
       ],
@@ -146,12 +324,25 @@
       "size": "Moyenne (1,50 m à 1,85 m)",
       "speed": "9 m",
       "age": "Adulte vers 20 ans ; vit plus de 180 ans",
-      "languages": ["Commun", "Elfique", "1 langue au choix"],
+      "languages": [
+        "Commun",
+        "Elfique",
+        "1 langue au choix"
+      ],
       "ability_bonus": "Charisme +2, et 2 autres caractéristiques au choix +1",
       "traits": [
-        { "name": "Vision dans le noir", "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)." },
-        { "name": "Ascendance féerique", "description": "Avantage aux jets de sauvegarde contre la charme et immunité au sommeil magique." },
-        { "name": "Polyvalence de compétences", "description": "Maîtrise de deux compétences au choix." }
+        {
+          "name": "Vision dans le noir",
+          "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)."
+        },
+        {
+          "name": "Ascendance féerique",
+          "description": "Avantage aux jets de sauvegarde contre la charme et immunité au sommeil magique."
+        },
+        {
+          "name": "Polyvalence de compétences",
+          "description": "Maîtrise de deux compétences au choix."
+        }
       ],
       "subraces": [],
       "detail_url": "https://www.aidedd.org/regles/races/demi-elfe/",
@@ -164,13 +355,28 @@
       "size": "Moyenne (1,55 m à 1,85 m et plus)",
       "speed": "9 m",
       "age": "Adulte vers 14 ans ; vit rarement au-delà de 75 ans",
-      "languages": ["Commun", "Orc"],
+      "languages": [
+        "Commun",
+        "Orc"
+      ],
       "ability_bonus": "Force +2, Constitution +1",
       "traits": [
-        { "name": "Vision dans le noir", "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)." },
-        { "name": "Menaçant", "description": "Maîtrise de la compétence Intimidation." },
-        { "name": "Endurance implacable", "description": "Une fois par repos long, si des dégâts le réduisent à 0 point de vie sans le tuer, il tombe à 1 point de vie à la place." },
-        { "name": "Attaques sauvages", "description": "En cas de coup critique au corps à corps, relance un des dés de dégâts de l'arme et ajoute le résultat aux dégâts supplémentaires." }
+        {
+          "name": "Vision dans le noir",
+          "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)."
+        },
+        {
+          "name": "Menaçant",
+          "description": "Maîtrise de la compétence Intimidation."
+        },
+        {
+          "name": "Endurance implacable",
+          "description": "Une fois par repos long, si des dégâts le réduisent à 0 point de vie sans le tuer, il tombe à 1 point de vie à la place."
+        },
+        {
+          "name": "Attaques sauvages",
+          "description": "En cas de coup critique au corps à corps, relance un des dés de dégâts de l'arme et ajoute le résultat aux dégâts supplémentaires."
+        }
       ],
       "subraces": [],
       "detail_url": "https://www.aidedd.org/regles/races/demi-orc/",
@@ -183,27 +389,48 @@
       "size": "Petite (environ 90 cm à 1,20 m)",
       "speed": "7,5 m",
       "age": "Adulte vers 40 ans ; vit de 350 à 500 ans",
-      "languages": ["Commun", "Gnome"],
+      "languages": [
+        "Commun",
+        "Gnome"
+      ],
       "ability_bonus": "Intelligence +2",
       "traits": [
-        { "name": "Vision dans le noir", "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)." },
-        { "name": "Ruse gnome", "description": "Avantage aux jets de sauvegarde d'Intelligence, de Sagesse et de Charisme contre la magie." }
+        {
+          "name": "Vision dans le noir",
+          "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)."
+        },
+        {
+          "name": "Ruse gnome",
+          "description": "Avantage aux jets de sauvegarde d'Intelligence, de Sagesse et de Charisme contre la magie."
+        }
       ],
       "subraces": [
         {
           "name": "Gnome des forêts",
           "ability_bonus": "Dextérité +1",
           "traits": [
-            { "name": "Illusionniste-né", "description": "Connaît le tour de magie Illusion mineure." },
-            { "name": "Discussion avec les petites bêtes", "description": "Peut communiquer des idées simples aux bêtes de taille P ou inférieure." }
+            {
+              "name": "Illusionniste-né",
+              "description": "Connaît le tour de magie Illusion mineure."
+            },
+            {
+              "name": "Discussion avec les petites bêtes",
+              "description": "Peut communiquer des idées simples aux bêtes de taille P ou inférieure."
+            }
           ]
         },
         {
           "name": "Gnome des roches",
           "ability_bonus": "Constitution +1",
           "traits": [
-            { "name": "Savoir de l'artificier", "description": "Maîtrise doublée en Histoire pour les objets magiques, alchimiques ou technologiques." },
-            { "name": "Bricolage", "description": "Maîtrise des outils d'artisan (mécanismes) ; peut fabriquer de petits objets mécaniques (jouet à remontoir, briquet, boîte à musique, etc.)." }
+            {
+              "name": "Savoir de l'artificier",
+              "description": "Maîtrise doublée en Histoire pour les objets magiques, alchimiques ou technologiques."
+            },
+            {
+              "name": "Bricolage",
+              "description": "Maîtrise des outils d'artisan (mécanismes) ; peut fabriquer de petits objets mécaniques (jouet à remontoir, briquet, boîte à musique, etc.)."
+            }
           ]
         }
       ],
@@ -217,12 +444,24 @@
       "size": "Moyenne (plus de 1,80 m)",
       "speed": "9 m",
       "age": "Adulte vers 15 ans ; vit environ 80 ans",
-      "languages": ["Commun", "Draconique"],
+      "languages": [
+        "Commun",
+        "Draconique"
+      ],
       "ability_bonus": "Force +2, Charisme +1",
       "traits": [
-        { "name": "Ascendance draconique", "description": "Choix d'un type de dragon déterminant le type de dégâts du souffle et la résistance associée (par ex. rouge/or = feu, bleu/bronze = foudre, blanc/argent = froid, noir/cuivre = acide, vert = poison)." },
-        { "name": "Arme de souffle", "description": "Action : souffle en ligne (1,5 m x 9 m) ou en cône (4,5 m) infligeant 2d6 dégâts (progresse à 3d6 au niveau 6, 4d6 au niveau 11, 5d6 au niveau 16) ; jet de sauvegarde (DEX ou CON selon le type) DD = 8 + bonus de maîtrise + modificateur de Constitution, moitié des dégâts en cas de réussite. Une fois utilisée, nécessite un repos court ou long." },
-        { "name": "Résistance aux dégâts", "description": "Résistance au type de dégâts associé à l'ascendance draconique." }
+        {
+          "name": "Ascendance draconique",
+          "description": "Choix d'un type de dragon déterminant le type de dégâts du souffle et la résistance associée (par ex. rouge/or = feu, bleu/bronze = foudre, blanc/argent = froid, noir/cuivre = acide, vert = poison)."
+        },
+        {
+          "name": "Arme de souffle",
+          "description": "Action : souffle en ligne (1,5 m x 9 m) ou en cône (4,5 m) infligeant 2d6 dégâts (progresse à 3d6 au niveau 6, 4d6 au niveau 11, 5d6 au niveau 16) ; jet de sauvegarde (DEX ou CON selon le type) DD = 8 + bonus de maîtrise + modificateur de Constitution, moitié des dégâts en cas de réussite. Une fois utilisée, nécessite un repos court ou long."
+        },
+        {
+          "name": "Résistance aux dégâts",
+          "description": "Résistance au type de dégâts associé à l'ascendance draconique."
+        }
       ],
       "subraces": [],
       "detail_url": "https://www.aidedd.org/regles/races/drakeide/",
@@ -235,16 +474,752 @@
       "size": "Moyenne",
       "speed": "9 m",
       "age": "Mûrit au même rythme qu'un humain ; vit un peu plus longtemps",
-      "languages": ["Commun", "Infernal"],
+      "languages": [
+        "Commun",
+        "Infernal"
+      ],
       "ability_bonus": "Intelligence +1, Charisme +2",
       "traits": [
-        { "name": "Vision dans le noir", "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)." },
-        { "name": "Résistance infernale", "description": "Résistance aux dégâts de feu." },
-        { "name": "Héritage infernal", "description": "Connaît le tour de magie Thaumaturgie. À partir du niveau 3, lance Représailles infernales (2ᵉ cercle) 1 fois par repos long. À partir du niveau 5, lance Ténèbres 1 fois par repos long. Le Charisme est la caractéristique d'incantation." }
+        {
+          "name": "Vision dans le noir",
+          "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)."
+        },
+        {
+          "name": "Résistance infernale",
+          "description": "Résistance aux dégâts de feu."
+        },
+        {
+          "name": "Héritage infernal",
+          "description": "Connaît le tour de magie Thaumaturgie. À partir du niveau 3, lance Représailles infernales (2ᵉ cercle) 1 fois par repos long. À partir du niveau 5, lance Ténèbres 1 fois par repos long. Le Charisme est la caractéristique d'incantation."
+        }
       ],
       "subraces": [],
       "detail_url": "https://www.aidedd.org/regles/races/tieffelin/",
       "source": "Manuel des Joueurs (PHB 2014)"
+    },
+    {
+      "name": "Gith",
+      "slug": "gith",
+      "icon": "game-icons:psychic-waves",
+      "size": "Moyenne (environ 1,80 m en moyenne)",
+      "speed": "9 m",
+      "age": "Adulte peu avant 20 ans ; vit environ 100 ans",
+      "languages": [
+        "Commun",
+        "Gith"
+      ],
+      "ability_bonus": "Intelligence +1",
+      "traits": [],
+      "subraces": [
+        {
+          "name": "Githyanki",
+          "ability_bonus": "Force +2",
+          "traits": [
+            {
+              "name": "Maîtrise opulente",
+              "description": "Maîtrise d'une langue, d'une compétence ou d'un outil au choix."
+            },
+            {
+              "name": "Guerrier prodige",
+              "description": "Maîtrise des armures légères et intermédiaires."
+            },
+            {
+              "name": "Pouvoirs psioniques githyanki",
+              "description": "Connaît le sort mineur Main de mage ; lance Saut une fois entre deux repos longs dès le niveau 3, puis Foulée brumeuse dès le niveau 5 (Intelligence, sans composantes)."
+            }
+          ]
+        },
+        {
+          "name": "Githzerai",
+          "ability_bonus": "Sagesse +2",
+          "traits": [
+            {
+              "name": "Entraînement monacal",
+              "description": "+1 à la CA tant qu'aucune armure intermédiaire ou lourde ni bouclier n'est utilisé."
+            },
+            {
+              "name": "Pouvoirs psioniques githzerai",
+              "description": "Connaît le sort mineur Main de mage ; lance Bouclier une fois entre deux repos longs dès le niveau 3, puis Détection des pensées dès le niveau 5 (Sagesse, sans composantes)."
+            }
+          ]
+        }
+      ],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/eladrin-et-gith/",
+      "source": "Unearthed Arcana : Éladrin et gith (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Drakéide chromatique (UA)",
+      "slug": "drakeide-chromatique-ua",
+      "icon": "game-icons:dragon-head",
+      "size": "Moyenne",
+      "speed": "9 m",
+      "age": "Adulte vers 15 ans ; vit environ 80 ans",
+      "languages": [
+        "Commun",
+        "Draconique"
+      ],
+      "ability_bonus": "2 caractéristiques différentes au choix : l'une +2, l'autre +1, ou 3 caractéristiques différentes +1",
+      "traits": [
+        {
+          "name": "Ascendance chromatique",
+          "description": "Choix d'un dragon chromatique (noir/acide, bleu/foudre, vert/poison, rouge/feu, blanc/froid) déterminant le type de dégâts des traits suivants."
+        },
+        {
+          "name": "Souffle",
+          "description": "Remplace une attaque : ligne de 9 m x 1,5 m, JdS Dextérité (DD 8 + bonus de maîtrise + mod. Constitution), 2d8 dégâts (3d8 au niveau 5, 4d8 au niveau 11, 5d8 au niveau 17), moitié en cas de réussite ; utilisations = bonus de maîtrise, récupérées après un repos long."
+        },
+        {
+          "name": "Résistance du dragon",
+          "description": "Résistance au type de dégâts de l'ascendance chromatique."
+        },
+        {
+          "name": "Protection chromatique (niveau 3)",
+          "description": "Action : immunité au type de dégâts de l'ascendance pendant 10 minutes ; 1 utilisation, récupérée après un repos long."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/options-draconiques/",
+      "source": "Unearthed Arcana : Options draconiques (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Drakéide diamantin (UA)",
+      "slug": "drakeide-diamantin-ua",
+      "icon": "game-icons:gem-pendant",
+      "size": "Moyenne",
+      "speed": "9 m",
+      "age": "Adulte vers 15 ans ; vit environ 80 ans",
+      "languages": [
+        "Commun",
+        "Draconique"
+      ],
+      "ability_bonus": "2 caractéristiques différentes au choix : l'une +2, l'autre +1, ou 3 caractéristiques différentes +1",
+      "traits": [
+        {
+          "name": "Ascendance diamantine",
+          "description": "Choix d'un dragon diamantin (améthyste/force, cristal/radiant, émeraude/psychique, saphir/tonnerre, topaze/nécrotique) déterminant le type de dégâts des traits suivants."
+        },
+        {
+          "name": "Souffle",
+          "description": "Remplace une attaque : cône de 4,5 m, JdS Dextérité (DD 8 + bonus de maîtrise + mod. Constitution), 2d8 dégâts (3d8 au niveau 5, 4d8 au niveau 11, 5d8 au niveau 17), moitié en cas de réussite ; utilisations = bonus de maîtrise, récupérées après un repos long."
+        },
+        {
+          "name": "Résistance du dragon",
+          "description": "Résistance au type de dégâts de l'ascendance diamantine."
+        },
+        {
+          "name": "Esprit psionique",
+          "description": "Télépathie jusqu'à 9 m avec une créature visible comprenant au moins une langue (celle-ci ne peut pas répondre par ce biais)."
+        },
+        {
+          "name": "Vol diamantin (niveau 3)",
+          "description": "Action bonus : ailes spectrales octroyant une vitesse de vol égale à la vitesse de base pendant 1 minute (vol stationnaire possible) ; 1 utilisation, récupérée après un repos long."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/options-draconiques/",
+      "source": "Unearthed Arcana : Options draconiques (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Kobold",
+      "slug": "kobold",
+      "icon": "game-icons:lizardman",
+      "size": "Petite",
+      "speed": "9 m",
+      "age": "Non précisé",
+      "languages": [
+        "Commun",
+        "1 langue au choix"
+      ],
+      "ability_bonus": "2 caractéristiques différentes au choix : l'une +2, l'autre +1, ou 3 caractéristiques différentes +1",
+      "traits": [
+        {
+          "name": "Vision dans le noir",
+          "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)."
+        },
+        {
+          "name": "Héritage draconique",
+          "description": "Choix à la création parmi : avantage aux jets de sauvegarde contre l'état effrayé ; sort mineur d'ensorceleur au choix (Intelligence, Sagesse ou Charisme) ; attaque de queue sans arme (1d6 + mod. Force, dégâts contondants)."
+        },
+        {
+          "name": "Rugissement draconique",
+          "description": "Action bonus : les ennemis à 3 m ou moins qui entendent le rugissement subissent un désavantage aux attaques contre vous et vos alliés jusqu'à la fin de votre prochain tour ; utilisations = bonus de maîtrise, récupérées après un repos long."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/options-draconiques/",
+      "source": "Unearthed Arcana : Options draconiques (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Minotaure",
+      "slug": "minotaure",
+      "icon": "game-icons:minotaur",
+      "size": "Moyenne (plus de 1,80 m, carrure trapue)",
+      "speed": "9 m",
+      "age": "Non précisé",
+      "languages": [
+        "Commun",
+        "Minotaure"
+      ],
+      "ability_bonus": "Force +2, Constitution +1",
+      "traits": [
+        {
+          "name": "Cornes",
+          "description": "Arme naturelle de corps à corps maîtrisée automatiquement ; 1d6 + mod. Force dégâts perforants."
+        },
+        {
+          "name": "Ruée",
+          "description": "Après avoir foncé et parcouru au moins sa vitesse de base, attaque à cornes possible en action bonus."
+        },
+        {
+          "name": "Revers de cornes",
+          "description": "Réaction après avoir touché en mêlée : repousse de 1,5 m une créature d'une taille au plus supérieure, JdS Force DD 8 + bonus de maîtrise + mod. Force."
+        },
+        {
+          "name": "Menaçant",
+          "description": "Maîtrise de la compétence Intimidation."
+        },
+        {
+          "name": "Nature hybride",
+          "description": "Type de créature humanoïde et monstruosité simultanément."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/aventures-maritimes/",
+      "source": "Unearthed Arcana : Aventures maritimes (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Centaure",
+      "slug": "centaure",
+      "icon": "game-icons:centaur",
+      "size": "Moyenne (silhouette plus grande que la plupart des humanoïdes)",
+      "speed": "12 m",
+      "age": "Grandit et vieillit au même rythme qu'un humain",
+      "languages": [
+        "Commun",
+        "Sylvestre"
+      ],
+      "ability_bonus": "Force +2, Sagesse +1",
+      "traits": [
+        {
+          "name": "Charge",
+          "description": "Après un déplacement en ligne droite d'au moins 6 m suivi d'une attaque de mêlée à l'arme qui touche, double les dés de dégâts de l'arme ; 1 utilisation, récupérée après un repos court ou long."
+        },
+        {
+          "name": "Sabots",
+          "description": "Arme naturelle de corps à corps maîtrisée automatiquement ; 1d6 + mod. Force dégâts contondants."
+        },
+        {
+          "name": "Forme équine",
+          "description": "Compte une taille de plus pour la capacité de charge et de poussée ; escalade mains-pieds deux fois plus coûteuse ; peut porter un cavalier de taille M ou moins sans agir comme une monture contrôlée."
+        },
+        {
+          "name": "Survivant",
+          "description": "Maîtrise de la compétence Survie."
+        },
+        {
+          "name": "Nature hybride",
+          "description": "Type de créature humanoïde et monstruosité simultanément."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/aventures-maritimes/",
+      "source": "Unearthed Arcana : Aventures maritimes (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Fadette",
+      "slug": "fadette",
+      "icon": "game-icons:fairy",
+      "size": "Petite",
+      "speed": "9 m",
+      "age": "Non précisé",
+      "languages": [
+        "Commun",
+        "1 langue au choix"
+      ],
+      "ability_bonus": "2 caractéristiques différentes au choix : l'une +2, l'autre +1",
+      "traits": [
+        {
+          "name": "Type de créature",
+          "description": "Créature de type fée."
+        },
+        {
+          "name": "Vol féerique",
+          "description": "Vitesse de vol égale à la vitesse de base, avec vol stationnaire ; magique, ne nécessite pas d'ailes."
+        },
+        {
+          "name": "Magie des fées",
+          "description": "Connaît Druidisme et Lueurs féeriques (lançable gratuitement 1 fois par repos long, ou via un emplacement de sort) ; caractéristique d'incantation au choix (Intelligence, Sagesse ou Charisme)."
+        },
+        {
+          "name": "Passage féerique",
+          "description": "Peut se faufiler dans un espace large de seulement 3 cm."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/peuples-de-la-feerie/",
+      "source": "Unearthed Arcana : Peuples de la Féerie (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Hobgobelin de Féerie",
+      "slug": "hobgobelin-de-feerie",
+      "icon": "game-icons:goblin-head",
+      "size": "Moyenne",
+      "speed": "9 m",
+      "age": "Non précisé",
+      "languages": [
+        "Commun",
+        "1 langue au choix"
+      ],
+      "ability_bonus": "2 caractéristiques différentes au choix : l'une +2, l'autre +1",
+      "traits": [
+        {
+          "name": "Vision dans le noir",
+          "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)."
+        },
+        {
+          "name": "Ascendance féerique",
+          "description": "Avantage aux jets de sauvegarde contre l'état charmé."
+        },
+        {
+          "name": "Don féerique",
+          "description": "L'action Aider est réalisable en action bonus, un nombre de fois égal au bonus de maîtrise (récupéré après un repos long) ; dès le niveau 3, un effet supplémentaire est choisi à chaque usage : Hospitalité (PV temporaires 1d6 + bonus de maîtrise pour soi et la cible), Cheminement (+3 m de vitesse pour soi et la cible jusqu'au prochain tour), Espionnage (désavantage au prochain jet d'attaque de la première créature touchée) ou La chance du plus grand nombre (bonus égal au nombre d'alliés visibles à 9 m, max +5, applicable à un jet raté)."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/peuples-de-la-feerie/",
+      "source": "Unearthed Arcana : Peuples de la Féerie (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Hiboulin",
+      "slug": "hiboulin",
+      "icon": "game-icons:owl",
+      "size": "Moyenne ou Petite (au choix)",
+      "speed": "9 m",
+      "age": "Non précisé",
+      "languages": [
+        "Commun",
+        "1 langue au choix"
+      ],
+      "ability_bonus": "2 caractéristiques différentes au choix : l'une +2, l'autre +1",
+      "traits": [
+        {
+          "name": "Vision dans le noir supérieure",
+          "description": "Voit à 27 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)."
+        },
+        {
+          "name": "Perception de la magie",
+          "description": "Lance Détection de la magie en rituel (Intelligence, Sagesse ou Charisme), ou via un emplacement de sort."
+        },
+        {
+          "name": "Vol agile",
+          "description": "Vitesse de vol égale à la vitesse de base ; en cas de chute, réaction pour un JdS Dextérité DD 10 afin d'arrêter la chute et voler sur place jusqu'au début du prochain tour."
+        },
+        {
+          "name": "Plumage silencieux",
+          "description": "Maîtrise de la compétence Discrétion."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/peuples-de-la-feerie/",
+      "source": "Unearthed Arcana : Peuples de la Féerie (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Homme-lapin",
+      "slug": "homme-lapin",
+      "icon": "game-icons:rabbit",
+      "size": "Moyenne ou Petite (au choix)",
+      "speed": "9 m",
+      "age": "Non précisé",
+      "languages": [
+        "Commun",
+        "1 langue au choix"
+      ],
+      "ability_bonus": "2 caractéristiques différentes au choix : l'une +2, l'autre +1",
+      "traits": [
+        {
+          "name": "Démarrage du lièvre",
+          "description": "Ajoute le bonus de maîtrise au jet d'initiative."
+        },
+        {
+          "name": "Sens léporidés",
+          "description": "Maîtrise de la compétence Perception."
+        },
+        {
+          "name": "Pas chanceux",
+          "description": "Réaction sur un jet de sauvegarde de Dextérité raté : ajoute 1d4 au résultat."
+        },
+        {
+          "name": "Saut de lapin",
+          "description": "Une fois par tour, après un déplacement d'au moins 1,5 m, saut supplémentaire de 1d4 mètres (ou 1d3 cases) sans coût de mouvement, tant que la vitesse n'est pas nulle."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/peuples-de-la-feerie/",
+      "source": "Unearthed Arcana : Peuples de la Féerie (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Dhampire",
+      "slug": "dhampire",
+      "icon": "game-icons:fangs",
+      "size": "Moyenne ou Petite (au choix)",
+      "speed": "10,5 m",
+      "age": "Variable ; voir la table d'origine de la lignée",
+      "languages": [
+        "Commun",
+        "1 langue au choix (les langues déjà connues sont conservées si la lignée remplace une race précédente)"
+      ],
+      "ability_bonus": "Personnalisable : une caractéristique +2 et une autre +1 au choix (pas de bonus fixe imposé par la lignée)",
+      "traits": [
+        {
+          "name": "Type de créature",
+          "description": "Humanoïde et mort-vivant."
+        },
+        {
+          "name": "Vision dans le noir",
+          "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)."
+        },
+        {
+          "name": "Pattes d'araignée",
+          "description": "Vitesse d'escalade égale à la vitesse de marche ; dès le niveau 3, déplacement possible sur surfaces verticales et plafonds, mains libres."
+        },
+        {
+          "name": "Morsure vampirique",
+          "description": "Arme naturelle maîtrisée (compte comme une arme courante de corps à corps), mod. Constitution ajouté aux jets d'attaque et de dégâts, 1d4 dégâts perforants ; avantage si les PV sont inférieurs à la moitié du maximum ; en cas de touche sur une créature vivante, choix entre régénérer les PV infligés ou gagner un bonus égal aux dégâts au prochain jet ; utilisations = bonus de maîtrise, récupérées après un repos long."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/lignees-gothiques/",
+      "source": "Unearthed Arcana : Lignées gothiques (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Sang maudit",
+      "slug": "sang-maudit",
+      "icon": "game-icons:witch-face",
+      "size": "Moyenne ou Petite (au choix)",
+      "speed": "9 m",
+      "age": "Variable ; voir la table d'origine de la lignée",
+      "languages": [
+        "Commun",
+        "1 langue au choix (les langues déjà connues sont conservées si la lignée remplace une race précédente)"
+      ],
+      "ability_bonus": "Personnalisable : une caractéristique +2 et une autre +1 au choix (pas de bonus fixe imposé par la lignée)",
+      "traits": [
+        {
+          "name": "Type de créature",
+          "description": "Fée et humanoïde."
+        },
+        {
+          "name": "Vision dans le noir",
+          "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)."
+        },
+        {
+          "name": "Ascendance féerique",
+          "description": "Avantage aux jets de sauvegarde contre le charme ; ne peut pas être endormi par magie."
+        },
+        {
+          "name": "Magie maudite",
+          "description": "Lance Déguisement et Maléfice (1 fois chacun par repos long, ou via un emplacement de sort) ; caractéristique d'incantation au choix (Intelligence, Sagesse ou Charisme)."
+        },
+        {
+          "name": "Gage magique",
+          "description": "Action : crée un gage (ongle, dent ou mèche de cheveux) permettant un message télépathique de 25 mots ou une transe d'observation à distance (1 minute, aveuglé et assourdi localement) tant que le gage est à moins de 15 km ; le gage est ensuite détruit ; un nouveau gage peut être créé après un repos long."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/lignees-gothiques/",
+      "source": "Unearthed Arcana : Lignées gothiques (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Ressuscité",
+      "slug": "ressuscite",
+      "icon": "game-icons:stitched-wound",
+      "size": "Moyenne ou Petite (au choix)",
+      "speed": "9 m",
+      "age": "Variable ; voir la table d'origine de la lignée",
+      "languages": [
+        "Commun",
+        "1 langue au choix (les langues déjà connues sont conservées si la lignée remplace une race précédente)"
+      ],
+      "ability_bonus": "Personnalisable : une caractéristique +2 et une autre +1 au choix (pas de bonus fixe imposé par la lignée)",
+      "traits": [
+        {
+          "name": "Type de créature",
+          "description": "Humanoïde, créature artificielle ou mort-vivant, au choix."
+        },
+        {
+          "name": "Vision dans le noir",
+          "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)."
+        },
+        {
+          "name": "Nature immortelle",
+          "description": "Avantage aux jets de sauvegarde contre la maladie et le poison, résistance aux dégâts de poison, avantage aux jets de sauvegarde contre la mort ; pas besoin de manger, boire ou respirer ; pas besoin de dormir (repos long en 4h en état inactif et conscient)."
+        },
+        {
+          "name": "Savoir d'une vie antérieure",
+          "description": "Sur un jet de caractéristique utilisant une compétence maîtrisée, ajoute 1d6 au résultat ; utilisations = bonus de maîtrise, récupérées après un repos long."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/lignees-gothiques/",
+      "source": "Unearthed Arcana : Lignées gothiques (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Kender",
+      "slug": "kender",
+      "icon": "game-icons:knapsack",
+      "size": "Petite",
+      "speed": "9 m",
+      "age": "Non précisé",
+      "languages": [
+        "Commun",
+        "1 langue au choix"
+      ],
+      "ability_bonus": "2 caractéristiques différentes au choix : l'une +2, l'autre +1",
+      "traits": [
+        {
+          "name": "Brave",
+          "description": "Immunité à l'état effrayé."
+        },
+        {
+          "name": "Curiosité du kender",
+          "description": "Maîtrise d'une compétence au choix parmi Intuition, Investigation, Escamotage, Discrétion ou Survie."
+        },
+        {
+          "name": "Railleur",
+          "description": "Action bonus : une créature à 18 m ou moins qui vous entend et vous comprend doit réussir un JdS de Sagesse (DD 8 + bonus de maîtrise + mod. Charisme) sous peine de désavantage à ses jets d'attaque jusqu'au début de votre prochain tour ; utilisations = bonus de maîtrise, récupérées après un repos long."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/heros-de-krynn/",
+      "source": "Unearthed Arcana : Héros de Krynn (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Elfe astral",
+      "slug": "elfe-astral",
+      "icon": "game-icons:star-formation",
+      "size": "Moyenne",
+      "speed": "9 m",
+      "age": "Peut vivre jusqu'à 750 ans hors du plan Astral",
+      "languages": [
+        "Commun",
+        "1 langue au choix"
+      ],
+      "ability_bonus": "2 caractéristiques différentes au choix : l'une +2, l'autre +1, ou 3 caractéristiques différentes +1",
+      "traits": [
+        {
+          "name": "Feu astral",
+          "description": "Connaît un sort mineur au choix parmi Lumières dansantes, Lumière et Flamme sacrée (Intelligence, Sagesse ou Charisme)."
+        },
+        {
+          "name": "Vision dans le noir",
+          "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)."
+        },
+        {
+          "name": "Sens aiguisés",
+          "description": "Maîtrise de la compétence Perception."
+        },
+        {
+          "name": "Ascendance féerique",
+          "description": "Avantage aux jets de sauvegarde contre le charme et pour y mettre fin."
+        },
+        {
+          "name": "Âme rayonnante",
+          "description": "Sur un jet de sauvegarde contre la mort réussi, régénère un nombre de PV égal au bonus de maîtrise + mod. Intelligence, Sagesse ou Charisme ; 1 utilisation, récupérée après un repos long."
+        },
+        {
+          "name": "Transe",
+          "description": "Pas besoin de dormir ; repos long en 4h en méditation consciente."
+        },
+        {
+          "name": "Maîtrises de la transe",
+          "description": "Après un repos long via Transe, gagne 2 maîtrises temporaires (arme ou outil au choix) jusqu'au prochain repos long."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/voyageurs-du-multivers/",
+      "source": "Unearthed Arcana : Voyageurs du multivers (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Autognome",
+      "slug": "autognome",
+      "icon": "game-icons:clockwork",
+      "size": "Petite",
+      "speed": "9 m",
+      "age": "Peut vivre jusqu'à 500 ans",
+      "languages": [
+        "Commun",
+        "1 langue au choix"
+      ],
+      "ability_bonus": "2 caractéristiques différentes au choix : l'une +2, l'autre +1, ou 3 caractéristiques différentes +1",
+      "traits": [
+        {
+          "name": "Type de créature",
+          "description": "Créature artificielle."
+        },
+        {
+          "name": "Blindé",
+          "description": "CA de base 13 + mod. Dextérité tant qu'aucune armure n'est portée."
+        },
+        {
+          "name": "Construit pour le succès",
+          "description": "Ajoute 1d4 à un jet d'attaque, de caractéristique ou de sauvegarde après avoir vu le résultat du d20 ; utilisations = bonus de maîtrise, récupérées après un repos long."
+        },
+        {
+          "name": "Nature mécanique",
+          "description": "Résistance aux dégâts de poison, immunité aux maladies, avantage aux jets de sauvegarde contre la paralysie et le poison ; pas besoin de manger, boire ou respirer."
+        },
+        {
+          "name": "Repos de la sentinelle",
+          "description": "Repos long effectué en 6h en état inactif (mais non inconscient) plutôt qu'en dormant."
+        },
+        {
+          "name": "Conception spécialisée",
+          "description": "Maîtrise de deux outils au choix."
+        },
+        {
+          "name": "Vraie vie",
+          "description": "Bénéficie du sort Réparation (dé de vie + mod. Constitution) et des sorts de soins courants (Soin des blessures, Mot de guérison, Stabilisation) normalement inefficaces sur les créatures artificielles."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/voyageurs-du-multivers/",
+      "source": "Unearthed Arcana : Voyageurs du multivers (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Giff",
+      "slug": "giff",
+      "icon": "game-icons:ivory-tusks",
+      "size": "Moyenne",
+      "speed": "9 m, vitesse de nage égale à la vitesse de base",
+      "age": "Non précisé",
+      "languages": [
+        "Commun",
+        "1 langue au choix"
+      ],
+      "ability_bonus": "2 caractéristiques différentes au choix : l'une +2, l'autre +1, ou 3 caractéristiques différentes +1",
+      "traits": [
+        {
+          "name": "Gros dommages",
+          "description": "Une fois par tour, relance un dé de dégâts de corps à corps ayant obtenu 1."
+        },
+        {
+          "name": "Gabarit d'hippopotame",
+          "description": "Avantage aux jets de caractéristique et de sauvegarde de Force ; compte une taille de plus pour la capacité de charge et de poussée."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/voyageurs-du-multivers/",
+      "source": "Unearthed Arcana : Voyageurs du multivers (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Hadozi",
+      "slug": "hadozi",
+      "icon": "game-icons:monkey",
+      "size": "Moyenne ou Petite (au choix)",
+      "speed": "9 m, vitesse d'escalade égale à la vitesse de base",
+      "age": "Non précisé",
+      "languages": [
+        "Commun",
+        "1 langue au choix"
+      ],
+      "ability_bonus": "2 caractéristiques différentes au choix : l'une +2, l'autre +1, ou 3 caractéristiques différentes +1",
+      "traits": [
+        {
+          "name": "Pieds adroits",
+          "description": "L'action Utiliser un objet est réalisable en action bonus."
+        },
+        {
+          "name": "Planer",
+          "description": "Sans armure lourde et sans être neutralisé, réduit les dégâts de chute (1,5 m parcouru horizontalement par 30 cm de chute) ; réaction pour annuler entièrement les dégâts d'une chute."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/voyageurs-du-multivers/",
+      "source": "Unearthed Arcana : Voyageurs du multivers (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Plasmoïde",
+      "slug": "plasmoide",
+      "icon": "game-icons:slime",
+      "size": "Moyenne ou Petite (au choix)",
+      "speed": "9 m",
+      "age": "Non précisé",
+      "languages": [
+        "Commun",
+        "1 langue au choix"
+      ],
+      "ability_bonus": "2 caractéristiques différentes au choix : l'une +2, l'autre +1, ou 3 caractéristiques différentes +1",
+      "traits": [
+        {
+          "name": "Type de créature",
+          "description": "Vase."
+        },
+        {
+          "name": "Amorphe",
+          "description": "Peut se faufiler dans un espace large de 2,5 cm sans équipement ; avantage aux jets de caractéristique pour engager ou s'échapper d'une lutte."
+        },
+        {
+          "name": "Vision dans le noir",
+          "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)."
+        },
+        {
+          "name": "Retenir son souffle",
+          "description": "Peut retenir sa respiration jusqu'à 1 heure."
+        },
+        {
+          "name": "Résistance naturelle",
+          "description": "Résistance aux dégâts d'acide et de poison ; avantage aux jets de sauvegarde contre le poison."
+        },
+        {
+          "name": "Modifier sa forme",
+          "description": "Remodèle librement son corps (aucune action) ; action bonus pour créer ou rétracter un pseudopode (15 cm de large, 3 m de long) manipulant objets, portes ou contenants, sans pouvoir attaquer ni porter plus de 5 kg."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/voyageurs-du-multivers/",
+      "source": "Unearthed Arcana : Voyageurs du multivers (contenu playtest, non officiel)"
+    },
+    {
+      "name": "Thri-kreen",
+      "slug": "thri-kreen",
+      "icon": "game-icons:praying-mantis",
+      "size": "Moyenne ou Petite (au choix)",
+      "speed": "9 m",
+      "age": "Non précisé",
+      "languages": [
+        "Commun",
+        "1 langue au choix"
+      ],
+      "ability_bonus": "2 caractéristiques différentes au choix : l'une +2, l'autre +1, ou 3 caractéristiques différentes +1",
+      "traits": [
+        {
+          "name": "Type de créature",
+          "description": "Monstruosité."
+        },
+        {
+          "name": "Carapace de caméléon",
+          "description": "CA de base 13 + mod. Dextérité sans armure ; action pour changer de couleur, procurant un avantage aux jets de Discrétion dans un environnement assorti."
+        },
+        {
+          "name": "Vision dans le noir",
+          "description": "Voit à 18 m en lumière faible comme en lumière vive, et dans l'obscurité comme en lumière faible (sans couleurs)."
+        },
+        {
+          "name": "Bras secondaires",
+          "description": "Deux bras secondaires ne pouvant manier qu'une arme dotée de la propriété légère, sans bouclier."
+        },
+        {
+          "name": "Revitalisation sans sommeil",
+          "description": "Pas besoin de dormir ; reste conscient pendant un repos long."
+        },
+        {
+          "name": "Télépathie thri-kreen",
+          "description": "Communication télépathique jusqu'à 36 m avec des créatures consentantes comprenant au moins une langue."
+        }
+      ],
+      "subraces": [],
+      "detail_url": "https://www.aidedd.org/dnd-5/unearthed-arcana/voyageurs-du-multivers/",
+      "source": "Unearthed Arcana : Voyageurs du multivers (contenu playtest, non officiel)"
     }
   ]
 }

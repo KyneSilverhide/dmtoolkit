@@ -116,6 +116,26 @@ function abilityPreview(ability) {
   }
 }
 
+function servicePreview(service) {
+  return {
+    kind: 'service', id: `service-${service.slug}`, label: service.name,
+    icon: 'lucide:hand-coins', tagLabel: '',
+    tagColor: 'var(--color-gold-dark)', price: service.price || '',
+    snippet: snippet(service.description, 80),
+    subTab: 'services', query: service.name, slug: service.slug,
+  }
+}
+
+function conditionPreview(condition) {
+  return {
+    kind: 'condition', id: `condition-${condition.slug}`, label: condition.name,
+    icon: 'lucide:skull', tagLabel: condition.name_vo || '',
+    tagColor: 'var(--color-danger)', price: '',
+    snippet: snippet(condition.description, 80),
+    subTab: 'conditions', query: condition.name, slug: condition.slug,
+  }
+}
+
 const flatResults = computed(() => [...sectionMatches.value, ...liveResults.value])
 
 watch(() => props.open, async (isOpen) => {
@@ -147,7 +167,7 @@ async function runLiveSearch(q) {
   const requestId = ++liveRequestId
   liveLoading.value = true
   try {
-    const [spellsRes, itemsRes, racesRes, classesRes, backgroundsRes, abilitiesRes] = await Promise.all([
+    const [spellsRes, itemsRes, racesRes, classesRes, backgroundsRes, abilitiesRes, servicesRes, conditionsRes] = await Promise.all([
       apiFetch(`/api/spells/search?q=${encodeURIComponent(q)}`, {
         headers: { Authorization: `Bearer ${authStore.token}` },
       }),
@@ -166,6 +186,12 @@ async function runLiveSearch(q) {
       apiFetch(`/api/classes/abilities/search?q=${encodeURIComponent(q)}`, {
         headers: { Authorization: `Bearer ${authStore.token}` },
       }),
+      apiFetch(`/api/services/search?q=${encodeURIComponent(q)}`, {
+        headers: { Authorization: `Bearer ${authStore.token}` },
+      }),
+      apiFetch(`/api/conditions/search?q=${encodeURIComponent(q)}`, {
+        headers: { Authorization: `Bearer ${authStore.token}` },
+      }),
     ])
     const spells = spellsRes.ok ? await spellsRes.json() : []
     const items = itemsRes.ok ? await itemsRes.json() : []
@@ -173,6 +199,8 @@ async function runLiveSearch(q) {
     const dndClasses = classesRes.ok ? await classesRes.json() : []
     const backgrounds = backgroundsRes.ok ? await backgroundsRes.json() : []
     const abilities = abilitiesRes.ok ? await abilitiesRes.json() : []
+    const services = servicesRes.ok ? await servicesRes.json() : []
+    const conditions = conditionsRes.ok ? await conditionsRes.json() : []
     if (requestId !== liveRequestId) return
     const results = [
       ...spells.slice(0, 4).map(spellPreview),
@@ -181,6 +209,8 @@ async function runLiveSearch(q) {
       ...dndClasses.slice(0, 3).map(classPreview),
       ...backgrounds.slice(0, 3).map(backgroundPreview),
       ...abilities.slice(0, 4).map(abilityPreview),
+      ...services.slice(0, 3).map(servicePreview),
+      ...conditions.slice(0, 3).map(conditionPreview),
     ]
     liveCache.set(q, results)
     liveResults.value = results
