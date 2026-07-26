@@ -2,9 +2,15 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
+import { BACKEND_URL } from '@/config.js'
 import AppIcon from '../AppIcon.vue'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 import ContentActionButtons from './ContentActionButtons.vue'
+
+// Écran joueur : endpoints publics + pas de boutons TV/Envoyer (voir SpellSearch.vue).
+const props = defineProps({
+  playerMode: { type: Boolean, default: false },
+})
 
 const tabQuery = useContentTabQuery('services')
 let writeTimer = null
@@ -26,9 +32,9 @@ async function loadServices() {
   loading.value = true
   loadError.value = false
   try {
-    const res = await apiFetch('/api/services', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/services/public`)
+      : await apiFetch('/api/services', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) {
       services.value = await res.json()
     } else {
@@ -165,7 +171,7 @@ onUnmounted(() => {
               <p class="service-desc">{{ service.description }}</p>
               <div class="service-footer">
                 <a :href="service.detail_url" target="_blank" class="service-link">Voir sur AideDD ↗</a>
-                <ContentActionButtons content-type="service" :item="service" />
+                <ContentActionButtons v-if="!playerMode" content-type="service" :item="service" />
               </div>
             </div>
           </div>

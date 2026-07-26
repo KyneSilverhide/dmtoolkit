@@ -263,7 +263,8 @@ export function internalizeSpellLinks(html) {
 
 // Point d'entrée unique pour rendre description_html/description en HTML sûr et structuré —
 // remplace les fonctions toHtml()/descriptionHtml() dupliquées dans SpellSearch.vue,
-// ItemSearch.vue, SpellSearchTool.vue, MagicItemSearchTool.vue et ContentSheetView.vue.
+// ItemSearch.vue et ContentSheetView.vue (SpellSearch.vue/ItemSearch.vue sont partagés entre
+// le MJ et l'écran joueur via la prop `player-mode`, voir PlayerInboxView.vue).
 // `internalizeSpells: true` réservé aux objets (jamais aux sorts, qui ne référencent aucun
 // autre sort dans leur description — vérifié sur les 479 entrées de aidedd_spells.json).
 export function renderContentHtml(entry, { internalizeSpells = false } = {}) {

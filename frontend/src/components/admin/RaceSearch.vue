@@ -2,11 +2,17 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
+import { BACKEND_URL } from '@/config.js'
 import AppIcon from '../AppIcon.vue'
 import LinkedText from '../LinkedText.vue'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 import { spellCandidates, withGlossary } from '@/utils/textLinker.js'
 import ContentActionButtons from './ContentActionButtons.vue'
+
+// Écran joueur : endpoints publics + pas de boutons TV/Envoyer (voir SpellSearch.vue).
+const props = defineProps({
+  playerMode: { type: Boolean, default: false },
+})
 
 const tabQuery = useContentTabQuery('races')
 let writeTimer = null
@@ -28,9 +34,9 @@ async function loadRaces() {
   loading.value = true
   loadError.value = false
   try {
-    const res = await apiFetch('/api/races', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/races/public/full`)
+      : await apiFetch('/api/races', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) {
       races.value = await res.json()
     } else {
@@ -47,9 +53,9 @@ async function loadRaces() {
 const spells = ref([])
 async function loadSpells() {
   try {
-    const res = await apiFetch('/api/spells', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/spells/public`)
+      : await apiFetch('/api/spells', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) spells.value = await res.json()
   } catch (err) {
     console.error(err)
@@ -196,7 +202,7 @@ onUnmounted(() => {
         <div class="race-footer">
           <span class="race-source"><AppIcon icon="lucide:library" size="0.8em" /> {{ race.source }}</span>
           <a :href="race.detail_url" target="_blank" class="race-link">Voir sur AideDD ↗</a>
-          <ContentActionButtons content-type="race" :item="race" />
+          <ContentActionButtons v-if="!playerMode" content-type="race" :item="race" />
         </div>
       </div>
     </div>

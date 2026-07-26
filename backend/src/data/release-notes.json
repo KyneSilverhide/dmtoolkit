@@ -1,6 +1,14 @@
 {
   "notes": [
     {
+      "version": "1.0.124",
+      "date": "2026-07-26",
+      "changes": [
+        { "type": "fix", "role": "player", "text": "Contenu — les onglets Sorts, Objets, Races, Classes, Origines, Aptitudes, Services et États affichent désormais exactement le même rendu que côté MJ (liens internes, infobulles, mise en évidence des règles), au lieu d'une présentation simplifiée." },
+        { "type": "improvement", "role": "player", "text": "Objets et Objets magiques sont désormais deux onglets distincts, comme côté MJ." }
+      ]
+    },
+    {
       "version": "1.0.123",
       "date": "2026-07-26",
       "changes": [

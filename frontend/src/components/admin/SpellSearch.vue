@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
+import { BACKEND_URL } from '@/config.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
 import ContentPagination from './ContentPagination.vue'
@@ -10,9 +11,18 @@ import ContentActionButtons from './ContentActionButtons.vue'
 import { parseEcole, levelLabel, schoolColor } from '@/utils/spellSchool.js'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 import { renderContentHtml } from '@/utils/textLinker.js'
+import { contentBasePath } from '@/utils/contentRoutes.js'
+
+// Écran joueur (PlayerInboxView.vue) : réutilise ce composant tel quel pour la parité de
+// contenu avec le MJ — endpoints publics (sans JWT) au lieu des endpoints admin, pas de
+// boutons TV/Envoyer (ContentActionButtons, actions MJ uniquement).
+const props = defineProps({
+  playerMode: { type: Boolean, default: false },
+})
 
 const tabQuery = useContentTabQuery('spells')
 const router = useRouter()
+const route = useRoute()
 
 const query = ref('')
 const results = ref([])
@@ -35,9 +45,9 @@ const PAGE_SIZE = 20
 async function loadAllSpells() {
   loading.value = true
   try {
-    const res = await apiFetch('/api/spells', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/spells/public`)
+      : await apiFetch('/api/spells', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) allSpells.value = await res.json()
   } catch (err) {
     console.error(err)
@@ -74,7 +84,7 @@ function toHtml(entry) {
 function onDescClick(e) {
   const el = e.target.closest('[data-condition-slug]')
   if (!el) return
-  router.push({ path: '/admin/conditions', query: { q: el.dataset.conditionName, slug: el.dataset.conditionSlug } })
+  router.push({ path: `${contentBasePath(route)}/conditions`, query: { q: el.dataset.conditionName, slug: el.dataset.conditionSlug } })
 }
 
 async function search() {
@@ -88,9 +98,9 @@ async function search() {
   loading.value = true
   searched.value = false
   try {
-    const res = await apiFetch(`/api/spells/search?q=${encodeURIComponent(q)}`, {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/spells/public/search?q=${encodeURIComponent(q)}`)
+      : await apiFetch(`/api/spells/search?q=${encodeURIComponent(q)}`, { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) {
       const data = await res.json()
       results.value = data
@@ -110,9 +120,9 @@ async function searchByClass(className) {
   loading.value = true
   searched.value = false
   try {
-    const res = await apiFetch(`/api/spells/by-class/${encodeURIComponent(className)}`, {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/spells/public/by-class/${encodeURIComponent(className)}`)
+      : await apiFetch(`/api/spells/by-class/${encodeURIComponent(className)}`, { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) {
       results.value = await res.json()
     }
@@ -294,7 +304,7 @@ onUnmounted(() => {
         </div>
         <div class="spell-footer">
           <a :href="spell.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
-          <ContentActionButtons content-type="spell" :item="spell" />
+          <ContentActionButtons v-if="!playerMode" content-type="spell" :item="spell" />
         </div>
       </div>
     </div>

@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { schoolColor, parseEcole, levelLabel } from '@/utils/spellSchool.js'
 import { itemTypeStyle } from '@/utils/itemTypes.js'
+import { contentBasePath } from '@/utils/contentRoutes.js'
 
 const props = defineProps({
   type: { type: String, required: true }, // 'spell' | 'ability' | 'glossary' | 'item' | 'condition'
@@ -11,6 +12,7 @@ const props = defineProps({
 })
 
 const router = useRouter()
+const route = useRoute()
 
 const visible = ref(false)
 const triggerRef = ref(null)
@@ -89,14 +91,15 @@ const shortDescription = computed(() => {
 
 function go() {
   if (props.type === 'glossary') return
+  const base = contentBasePath(route)
   if (props.type === 'spell') {
-    router.push({ path: '/admin/spells', query: { q: props.payload.name, slug: props.payload.slug } })
+    router.push({ path: `${base}/spells`, query: { q: props.payload.name, slug: props.payload.slug } })
   } else if (props.type === 'item') {
-    router.push({ path: '/admin/equipment', query: { q: props.payload.name, slug: props.payload.slug } })
+    router.push({ path: `${base}/equipment`, query: { q: props.payload.name, slug: props.payload.slug } })
   } else if (props.type === 'condition') {
-    router.push({ path: '/admin/conditions', query: { q: props.payload.name, slug: props.payload.slug } })
+    router.push({ path: `${base}/conditions`, query: { q: props.payload.name, slug: props.payload.slug } })
   } else {
-    router.push({ path: '/admin/abilities', query: { q: props.payload.name, slug: props.payload.id } })
+    router.push({ path: `${base}/abilities`, query: { q: props.payload.name, slug: props.payload.id } })
   }
 }
 

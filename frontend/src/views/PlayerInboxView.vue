@@ -3,14 +3,18 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSocket, resetSocket } from '../socket.js'
 import { sessionStore } from '../stores/session.js'
-import SpellSearchTool from '../components/player/SpellSearchTool.vue'
-import MagicItemSearchTool from '../components/player/MagicItemSearchTool.vue'
-import RaceSearchTool from '../components/player/RaceSearchTool.vue'
-import ClassSearchTool from '../components/player/ClassSearchTool.vue'
-import BackgroundSearchTool from '../components/player/BackgroundSearchTool.vue'
-import AbilitySearchTool from '../components/player/AbilitySearchTool.vue'
-import ServiceSearchTool from '../components/player/ServiceSearchTool.vue'
-import ConditionSearchTool from '../components/player/ConditionSearchTool.vue'
+// Onglets de contenu (Sorts/Objets/Objets magiques/Races/Classes/Origines/Aptitudes/
+// Services/États) : réutilisent les MÊMES composants que le MJ (prop `player-mode`), pour
+// une parité complète (glossaire, liens internes, mise en page) au lieu d'une réimplémentation
+// simplifiée qui divergeait visuellement — voir la note sur `playerMode` dans SpellSearch.vue.
+import SpellSearch from '../components/admin/SpellSearch.vue'
+import ItemSearch from '../components/admin/ItemSearch.vue'
+import RaceSearch from '../components/admin/RaceSearch.vue'
+import ClassSearch from '../components/admin/ClassSearch.vue'
+import BackgroundSearch from '../components/admin/BackgroundSearch.vue'
+import AbilitySearch from '../components/admin/AbilitySearch.vue'
+import ServiceSearch from '../components/admin/ServiceSearch.vue'
+import ConditionSearch from '../components/admin/ConditionSearch.vue'
 import PlayerCommandPalette from '../components/player/PlayerCommandPalette.vue'
 import PlayerNotesTool from '../components/player/PlayerNotesTool.vue'
 import PlayerDiceTool from '../components/player/PlayerDiceTool.vue'
@@ -86,17 +90,20 @@ const showLeaveConfirm = ref(false)
 const isDemo = ref(false)
 
 // ── Contenu de référence : onglets accessibles hors mode démo, avec parité MJ ──────────
-// Clés identiques à CONTENT_TABS côté admin (AdminView.vue) pour rester cohérent.
-const CONTENT_TABS = ['sorts', 'objets', 'races', 'classes', 'backgrounds', 'abilities', 'services', 'conditions']
+// Clés identiques à CONTENT_TABS côté admin (AdminView.vue) — nécessaire pour que
+// useContentTabQuery() (partagé avec les composants admin réutilisés ici) matche le bon
+// onglet actif via route.params.tab.
+const CONTENT_TABS = ['spells', 'equipment', 'magic', 'races', 'classes', 'backgrounds', 'abilities', 'services', 'conditions']
 
 // ── Recherche globale (Ctrl+K équivalent joueur) ────────────────────────────
 const showCommandPalette = ref(false)
-const contentPrefillQuery = ref('')
-const contentPrefillToken = ref(0)
-function handlePaletteSelect({ tab, query }) {
-  switchTab(tab)
-  contentPrefillQuery.value = query
-  contentPrefillToken.value++
+// Pousse directement tab + query params (q/slug) dans l'URL : les composants de contenu
+// réutilisés (SpellSearch.vue, etc.) lisent leur pré-remplissage depuis la route via
+// useContentTabQuery(), pas depuis une prop — même mécanisme que CommandPalette.vue (MJ).
+function handlePaletteSelect({ tab, query, slug }) {
+  router.push({ name: route.name, params: { ...route.params, tab }, query: { q: query || undefined, slug: slug || undefined } })
+  tabAnimKey.value++
+  showHeaderMenu.value = false
 }
 
 function toggleTheme() {
@@ -1019,13 +1026,17 @@ onUnmounted(() => {
           <span class="sidebar-icon"><AppIcon icon="lucide:notebook-pen" size="1.2rem" /></span>
           <span class="sidebar-label">Notes</span>
         </button>
-        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'sorts' }" @click="switchTab('sorts')" aria-label="Sorts" data-testid="player-tab-sorts">
+        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'spells' }" @click="switchTab('spells')" aria-label="Sorts" data-testid="player-tab-spells">
           <span class="sidebar-icon"><AppIcon icon="lucide:sparkles" size="1.2rem" /></span>
           <span class="sidebar-label">Sorts</span>
         </button>
-        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'objets' }" @click="switchTab('objets')" aria-label="Objets" data-testid="player-tab-objets">
-          <span class="sidebar-icon"><AppIcon icon="lucide:gem" size="1.2rem" /></span>
+        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'equipment' }" @click="switchTab('equipment')" aria-label="Objets" data-testid="player-tab-equipment">
+          <span class="sidebar-icon"><AppIcon icon="lucide:package" size="1.2rem" /></span>
           <span class="sidebar-label">Objets</span>
+        </button>
+        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'magic' }" @click="switchTab('magic')" aria-label="Objets magiques" data-testid="player-tab-magic">
+          <span class="sidebar-icon"><AppIcon icon="lucide:gem" size="1.2rem" /></span>
+          <span class="sidebar-label">Objets magiques</span>
         </button>
         <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'races' }" @click="switchTab('races')" aria-label="Races" data-testid="player-tab-races">
           <span class="sidebar-icon"><AppIcon icon="game-icons:vitruvian-man" size="1.2rem" /></span>
@@ -1173,67 +1184,48 @@ onUnmounted(() => {
             </div>
 
             <!-- ── SORTS tab ──────────────────────────────────────────────── -->
-            <div v-show="activeTab === 'sorts' && !isDemo" class="tab-panel">
-              <div class="panel">
-                <p class="panel-label"><AppIcon icon="lucide:search" size="0.85rem" /> Recherche de sorts</p>
-                <SpellSearchTool />
-              </div>
+            <div v-show="activeTab === 'spells' && !isDemo" class="tab-panel">
+              <SpellSearch player-mode />
             </div>
 
             <!-- ── OBJETS tab ─────────────────────────────────────────────── -->
-            <div v-show="activeTab === 'objets' && !isDemo" class="tab-panel">
-              <div class="panel">
-                <p class="panel-label"><AppIcon icon="lucide:gem" size="0.85rem" color="var(--color-info-bright)" /> Objets & Objets magiques</p>
-                <MagicItemSearchTool />
-              </div>
+            <div v-show="activeTab === 'equipment' && !isDemo" class="tab-panel">
+              <ItemSearch category="equipment" player-mode />
+            </div>
+
+            <!-- ── OBJETS MAGIQUES tab ───────────────────────────────────── -->
+            <div v-show="activeTab === 'magic' && !isDemo" class="tab-panel">
+              <ItemSearch category="magic" player-mode />
             </div>
 
             <!-- ── RACES tab ──────────────────────────────────────────────── -->
             <div v-show="activeTab === 'races' && !isDemo" class="tab-panel">
-              <div class="panel">
-                <p class="panel-label"><AppIcon icon="game-icons:vitruvian-man" size="0.85rem" /> Races</p>
-                <RaceSearchTool :active="activeTab === 'races'" :prefill-query="contentPrefillQuery" :prefill-token="activeTab === 'races' ? contentPrefillToken : 0" />
-              </div>
+              <RaceSearch player-mode />
             </div>
 
             <!-- ── CLASSES tab ────────────────────────────────────────────── -->
             <div v-show="activeTab === 'classes' && !isDemo" class="tab-panel">
-              <div class="panel">
-                <p class="panel-label"><AppIcon icon="game-icons:round-shield" size="0.85rem" /> Classes</p>
-                <ClassSearchTool :active="activeTab === 'classes'" :prefill-query="contentPrefillQuery" :prefill-token="activeTab === 'classes' ? contentPrefillToken : 0" />
-              </div>
+              <ClassSearch player-mode />
             </div>
 
             <!-- ── ORIGINES (backgrounds) tab ─────────────────────────────── -->
             <div v-show="activeTab === 'backgrounds' && !isDemo" class="tab-panel">
-              <div class="panel">
-                <p class="panel-label"><AppIcon icon="game-icons:quill-ink" size="0.85rem" /> Origines</p>
-                <BackgroundSearchTool :active="activeTab === 'backgrounds'" :prefill-query="contentPrefillQuery" :prefill-token="activeTab === 'backgrounds' ? contentPrefillToken : 0" />
-              </div>
+              <BackgroundSearch player-mode />
             </div>
 
             <!-- ── APTITUDES (abilities) tab ──────────────────────────────── -->
             <div v-show="activeTab === 'abilities' && !isDemo" class="tab-panel">
-              <div class="panel">
-                <p class="panel-label"><AppIcon icon="lucide:zap" size="0.85rem" /> Aptitudes</p>
-                <AbilitySearchTool :active="activeTab === 'abilities'" :prefill-query="contentPrefillQuery" :prefill-token="activeTab === 'abilities' ? contentPrefillToken : 0" />
-              </div>
+              <AbilitySearch player-mode />
             </div>
 
             <!-- ── SERVICES tab ───────────────────────────────────────────── -->
             <div v-show="activeTab === 'services' && !isDemo" class="tab-panel">
-              <div class="panel">
-                <p class="panel-label"><AppIcon icon="lucide:hand-coins" size="0.85rem" /> Services</p>
-                <ServiceSearchTool :active="activeTab === 'services'" :prefill-query="contentPrefillQuery" :prefill-token="activeTab === 'services' ? contentPrefillToken : 0" />
-              </div>
+              <ServiceSearch player-mode />
             </div>
 
             <!-- ── ÉTATS (conditions) tab ─────────────────────────────────── -->
             <div v-show="activeTab === 'conditions' && !isDemo" class="tab-panel">
-              <div class="panel">
-                <p class="panel-label"><AppIcon icon="lucide:skull" size="0.85rem" /> États</p>
-                <ConditionSearchTool :active="activeTab === 'conditions'" :prefill-query="contentPrefillQuery" :prefill-token="activeTab === 'conditions' ? contentPrefillToken : 0" />
-              </div>
+              <ConditionSearch player-mode />
             </div>
 
             <!-- ── Contenu masqué en mode démo ──────────────────────────────── -->
@@ -1344,10 +1336,10 @@ onUnmounted(() => {
       <button
         v-if="!isDemo"
         class="tab-item"
-        :class="{ active: activeTab === 'sorts' }"
-        @click="switchTab('sorts')"
+        :class="{ active: activeTab === 'spells' }"
+        @click="switchTab('spells')"
         aria-label="Sorts"
-        data-testid="player-tab-sorts"
+        data-testid="player-tab-spells"
       >
         <span class="tab-icon"><AppIcon icon="lucide:sparkles" size="1.4rem" /></span>
         <span class="tab-label">Sorts</span>
@@ -1355,13 +1347,24 @@ onUnmounted(() => {
       <button
         v-if="!isDemo"
         class="tab-item"
-        :class="{ active: activeTab === 'objets' }"
-        @click="switchTab('objets')"
+        :class="{ active: activeTab === 'equipment' }"
+        @click="switchTab('equipment')"
         aria-label="Objets"
-        data-testid="player-tab-objets"
+        data-testid="player-tab-equipment"
+      >
+        <span class="tab-icon"><AppIcon icon="lucide:package" size="1.4rem" /></span>
+        <span class="tab-label">Objets</span>
+      </button>
+      <button
+        v-if="!isDemo"
+        class="tab-item"
+        :class="{ active: activeTab === 'magic' }"
+        @click="switchTab('magic')"
+        aria-label="Objets magiques"
+        data-testid="player-tab-magic"
       >
         <span class="tab-icon"><AppIcon icon="lucide:gem" size="1.4rem" /></span>
-        <span class="tab-label">Objets</span>
+        <span class="tab-label">Objets magiques</span>
       </button>
       <button
         v-if="!isDemo"

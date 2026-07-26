@@ -1,8 +1,9 @@
 <script setup>
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
+import { BACKEND_URL } from '@/config.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
 import ContentPagination from './ContentPagination.vue'
@@ -11,15 +12,19 @@ import { itemTypeStyle } from '@/utils/itemTypes.js'
 import { rarityColor } from '@/utils/rarity.js'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 import { renderContentHtml } from '@/utils/textLinker.js'
+import { contentBasePath } from '@/utils/contentRoutes.js'
 
 const props = defineProps({
   // 'equipment' (objets standard) ou 'magic' (objets magiques)
   category: { type: String, required: true },
+  // Écran joueur : endpoints publics + pas de boutons TV/Envoyer (voir SpellSearch.vue).
+  playerMode: { type: Boolean, default: false },
 })
 
 // La clé d'onglet correspond directement à la catégorie ('equipment' ou 'magic').
 const tabQuery = useContentTabQuery(props.category)
 const router = useRouter()
+const route = useRoute()
 
 const CATEGORY_META = {
   equipment: { label: 'Objets', icon: 'lucide:package', placeholder: 'Nom, type, description…', noun: 'objet', nounPlural: 'objet(s)' },
@@ -54,9 +59,9 @@ const PAGE_SIZE = 20
 async function loadAll() {
   loading.value = true
   try {
-    const res = await apiFetch('/api/magic-items', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/magic-items/public`)
+      : await apiFetch('/api/magic-items', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) allRaw.value = await res.json()
   } catch (err) {
     console.error(err)
@@ -84,14 +89,15 @@ function toHtml(entry) {
 // sort rendues en HTML brut (data-condition-slug / data-spell-slug) au lieu d'un vrai
 // composant RefLink.
 function onDescClick(e) {
+  const base = contentBasePath(route)
   const conditionEl = e.target.closest('[data-condition-slug]')
   if (conditionEl) {
-    router.push({ path: '/admin/conditions', query: { q: conditionEl.dataset.conditionName, slug: conditionEl.dataset.conditionSlug } })
+    router.push({ path: `${base}/conditions`, query: { q: conditionEl.dataset.conditionName, slug: conditionEl.dataset.conditionSlug } })
     return
   }
   const spellEl = e.target.closest('[data-spell-slug]')
   if (spellEl) {
-    router.push({ path: '/admin/spells', query: { q: spellEl.dataset.spellName, slug: spellEl.dataset.spellSlug } })
+    router.push({ path: `${base}/spells`, query: { q: spellEl.dataset.spellName, slug: spellEl.dataset.spellSlug } })
   }
 }
 
@@ -113,9 +119,9 @@ async function search() {
   loading.value = true
   searched.value = false
   try {
-    const res = await apiFetch(`/api/magic-items/search?q=${encodeURIComponent(q)}`, {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/magic-items/public/search?q=${encodeURIComponent(q)}`)
+      : await apiFetch(`/api/magic-items/search?q=${encodeURIComponent(q)}`, { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) {
       const data = await res.json()
       rawCache.set(q, data)
@@ -260,7 +266,7 @@ onUnmounted(() => {
         <div v-if="item.source" class="item-source"><AppIcon icon="lucide:library" size="0.8em" /> {{ item.source }}</div>
         <div class="spell-footer">
           <a :href="item.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
-          <ContentActionButtons content-type="item" :item="item" />
+          <ContentActionButtons v-if="!playerMode" content-type="item" :item="item" />
         </div>
       </div>
     </div>

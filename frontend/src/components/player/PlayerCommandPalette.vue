@@ -43,7 +43,7 @@ function spellPreview(spell) {
   return {
     id: `spell-${spell.slug}`, label: spell.name, icon: 'lucide:sparkles',
     tagLabel: [school, levelLabel(level)].filter(Boolean).join(' · '), tagColor: schoolColor(school),
-    snippet: snippet(spell.description), tab: 'sorts', prefillQuery: spell.name,
+    snippet: snippet(spell.description), tab: 'spells', prefillQuery: spell.name, prefillSlug: spell.slug,
   }
 }
 function itemPreview(item) {
@@ -51,49 +51,49 @@ function itemPreview(item) {
   return {
     id: `item-${item.slug}`, label: item.name, icon: itemTypeStyle(item.item_type).icon,
     tagLabel: item.item_type, tagColor: kind === 'magic' ? rarityColor(item.rarity) : itemTypeStyle(item.item_type).color,
-    snippet: snippet(item.description), tab: 'objets', prefillQuery: item.name,
+    snippet: snippet(item.description), tab: kind, prefillQuery: item.name, prefillSlug: item.slug,
   }
 }
 function racePreview(race) {
   return {
     id: `race-${race.slug}`, label: race.name, icon: race.icon || 'game-icons:footprint',
     tagLabel: race.ability_bonus, tagColor: 'var(--color-gold-dark)',
-    snippet: [race.size, race.speed].filter(Boolean).join(' · '), tab: 'races', prefillQuery: race.name,
+    snippet: [race.size, race.speed].filter(Boolean).join(' · '), tab: 'races', prefillQuery: race.name, prefillSlug: race.slug,
   }
 }
 function classPreview(dndClass) {
   return {
     id: `class-${dndClass.slug}`, label: dndClass.name, icon: dndClass.icon || 'game-icons:sword-brandish',
     tagLabel: `Dé de vie ${dndClass.hit_die}`, tagColor: 'var(--color-gold-dark)',
-    snippet: dndClass.primary_ability, tab: 'classes', prefillQuery: dndClass.name,
+    snippet: dndClass.primary_ability, tab: 'classes', prefillQuery: dndClass.name, prefillSlug: dndClass.slug,
   }
 }
 function backgroundPreview(bg) {
   return {
     id: `background-${bg.slug}`, label: bg.name, icon: bg.icon || 'lucide:scroll',
     tagLabel: (bg.skill_proficiencies || []).join(', '), tagColor: 'var(--color-gold-dark)',
-    snippet: bg.feature ? `${bg.feature.name} — ${snippet(bg.feature.description, 70)}` : '', tab: 'backgrounds', prefillQuery: bg.name,
+    snippet: bg.feature ? `${bg.feature.name} — ${snippet(bg.feature.description, 70)}` : '', tab: 'backgrounds', prefillQuery: bg.name, prefillSlug: bg.slug,
   }
 }
 function abilityPreview(ability) {
   return {
     id: `ability-${ability.id}`, label: ability.name, icon: ability.classIcon || 'lucide:sparkle',
     tagLabel: [ability.className, ability.subclassName].filter(Boolean).join(' · '), tagColor: 'var(--color-gold-dark)',
-    snippet: snippet(ability.description, 70), tab: 'abilities', prefillQuery: ability.name,
+    snippet: snippet(ability.description, 70), tab: 'abilities', prefillQuery: ability.name, prefillSlug: ability.id,
   }
 }
 function servicePreview(service) {
   return {
     id: `service-${service.slug}`, label: service.name, icon: 'lucide:hand-coins',
     tagLabel: service.price || '', tagColor: 'var(--color-gold-dark)',
-    snippet: snippet(service.description, 70), tab: 'services', prefillQuery: service.name,
+    snippet: snippet(service.description, 70), tab: 'services', prefillQuery: service.name, prefillSlug: service.slug,
   }
 }
 function conditionPreview(condition) {
   return {
     id: `condition-${condition.id}`, label: condition.label, icon: 'lucide:skull',
     tagLabel: '', tagColor: 'var(--color-danger)',
-    snippet: snippet(condition.description, 70), tab: 'conditions', prefillQuery: condition.label,
+    snippet: snippet(condition.description, 70), tab: 'conditions', prefillQuery: condition.label, prefillSlug: condition.slug,
   }
 }
 
@@ -163,7 +163,7 @@ watch(query, () => {
 
 function selectEntry(entry) {
   if (!entry) return
-  emit('select', { tab: entry.tab, query: entry.prefillQuery })
+  emit('select', { tab: entry.tab, query: entry.prefillQuery, slug: entry.prefillSlug })
   close()
 }
 function close() { emit('close') }

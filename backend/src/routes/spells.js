@@ -88,6 +88,10 @@ function handleByClass(req, res) {
 router.get('/', authenticateToken, handleList)
 router.get('/search', authenticateToken, handleSearch)
 router.get('/public/search', handleSearch)
+// Public (sans auth) — parcours complet sans recherche et filtre par classe, utilisés par
+// l'écran joueur qui réutilise SpellSearch.vue/ClassSearch.vue en mode `player-mode`.
+router.get('/public', handleList)
 router.get('/by-class/:className', authenticateToken, handleByClass)
+router.get('/public/by-class/:className', handleByClass)
 
 module.exports = router

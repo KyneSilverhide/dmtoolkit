@@ -1,23 +1,31 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
+import { BACKEND_URL } from '@/config.js'
 import AppIcon from '../AppIcon.vue'
 import LinkedText from '../LinkedText.vue'
 import ContentPagination from './ContentPagination.vue'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 import { spellCandidates, withGlossary } from '@/utils/textLinker.js'
 import ContentActionButtons from './ContentActionButtons.vue'
+import { contentBasePath } from '@/utils/contentRoutes.js'
+
+// Écran joueur : endpoints publics + pas de boutons TV/Envoyer (voir SpellSearch.vue).
+const props = defineProps({
+  playerMode: { type: Boolean, default: false },
+})
 
 const router = useRouter()
+const route = useRoute()
 const tabQuery = useContentTabQuery('abilities')
 let writeTimer = null
 
 // Navigue directement vers l'onglet Classes filtré sur cette seule classe (mécanisme
 // slug déjà utilisé par CommandPalette), au lieu de faire remonter un événement.
 function goToClass(ability) {
-  router.push({ path: '/admin/classes', query: { q: ability.className, slug: ability.classSlug } })
+  router.push({ path: `${contentBasePath(route)}/classes`, query: { q: ability.className, slug: ability.classSlug } })
 }
 
 const MIN_SEARCH_LENGTH = 2
@@ -39,9 +47,9 @@ async function loadAbilities() {
   loading.value = true
   loadError.value = false
   try {
-    const res = await apiFetch('/api/classes/abilities', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/classes/abilities/public`)
+      : await apiFetch('/api/classes/abilities', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) {
       const data = await res.json()
       abilities.value = data.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
@@ -59,9 +67,9 @@ async function loadAbilities() {
 const spells = ref([])
 async function loadSpells() {
   try {
-    const res = await apiFetch('/api/spells', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/spells/public`)
+      : await apiFetch('/api/spells', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) spells.value = await res.json()
   } catch (err) {
     console.error(err)
@@ -204,7 +212,7 @@ onUnmounted(() => {
             <AppIcon icon="lucide:arrow-right" size="0.7em" />
           </button>
           <a v-if="ability.classDetailUrl" :href="ability.classDetailUrl" target="_blank" class="ability-link">Voir la classe sur AideDD ↗</a>
-          <ContentActionButtons content-type="ability" :item="ability" />
+          <ContentActionButtons v-if="!playerMode" content-type="ability" :item="ability" />
         </div>
       </div>
     </div>

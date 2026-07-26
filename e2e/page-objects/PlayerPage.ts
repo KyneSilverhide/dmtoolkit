@@ -44,7 +44,7 @@ export class PlayerPage {
     await this.page.getByTestId('concentration-toggle').click()
   }
 
-  async switchTab(tab: 'combat' | 'des' | 'notes' | 'sorts' | 'objets' | 'boutique' | 'vote' | 'messages') {
+  async switchTab(tab: 'combat' | 'des' | 'notes' | 'spells' | 'equipment' | 'magic' | 'races' | 'classes' | 'backgrounds' | 'abilities' | 'services' | 'conditions' | 'boutique' | 'vote' | 'messages') {
     await this.page.getByTestId(`player-tab-${tab}`).filter({ visible: true }).click()
   }
 

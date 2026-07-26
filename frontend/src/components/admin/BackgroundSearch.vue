@@ -2,11 +2,17 @@
 import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
+import { BACKEND_URL } from '@/config.js'
 import AppIcon from '../AppIcon.vue'
 import LinkedText from '../LinkedText.vue'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 import { spellCandidates, itemCandidates, withGlossary } from '@/utils/textLinker.js'
 import ContentActionButtons from './ContentActionButtons.vue'
+
+// Écran joueur : endpoints publics + pas de boutons TV/Envoyer (voir SpellSearch.vue).
+const props = defineProps({
+  playerMode: { type: Boolean, default: false },
+})
 
 const tabQuery = useContentTabQuery('backgrounds')
 let writeTimer = null
@@ -34,9 +40,9 @@ async function loadBackgrounds() {
   loading.value = true
   loadError.value = false
   try {
-    const res = await apiFetch('/api/backgrounds', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/backgrounds/public`)
+      : await apiFetch('/api/backgrounds', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) {
       backgrounds.value = await res.json()
     } else {
@@ -53,9 +59,9 @@ async function loadBackgrounds() {
 const spells = ref([])
 async function loadSpells() {
   try {
-    const res = await apiFetch('/api/spells', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/spells/public`)
+      : await apiFetch('/api/spells', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) spells.value = await res.json()
   } catch (err) {
     console.error(err)
@@ -67,9 +73,9 @@ async function loadSpells() {
 const items = ref([])
 async function loadItems() {
   try {
-    const res = await apiFetch('/api/magic-items', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/magic-items/public`)
+      : await apiFetch('/api/magic-items', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) items.value = (await res.json()).filter(i => i.source_category !== 'magic')
   } catch (err) {
     console.error(err)
@@ -245,7 +251,7 @@ onUnmounted(() => {
         <div class="bg-footer">
           <span class="bg-source"><AppIcon icon="lucide:library" size="0.8em" /> {{ background.source }}</span>
           <a :href="background.detail_url" target="_blank" class="bg-link">Voir sur AideDD ↗</a>
-          <ContentActionButtons content-type="background" :item="background" />
+          <ContentActionButtons v-if="!playerMode" content-type="background" :item="background" />
         </div>
       </div>
     </div>

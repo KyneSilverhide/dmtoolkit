@@ -2,11 +2,17 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
+import { BACKEND_URL } from '@/config.js'
 import AppIcon from '../AppIcon.vue'
 import LinkedText from '../LinkedText.vue'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 import { withGlossary } from '@/utils/textLinker.js'
 import ContentActionButtons from './ContentActionButtons.vue'
+
+// Écran joueur : endpoint public + pas de boutons TV/Envoyer (voir SpellSearch.vue).
+const props = defineProps({
+  playerMode: { type: Boolean, default: false },
+})
 
 const tabQuery = useContentTabQuery('conditions')
 let writeTimer = null
@@ -28,9 +34,9 @@ async function loadConditions() {
   loading.value = true
   loadError.value = false
   try {
-    const res = await apiFetch('/api/conditions', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/conditions/public`)
+      : await apiFetch('/api/conditions', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) {
       conditions.value = await res.json()
     } else {
@@ -152,7 +158,7 @@ onUnmounted(() => {
         <p class="condition-desc"><LinkedText :text="condition.description" :candidates="refCandidates" /></p>
         <div class="condition-footer">
           <a :href="condition.detail_url" target="_blank" class="condition-link">Voir sur AideDD ↗</a>
-          <ContentActionButtons content-type="condition" :item="condition" />
+          <ContentActionButtons v-if="!playerMode" content-type="condition" :item="condition" />
         </div>
       </div>
     </div>

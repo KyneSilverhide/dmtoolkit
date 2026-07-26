@@ -1,23 +1,42 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
+import { BACKEND_URL } from '@/config.js'
 import AppIcon from '../AppIcon.vue'
 import LinkedText from '../LinkedText.vue'
 import RefLink from '../RefLink.vue'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 import { spellCandidates, classAbilityCandidates, itemCandidates, SPELL_LIST_NAME_RE, withGlossary } from '@/utils/textLinker.js'
 import { slugify } from '@/utils/slugify.js'
+import { contentBasePath } from '@/utils/contentRoutes.js'
+
+// Écran joueur : endpoints publics au lieu des endpoints admin (pas de boutons TV/Envoyer
+// sur cette fiche de toute façon, voir CLAUDE.md — Classes est exclue de ContentActionButtons
+// côté MJ aussi, fiche trop volumineuse). En playerMode, les traits de classe/sous-classe
+// affichent leur description complète directement au lieu d'un simple lien vers la fiche
+// Aptitudes : les joueurs n'ont pas besoin de la densité de navigation du MJ, et préfèrent
+// tout voir sans changer d'onglet (retour explicite du MJ testeur de ce projet).
+const props = defineProps({
+  playerMode: { type: Boolean, default: false },
+})
 
 const router = useRouter()
+const route = useRoute()
 const tabQuery = useContentTabQuery('classes')
 let writeTimer = null
 
 // Navigue directement vers l'onglet Sorts filtré par classe (voir SpellSearch.vue
 // `by-class`), au lieu de faire remonter un événement à AdminView.
 function goToClassSpells(dndClass) {
-  router.push({ path: '/admin/spells', query: { class: dndClass.name } })
+  router.push({ path: `${contentBasePath(route)}/spells`, query: { class: dndClass.name } })
+}
+
+// Voir le commentaire sur le prop `playerMode` ci-dessus. isSpellListTrait() est déclarée
+// plus bas dans ce fichier (hoisting de `function`, donc accessible ici sans souci d'ordre).
+function showFullTrait(trait) {
+  return isSpellListTrait(trait) || props.playerMode
 }
 
 const query = ref('')
@@ -47,9 +66,9 @@ async function loadClasses() {
   loading.value = true
   loadError.value = false
   try {
-    const res = await apiFetch('/api/classes', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/classes/public/full`)
+      : await apiFetch('/api/classes', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) {
       classes.value = await res.json()
     } else {
@@ -69,9 +88,9 @@ async function loadClasses() {
 const spells = ref([])
 async function loadSpells() {
   try {
-    const res = await apiFetch('/api/spells', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/spells/public`)
+      : await apiFetch('/api/spells', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) spells.value = await res.json()
   } catch (err) {
     console.error(err)
@@ -83,9 +102,9 @@ async function loadSpells() {
 const items = ref([])
 async function loadItems() {
   try {
-    const res = await apiFetch('/api/magic-items', {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/magic-items/public`)
+      : await apiFetch('/api/magic-items', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) items.value = (await res.json()).filter(i => i.source_category !== 'magic')
   } catch (err) {
     console.error(err)
@@ -337,8 +356,8 @@ onUnmounted(() => {
           Traits de classe ({{ dndClass.features.length }})
         </button>
         <ul v-if="isExpanded(dndClass.slug, 'features')" class="trait-list trait-list-links">
-          <li v-for="trait in dndClass.features" :key="trait.name" class="trait-item" :class="isSpellListTrait(trait) ? '' : 'trait-item-link'">
-            <template v-if="isSpellListTrait(trait)">
+          <li v-for="trait in dndClass.features" :key="trait.name" class="trait-item" :class="showFullTrait(trait) ? '' : 'trait-item-link'">
+            <template v-if="showFullTrait(trait)">
               <span class="trait-name">{{ trait.name }}</span>
               <span class="trait-level">niv. {{ trait.level }}</span>
               <span class="trait-desc">
@@ -401,8 +420,8 @@ onUnmounted(() => {
               {{ subclass.name }} <span class="subclass-unlock">(dès le niveau {{ subclass.unlocked_at_level }})</span>
             </button>
             <ul v-if="isExpanded(dndClass.slug, `sub:${subclass.name}`)" class="trait-list trait-list-links">
-              <li v-for="trait in subclass.traits" :key="trait.name" class="trait-item" :class="isSpellListTrait(trait) ? '' : 'trait-item-link'">
-                <template v-if="isSpellListTrait(trait)">
+              <li v-for="trait in subclass.traits" :key="trait.name" class="trait-item" :class="showFullTrait(trait) ? '' : 'trait-item-link'">
+                <template v-if="showFullTrait(trait)">
                   <span class="trait-name">{{ trait.name }}</span>
                   <span class="trait-level">niv. {{ trait.level }}</span>
                   <span class="trait-desc">

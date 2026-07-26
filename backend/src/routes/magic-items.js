@@ -62,5 +62,8 @@ function handleSearch(req, res) {
 router.get('/', authenticateToken, handleList)
 router.get('/search', authenticateToken, handleSearch)
 router.get('/public/search', handleSearch)
+// Public (sans auth) — parcours complet sans recherche, utilisé par l'écran joueur qui
+// réutilise ItemSearch.vue en mode `player-mode`.
+router.get('/public', handleList)
 
 module.exports = router
