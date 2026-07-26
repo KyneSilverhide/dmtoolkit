@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
 import { authStore } from '@/stores/auth.js'
@@ -8,6 +8,7 @@ import { getSocket } from '@/socket.js'
 import { AUDIO_PLAY_REQUESTED, AUDIO_STOP_REQUESTED, AUDIO_LOOP_REQUESTED, AUDIO_VOLUME_REQUESTED } from '@/socket-events.js'
 import { BACKEND_URL } from '@/config.js'
 import { apiFetch } from '@/utils/apiFetch.js'
+import { usePendingAudioLaunch } from '@/composables/useAudioLaunch.js'
 
 import AudioCategorySection from './audio/AudioCategorySection.vue'
 
@@ -117,9 +118,23 @@ async function loadTracks() {
         if (volumes.value[t.id] === undefined) volumes.value[t.id] = 1
         if (loops.value[t.id] === undefined) loops.value[t.id] = false
       }
+      consumePendingLaunch()
     }
   } catch (err) { console.error(err) }
 }
+
+// Piste demandée depuis CommandPalette (recherche globale) avant même que ce composant soit
+// monté — voir composables/useAudioLaunch.js. Consommé ici une fois les pistes chargées, et
+// aussi via le watcher ci-dessous si ce composant était déjà actif (KeepAlive) au moment de la
+// demande.
+const pendingTrackId = usePendingAudioLaunch()
+function consumePendingLaunch() {
+  if (pendingTrackId.value == null) return
+  const track = tracks.value.find(t => t.id === pendingTrackId.value)
+  pendingTrackId.value = null
+  if (track && !playing.value.has(track.id)) togglePlay(track)
+}
+watch(pendingTrackId, (id) => { if (id != null) consumePendingLaunch() })
 
 function getAudio(track) {
   if (!audioObjects.has(track.id)) {

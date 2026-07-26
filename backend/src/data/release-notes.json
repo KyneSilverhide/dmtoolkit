@@ -1,6 +1,14 @@
 {
   "notes": [
     {
+      "version": "1.0.128",
+      "date": "2026-07-26",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Recherche globale (Ctrl+K) — la recherche couvre désormais aussi le contenu de la session en cours : images, vidéos, audio, cartes et marchands, avec un bouton pour les afficher sur la TV ou les lancer directement depuis les résultats." },
+        { "type": "fix", "role": "admin", "text": "Écran TV — le nom du marchand actif est de nouveau affiché au-dessus de sa vitrine (il avait disparu lors d'une refonte visuelle antérieure)." }
+      ]
+    },
+    {
       "version": "1.0.127",
       "date": "2026-07-26",
       "changes": [

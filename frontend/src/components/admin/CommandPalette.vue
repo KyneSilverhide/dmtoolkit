@@ -3,11 +3,15 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppIcon from '../AppIcon.vue'
 import { authStore } from '@/stores/auth.js'
+import { sessionStore } from '@/stores/session.js'
+import { getSocket } from '@/socket.js'
 import { apiFetch } from '@/utils/apiFetch.js'
 import { COMMAND_INDEX } from '@/utils/commandIndex.js'
 import { itemTypeStyle } from '@/utils/itemTypes.js'
 import { rarityColor } from '@/utils/rarity.js'
 import { parseEcole, levelLabel, schoolColor } from '@/utils/spellSchool.js'
+import { SHOW_IMAGE, SHOW_VIDEO, SHOW_MAP, MAP_SET_FOG, SHOW_MERCHANT } from '@/socket-events.js'
+import { requestAudioLaunch } from '@/composables/useAudioLaunch.js'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -139,13 +143,148 @@ function conditionPreview(condition) {
   }
 }
 
-const flatResults = computed(() => [...sectionMatches.value, ...liveResults.value])
+// Contenu custom de la session active (images/vidéos/cartes/audio/marchands) : noms/labels
+// filtrés côté client depuis GET /api/sessions/:id/images (+ /merchants), rechargés à chaque
+// ouverture de la palette. Contrairement aux résultats de contenu de référence ci-dessus,
+// ces entrées portent un `tabKey` (navigation directe, pas de query/slug) et, pour les types
+// projetables sur la TV (image/vidéo/carte/marchand — pas l'audio, qui sort du navigateur du
+// MJ, voir CLAUDE.md), un bouton dédié déclenche l'affichage TV sans quitter la palette.
+const CUSTOM_CONTENT_COLOR = 'var(--color-info)'
+const sessionImages = ref([])
+const sessionMerchants = ref([])
+
+function contentLabel(row) {
+  return row.tv_label || row.original_name || row.url.split('/').pop()
+}
+
+function imagePreview(row) {
+  return {
+    kind: 'image', id: `image-${row.id}`, label: contentLabel(row),
+    icon: 'lucide:image', tagLabel: 'Image', tagColor: CUSTOM_CONTENT_COLOR,
+    price: '', snippet: row.original_name && row.tv_label ? row.original_name : '',
+    tabKey: 'images', tvUrl: row.url,
+  }
+}
+function videoPreview(row) {
+  return {
+    kind: 'video', id: `video-${row.id}`, label: contentLabel(row),
+    icon: 'lucide:video', tagLabel: 'Vidéo', tagColor: CUSTOM_CONTENT_COLOR,
+    price: '', snippet: '',
+    tabKey: 'videos', tvUrl: row.url,
+  }
+}
+function mapPreview(row) {
+  return {
+    kind: 'map', id: `map-${row.id}`, label: contentLabel(row),
+    icon: 'lucide:map', tagLabel: 'Carte', tagColor: CUSTOM_CONTENT_COLOR,
+    price: '', snippet: '',
+    tabKey: 'map', tvUrl: row.url,
+  }
+}
+function audioPreview(row) {
+  return {
+    kind: 'audio', id: `audio-${row.id}`, label: contentLabel(row),
+    icon: 'lucide:music-2', tagLabel: row.audio_category || 'Audio', tagColor: CUSTOM_CONTENT_COLOR,
+    price: '', snippet: '',
+    tabKey: 'audio', trackId: row.id,
+  }
+}
+function merchantPreview(row) {
+  const count = (row.items || []).length
+  return {
+    kind: 'merchant', id: `merchant-${row.id}`, label: row.name,
+    icon: 'game-icons:shop', tagLabel: 'Marchand', tagColor: CUSTOM_CONTENT_COLOR,
+    price: '', snippet: count ? `${count} objet${count > 1 ? 's' : ''}` : '',
+    tabKey: 'merchants', merchantId: row.id,
+  }
+}
+
+async function loadSessionContent() {
+  const session = sessionStore.activeSession
+  if (!session) { sessionImages.value = []; sessionMerchants.value = []; return }
+  try {
+    const [imagesRes, merchantsRes] = await Promise.all([
+      apiFetch(`/api/sessions/${session.id}/images`, { headers: { Authorization: `Bearer ${authStore.token}` } }),
+      apiFetch(`/api/sessions/${session.id}/merchants`, { headers: { Authorization: `Bearer ${authStore.token}` } }),
+    ])
+    sessionImages.value = imagesRes.ok ? await imagesRes.json() : []
+    sessionMerchants.value = merchantsRes.ok ? await merchantsRes.json() : []
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+const CUSTOM_CONTENT_PREVIEW = { image: imagePreview, video: videoPreview, map: mapPreview, audio: audioPreview }
+
+const sessionContentMatches = computed(() => {
+  const q = normalize(query.value.trim())
+  if (!q || !sessionStore.activeSession) return []
+  const imageMatches = []
+  const merchantMatches = []
+  for (const row of sessionImages.value) {
+    const buildPreview = CUSTOM_CONTENT_PREVIEW[row.type]
+    if (!buildPreview) continue
+    if (!normalize(contentLabel(row)).includes(q)) continue
+    imageMatches.push(buildPreview(row))
+  }
+  for (const row of sessionMerchants.value) {
+    if (!normalize(row.name || '').includes(q)) continue
+    merchantMatches.push(merchantPreview(row))
+  }
+  // Chaque source garde son propre plafond avant fusion, pour qu'un marchand ne soit jamais
+  // masqué par un grand nombre d'images/audio correspondant à la même requête générique.
+  return [...imageMatches.slice(0, 6), ...merchantMatches.slice(0, 3)]
+})
+
+function canShowOnTv(entry) {
+  return entry.kind === 'image' || entry.kind === 'video' || entry.kind === 'map' || entry.kind === 'merchant'
+}
+
+// Libellé/icône du bouton de projection : la vidéo autoplay dès sa réception côté TV
+// (`<video autoplay>` dans TvVideo.vue), donc « lancer » l'affiche ET la joue en une seule
+// action — pas de bouton de lecture distinct nécessaire. Image/carte/marchand restent un
+// affichage statique, d'où le libellé « TV ».
+function tvActionMeta(entry) {
+  if (entry.kind === 'video') return { icon: 'lucide:play', label: 'Lancer', doneLabel: 'Lancé' }
+  return { icon: 'lucide:tv', label: 'Afficher sur la TV', doneLabel: 'Affiché' }
+}
+
+const shownOnTvId = ref(null)
+function showOnTv(entry) {
+  if (!sessionStore.activeSession || !canShowOnTv(entry)) return
+  const socket = getSocket()
+  const sessionId = sessionStore.activeSession.id
+  if (entry.kind === 'image') socket.emit(SHOW_IMAGE, { sessionId, imageUrl: entry.tvUrl })
+  else if (entry.kind === 'video') socket.emit(SHOW_VIDEO, { sessionId, videoUrl: entry.tvUrl })
+  else if (entry.kind === 'map') {
+    socket.emit(SHOW_MAP, { sessionId, imageUrl: entry.tvUrl })
+    socket.emit(MAP_SET_FOG, { sessionId, enabled: true })
+  } else if (entry.kind === 'merchant') {
+    socket.emit(SHOW_MERCHANT, { sessionId, merchantId: entry.merchantId })
+  }
+  shownOnTvId.value = entry.id
+  setTimeout(() => { if (shownOnTvId.value === entry.id) shownOnTvId.value = null }, 1600)
+}
+
+// L'audio n'a pas de scène TV dédiée (le son sort du navigateur du MJ, voir CLAUDE.md) —
+// « lancer » navigue donc vers l'onglet Audio (seul endroit où on peut voir/contrôler la
+// lecture) et y déclenche la piste via useAudioLaunch, qui tolère qu'AudioManager ne soit pas
+// encore monté.
+function launchAudio(entry) {
+  if (!sessionStore.activeSession || entry.kind !== 'audio') return
+  requestAudioLaunch(entry.trackId)
+  router.push({ name: 'admin', params: { tab: 'audio' } })
+  close()
+}
+
+const flatResults = computed(() => [...sectionMatches.value, ...liveResults.value, ...sessionContentMatches.value])
 
 watch(() => props.open, async (isOpen) => {
   if (!isOpen) return
   query.value = ''
   liveResults.value = []
   highlighted.value = 0
+  loadSessionContent()
   await nextTick()
   inputRef.value?.focus()
 })
@@ -226,7 +365,7 @@ async function runLiveSearch(q) {
 
 function selectEntry(entry) {
   if (!entry) return
-  if (entry.kind === 'section') {
+  if (entry.kind === 'section' || entry.tabKey) {
     router.push({ name: 'admin', params: { tab: entry.tabKey } })
   } else {
     router.push({ path: `/admin/${entry.subTab}`, query: { q: entry.query, slug: entry.slug } })
@@ -330,7 +469,47 @@ onUnmounted(() => {
               </button>
             </template>
 
-            <p v-if="query.trim() && sectionMatches.length === 0 && liveResults.length === 0 && !liveLoading" class="cp-empty">
+            <template v-if="sessionContentMatches.length > 0">
+              <p class="cp-group-label">Contenu de session</p>
+              <div v-for="entry in sessionContentMatches" :key="entry.id" class="cp-row-item">
+                <button
+                  class="cp-row cp-row-preview"
+                  :class="{ active: flatResults.indexOf(entry) === highlighted }"
+                  @mouseenter="highlighted = flatResults.indexOf(entry)"
+                  @click="selectEntry(entry)"
+                >
+                  <AppIcon :icon="entry.icon" size="1.1em" class="cp-row-icon" :style="{ color: entry.tagColor }" />
+                  <div class="cp-row-main">
+                    <div class="cp-row-top">
+                      <span class="cp-row-label">{{ entry.label }}</span>
+                      <span v-if="entry.tagLabel" class="cp-tag" :style="{ '--tag-color': entry.tagColor }">{{ entry.tagLabel }}</span>
+                    </div>
+                    <p v-if="entry.snippet" class="cp-row-snippet">{{ entry.snippet }}</p>
+                  </div>
+                </button>
+                <button
+                  v-if="canShowOnTv(entry)"
+                  type="button"
+                  class="cp-tv-btn"
+                  :class="{ 'cp-tv-btn-active': shownOnTvId === entry.id }"
+                  :title="shownOnTvId === entry.id ? tvActionMeta(entry).doneLabel : tvActionMeta(entry).label"
+                  @click="showOnTv(entry)"
+                >
+                  <AppIcon :icon="shownOnTvId === entry.id ? 'lucide:check' : tvActionMeta(entry).icon" size="0.85em" />
+                </button>
+                <button
+                  v-if="entry.kind === 'audio'"
+                  type="button"
+                  class="cp-tv-btn"
+                  title="Lancer"
+                  @click="launchAudio(entry)"
+                >
+                  <AppIcon icon="lucide:play" size="0.85em" />
+                </button>
+              </div>
+            </template>
+
+            <p v-if="query.trim() && sectionMatches.length === 0 && liveResults.length === 0 && sessionContentMatches.length === 0 && !liveLoading" class="cp-empty">
               Aucun résultat pour « {{ query }} »
             </p>
           </div>
@@ -429,6 +608,28 @@ onUnmounted(() => {
   color: var(--color-text-dim);
 }
 .cp-group-label:first-child { margin-top: 0.2rem; }
+
+.cp-row-item {
+  display: flex;
+  align-items: stretch;
+  gap: 0.3rem;
+}
+.cp-row-item .cp-row { flex: 1; min-width: 0; }
+.cp-tv-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-dim);
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.cp-tv-btn:hover { color: var(--color-info); border-color: var(--color-info); background: var(--surface-gold-soft); }
+.cp-tv-btn-active { color: var(--color-success); border-color: var(--color-success); }
 
 .cp-row {
   display: flex;

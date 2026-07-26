@@ -31,6 +31,10 @@ const density = computed(() => {
 
 <template>
   <div class="merchant-display" data-testid="tv-mode-merchant">
+    <header class="tv-header">
+      <h1 class="session-title">{{ activeMerchant?.name }}</h1>
+      <p v-if="activeMerchant?.description" class="merchant-desc">{{ activeMerchant.description }}</p>
+    </header>
     <div
       class="merchant-grid"
       :class="density"
@@ -61,6 +65,21 @@ const density = computed(() => {
   flex-direction: column;
   overflow: hidden;
   padding: 2rem;
+}
+.tv-header { text-align: center; flex-shrink: 0; }
+.session-title {
+  font-family: var(--font-title), sans-serif;
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  color: var(--color-gold-bright);
+  text-shadow: var(--text-shadow-accent);
+  letter-spacing: 0.1em;
+  margin: 0.15rem 0;
+}
+.merchant-desc {
+  font-family: var(--font-body), sans-serif;
+  font-size: 1.1rem;
+  color: var(--color-text-dim);
+  margin: 0.5rem 0 0;
 }
 .merchant-grid {
   flex: 1;
