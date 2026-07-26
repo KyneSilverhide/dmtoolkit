@@ -10,7 +10,7 @@ import ContentActionButtons from './ContentActionButtons.vue'
 import { itemTypeStyle } from '@/utils/itemTypes.js'
 import { rarityColor } from '@/utils/rarity.js'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
-import { highlightGlossaryHtml } from '@/utils/textLinker.js'
+import { renderContentHtml } from '@/utils/textLinker.js'
 
 const props = defineProps({
   // 'equipment' (objets standard) ou 'magic' (objets magiques)
@@ -77,23 +77,22 @@ const displayItems = computed(() => (isBrowsing.value ? pagedItems.value : resul
 watch(isBrowsing, (browsing) => { if (browsing) page.value = 1 })
 
 function toHtml(entry) {
-  if (entry.description_html) return highlightGlossaryHtml(entry.description_html)
-  if (!entry.description) return ''
-  const escaped = entry.description
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>')
-  return highlightGlossaryHtml(`<p>${escaped}</p>`)
+  return renderContentHtml(entry, { internalizeSpells: true })
 }
 
-// Voir SpellSearch.vue onDescClick — même délégation de clic pour les mentions d'état
-// rendues en HTML brut (data-condition-slug) au lieu d'un vrai composant RefLink.
+// Voir SpellSearch.vue onDescClick — même délégation de clic pour les mentions d'état et de
+// sort rendues en HTML brut (data-condition-slug / data-spell-slug) au lieu d'un vrai
+// composant RefLink.
 function onDescClick(e) {
-  const el = e.target.closest('[data-condition-slug]')
-  if (!el) return
-  router.push({ path: '/admin/conditions', query: { q: el.dataset.conditionName, slug: el.dataset.conditionSlug } })
+  const conditionEl = e.target.closest('[data-condition-slug]')
+  if (conditionEl) {
+    router.push({ path: '/admin/conditions', query: { q: conditionEl.dataset.conditionName, slug: conditionEl.dataset.conditionSlug } })
+    return
+  }
+  const spellEl = e.target.closest('[data-spell-slug]')
+  if (spellEl) {
+    router.push({ path: '/admin/spells', query: { q: spellEl.dataset.spellName, slug: spellEl.dataset.spellSlug } })
+  }
 }
 
 function itemTypeIcon(itemType) {

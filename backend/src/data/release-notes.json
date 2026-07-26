@@ -1,6 +1,14 @@
 {
   "notes": [
     {
+      "version": "1.0.123",
+      "date": "2026-07-26",
+      "changes": [
+        { "type": "fix", "role": "all", "text": "Sorts & Objets magiques — les descriptions à plusieurs paragraphes ou listes à puces (ex : Anneau de contrôle des élémentaires) s'affichent désormais correctement structurées au lieu d'un seul bloc de texte compact." },
+        { "type": "improvement", "role": "all", "text": "Objets magiques — les mentions de sorts dans la description pointent désormais vers la fiche interne du sort au lieu d'un lien externe vers AideDD." }
+      ]
+    },
+    {
       "version": "1.0.122",
       "date": "2026-07-26",
       "changes": [

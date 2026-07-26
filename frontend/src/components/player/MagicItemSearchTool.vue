@@ -2,7 +2,7 @@
 import { ref, watch, onUnmounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
 import { itemTypeStyle } from '@/utils/itemTypes.js'
-import { highlightGlossaryHtml } from '@/utils/textLinker.js'
+import { renderContentHtml } from '@/utils/textLinker.js'
 
 import { BACKEND_URL } from '@/config.js'
 
@@ -15,16 +15,7 @@ const MIN_AUTO_SEARCH_LENGTH = 3
 let autoSearchTimer = null
 
 function descriptionHtml(item) {
-  if (item.description_html) return highlightGlossaryHtml(item.description_html)
-  if (!item.description) return ''
-  // Escape plain text so it is safe to insert as HTML
-  const escaped = item.description
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>')
-  return highlightGlossaryHtml(`<p>${escaped}</p>`)
+  return renderContentHtml(item, { internalizeSpells: true })
 }
 
 const RARITY_COLORS = {

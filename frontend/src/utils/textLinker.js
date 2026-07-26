@@ -209,6 +209,81 @@ export function highlightGlossaryHtml(html) {
     .join('')
 }
 
+// Les 823 sorts/objets magiques de aidedd_spells.json / aidedd_magic_items.json n'ont AUCUN
+// `<p>`/`<br>` dans leur `description_html` : les paragraphes et listes à puce (« • Texte »)
+// ne sont séparés que par des lignes vides. En HTML, une suite d'espaces/retours à la ligne
+// se réduit à un seul espace au rendu (`white-space: normal`, comportement par défaut) — sans
+// cette fonction, tout ce texte s'affiche comme un unique bloc illisible, sauf les rares
+// entrées qui ont la chance de contenir un <table> ou <strong> pour créer une coupure visuelle
+// (ex: Anneau de feu d'étoiles, bien rendu, vs Anneau de contrôle des élémentaires, pas du
+// tout structuré). Reconstruit donc des <p>/<ul><li> à partir des coupures par ligne vide —
+// jamais de <p> autour d'un bloc qui commence par <table>, invalide en HTML. No-op si le HTML
+// contient déjà des <p>/<ul>/<ol> (idempotent, pour ne pas re-traiter du contenu déjà structuré).
+export function normalizeDescriptionHtml(html) {
+  if (!html) return html
+  if (/<p[ >]|<ul[ >]|<ol[ >]/i.test(html)) return html
+  const blocks = html.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean)
+  const parts = []
+  let listBuffer = []
+  function flushList() {
+    if (listBuffer.length) {
+      parts.push(`<ul>${listBuffer.map(li => `<li>${li}</li>`).join('')}</ul>`)
+      listBuffer = []
+    }
+  }
+  for (const block of blocks) {
+    const bulletMatch = block.match(/^•\s*([\s\S]*)$/)
+    if (bulletMatch) {
+      listBuffer.push(bulletMatch[1].trim())
+      continue
+    }
+    flushList()
+    parts.push(/^<table[ >]/i.test(block) ? block : `<p>${block.replace(/\n/g, '<br>')}</p>`)
+  }
+  flushList()
+  return parts.join('')
+}
+
+// Les objets magiques référencent des sorts via un lien EXTERNE vers aidedd.org
+// (`<a href="https://www.aidedd.org/dnd/sorts.php?vf=SLUG">Nom</a>`) — le slug de cette URL
+// est garanti identique au `slug` de aidedd_spells.json (même source de scraping), donc pas
+// besoin de deviner : on le convertit en span cliquable interne, même mécanisme que les états
+// (data-spell-slug + délégation de clic côté composant, voir onDescClick dans
+// SpellSearch.vue/ItemSearch.vue) plutôt qu'un vrai lien, toujours pour la même raison —
+// impossible de monter un composant Vue (RefLink) dans du v-html. Pas de détection par nom
+// (contrairement aux traits de classe) : ces liens existent déjà tels quels dans la donnée
+// source, aucune ambiguïté à lever.
+const AIDEDD_SPELL_LINK_RE = /<a\s+href="https:\/\/www\.aidedd\.org\/dnd\/sorts\.php\?vf=([a-z0-9-]+)"[^>]*>([\s\S]*?)<\/a>/gi
+export function internalizeSpellLinks(html) {
+  if (!html) return html
+  return html.replace(AIDEDD_SPELL_LINK_RE, (match, slug, label) =>
+    `<span class="spell-ref-term" data-spell-slug="${escapeAttr(slug)}" data-spell-name="${escapeAttr(label.replace(/<[^>]+>/g, ''))}" title="Cliquer pour voir la fiche du sort">${label}</span>`
+  )
+}
+
+// Point d'entrée unique pour rendre description_html/description en HTML sûr et structuré —
+// remplace les fonctions toHtml()/descriptionHtml() dupliquées dans SpellSearch.vue,
+// ItemSearch.vue, SpellSearchTool.vue, MagicItemSearchTool.vue et ContentSheetView.vue.
+// `internalizeSpells: true` réservé aux objets (jamais aux sorts, qui ne référencent aucun
+// autre sort dans leur description — vérifié sur les 479 entrées de aidedd_spells.json).
+export function renderContentHtml(entry, { internalizeSpells = false } = {}) {
+  let html
+  if (entry?.description_html) {
+    html = highlightGlossaryHtml(normalizeDescriptionHtml(entry.description_html))
+  } else if (entry?.description) {
+    const escaped = entry.description
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n/g, '<br>')
+    html = highlightGlossaryHtml(`<p>${escaped}</p>`)
+  } else {
+    return ''
+  }
+  return internalizeSpells ? internalizeSpellLinks(html) : html
+}
+
 // Aplatit les features de classe + traits de sous-classe (+ leurs options) d'UNE classe en
 // candidats "aptitude", avec un id synthétique identique à celui de GET
 // /api/classes/abilities (voir buildAbility côté backend) pour permettre la navigation

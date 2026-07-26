@@ -9,7 +9,7 @@ import ContentPagination from './ContentPagination.vue'
 import ContentActionButtons from './ContentActionButtons.vue'
 import { parseEcole, levelLabel, schoolColor } from '@/utils/spellSchool.js'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
-import { highlightGlossaryHtml } from '@/utils/textLinker.js'
+import { renderContentHtml } from '@/utils/textLinker.js'
 
 const tabQuery = useContentTabQuery('spells')
 const router = useRouter()
@@ -65,15 +65,7 @@ function shortComponent(composantes) {
 }
 
 function toHtml(entry) {
-  if (entry.description_html) return highlightGlossaryHtml(entry.description_html)
-  if (!entry.description) return ''
-  const escaped = entry.description
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>')
-  return highlightGlossaryHtml(`<p>${escaped}</p>`)
+  return renderContentHtml(entry)
 }
 
 // Les mentions d'état (voir highlightGlossaryHtml) sont rendues en HTML brut avec un

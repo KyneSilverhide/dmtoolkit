@@ -6,6 +6,8 @@
 // utilisés par les composants de recherche admin (SpellSearch, ItemSearch, etc.) — voir
 // backend/src/socket.js `show-content` : l'admin envoie l'objet qu'il a déjà côté client,
 // le serveur ne le résout jamais lui-même.
+import { renderContentHtml } from '@/utils/textLinker.js'
+
 defineProps({
   contentType: { type: String, required: true }, // spell | item | race | background | ability | service | condition
   item: { type: Object, required: true },
@@ -25,7 +27,7 @@ defineProps({
         <span v-if="item.attributes?.composantes" class="cs-attr">🧪 {{ item.attributes.composantes }}</span>
       </div>
       <!-- eslint-disable-next-line vue/no-v-html — HTML statique de nos données, pas de saisie utilisateur -->
-      <div class="cs-desc" v-html="item.description_html || item.description"></div>
+      <div class="cs-desc" v-html="renderContentHtml(item)"></div>
       <div v-if="item.classes?.length" class="cs-badges">
         <span v-for="c in item.classes" :key="c" class="cs-badge">{{ c }}</span>
       </div>
@@ -40,7 +42,7 @@ defineProps({
         Nécessite un lien<template v-if="item.attunement_detail"> — {{ item.attunement_detail }}</template>
       </p>
       <!-- eslint-disable-next-line vue/no-v-html -->
-      <div class="cs-desc" v-html="item.description_html || item.description"></div>
+      <div class="cs-desc" v-html="renderContentHtml(item, { internalizeSpells: true })"></div>
       <p v-if="item.list_data?.prix" class="cs-price">{{ item.list_data.prix }}</p>
     </template>
 
@@ -131,6 +133,28 @@ defineProps({
   color: var(--color-text);
   line-height: 1.5;
   margin: 0;
+}
+.cs-desc :deep(p) { margin: 0.4em 0; }
+.cs-desc :deep(p:first-child) { margin-top: 0; }
+.cs-desc :deep(p:last-child) { margin-bottom: 0; }
+.cs-desc :deep(ul), .cs-desc :deep(ol) { margin: 0.4em 0; padding-left: 1.3em; }
+.cs-desc :deep(li) { margin: 0.15em 0; }
+.cs-desc :deep(strong), .cs-desc :deep(b) { color: var(--color-gold-bright); font-weight: 600; }
+.cs-desc :deep(em), .cs-desc :deep(i) { font-style: italic; }
+.cs-desc :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5em 0;
+}
+.cs-desc :deep(th), .cs-desc :deep(td) {
+  border: 1px solid var(--color-border);
+  padding: 0.25em 0.6em;
+  text-align: left;
+  vertical-align: top;
+}
+.cs-desc :deep(th) {
+  background: var(--surface-raised, rgba(255,255,255,0.05));
+  color: var(--color-gold-dark);
 }
 .cs-trait-list {
   font-family: var(--font-body), sans-serif;

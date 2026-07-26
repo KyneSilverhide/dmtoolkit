@@ -342,6 +342,13 @@ body {
   text-underline-offset: 2px;
   color: var(--color-danger);
 }
+.spell-ref-term {
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+  color: var(--color-gold-bright);
+  font-style: italic;
+}
 
 button,
 .home-btn,
