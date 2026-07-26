@@ -46,6 +46,13 @@ router.get('/public', (req, res) => {
   res.json(getRaces().map(race => ({ slug: race.slug, name: race.name })))
 })
 
+// Public (sans auth) — fiches complètes, utilisées par l'onglet Races de l'écran joueur
+// (parité de contenu avec le MJ, masqué en mode démo côté client). Contenu de règles
+// générique, non sensible — même raisonnement que GET /api/conditions/public.
+router.get('/public/full', (req, res) => {
+  res.json(getRaces())
+})
+
 router.get('/search', authenticateToken, (req, res) => {
   const q = (req.query.q || '').trim().toLowerCase()
   const races = getRaces()

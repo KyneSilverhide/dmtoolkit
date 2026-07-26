@@ -5,6 +5,13 @@ import { getSocket, resetSocket } from '../socket.js'
 import { sessionStore } from '../stores/session.js'
 import SpellSearchTool from '../components/player/SpellSearchTool.vue'
 import MagicItemSearchTool from '../components/player/MagicItemSearchTool.vue'
+import RaceSearchTool from '../components/player/RaceSearchTool.vue'
+import ClassSearchTool from '../components/player/ClassSearchTool.vue'
+import BackgroundSearchTool from '../components/player/BackgroundSearchTool.vue'
+import AbilitySearchTool from '../components/player/AbilitySearchTool.vue'
+import ServiceSearchTool from '../components/player/ServiceSearchTool.vue'
+import ConditionSearchTool from '../components/player/ConditionSearchTool.vue'
+import PlayerCommandPalette from '../components/player/PlayerCommandPalette.vue'
 import PlayerNotesTool from '../components/player/PlayerNotesTool.vue'
 import PlayerDiceTool from '../components/player/PlayerDiceTool.vue'
 import PlayerCombatTab from '../components/player/PlayerCombatTab.vue'
@@ -77,6 +84,20 @@ const showLeaveConfirm = ref(false)
 
 // ── Demo mode ─────────────────────────────────────────────────────────────
 const isDemo = ref(false)
+
+// ── Contenu de référence : onglets accessibles hors mode démo, avec parité MJ ──────────
+// Clés identiques à CONTENT_TABS côté admin (AdminView.vue) pour rester cohérent.
+const CONTENT_TABS = ['sorts', 'objets', 'races', 'classes', 'backgrounds', 'abilities', 'services', 'conditions']
+
+// ── Recherche globale (Ctrl+K équivalent joueur) ────────────────────────────
+const showCommandPalette = ref(false)
+const contentPrefillQuery = ref('')
+const contentPrefillToken = ref(0)
+function handlePaletteSelect({ tab, query }) {
+  switchTab(tab)
+  contentPrefillQuery.value = query
+  contentPrefillToken.value++
+}
 
 function toggleTheme() {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
@@ -170,7 +191,7 @@ function applyJoinedState(data) {
   initiativeValue.value = data.player.initiative
   isConcentrating.value = !!data.player.is_concentrating
   isDemo.value = !!data.isDemo
-  if (isDemo.value && (activeTab.value === 'sorts' || activeTab.value === 'objets')) switchTab('combat')
+  if (isDemo.value && CONTENT_TABS.includes(activeTab.value)) switchTab('combat')
   try {
     const rawConds = data.player.conditions
     const parsed = typeof rawConds === 'string' ? JSON.parse(rawConds) : rawConds
@@ -925,6 +946,15 @@ onUnmounted(() => {
         <span v-if="unreadMessages > 0" class="msg-chip" @click="switchTab('messages')">
           <AppIcon icon="lucide:inbox" size="0.85rem" />{{ unreadMessages }}
         </span>
+        <button
+          v-if="!isDemo"
+          class="header-search-btn"
+          @click="showCommandPalette = true"
+          aria-label="Recherche"
+          data-testid="player-search-btn"
+        >
+          <AppIcon icon="lucide:search" size="0.95rem" />
+        </button>
         <ReleaseNotesBell role="player" />
         <!-- Menu secondaire -->
         <div class="header-menu-wrap">
@@ -996,6 +1026,30 @@ onUnmounted(() => {
         <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'objets' }" @click="switchTab('objets')" aria-label="Objets" data-testid="player-tab-objets">
           <span class="sidebar-icon"><AppIcon icon="lucide:gem" size="1.2rem" /></span>
           <span class="sidebar-label">Objets</span>
+        </button>
+        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'races' }" @click="switchTab('races')" aria-label="Races" data-testid="player-tab-races">
+          <span class="sidebar-icon"><AppIcon icon="game-icons:vitruvian-man" size="1.2rem" /></span>
+          <span class="sidebar-label">Races</span>
+        </button>
+        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'classes' }" @click="switchTab('classes')" aria-label="Classes" data-testid="player-tab-classes">
+          <span class="sidebar-icon"><AppIcon icon="game-icons:round-shield" size="1.2rem" /></span>
+          <span class="sidebar-label">Classes</span>
+        </button>
+        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'backgrounds' }" @click="switchTab('backgrounds')" aria-label="Origines" data-testid="player-tab-backgrounds">
+          <span class="sidebar-icon"><AppIcon icon="game-icons:quill-ink" size="1.2rem" /></span>
+          <span class="sidebar-label">Origines</span>
+        </button>
+        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'abilities' }" @click="switchTab('abilities')" aria-label="Aptitudes" data-testid="player-tab-abilities">
+          <span class="sidebar-icon"><AppIcon icon="lucide:zap" size="1.2rem" /></span>
+          <span class="sidebar-label">Aptitudes</span>
+        </button>
+        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'services' }" @click="switchTab('services')" aria-label="Services" data-testid="player-tab-services">
+          <span class="sidebar-icon"><AppIcon icon="lucide:hand-coins" size="1.2rem" /></span>
+          <span class="sidebar-label">Services</span>
+        </button>
+        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'conditions' }" @click="switchTab('conditions')" aria-label="États" data-testid="player-tab-conditions">
+          <span class="sidebar-icon"><AppIcon icon="lucide:skull" size="1.2rem" /></span>
+          <span class="sidebar-label">États</span>
         </button>
         <button
           v-if="activeMerchant"
@@ -1134,8 +1188,56 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- ── SORTS/OBJETS masqués en mode démo ─────────────────────── -->
-            <div v-show="(activeTab === 'sorts' || activeTab === 'objets') && isDemo" class="tab-panel">
+            <!-- ── RACES tab ──────────────────────────────────────────────── -->
+            <div v-show="activeTab === 'races' && !isDemo" class="tab-panel">
+              <div class="panel">
+                <p class="panel-label"><AppIcon icon="game-icons:vitruvian-man" size="0.85rem" /> Races</p>
+                <RaceSearchTool :active="activeTab === 'races'" :prefill-query="contentPrefillQuery" :prefill-token="activeTab === 'races' ? contentPrefillToken : 0" />
+              </div>
+            </div>
+
+            <!-- ── CLASSES tab ────────────────────────────────────────────── -->
+            <div v-show="activeTab === 'classes' && !isDemo" class="tab-panel">
+              <div class="panel">
+                <p class="panel-label"><AppIcon icon="game-icons:round-shield" size="0.85rem" /> Classes</p>
+                <ClassSearchTool :active="activeTab === 'classes'" :prefill-query="contentPrefillQuery" :prefill-token="activeTab === 'classes' ? contentPrefillToken : 0" />
+              </div>
+            </div>
+
+            <!-- ── ORIGINES (backgrounds) tab ─────────────────────────────── -->
+            <div v-show="activeTab === 'backgrounds' && !isDemo" class="tab-panel">
+              <div class="panel">
+                <p class="panel-label"><AppIcon icon="game-icons:quill-ink" size="0.85rem" /> Origines</p>
+                <BackgroundSearchTool :active="activeTab === 'backgrounds'" :prefill-query="contentPrefillQuery" :prefill-token="activeTab === 'backgrounds' ? contentPrefillToken : 0" />
+              </div>
+            </div>
+
+            <!-- ── APTITUDES (abilities) tab ──────────────────────────────── -->
+            <div v-show="activeTab === 'abilities' && !isDemo" class="tab-panel">
+              <div class="panel">
+                <p class="panel-label"><AppIcon icon="lucide:zap" size="0.85rem" /> Aptitudes</p>
+                <AbilitySearchTool :active="activeTab === 'abilities'" :prefill-query="contentPrefillQuery" :prefill-token="activeTab === 'abilities' ? contentPrefillToken : 0" />
+              </div>
+            </div>
+
+            <!-- ── SERVICES tab ───────────────────────────────────────────── -->
+            <div v-show="activeTab === 'services' && !isDemo" class="tab-panel">
+              <div class="panel">
+                <p class="panel-label"><AppIcon icon="lucide:hand-coins" size="0.85rem" /> Services</p>
+                <ServiceSearchTool :active="activeTab === 'services'" :prefill-query="contentPrefillQuery" :prefill-token="activeTab === 'services' ? contentPrefillToken : 0" />
+              </div>
+            </div>
+
+            <!-- ── ÉTATS (conditions) tab ─────────────────────────────────── -->
+            <div v-show="activeTab === 'conditions' && !isDemo" class="tab-panel">
+              <div class="panel">
+                <p class="panel-label"><AppIcon icon="lucide:skull" size="0.85rem" /> États</p>
+                <ConditionSearchTool :active="activeTab === 'conditions'" :prefill-query="contentPrefillQuery" :prefill-token="activeTab === 'conditions' ? contentPrefillToken : 0" />
+              </div>
+            </div>
+
+            <!-- ── Contenu masqué en mode démo ──────────────────────────────── -->
+            <div v-show="CONTENT_TABS.includes(activeTab) && isDemo" class="tab-panel">
               <div class="panel demo-locked-panel">
                 <AppIcon icon="lucide:lock" size="1.4em" />
                 <p class="panel-label">Contenu masqué en mode démo</p>
@@ -1262,6 +1364,72 @@ onUnmounted(() => {
         <span class="tab-label">Objets</span>
       </button>
       <button
+        v-if="!isDemo"
+        class="tab-item"
+        :class="{ active: activeTab === 'races' }"
+        @click="switchTab('races')"
+        aria-label="Races"
+        data-testid="player-tab-races"
+      >
+        <span class="tab-icon"><AppIcon icon="game-icons:vitruvian-man" size="1.4rem" /></span>
+        <span class="tab-label">Races</span>
+      </button>
+      <button
+        v-if="!isDemo"
+        class="tab-item"
+        :class="{ active: activeTab === 'classes' }"
+        @click="switchTab('classes')"
+        aria-label="Classes"
+        data-testid="player-tab-classes"
+      >
+        <span class="tab-icon"><AppIcon icon="game-icons:round-shield" size="1.4rem" /></span>
+        <span class="tab-label">Classes</span>
+      </button>
+      <button
+        v-if="!isDemo"
+        class="tab-item"
+        :class="{ active: activeTab === 'backgrounds' }"
+        @click="switchTab('backgrounds')"
+        aria-label="Origines"
+        data-testid="player-tab-backgrounds"
+      >
+        <span class="tab-icon"><AppIcon icon="game-icons:quill-ink" size="1.4rem" /></span>
+        <span class="tab-label">Origines</span>
+      </button>
+      <button
+        v-if="!isDemo"
+        class="tab-item"
+        :class="{ active: activeTab === 'abilities' }"
+        @click="switchTab('abilities')"
+        aria-label="Aptitudes"
+        data-testid="player-tab-abilities"
+      >
+        <span class="tab-icon"><AppIcon icon="lucide:zap" size="1.4rem" /></span>
+        <span class="tab-label">Aptitudes</span>
+      </button>
+      <button
+        v-if="!isDemo"
+        class="tab-item"
+        :class="{ active: activeTab === 'services' }"
+        @click="switchTab('services')"
+        aria-label="Services"
+        data-testid="player-tab-services"
+      >
+        <span class="tab-icon"><AppIcon icon="lucide:hand-coins" size="1.4rem" /></span>
+        <span class="tab-label">Services</span>
+      </button>
+      <button
+        v-if="!isDemo"
+        class="tab-item"
+        :class="{ active: activeTab === 'conditions' }"
+        @click="switchTab('conditions')"
+        aria-label="États"
+        data-testid="player-tab-conditions"
+      >
+        <span class="tab-icon"><AppIcon icon="lucide:skull" size="1.4rem" /></span>
+        <span class="tab-label">États</span>
+      </button>
+      <button
         v-if="activeMerchant"
         class="tab-item"
         :class="{ active: activeTab === 'boutique' }"
@@ -1318,6 +1486,13 @@ onUnmounted(() => {
         <span v-if="unreadMessages > 0" class="tab-badge tab-badge-urgent">{{ unreadMessages }}</span>
       </button>
     </nav>
+
+    <PlayerCommandPalette
+      :open="showCommandPalette"
+      :is-demo="isDemo"
+      @close="showCommandPalette = false"
+      @select="handlePaletteSelect"
+    />
 
   </div>
 </template>
@@ -1439,7 +1614,7 @@ onUnmounted(() => {
 /* ── Header menu ─────────────────────────────────────────────────────── */
 .header-menu-wrap { position: relative; }
 
-.header-menu-btn {
+.header-menu-btn, .header-search-btn {
   background: none;
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -1453,7 +1628,7 @@ onUnmounted(() => {
   min-width: 36px;
   min-height: 36px;
 }
-.header-menu-btn:hover, .header-menu-btn.active {
+.header-menu-btn:hover, .header-menu-btn.active, .header-search-btn:hover {
   border-color: var(--color-gold-dark);
   color: var(--color-gold-bright);
   background: var(--player-gold-bg);

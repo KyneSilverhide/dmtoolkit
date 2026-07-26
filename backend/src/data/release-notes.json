@@ -1,6 +1,14 @@
 {
   "notes": [
     {
+      "version": "1.0.122",
+      "date": "2026-07-26",
+      "changes": [
+        { "type": "feature", "role": "player", "text": "Contenu — accès à toute la recherche de contenu comme le MJ : nouveaux onglets Races, Classes, Origines, Aptitudes, Services et États, en plus de Sorts et Objets déjà disponibles (masqués en mode démo)." },
+        { "type": "feature", "role": "player", "text": "Recherche globale — un bouton de recherche dans l'en-tête permet désormais de chercher dans tout le contenu de référence à la fois et d'ouvrir directement la fiche correspondante." }
+      ]
+    },
+    {
       "version": "1.0.121",
       "date": "2026-07-26",
       "changes": [

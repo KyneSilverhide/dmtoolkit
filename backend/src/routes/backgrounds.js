@@ -40,6 +40,11 @@ router.get('/', authenticateToken, (req, res) => {
   res.json(getBackgrounds())
 })
 
+// Public (sans auth) — utilisé par l'onglet Origines de l'écran joueur.
+router.get('/public', (req, res) => {
+  res.json(getBackgrounds())
+})
+
 router.get('/search', authenticateToken, (req, res) => {
   const q = (req.query.q || '').trim().toLowerCase()
   const backgrounds = getBackgrounds()

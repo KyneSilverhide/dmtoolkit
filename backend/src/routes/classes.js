@@ -68,6 +68,12 @@ router.get('/public', (req, res) => {
   })))
 })
 
+// Public (sans auth) — fiches complètes, utilisées par l'onglet Classes de l'écran joueur
+// (parité de contenu avec le MJ, masqué en mode démo côté client).
+router.get('/public/full', (req, res) => {
+  res.json(getClasses())
+})
+
 router.get('/search', authenticateToken, (req, res) => {
   const q = (req.query.q || '').trim().toLowerCase()
   const classes = getClasses()
@@ -168,6 +174,11 @@ function abilityMatches(ability, q) {
 }
 
 router.get('/abilities', authenticateToken, (req, res) => {
+  res.json(getAbilities())
+})
+
+// Public (sans auth) — utilisé par l'onglet Aptitudes de l'écran joueur.
+router.get('/abilities/public', (req, res) => {
   res.json(getAbilities())
 })
 

@@ -35,6 +35,11 @@ router.get('/', authenticateToken, (req, res) => {
   res.json(getServices())
 })
 
+// Public (sans auth) — utilisé par l'onglet Services de l'écran joueur.
+router.get('/public', (req, res) => {
+  res.json(getServices())
+})
+
 router.get('/search', authenticateToken, (req, res) => {
   const q = (req.query.q || '').trim().toLowerCase()
   const services = getServices()
