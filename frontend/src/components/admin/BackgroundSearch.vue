@@ -6,6 +6,7 @@ import AppIcon from '../AppIcon.vue'
 import LinkedText from '../LinkedText.vue'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 import { spellCandidates, itemCandidates, withGlossary } from '@/utils/textLinker.js'
+import ContentActionButtons from './ContentActionButtons.vue'
 
 const tabQuery = useContentTabQuery('backgrounds')
 let writeTimer = null
@@ -244,6 +245,7 @@ onUnmounted(() => {
         <div class="bg-footer">
           <span class="bg-source"><AppIcon icon="lucide:library" size="0.8em" /> {{ background.source }}</span>
           <a :href="background.detail_url" target="_blank" class="bg-link">Voir sur AideDD ↗</a>
+          <ContentActionButtons content-type="background" :item="background" />
         </div>
       </div>
     </div>

@@ -35,6 +35,28 @@ const MAP_FOG_STROKES_MAX = 500
 const MAX_FACTION_VALUE = 1000
 const MIN_FACTION_VALUE = -1000
 
+// Types de fiche de contenu affichables sur la TV / envoyables à un joueur — jamais
+// 'class' (fiche trop volumineuse : progression 1-20, sous-classes, emplacements de
+// sorts...). L'admin envoie l'objet déjà résolu côté client (il l'a via ses propres
+// endpoints authentifiés /api/spells, /api/races, etc.) ; le serveur ne fait que le
+// valider superficiellement, le stocker et le relayer — voir 'show-content' plus bas.
+const CONTENT_TYPES = new Set(['spell', 'item', 'race', 'background', 'ability', 'service', 'condition'])
+const MAX_CONTENT_JSON_LENGTH = 50_000
+
+/**
+ * Parses the JSON-serialized content sheet currently shown on TV, if any.
+ * @param {object} session - A row from the sessions table
+ * @returns {object|null}
+ */
+function serializeCurrentContent(session) {
+  if (session.tv_mode !== 'content' || !session.current_content_data) return null
+  try {
+    return { contentType: session.current_content_type, contentData: JSON.parse(session.current_content_data) }
+  } catch {
+    return null
+  }
+}
+
 /**
  * Sanitizes a player name: trims whitespace and collapses multiple spaces.
  * @param {string} name
@@ -626,6 +648,7 @@ function setupSocket(io) {
           isDemo: !!socket.admin.is_demo,
           factions: await getFactionsBySession(session.id),
           tvTheme: session.tv_theme || 'dark',
+          activeContent: serializeCurrentContent(session),
         })
       } catch (err) { console.error(err) }
     })
@@ -681,6 +704,7 @@ function setupSocket(io) {
           isDemo: !!session.admin_is_demo,
           factions: await getFactionsBySession(session.id),
           tvTheme: session.tv_theme || 'dark',
+          activeContent: serializeCurrentContent(session),
         })
       } catch (err) { console.error(err) }
     })
@@ -703,6 +727,26 @@ function setupSocket(io) {
         io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode })
         io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode })
       } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: show a content sheet (spell/item/race/background/ability/service/
+    // condition — never a class) on the TV. The admin sends the sheet it already has
+    // client-side (from its own authenticated /api/* fetches) ; the server stores it
+    // as-is and relays it, it never re-resolves content itself (see CONTENT_TYPES).
+    socket.on('show-content', async ({ sessionId, contentType, contentData }) => {
+      if (!socket.admin) return
+      if (!CONTENT_TYPES.has(contentType) || !contentData || typeof contentData !== 'object') return
+      try {
+        const dataStr = JSON.stringify(contentData)
+        if (dataStr.length > MAX_CONTENT_JSON_LENGTH) return
+        const result = await pool.query(
+          'UPDATE sessions SET tv_mode = $1, current_content_type = $2, current_content_data = $3 WHERE id = $4 AND created_by = $5',
+          ['content', contentType, dataStr, sessionId, socket.admin.id]
+        )
+        if (result.rowCount === 0) return
+        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'content', contentType, contentData })
+        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'content', contentType, contentData })
+      } catch (err) { console.error(err); socket.emit('tv-control-error', { message: 'Impossible d\'afficher ce contenu sur la TV.' }) }
     })
 
     // ── Admin: start doom clock ──────────────────────────────────────────────

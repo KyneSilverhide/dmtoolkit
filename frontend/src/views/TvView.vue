@@ -16,6 +16,7 @@ import TvMap from '../components/tv/TvMap.vue'
 import TvMerchant from '../components/tv/TvMerchant.vue'
 import TvPuzzle from '../components/tv/TvPuzzle.vue'
 import TvReputation from '../components/tv/TvReputation.vue'
+import TvContent from '../components/tv/TvContent.vue'
 import { BACKEND_URL } from '@/config.js'
 
 const DOOM_DANGER_THRESHOLD_SECONDS = 10
@@ -44,6 +45,7 @@ const activeDoomClock = ref(null)
 const activeTensionScale = ref(null)
 const activeTimeScale = ref(null)
 const activeTimer = ref(null)
+const activeContent = ref(null) // { contentType, contentData } — voir TvContent.vue
 const combatRound = ref(0)
 const factions = ref([])
 const now = ref(Date.now())
@@ -218,6 +220,7 @@ onMounted(() => {
     activeDoomClock.value = data.doomClock || null
     activeTensionScale.value = data.tensionScale || null
     activeTimeScale.value = data.timeScale || null
+    activeContent.value = data.activeContent || null
     combatRound.value = data.combatRound || 0
     activeTimer.value = data.timer || null
     applyTheme(data.tvTheme || 'dark')
@@ -235,13 +238,14 @@ onMounted(() => {
     }
   })
 
-  socket.on('tv-mode-changed', ({ mode, imageUrl, imageLabel, videoUrl, merchantData, puzzleImageId: pid, puzzleSeed: ps }) => {
+  socket.on('tv-mode-changed', ({ mode, imageUrl, imageLabel, videoUrl, merchantData, contentType, contentData, puzzleImageId: pid, puzzleSeed: ps }) => {
     tvMode.value = mode
     if (imageUrl) currentImageUrl.value = imageUrl
     if (mode === 'image') currentImageLabel.value = imageLabel || null
     if (videoUrl) currentVideoUrl.value = videoUrl
     if (merchantData) activeMerchant.value = merchantData
     else if (mode === 'lobby') activeMerchant.value = null
+    if (mode === 'content' && contentData) activeContent.value = { contentType, contentData }
     if (mode === 'puzzle' && pid) {
       pendingPuzzleClicks.value = []
       puzzleImageId.value = pid
@@ -515,6 +519,11 @@ onUnmounted(() => {
             v-else-if="tvMode === 'reputation'"
             :factions="factions"
             :session="session"
+          />
+
+          <TvContent
+            v-else-if="tvMode === 'content' && activeContent"
+            :active-content="activeContent"
           />
         </div>
       </Transition>

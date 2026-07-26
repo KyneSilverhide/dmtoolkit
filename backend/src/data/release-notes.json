@@ -8,7 +8,9 @@
         { "type": "feature", "role": "player", "text": "Connexion — en rejoignant une session, vous pouvez désormais choisir votre classe (et sous-classe si applicable) et votre race depuis les listes du contenu, ou les saisir librement." },
         { "type": "feature", "role": "admin", "text": "Joueurs — un résumé des résistances, immunités et sens (vision dans le noir…) découlant de la classe/sous-classe/race de chaque joueur est désormais affiché sur sa fiche." },
         { "type": "improvement", "role": "admin", "text": "Services — les résultats sont désormais regroupés par catégorie (Main d'œuvre, Transport & voyage, Hébergement, Repas & boissons)." },
-        { "type": "improvement", "role": "admin", "text": "Classes — les traits de classe de base pointent désormais vers leur fiche dans l'onglet Aptitudes, comme les traits de sous-classe, au lieu d'afficher leur description directement." }
+        { "type": "improvement", "role": "admin", "text": "Classes — les traits de classe de base pointent désormais vers leur fiche dans l'onglet Aptitudes, comme les traits de sous-classe, au lieu d'afficher leur description directement." },
+        { "type": "feature", "role": "admin", "text": "Contenu — un bouton « TV » et « Envoyer » a été ajouté sur chaque sort, objet, race, origine, aptitude, service et état : il permet de projeter sa fiche sur l'écran TV (nouveau mode « Contenu ») ou de l'envoyer par message à un ou tous les joueurs." },
+        { "type": "feature", "role": "player", "text": "Messages — une fiche de contenu envoyée par le MJ (sort, objet, race…) s'affiche désormais directement dans vos messages." }
       ]
     },
     {

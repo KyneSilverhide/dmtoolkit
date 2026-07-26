@@ -6,6 +6,7 @@ import { apiFetch } from '@/utils/apiFetch.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
 import ContentPagination from './ContentPagination.vue'
+import ContentActionButtons from './ContentActionButtons.vue'
 import { itemTypeStyle } from '@/utils/itemTypes.js'
 import { rarityColor } from '@/utils/rarity.js'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
@@ -258,7 +259,10 @@ onUnmounted(() => {
         </div>
         <div v-if="item.description_html || item.description" class="item-desc" v-html="toHtml(item)" @click="onDescClick" />
         <div v-if="item.source" class="item-source"><AppIcon icon="lucide:library" size="0.8em" /> {{ item.source }}</div>
-        <a :href="item.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
+        <div class="spell-footer">
+          <a :href="item.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
+          <ContentActionButtons content-type="item" :item="item" />
+        </div>
       </div>
     </div>
 
@@ -526,6 +530,13 @@ onUnmounted(() => {
 }
 
 /* Link */
+.spell-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
 .spell-link {
   font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
@@ -533,7 +544,6 @@ onUnmounted(() => {
   text-transform: uppercase;
   color: var(--color-gold-dark);
   text-decoration: none;
-  align-self: flex-start;
   transition: color 0.2s;
 }
 .spell-link:hover { color: var(--color-gold-bright); }

@@ -100,6 +100,14 @@ export const VIDEO_CONTROL = 'video-control'
 /** Admin displays a battlemap on the TV: { sessionId, imageUrl } */
 export const SHOW_MAP = 'show-map'
 
+/**
+ * Admin displays a content sheet (spell/item/race/background/ability/service/condition —
+ * never a class) on the TV: { sessionId, contentType, contentData }. The admin sends the
+ * full object it already has client-side; relayed back via TV_MODE_CHANGED with
+ * { mode: 'content', contentType, contentData }.
+ */
+export const SHOW_CONTENT = 'show-content'
+
 /** Admin toggles the battlemap fog of war: { sessionId, enabled } */
 export const MAP_SET_FOG = 'map-set-fog'
 
@@ -423,6 +431,7 @@ export default {
   SHOW_VIDEO,
   VIDEO_CONTROL,
   SHOW_MAP,
+  SHOW_CONTENT,
   MAP_SET_FOG,
   MAP_VIEWPORT_UPDATE,
   MAP_FOG_CLEAR,

@@ -1,6 +1,7 @@
 ﻿<script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import AppIcon from '../AppIcon.vue'
+import ContentSheetView from '../ContentSheetView.vue'
 
 const props = defineProps({
   message: {
@@ -68,6 +69,18 @@ function resolvedText() {
   if (props.message.textEffect === 'typewriter') return displayedText.value
   return props.message.content
 }
+
+// Fiche de contenu envoyée par le MJ (voir ContentActionButtons.vue côté admin) —
+// content est un JSON stringifié { contentType, item }, jamais une classe.
+const contentPayload = computed(() => {
+  if (props.message.type !== 'content') return null
+  try {
+    const parsed = JSON.parse(props.message.content)
+    return parsed?.contentType && parsed?.item ? parsed : null
+  } catch {
+    return null
+  }
+})
 </script>
 
 <template>
@@ -102,6 +115,14 @@ function resolvedText() {
         <span class="card-time">{{ formatTime(message.sentAt) }}</span>
       </div>
       <img :src="getImageUrl(message.content)" alt="Image du MJ" class="message-image" />
+    </div>
+
+    <div v-else-if="message.type === 'content' && contentPayload" class="content-card">
+      <div class="card-header">
+        <span class="from-name">{{ message.fromName || 'MJ' }}</span>
+        <span class="card-time">{{ formatTime(message.sentAt) }}</span>
+      </div>
+      <ContentSheetView :content-type="contentPayload.contentType" :item="contentPayload.item" variant="compact" />
     </div>
 
     <div v-else class="text-card" :class="'effect-' + (message.textEffect || 'none')"
@@ -146,6 +167,12 @@ function resolvedText() {
 .gold-card {
   padding: 1rem 1.25rem;
   border-left: 3px solid var(--msg-swatch-gold);
+  background: var(--player-panel-highlight-bg, var(--gradient-panel-soft));
+}
+
+.content-card {
+  padding: 1rem 1.25rem;
+  border-left: 3px solid var(--color-gold-dark);
   background: var(--player-panel-highlight-bg, var(--gradient-panel-soft));
 }
 

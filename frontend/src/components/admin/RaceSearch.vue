@@ -6,6 +6,7 @@ import AppIcon from '../AppIcon.vue'
 import LinkedText from '../LinkedText.vue'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 import { spellCandidates, withGlossary } from '@/utils/textLinker.js'
+import ContentActionButtons from './ContentActionButtons.vue'
 
 const tabQuery = useContentTabQuery('races')
 let writeTimer = null
@@ -195,6 +196,7 @@ onUnmounted(() => {
         <div class="race-footer">
           <span class="race-source"><AppIcon icon="lucide:library" size="0.8em" /> {{ race.source }}</span>
           <a :href="race.detail_url" target="_blank" class="race-link">Voir sur AideDD ↗</a>
+          <ContentActionButtons content-type="race" :item="race" />
         </div>
       </div>
     </div>

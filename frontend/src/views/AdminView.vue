@@ -109,6 +109,7 @@ const hasActiveTimeScale = ref(false)
 const hasActiveMap = ref(false)
 const activePuzzle = ref(null)
 const hasActiveReputation = ref(false)
+const hasActiveContent = ref(false)
 const combatRound = ref(0)
 
 // Onglets verrouillés (grisés + tooltip). Map { [tabKey]: { title, text } }.
@@ -252,6 +253,7 @@ const tvModes = computed(() => ([
   { key: 'tension',    label: 'Echelle tension',  hint: 'Depuis l onglet Rythme',        ready: hasActiveTension.value },
   { key: 'timescale',  label: 'Echelle de temps', hint: 'Depuis l onglet Rythme',        ready: hasActiveTimeScale.value },
   { key: 'reputation', label: 'Réputations',      hint: 'Depuis l onglet Réputations',   ready: hasActiveReputation.value },
+  { key: 'content',    label: 'Contenu',          hint: 'Depuis un onglet Contenu',      ready: hasActiveContent.value },
 ]))
 
 const activeTvModeLabel = computed(() => {
@@ -330,6 +332,7 @@ function handleAdminState(data) {
   hasActiveMap.value = !!(data.mapState?.mapUrl)
   activePuzzle.value = data.activePuzzle || null
   hasActiveReputation.value = Array.isArray(data.factions) && data.factions.length > 0
+  hasActiveContent.value = !!data.activeContent
   if (data.isDemo !== undefined && authStore.admin) {
     authStore.admin = { ...authStore.admin, is_demo: data.isDemo }
   }
@@ -340,6 +343,7 @@ function handleTvModeChanged(payload) {
   if (payload?.imageUrl !== undefined) hasActiveImage.value = !!payload.imageUrl
   if (payload?.videoUrl !== undefined) hasActiveVideo.value = !!payload.videoUrl
   if (payload?.merchantData !== undefined) hasActiveMerchant.value = !!payload.merchantData
+  if (payload?.mode === 'content' && payload?.contentData) hasActiveContent.value = true
   if (payload?.mode === 'puzzle' && payload?.puzzleImageId) {
     activePuzzle.value = { puzzleImageId: payload.puzzleImageId, puzzleSeed: payload.puzzleSeed, puzzleClicks: activePuzzle.value?.puzzleClicks || [] }
   } else if (payload?.mode && payload.mode !== 'puzzle') {

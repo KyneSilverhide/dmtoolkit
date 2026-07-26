@@ -6,6 +6,7 @@ import AppIcon from '../AppIcon.vue'
 import LinkedText from '../LinkedText.vue'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 import { withGlossary } from '@/utils/textLinker.js'
+import ContentActionButtons from './ContentActionButtons.vue'
 
 const tabQuery = useContentTabQuery('conditions')
 let writeTimer = null
@@ -149,7 +150,10 @@ onUnmounted(() => {
           <span v-if="condition.name_vo" class="vo-badge">{{ condition.name_vo }}</span>
         </div>
         <p class="condition-desc"><LinkedText :text="condition.description" :candidates="refCandidates" /></p>
-        <a :href="condition.detail_url" target="_blank" class="condition-link">Voir sur AideDD ↗</a>
+        <div class="condition-footer">
+          <a :href="condition.detail_url" target="_blank" class="condition-link">Voir sur AideDD ↗</a>
+          <ContentActionButtons content-type="condition" :item="condition" />
+        </div>
       </div>
     </div>
   </div>
@@ -284,6 +288,13 @@ onUnmounted(() => {
   margin: 0;
 }
 
+.condition-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
 .condition-link {
   font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
@@ -291,7 +302,6 @@ onUnmounted(() => {
   text-transform: uppercase;
   color: var(--color-gold-dark);
   text-decoration: none;
-  align-self: flex-start;
   transition: color 0.2s;
 }
 .condition-link:hover { color: var(--color-gold-bright); }

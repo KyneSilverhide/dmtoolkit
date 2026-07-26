@@ -4,6 +4,7 @@ import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
 import AppIcon from '../AppIcon.vue'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
+import ContentActionButtons from './ContentActionButtons.vue'
 
 const tabQuery = useContentTabQuery('services')
 let writeTimer = null
@@ -162,7 +163,10 @@ onUnmounted(() => {
                 <span class="price-badge"><AppIcon icon="lucide:coins" size="0.7em" /> {{ service.price }}</span>
               </div>
               <p class="service-desc">{{ service.description }}</p>
-              <a :href="service.detail_url" target="_blank" class="service-link">Voir sur AideDD ↗</a>
+              <div class="service-footer">
+                <a :href="service.detail_url" target="_blank" class="service-link">Voir sur AideDD ↗</a>
+                <ContentActionButtons content-type="service" :item="service" />
+              </div>
             </div>
           </div>
         </div>
@@ -322,6 +326,13 @@ onUnmounted(() => {
   margin: 0;
 }
 
+.service-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
 .service-link {
   font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
@@ -329,7 +340,6 @@ onUnmounted(() => {
   text-transform: uppercase;
   color: var(--color-gold-dark);
   text-decoration: none;
-  align-self: flex-start;
   transition: color 0.2s;
 }
 .service-link:hover { color: var(--color-gold-bright); }

@@ -6,6 +6,7 @@ import { apiFetch } from '@/utils/apiFetch.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
 import ContentPagination from './ContentPagination.vue'
+import ContentActionButtons from './ContentActionButtons.vue'
 import { parseEcole, levelLabel, schoolColor } from '@/utils/spellSchool.js'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 import { highlightGlossaryHtml } from '@/utils/textLinker.js'
@@ -299,7 +300,10 @@ onUnmounted(() => {
           <AppIcon icon="game-icons:vitruvian-man" size="0.7em" class="classes-icon" />
           <span v-for="cls in spell.classes" :key="cls" class="class-badge">{{ cls }}</span>
         </div>
-        <a :href="spell.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
+        <div class="spell-footer">
+          <a :href="spell.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
+          <ContentActionButtons content-type="spell" :item="spell" />
+        </div>
       </div>
     </div>
 
@@ -581,6 +585,13 @@ onUnmounted(() => {
 .clear-filter-btn:hover { color: var(--color-gold-bright); border-color: var(--color-gold-dark); }
 
 /* Link */
+.spell-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
 .spell-link {
   font-family: var(--font-heading), sans-serif;
   font-size: 0.6rem;
@@ -588,7 +599,6 @@ onUnmounted(() => {
   text-transform: uppercase;
   color: var(--color-gold-dark);
   text-decoration: none;
-  align-self: flex-start;
   transition: color 0.2s;
 }
 .spell-link:hover { color: var(--color-gold-bright); }

@@ -8,6 +8,7 @@ import LinkedText from '../LinkedText.vue'
 import ContentPagination from './ContentPagination.vue'
 import { useContentTabQuery } from '@/composables/useContentTabQuery.js'
 import { spellCandidates, withGlossary } from '@/utils/textLinker.js'
+import ContentActionButtons from './ContentActionButtons.vue'
 
 const router = useRouter()
 const tabQuery = useContentTabQuery('abilities')
@@ -203,6 +204,7 @@ onUnmounted(() => {
             <AppIcon icon="lucide:arrow-right" size="0.7em" />
           </button>
           <a v-if="ability.classDetailUrl" :href="ability.classDetailUrl" target="_blank" class="ability-link">Voir la classe sur AideDD ↗</a>
+          <ContentActionButtons content-type="ability" :item="ability" />
         </div>
       </div>
     </div>

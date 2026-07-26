@@ -278,6 +278,12 @@ ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_video_url VARCHAR(500);
 -- utilisées avec dnd_class pour le résumé des résistances/immunités affiché au MJ.
 ALTER TABLE players ADD COLUMN IF NOT EXISTS race VARCHAR(100);
 ALTER TABLE players ADD COLUMN IF NOT EXISTS subclass VARCHAR(100);
+
+-- Fiche de contenu (sort/objet/race/origine/aptitude/service/état — jamais une classe)
+-- actuellement affichée sur la TV (tv_mode = 'content'). L'admin envoie l'objet déjà
+-- résolu côté client (voir socket.js 'show-content') ; stocké tel quel en JSON.
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_content_type VARCHAR(20);
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_content_data TEXT;
 `
 
 async function runMigrations() {
