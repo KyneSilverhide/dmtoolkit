@@ -1,7 +1,7 @@
 {
   "notes": [
     {
-      "version": "1.0.119",
+      "version": "1.0.120",
       "date": "2026-07-25",
       "changes": [
         { "type": "improvement", "role": "all", "text": "Mode démo — le contenu de référence (Sorts, Objets, Races, Classes, Origines, Aptitudes, Services, États) est désormais masqué à la fois côté MJ et côté joueur." },
