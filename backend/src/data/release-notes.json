@@ -4,7 +4,7 @@
       "version": "2.0.0",
       "date": "2026-07-26",
       "changes": [
-        { "type": "feature", "role": "all", "text": "Nouveau thème sombre « Braise » : palette entièrement revue (fond quasi-noir, ambre chaud, rouge braise), inspirée de la charte graphique de dd2024.fr." },
+        { "type": "feature", "role": "all", "text": "Nouveau thème sombre « Braise » : palette entièrement revue (fond quasi-noir, ambre chaud, rouge braise)" },
         { "type": "improvement", "role": "all", "text": "Le bouton de bascule de thème affiche désormais le thème actuellement actif, au lieu du thème vers lequel il basculerait." }
       ]
     },
