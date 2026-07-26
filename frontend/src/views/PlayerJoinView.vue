@@ -1,5 +1,5 @@
 ﻿<script setup>
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
+import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSocket } from '../socket.js'
 import { sessionStore } from '../stores/session.js'
@@ -33,7 +33,14 @@ const selectedClassSubclasses = computed(() => {
   if (isCustomClass.value || !selectedClass.value) return []
   return classesList.value.find(c => c.name === selectedClass.value)?.subclasses || []
 })
+// Le pré-remplissage depuis le profil stocké (voir watch(playerName) plus bas) modifie
+// selectedClass puis selectedSubclass dans le même tick — sans ce garde-fou, ce watcher
+// (déclenché de façon asynchrone par le changement de selectedClass) efface la sous-classe
+// qui vient d'être restaurée. Ne doit réinitialiser la sous-classe que sur un changement de
+// classe VOULU PAR L'UTILISATEUR (sélection manuelle dans le menu déroulant).
+let suppressSubclassReset = false
 watch(selectedClass, () => {
+  if (suppressSubclassReset) { suppressSubclassReset = false; return }
   selectedSubclass.value = ''
   customSubclass.value = ''
 })
@@ -109,6 +116,12 @@ watch(playerName, (name, prevName) => {
     if (profile.dndClass) {
       const knownClass = classesList.value.find(c => c.name === profile.dndClass)
       if (knownClass) {
+        suppressSubclassReset = true
+        // Filet de sécurité : si selectedClass.value avait déjà cette valeur (ex: profil
+        // relu sans changement réel), le watcher ci-dessus ne se déclenche jamais et ne
+        // remet donc jamais le drapeau à false — ce qui supprimerait à tort le prochain
+        // changement de classe VOULU par l'utilisateur.
+        nextTick(() => { suppressSubclassReset = false })
         selectedClass.value = profile.dndClass
         customClass.value = ''
         if (profile.subclass) {

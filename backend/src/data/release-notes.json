@@ -1,6 +1,13 @@
 {
   "notes": [
     {
+      "version": "1.0.126",
+      "date": "2026-07-26",
+      "changes": [
+        { "type": "fix", "role": "player", "text": "Connexion — la sous-classe mémorisée sur cet appareil est de nouveau pré-remplie automatiquement, comme le nom, la classe et la race." }
+      ]
+    },
+    {
       "version": "1.0.125",
       "date": "2026-07-26",
       "changes": [
