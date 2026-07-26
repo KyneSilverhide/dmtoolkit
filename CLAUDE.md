@@ -368,7 +368,7 @@ cd frontend && npm run dev  # vite dev server
 | `time-scale-updated` | TV + admin | Échelle de temps mise à jour — `{ title, totalHours, slotCount, restSlots, elapsedSlots, slotHours }` |
 | `time-scale-ended` | TV + admin | Échelle de temps terminée |
 | `puzzle-started` | TV + session + admin | Puzzle affiché — `{ puzzleImageId, puzzleSeed, puzzleClicks: [] }` |
-| `puzzle-closed` | TV + session + admin | Puzzle fermé |
+| `puzzle-closed` | session + admin | Puzzle fermé (la TV se réinitialise via `tv-mode-changed` mode `lobby`, pas via cet événement) |
 | `puzzle-cell-clicked` | TV + session + admin (sauf émetteur) | Clic relayé — `{ path: number[] }` |
 | `map-fog-cells-patch` | TV + admin | Nouvelles cellules révélées — `{ cells: [idx] }` |
 | `map-fog-cells-reset` | TV + admin | Toutes les cellules redeviennent cachées |

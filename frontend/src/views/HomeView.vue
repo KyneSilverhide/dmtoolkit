@@ -185,7 +185,7 @@ async function login() {
                   v-model="username"
                   type="text"
                   class="form-input"
-                  placeholder="admin"
+                  placeholder="Tapez votre login"
                   autocomplete="username"
                   autofocus
                   data-testid="username-input"
@@ -198,7 +198,7 @@ async function login() {
                   v-model="password"
                   type="password"
                   class="form-input"
-                  placeholder="••••••••"
+                  placeholder="Tapez votre mot de passe "
                   autocomplete="current-password"
                   data-testid="password-input"
                 />

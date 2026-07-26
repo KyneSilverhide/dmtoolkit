@@ -1,6 +1,14 @@
 {
   "notes": [
     {
+      "version": "1.0.127",
+      "date": "2026-07-26",
+      "changes": [
+        { "type": "fix", "role": "admin", "text": "Diffusion TV — le mode « Puzzle » apparaît de nouveau dans la liste des modes disponibles pour l'écran TV ; il n'était plus possible d'y revenir une fois qu'on en était sorti." },
+        { "type": "improvement", "role": "admin", "text": "Connexion MJ — les champs identifiant et mot de passe affichent désormais un texte d'aide explicite (« Tapez votre login » / « Tapez votre mot de passe »)." }
+      ]
+    },
+    {
       "version": "1.0.126",
       "date": "2026-07-26",
       "changes": [

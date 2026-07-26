@@ -1238,6 +1238,7 @@ function setupSocket(io) {
         io.to(`tv:${sid}`).emit('tv-mode-changed', { mode: 'lobby' })
         io.to(`admin:${sid}`).emit('tv-mode-changed', { mode: 'lobby' })
         io.to(`session:${sid}`).emit('puzzle-closed')
+        io.to(`admin:${sid}`).emit('puzzle-closed')
       } catch (err) { console.error(err) }
     })
 

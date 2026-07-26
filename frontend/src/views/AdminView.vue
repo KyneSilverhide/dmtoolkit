@@ -44,7 +44,7 @@ import {
   MAP_STATE, MERCHANT_ITEMS_UPDATED, DOOM_CLOCK_STARTED, DOOM_CLOCK_STOPPED,
   TENSION_SCALE_UPDATED, TENSION_SCALE_ENDED, TIME_SCALE_UPDATED, TIME_SCALE_ENDED,
   PLAYER_ROLL_RESULT, DEMO_RESET, ROUND_UPDATED,
-  ADMIN_JOIN, SET_TV_MODE, FACTIONS_UPDATED,
+  ADMIN_JOIN, SET_TV_MODE, FACTIONS_UPDATED, PUZZLE_CLOSED,
 } from '../socket-events.js'
 
 const router = useRouter()
@@ -249,6 +249,7 @@ const tvModes = computed(() => ([
   { key: 'video',      label: 'Vidéo',            hint: 'Affiche la vidéo active',       ready: hasActiveVideo.value },
   { key: 'map',        label: 'Carte',            hint: 'Depuis l onglet Carte',         ready: hasActiveMap.value },
   { key: 'merchant',   label: 'Marchand',         hint: 'Affiche le marchand actif',     ready: hasActiveMerchant.value },
+  { key: 'puzzle',     label: 'Puzzle',           hint: 'Depuis l onglet Puzzles',       ready: !!activePuzzle.value },
   { key: 'doom',       label: 'Doom Clock',       hint: 'Depuis l onglet Rythme',        ready: hasActiveDoom.value },
   { key: 'tension',    label: 'Echelle tension',  hint: 'Depuis l onglet Rythme',        ready: hasActiveTension.value },
   { key: 'timescale',  label: 'Echelle de temps', hint: 'Depuis l onglet Rythme',        ready: hasActiveTimeScale.value },
@@ -346,8 +347,6 @@ function handleTvModeChanged(payload) {
   if (payload?.mode === 'content' && payload?.contentData) hasActiveContent.value = true
   if (payload?.mode === 'puzzle' && payload?.puzzleImageId) {
     activePuzzle.value = { puzzleImageId: payload.puzzleImageId, puzzleSeed: payload.puzzleSeed, puzzleClicks: activePuzzle.value?.puzzleClicks || [] }
-  } else if (payload?.mode && payload.mode !== 'puzzle') {
-    activePuzzle.value = null
   }
 }
 
@@ -428,6 +427,10 @@ onMounted(() => {
   _socket.on(VOTE_CLOSED, () => { hasActiveVote.value = false })
   _socket.on(MAP_STATE, (data) => { hasActiveMap.value = !!(data?.mapUrl) })
   _socket.on(MERCHANT_ITEMS_UPDATED, () => { hasActiveMerchant.value = true })
+  _socket.on(PUZZLE_CLOSED, () => {
+    activePuzzle.value = null
+    if (tvMode.value === 'puzzle') tvMode.value = 'lobby'
+  })
   _socket.on(DOOM_CLOCK_STARTED, () => { hasActiveDoom.value = true })
   _socket.on(DOOM_CLOCK_STOPPED, () => {
     hasActiveDoom.value = false
@@ -489,6 +492,7 @@ onUnmounted(() => {
     _socket.off(VOTE_STARTED)
     _socket.off(VOTE_CLOSED)
     _socket.off(MERCHANT_ITEMS_UPDATED)
+    _socket.off(PUZZLE_CLOSED)
     _socket.off(DOOM_CLOCK_STARTED)
     _socket.off(DOOM_CLOCK_STOPPED)
     _socket.off(TENSION_SCALE_UPDATED)
