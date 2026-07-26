@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { getThemePreference, setThemePreference, applyTheme, getLastUsedTheme } from './themePreferences.js'
+import { getThemePreference, setThemePreference, applyTheme, getLastUsedTheme, getNextTheme, getThemeMeta } from './themePreferences.js'
 
 const localStorageMock = (() => {
   let store = {}
@@ -70,6 +70,27 @@ describe('themePreferences', () => {
       setThemePreference('player', 'light')
       setThemePreference('admin', 'dark')
       expect(getLastUsedTheme()).toBe('dark')
+    })
+  })
+
+  describe('getNextTheme', () => {
+    it('cycles dark -> light -> dark', () => {
+      expect(getNextTheme('dark')).toBe('light')
+      expect(getNextTheme('light')).toBe('dark')
+    })
+
+    it('falls back to dark for an invalid theme', () => {
+      expect(getNextTheme('blue')).toBe('light')
+    })
+  })
+
+  describe('getThemeMeta', () => {
+    it('returns a label and icon for every valid theme', () => {
+      for (const t of ['dark', 'light']) {
+        const meta = getThemeMeta(t)
+        expect(meta.label).toBeTruthy()
+        expect(meta.icon).toBeTruthy()
+      }
     })
   })
 })

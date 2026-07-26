@@ -9,7 +9,7 @@ import AppIcon from '../components/AppIcon.vue'
 import ReleaseNotesBell from '../components/ReleaseNotesBell.vue'
 import { releaseNotesStore } from '../stores/releaseNotes.js'
 import { JOIN_SESSION, SESSION_JOINED, ERROR } from '../socket-events.js'
-import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
+import { applyTheme, getThemePreference, setThemePreference, getNextTheme, getThemeMeta } from '../utils/themePreferences.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -56,10 +56,10 @@ const error = ref('')
 const loading = ref(false)
 
 const theme = ref(getThemePreference('player', 'dark'))
-const isLightTheme = computed(() => theme.value === 'light')
+const currentThemeMeta = computed(() => getThemeMeta(theme.value))
 
 function toggleTheme() {
-  theme.value = theme.value === 'light' ? 'dark' : 'light'
+  theme.value = getNextTheme(theme.value)
   setThemePreference('player', theme.value)
   applyTheme(theme.value)
 }
@@ -289,8 +289,8 @@ async function joinSession() {
       <button class="back-btn" @click="router.push('/')">← Retour</button>
       <h1 class="page-title">Rejoindre <span class="title-accent">une Session</span></h1>
       <button class="theme-toggle-btn" @click="toggleTheme">
-        <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.9em" />
-        {{ isLightTheme ? 'Sombre' : 'Clair' }}
+        <AppIcon :icon="currentThemeMeta.icon" size="0.9em" />
+        {{ currentThemeMeta.label }}
       </button>
     </header>
 

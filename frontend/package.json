@@ -1,7 +1,7 @@
 {
   "name": "dmtoolkit-frontend",
   "private": true,
-  "version": "1.0.122",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

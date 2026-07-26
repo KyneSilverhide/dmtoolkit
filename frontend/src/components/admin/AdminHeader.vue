@@ -1,18 +1,22 @@
 <script setup>
+import { computed } from 'vue'
 import AppIcon from '../AppIcon.vue'
 import ReleaseNotesBell from '../ReleaseNotesBell.vue'
 import SessionManager from './SessionManager.vue'
+import { getThemeMeta } from '../../utils/themePreferences.js'
 
-defineProps({
+const props = defineProps({
   admin:                  { type: Object, default: null },
   appVersion:             { type: String, default: '' },
-  isLightTheme:           { type: Boolean, default: false },
+  theme:                  { type: String, default: 'dark' },
   isSessionPanelCollapsed:{ type: Boolean, default: false },
   activeSessionLabel:     { type: String, default: '' },
   hasActiveSession:       { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['logout', 'toggle-theme', 'toggle-session-panel', 'open-search'])
+
+const currentThemeMeta = computed(() => getThemeMeta(props.theme))
 </script>
 
 <template>
@@ -38,8 +42,8 @@ const emit = defineEmits(['logout', 'toggle-theme', 'toggle-session-panel', 'ope
         </button>
         <ReleaseNotesBell role="admin" />
         <button class="theme-toggle-btn" @click="emit('toggle-theme')" data-testid="theme-toggle">
-          <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.9em" />
-          {{ isLightTheme ? 'Sombre' : 'Clair' }}
+          <AppIcon :icon="currentThemeMeta.icon" size="0.9em" />
+          {{ currentThemeMeta.label }}
         </button>
         <button class="logout-btn" @click="emit('logout')" data-testid="logout-button">
           <AppIcon icon="lucide:log-out" size="0.9em" /> Déconnexion

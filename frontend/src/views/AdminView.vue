@@ -34,7 +34,7 @@ import AdminHeader from '../components/admin/AdminHeader.vue'
 import AdminNavSidebar from '../components/admin/AdminNavSidebar.vue'
 import AdminTvSidebar from '../components/admin/AdminTvSidebar.vue'
 import PlayerRollToasts from '../components/admin/PlayerRollToasts.vue'
-import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
+import { applyTheme, getThemePreference, setThemePreference, getNextTheme } from '../utils/themePreferences.js'
 import DemoBanner from '../components/DemoBanner.vue'
 import { releaseNotesStore } from '../stores/releaseNotes.js'
 import {
@@ -57,7 +57,6 @@ const generatorEnabled = ref(true) // optimistic default — updated by loadConf
 const isSessionPanelCollapsed = ref(false)
 const tvMode = ref('lobby')
 const theme = ref(getThemePreference('admin', 'dark'))
-const isLightTheme = computed(() => theme.value === 'light')
 const isNavCollapsed = ref(false)
 const isPaletteOpen = ref(false)
 
@@ -295,7 +294,7 @@ function onGlobalKeydown(e) {
 }
 
 function toggleTheme() {
-  theme.value = theme.value === 'light' ? 'dark' : 'light'
+  theme.value = getNextTheme(theme.value)
   setThemePreference('admin', theme.value)
   applyTheme(theme.value)
   if (sessionStore.activeSession?.id) {
@@ -516,7 +515,7 @@ onUnmounted(() => {
     <AdminHeader
       :admin="authStore.admin"
       :app-version="appVersion"
-      :is-light-theme="isLightTheme"
+      :theme="theme"
       :is-session-panel-collapsed="isSessionPanelCollapsed"
       :active-session-label="activeSessionLabel"
       :has-active-session="!!sessionStore.activeSession"

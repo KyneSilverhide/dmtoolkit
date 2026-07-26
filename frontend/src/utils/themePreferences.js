@@ -3,8 +3,17 @@ const VALID_THEMES = new Set(['dark', 'light'])
 // Secours si --color-bg n'est pas résolvable (ex. tests sans style.css chargé) —
 // la source de vérité reste --color-bg dans style.css ; garder synchronisé si modifié.
 const THEME_META_COLORS_FALLBACK = {
-  dark: '#120d04',
+  dark: '#181411',
   light: '#f5f1e8',
+}
+
+// Ordre de cycle du bouton de bascule (voir toggleTheme() dans AdminView/HomeView/
+// PlayerJoinView/PlayerInboxView, et AdminHeader.vue) — un clic avance d'une position.
+export const THEME_ORDER = ['dark', 'light']
+
+const THEME_META = {
+  dark: { label: 'Sombre', icon: 'lucide:moon' },
+  light: { label: 'Clair', icon: 'lucide:sun' },
 }
 
 function readAll() {
@@ -70,4 +79,13 @@ export function setThemePreference(scope, theme) {
 export function getLastUsedTheme(fallback = 'dark') {
   const all = readAll()
   return normalizeTheme(all['_last'], normalizeTheme(fallback))
+}
+
+export function getNextTheme(theme) {
+  const idx = THEME_ORDER.indexOf(normalizeTheme(theme))
+  return THEME_ORDER[(idx + 1) % THEME_ORDER.length]
+}
+
+export function getThemeMeta(theme) {
+  return THEME_META[normalizeTheme(theme)]
 }

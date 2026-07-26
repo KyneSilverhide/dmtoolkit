@@ -5,16 +5,16 @@ import { authStore } from '../stores/auth.js'
 import AppIcon from '../components/AppIcon.vue'
 import ReleaseNotesBell from '../components/ReleaseNotesBell.vue'
 import { releaseNotesStore } from '../stores/releaseNotes.js'
-import { applyTheme, getLastUsedTheme, setThemePreference } from '../utils/themePreferences.js'
+import { applyTheme, getLastUsedTheme, setThemePreference, getNextTheme, getThemeMeta } from '../utils/themePreferences.js'
 
 const router = useRouter()
 const route = useRoute()
 import { BACKEND_URL } from '@/config.js'
 const theme = ref(getLastUsedTheme('dark'))
-const isLightTheme = computed(() => theme.value === 'light')
+const currentThemeMeta = computed(() => getThemeMeta(theme.value))
 
 function toggleTheme() {
-  theme.value = theme.value === 'light' ? 'dark' : 'light'
+  theme.value = getNextTheme(theme.value)
   setThemePreference('admin', theme.value)
   setThemePreference('tv', theme.value)
   applyTheme(theme.value)
@@ -120,8 +120,8 @@ async function login() {
   <div class="home-wrapper">
     <header class="home-header">
       <button class="theme-toggle-btn" @click="toggleTheme">
-        <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.9em" />
-        {{ isLightTheme ? 'Sombre' : 'Clair' }}
+        <AppIcon :icon="currentThemeMeta.icon" size="0.9em" />
+        {{ currentThemeMeta.label }}
       </button>
       <h1 class="app-title">DM <span class="title-accent">Toolkit</span></h1>
       <p class="app-subtitle">Votre compagnon pour vos sessions de JDR !</p>

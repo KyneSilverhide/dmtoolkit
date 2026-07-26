@@ -24,7 +24,7 @@ import PlayerVoteTab from '../components/player/PlayerVoteTab.vue'
 import PlayerMessagesTab from '../components/player/PlayerMessagesTab.vue'
 import PlayerPuzzleOverlay from '../components/player/PlayerPuzzleOverlay.vue'
 import { getLastKnownPlayer, saveLastKnownPlayer, removeLastKnownPlayer } from '../utils/playerSessionMemory.js'
-import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
+import { applyTheme, getThemePreference, setThemePreference, getNextTheme, getThemeMeta } from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
 import HelpTip from '../components/HelpTip.vue'
 import DemoBanner from '../components/DemoBanner.vue'
@@ -75,7 +75,7 @@ let hasRequestedNotificationPermission = false
 const rejoinError = ref('')
 const rejoining = ref(false)
 const theme = ref(getThemePreference('player', 'dark'))
-const isLightTheme = computed(() => theme.value === 'light')
+const currentThemeMeta = computed(() => getThemeMeta(theme.value))
 const notificationPermission = ref(readNotificationPermission())
 const attentionToasts = ref([])
 let attentionToastId = 0
@@ -107,7 +107,7 @@ function handlePaletteSelect({ tab, query, slug }) {
 }
 
 function toggleTheme() {
-  theme.value = theme.value === 'light' ? 'dark' : 'light'
+  theme.value = getNextTheme(theme.value)
   setThemePreference('player', theme.value)
   applyTheme(theme.value)
 }
@@ -983,8 +983,8 @@ onUnmounted(() => {
                   <span>Notifications — {{ notificationButtonText }}</span>
                 </button>
                 <button class="menu-item" @click="toggleTheme(); showHeaderMenu = false" data-testid="player-theme-toggle">
-                  <AppIcon :icon="isLightTheme ? 'lucide:moon' : 'lucide:sun'" size="0.95em" />
-                  <span>{{ isLightTheme ? 'Thème sombre' : 'Thème clair' }}</span>
+                  <AppIcon :icon="currentThemeMeta.icon" size="0.95em" />
+                  <span>Thème {{ currentThemeMeta.label.toLowerCase() }}</span>
                 </button>
                 <div class="menu-divider" />
                 <button class="menu-item menu-item-danger" @click="showLeaveConfirm = true; showHeaderMenu = false" data-testid="leave-button">
