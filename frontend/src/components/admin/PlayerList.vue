@@ -1,10 +1,11 @@
 ﻿<script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
-import { DND_CONDITIONS_MAP } from '@/utils/conditions.js'
+import { useConditions } from '@/composables/useConditions.js'
 import { apiFetch } from '@/utils/apiFetch.js'
 import { getDefensiveSummary } from '@/utils/defensiveTraits.js'
 
@@ -54,7 +55,19 @@ function hpGlow(player) {
   return 'rgba(var(--color-danger-rgb), 0.22)'
 }
 
-const CONDITION_LABELS = DND_CONDITIONS_MAP
+const { conditions: dndConditions, load: loadConditions } = useConditions()
+onMounted(loadConditions)
+const CONDITION_LABELS = computed(() => Object.fromEntries(dndConditions.value.map(c => [c.id, c])))
+const router = useRouter()
+
+// Navigue vers la fiche complète de l'état (onglet Contenu > États) — le slug est la clé
+// commune entre ce catalogue de combat (conditions.js) et le catalogue de règles
+// (backend/src/data/dnd_conditions.json), voir la note dans conditions.js.
+function openConditionSheet(cid) {
+  const cond = CONDITION_LABELS.value[cid]
+  if (!cond?.slug) return
+  router.push({ path: '/admin/conditions', query: { q: cond.label, slug: cond.slug } })
+}
 
 function parseConditions(player) {
   try {
@@ -158,14 +171,21 @@ function avatarSrc(player) {
 
         <!-- Conditions -->
         <div v-if="parseConditions(player).length > 0" class="conditions-row">
-          <span v-for="cid in parseConditions(player)" :key="cid" class="condition-badge">
+          <button
+            v-for="cid in parseConditions(player)"
+            :key="cid"
+            type="button"
+            class="condition-badge"
+            :title="`Voir la fiche « ${CONDITION_LABELS[cid]?.label || cid} »`"
+            @click="openConditionSheet(cid)"
+          >
             <AppIcon
               :icon="CONDITION_LABELS[cid]?.icon || 'game-icons:lightning-trio'"
               :color="CONDITION_LABELS[cid]?.color || 'currentColor'"
               size="0.75rem"
             />
             {{ CONDITION_LABELS[cid]?.label || cid }}
-          </span>
+          </button>
         </div>
 
         <!-- Résistances / immunités / sens (voir defensiveTraits.js) -->
@@ -367,6 +387,12 @@ function avatarSrc(player) {
   border-radius: 20px;
   padding: 0.1rem 0.4rem;
   white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.condition-badge:hover, .condition-badge:focus-visible {
+  color: var(--color-gold-bright);
+  border-color: var(--color-gold-dark);
 }
 
 /* Résistances / immunités / sens */

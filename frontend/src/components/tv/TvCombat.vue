@@ -1,6 +1,7 @@
 <script setup>
+import { computed, onMounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
-import { DND_CONDITIONS_MAP } from '@/utils/conditions.js'
+import { useConditions } from '@/composables/useConditions.js'
 import { BACKEND_URL } from '@/config.js'
 
 const TEMP_HP_COLOR = 'var(--tv-info-text)'
@@ -11,7 +12,9 @@ const props = defineProps({
   hpAnimations: { type: Object, default: () => ({}) },
 })
 
-const CONDITION_LABELS = DND_CONDITIONS_MAP
+const { conditions: dndConditions, load: loadConditions } = useConditions()
+onMounted(loadConditions)
+const CONDITION_LABELS = computed(() => Object.fromEntries(dndConditions.value.map(c => [c.id, c])))
 
 function resolveMediaUrl(url) {
   if (!url) return ''

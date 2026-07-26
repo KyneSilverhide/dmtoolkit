@@ -1,7 +1,11 @@
 <script setup>
+import { onMounted } from 'vue'
 import AppIcon from '@/components/AppIcon.vue'
 import HelpTip from '@/components/HelpTip.vue'
-import { DND_CONDITIONS } from '@/utils/conditions.js'
+import { useConditions } from '@/composables/useConditions.js'
+
+const { conditions: dndConditions, load: loadConditions } = useConditions()
+onMounted(loadConditions)
 
 const INITIATIVE_MIN = -10
 const INITIATIVE_MAX = 99
@@ -180,7 +184,7 @@ const emit = defineEmits([
       <div class="panel">
         <p class="panel-label"><AppIcon icon="game-icons:lightning-trio" size="0.85rem" color="var(--color-warning)" /> États et Conditions</p>
         <div class="conditions-grid">
-          <div v-for="cond in DND_CONDITIONS" :key="cond.id" class="cond-cell">
+          <div v-for="cond in dndConditions" :key="cond.id" class="cond-cell">
             <button
               class="condition-btn"
               :class="{ active: activeConditions.includes(cond.id) }"
@@ -190,7 +194,7 @@ const emit = defineEmits([
               <span class="cond-icon"><AppIcon :icon="cond.icon" :color="activeConditions.includes(cond.id) ? (cond.color || 'var(--player-danger-text)') : 'currentColor'" size="1.1rem" /></span>
               <span class="cond-label">{{ cond.label }}</span>
             </button>
-            <HelpTip :id="`condition.${cond.id}`" />
+            <HelpTip :id="`condition.${cond.id}`" :text="cond.description" />
           </div>
         </div>
       </div>

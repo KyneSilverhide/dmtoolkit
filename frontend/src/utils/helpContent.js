@@ -104,37 +104,10 @@ export const helpContent = {
     'Le MJ vous propose un prix différent pour votre panier. Acceptez si le prix vous convient, déclinez sinon.',
 
   // ── Player — Conditions ───────────────────────────────────────────────────
-  'condition.charmed':
-    'Charmé : ne peut pas attaquer la source du charme ni la cibler avec des effets nuisibles. La source a l\'avantage à tous les jets de caractéristique sociaux contre vous.',
-  'condition.blinded':
-    'Aveuglé : échec automatique aux jets nécessitant la vue. Les attaques effectuées ont le désavantage ; celles reçues ont l\'avantage.',
-  'condition.deafened':
-    'Assourdi : échec automatique aux jets nécessitant l\'ouïe.',
-  'condition.exhaustion':
-    'Épuisé : 6 niveaux de pénalités cumulatives. Niv. 1 : désavantage aux jets de caractéristique. Niv. 5 : vitesse 0. Niv. 6 : mort.',
-  'condition.frightened':
-    'Effrayé : désavantage aux jets d\'attaque et de caractéristique tant que la source est visible. Ne peut pas se rapprocher volontairement de la source.',
-  'condition.grappled':
-    'Agrippé : vitesse réduite à 0. Fin si l\'agresseur est incapacité, ou si vous vous échappez (action Se dégager).',
-  'condition.incapacitated':
-    'Incapacité : ne peut plus effectuer d\'actions ni de réactions.',
-  'condition.invisible':
-    'Invisible : impossible à voir sans sorts ou sens spéciaux. Avantage aux jets d\'attaque, désavantage sur les attaques reçues.',
-  'condition.paralyzed':
-    'Paralysé : incapacité totale, ne peut bouger ni parler. Les attaques corps-à-corps sont des coups critiques automatiques.',
-  'condition.petrified':
-    'Pétrifié : transformé en substance inerte. Incapacité totale, résistance à tous les dégâts. N\'a plus conscience de son environnement.',
-  'condition.poisoned':
-    'Empoisonné : désavantage aux jets d\'attaque et à tous les jets de caractéristique.',
-  'condition.prone':
-    'À terre : doit dépenser la moitié de sa vitesse pour se relever. Désavantage aux jets d\'attaque. Les attaques corps-à-corps reçues ont l\'avantage, les attaques à distance l\'ont le désavantage.',
-  'condition.restrained':
-    'Entravé : vitesse 0. Désavantage aux jets d\'attaque et aux jets de sauvegarde DEX. Les attaques contre vous ont l\'avantage.',
-  'condition.stunned':
-    'Étourdi : incapacité, ne peut pas bouger, ne parle qu\'avec difficulté. Jets de sauvegarde FOR et DEX automatiquement ratés. Attaques reçues avec avantage.',
-  'condition.unconscious':
-    'Inconscient : incapacité totale, tombe à terre. Jets de sauvegarde FOR et DEX automatiquement ratés. Attaques corps-à-corps critiques automatiques.',
-
+  // Pas d'entrées `condition.*` ici : leur description vient désormais de
+  // backend/src/data/dnd_conditions.json (via composables/useConditions.js), passée en prop
+  // `text` au HelpTip par PlayerCombatTab.vue — une seule source pour ce texte, plutôt qu'une
+  // troisième paraphrase à maintenir en plus de conditions.js/glossary.js.
 
   // ── Player — Dés ──────────────────────────────────────────────────────────
   'player.dice-advantage':

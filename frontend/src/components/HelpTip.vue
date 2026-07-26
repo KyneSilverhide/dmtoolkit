@@ -5,6 +5,10 @@ import { helpContent } from '@/utils/helpContent.js'
 const props = defineProps({
   id: { type: String, required: true },
   position: { type: String, default: 'right' },
+  // Contenu dynamique (ex : description d'état chargée depuis le backend, voir
+  // composables/useConditions.js) — prioritaire sur la table statique helpContent quand fourni,
+  // pour éviter de dupliquer un texte qui a déjà une source canonique ailleurs.
+  text: { type: String, default: null },
 })
 
 const slots = useSlots()
@@ -17,7 +21,7 @@ const bubblePos = ref({ top: 0, left: 0, dir: 'right' })
 const BUBBLE_WIDTH = 260
 const BUBBLE_OFFSET = 10
 
-const content = computed(() => helpContent[props.id] ?? `[aide: ${props.id}]`)
+const content = computed(() => props.text ?? helpContent[props.id] ?? `[aide: ${props.id}]`)
 
 function calcPos() {
   if (!triggerRef.value) return

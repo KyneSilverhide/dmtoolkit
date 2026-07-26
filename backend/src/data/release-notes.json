@@ -1,6 +1,14 @@
 {
   "notes": [
     {
+      "version": "1.0.121",
+      "date": "2026-07-26",
+      "changes": [
+        { "type": "fix", "role": "all", "text": "États — la description d'un état (Aveuglé, Empoisonné…) affichée sur l'écran Joueurs, l'écran TV et l'infobulle du joueur provient désormais toujours de la même fiche de référence, au lieu de trois textes qui pouvaient légèrement diverger." },
+        { "type": "feature", "role": "admin", "text": "Joueurs — cliquer sur un badge d'état affiche désormais sa fiche complète dans l'onglet Contenu > États." }
+      ]
+    },
+    {
       "version": "1.0.120",
       "date": "2026-07-25",
       "changes": [
