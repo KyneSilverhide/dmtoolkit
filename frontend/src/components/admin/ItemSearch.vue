@@ -6,6 +6,7 @@ import { apiFetch } from '@/utils/apiFetch.js'
 import { BACKEND_URL } from '@/config.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
+import HtmlSpanTooltip from '../HtmlSpanTooltip.vue'
 import ContentPagination from './ContentPagination.vue'
 import ContentActionButtons from './ContentActionButtons.vue'
 import { itemTypeStyle } from '@/utils/itemTypes.js'
@@ -25,6 +26,7 @@ const props = defineProps({
 const tabQuery = useContentTabQuery(props.category)
 const router = useRouter()
 const route = useRoute()
+const descTooltip = ref(null)
 
 const CATEGORY_META = {
   equipment: { label: 'Objets', icon: 'lucide:package', placeholder: 'Nom, type, description…', noun: 'objet', nounPlural: 'objet(s)' },
@@ -71,6 +73,23 @@ async function loadAll() {
 }
 onMounted(loadAll)
 
+// Chargés pour donner un aperçu réel (nom + extrait de description) dans la bulle des
+// mentions de sorts internalisées (voir internalizeSpellLinks() dans textLinker.js), plutôt
+// que le message générique "Cliquer pour voir la fiche du sort".
+const spells = ref([])
+async function loadSpells() {
+  try {
+    const res = props.playerMode
+      ? await fetch(`${BACKEND_URL}/api/spells/public`)
+      : await apiFetch('/api/spells', { headers: { Authorization: `Bearer ${authStore.token}` } })
+    if (res.ok) spells.value = await res.json()
+  } catch (err) {
+    console.error(err)
+  }
+}
+onMounted(loadSpells)
+const spellsBySlug = computed(() => Object.fromEntries(spells.value.map(s => [s.slug, s])))
+
 const isBrowsing = computed(() => !exactMatchSlug.value && query.value.trim().length < MIN_AUTO_SEARCH_LENGTH)
 const allCategoryItems = computed(() => filterByCategory(allRaw.value))
 const totalPages = computed(() => Math.max(1, Math.ceil(allCategoryItems.value.length / PAGE_SIZE)))
@@ -82,7 +101,7 @@ const displayItems = computed(() => (isBrowsing.value ? pagedItems.value : resul
 watch(isBrowsing, (browsing) => { if (browsing) page.value = 1 })
 
 function toHtml(entry) {
-  return renderContentHtml(entry, { internalizeSpells: true })
+  return renderContentHtml(entry, { internalizeSpells: true, spellsBySlug: spellsBySlug.value })
 }
 
 // Voir SpellSearch.vue onDescClick — même délégation de clic pour les mentions d'état et de
@@ -262,7 +281,14 @@ onUnmounted(() => {
             </span>
           </div>
         </div>
-        <div v-if="item.description_html || item.description" class="item-desc" v-html="toHtml(item)" @click="onDescClick" />
+        <div
+          v-if="item.description_html || item.description"
+          class="item-desc"
+          v-html="toHtml(item)"
+          @click="onDescClick"
+          @mouseover="descTooltip?.onMouseOver($event)"
+          @mouseout="descTooltip?.onMouseOut($event)"
+        />
         <div v-if="item.source" class="item-source"><AppIcon icon="lucide:library" size="0.8em" /> {{ item.source }}</div>
         <div class="spell-footer">
           <a :href="item.detail_url" target="_blank" class="spell-link">Voir sur AideDD ↗</a>
@@ -272,6 +298,7 @@ onUnmounted(() => {
     </div>
 
     <ContentPagination v-if="isBrowsing && totalPages > 1" :page="page" :total-pages="totalPages" @update:page="page = $event" />
+    <HtmlSpanTooltip ref="descTooltip" />
   </div>
 </template>
 

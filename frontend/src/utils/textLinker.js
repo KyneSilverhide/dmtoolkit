@@ -189,8 +189,12 @@ function escapeAttr(s) {
 // Les états sont rendus avec un attribut data-condition-slug plutôt qu'un vrai lien : on ne
 // peut pas monter de composant Vue (RefLink) à l'intérieur d'un v-html. Les composants admin
 // qui affichent ce HTML (SpellSearch/ItemSearch) ajoutent un handler de clic délégué sur le
-// conteneur pour naviguer vers /admin/conditions ; ailleurs (outils joueur), le span reste
-// un simple indice visuel avec tooltip natif, sans navigation.
+// conteneur pour naviguer vers /admin/conditions (contentBasePath()-aware, voir onDescClick).
+// data-tt-* (nom/description/badge/couleur/navigable) alimente HtmlSpanTooltip.vue — même
+// bulle riche que RefLink.vue au lieu du `title` natif du navigateur (délégation de survol
+// sur le même conteneur que onDescClick, voir SpellSearch.vue/ItemSearch.vue) ; ailleurs (pas
+// de HtmlSpanTooltip monté, ex: TvContent/MessageCard), ces attributs sont simplement ignorés
+// et le span reste un indice visuel inerte sans tooltip.
 export function highlightGlossaryHtml(html) {
   if (!html) return html
   return html
@@ -199,9 +203,13 @@ export function highlightGlossaryHtml(html) {
       if (part.startsWith('<')) return part
       return linkify(part, GLOSSARY_AND_CONCEPT_CANDIDATES)
         .map(seg => {
-          if (seg.type === 'glossary') return `<span class="glossary-term" title="${escapeAttr(seg.payload.description)}">${seg.value}</span>`
+          if (seg.type === 'glossary') {
+            return `<span class="glossary-term" data-tt-name="${escapeAttr(seg.value)}" data-tt-desc="${escapeAttr(seg.payload.description)}" data-tt-badge="Règle">${seg.value}</span>`
+          }
           if (seg.type === 'concept') return `<span class="concept-term">${seg.value}</span>`
-          if (seg.type === 'condition') return `<span class="condition-term" data-condition-slug="${escapeAttr(seg.payload.slug)}" data-condition-name="${escapeAttr(seg.payload.name)}" title="${escapeAttr(seg.payload.description)}">${seg.value}</span>`
+          if (seg.type === 'condition') {
+            return `<span class="condition-term" data-condition-slug="${escapeAttr(seg.payload.slug)}" data-condition-name="${escapeAttr(seg.payload.name)}" data-tt-name="${escapeAttr(seg.payload.name)}" data-tt-desc="${escapeAttr(seg.payload.description)}" data-tt-badge="État" data-tt-color="var(--color-danger)" data-tt-nav="1">${seg.value}</span>`
+          }
           return seg.value
         })
         .join('')
@@ -253,12 +261,24 @@ export function normalizeDescriptionHtml(html) {
 // impossible de monter un composant Vue (RefLink) dans du v-html. Pas de détection par nom
 // (contrairement aux traits de classe) : ces liens existent déjà tels quels dans la donnée
 // source, aucune ambiguïté à lever.
+function snippetText(text, max) {
+  if (!text) return ''
+  const clean = text.replace(/\s+/g, ' ').trim()
+  return clean.length > max ? `${clean.slice(0, max).trimEnd()}…` : clean
+}
+
 const AIDEDD_SPELL_LINK_RE = /<a\s+href="https:\/\/www\.aidedd\.org\/dnd\/sorts\.php\?vf=([a-z0-9-]+)"[^>]*>([\s\S]*?)<\/a>/gi
-export function internalizeSpellLinks(html) {
+// `spellsBySlug` (optionnel, { slug: spell }) alimente la bulle riche HtmlSpanTooltip.vue avec
+// un extrait de la vraie description du sort au lieu d'un simple "Cliquer pour voir la fiche"
+// — voir ItemSearch.vue, seul appelant qui a besoin de charger la liste des sorts pour ça.
+export function internalizeSpellLinks(html, spellsBySlug = {}) {
   if (!html) return html
-  return html.replace(AIDEDD_SPELL_LINK_RE, (match, slug, label) =>
-    `<span class="spell-ref-term" data-spell-slug="${escapeAttr(slug)}" data-spell-name="${escapeAttr(label.replace(/<[^>]+>/g, ''))}" title="Cliquer pour voir la fiche du sort">${label}</span>`
-  )
+  return html.replace(AIDEDD_SPELL_LINK_RE, (match, slug, label) => {
+    const cleanLabel = label.replace(/<[^>]+>/g, '')
+    const spell = spellsBySlug[slug]
+    const desc = spell?.description ? snippetText(spell.description, 160) : 'Cliquer pour voir la fiche du sort'
+    return `<span class="spell-ref-term" data-spell-slug="${escapeAttr(slug)}" data-spell-name="${escapeAttr(cleanLabel)}" data-tt-name="${escapeAttr(spell?.name || cleanLabel)}" data-tt-desc="${escapeAttr(desc)}" data-tt-badge="Sort" data-tt-color="var(--color-gold-bright)" data-tt-nav="1">${label}</span>`
+  })
 }
 
 // Point d'entrée unique pour rendre description_html/description en HTML sûr et structuré —
@@ -267,7 +287,8 @@ export function internalizeSpellLinks(html) {
 // le MJ et l'écran joueur via la prop `player-mode`, voir PlayerInboxView.vue).
 // `internalizeSpells: true` réservé aux objets (jamais aux sorts, qui ne référencent aucun
 // autre sort dans leur description — vérifié sur les 479 entrées de aidedd_spells.json).
-export function renderContentHtml(entry, { internalizeSpells = false } = {}) {
+// `spellsBySlug` : voir internalizeSpellLinks() — extrait de description pour la bulle riche.
+export function renderContentHtml(entry, { internalizeSpells = false, spellsBySlug } = {}) {
   let html
   if (entry?.description_html) {
     html = highlightGlossaryHtml(normalizeDescriptionHtml(entry.description_html))
@@ -282,7 +303,7 @@ export function renderContentHtml(entry, { internalizeSpells = false } = {}) {
   } else {
     return ''
   }
-  return internalizeSpells ? internalizeSpellLinks(html) : html
+  return internalizeSpells ? internalizeSpellLinks(html, spellsBySlug) : html
 }
 
 // Aplatit les features de classe + traits de sous-classe (+ leurs options) d'UNE classe en

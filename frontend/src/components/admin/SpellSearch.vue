@@ -6,6 +6,7 @@ import { apiFetch } from '@/utils/apiFetch.js'
 import { BACKEND_URL } from '@/config.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
+import HtmlSpanTooltip from '../HtmlSpanTooltip.vue'
 import ContentPagination from './ContentPagination.vue'
 import ContentActionButtons from './ContentActionButtons.vue'
 import { parseEcole, levelLabel, schoolColor } from '@/utils/spellSchool.js'
@@ -23,6 +24,7 @@ const props = defineProps({
 const tabQuery = useContentTabQuery('spells')
 const router = useRouter()
 const route = useRoute()
+const descTooltip = ref(null)
 
 const query = ref('')
 const results = ref([])
@@ -297,7 +299,14 @@ onUnmounted(() => {
             <span class="attr-val">{{ shortComponent(spell.attributes.composantes) }}</span>
           </div>
         </div>
-        <div v-if="spell.description_html || spell.description" class="spell-desc" v-html="toHtml(spell)" @click="onDescClick" />
+        <div
+          v-if="spell.description_html || spell.description"
+          class="spell-desc"
+          v-html="toHtml(spell)"
+          @click="onDescClick"
+          @mouseover="descTooltip?.onMouseOver($event)"
+          @mouseout="descTooltip?.onMouseOut($event)"
+        />
         <div v-if="spell.classes?.length" class="classes-row">
           <AppIcon icon="game-icons:vitruvian-man" size="0.7em" class="classes-icon" />
           <span v-for="cls in spell.classes" :key="cls" class="class-badge">{{ cls }}</span>
@@ -310,6 +319,7 @@ onUnmounted(() => {
     </div>
 
     <ContentPagination v-if="isBrowsing && totalPages > 1" :page="page" :total-pages="totalPages" @update:page="page = $event" />
+    <HtmlSpanTooltip ref="descTooltip" />
   </div>
 </template>
 

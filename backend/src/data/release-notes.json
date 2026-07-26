@@ -1,6 +1,13 @@
 {
   "notes": [
     {
+      "version": "1.0.125",
+      "date": "2026-07-26",
+      "changes": [
+        { "type": "fix", "role": "all", "text": "Sorts & Objets — les mentions d'état ou de sort dans une description affichent désormais une véritable infobulle (nom, extrait, catégorie) au survol, au lieu d'une infobulle basique du navigateur." }
+      ]
+    },
+    {
       "version": "1.0.124",
       "date": "2026-07-26",
       "changes": [

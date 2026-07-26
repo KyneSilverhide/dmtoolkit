@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { schoolColor, parseEcole, levelLabel } from '@/utils/spellSchool.js'
 import { itemTypeStyle } from '@/utils/itemTypes.js'
 import { contentBasePath } from '@/utils/contentRoutes.js'
+import { computeBubblePosition } from '@/utils/bubblePosition.js'
 
 const props = defineProps({
   type: { type: String, required: true }, // 'spell' | 'ability' | 'glossary' | 'item' | 'condition'
@@ -23,30 +24,7 @@ const BUBBLE_OFFSET = 10
 
 function calcPos() {
   if (!triggerRef.value) return
-  const rect = triggerRef.value.getBoundingClientRect()
-  const vw = window.innerWidth
-  const vh = window.innerHeight
-
-  const prefersRight = rect.right + BUBBLE_OFFSET + BUBBLE_WIDTH <= vw
-  const prefersLeft = rect.left - BUBBLE_OFFSET - BUBBLE_WIDTH >= 0
-  const dir = prefersRight ? 'right' : prefersLeft ? 'left' : 'bottom'
-
-  let top, left
-  if (dir === 'right') {
-    left = rect.right + BUBBLE_OFFSET
-    top = rect.top + rect.height / 2
-  } else if (dir === 'left') {
-    left = rect.left - BUBBLE_OFFSET - BUBBLE_WIDTH
-    top = rect.top + rect.height / 2
-  } else {
-    left = Math.max(8, Math.min(vw - BUBBLE_WIDTH - 8, rect.left + rect.width / 2 - BUBBLE_WIDTH / 2))
-    top = rect.bottom + BUBBLE_OFFSET
-  }
-
-  if (dir !== 'bottom' && top + 100 > vh) top = vh - 110
-  if (top < 8) top = 8
-
-  bubblePos.value = { top, left, dir }
+  bubblePos.value = computeBubblePosition(triggerRef.value.getBoundingClientRect(), BUBBLE_WIDTH, BUBBLE_OFFSET)
 }
 
 function attachListeners() {
