@@ -17,6 +17,14 @@ const routes = [
     component: AdminView,
     meta: { requiresAuth: true }
   },
+  {
+    // :code n'est jamais optionnel ici (contrairement à /admin/:tab?) pour éviter toute
+    // ambiguïté de matching avec un nom d'onglet — voir adminTabRoute() dans utils/adminRoute.js.
+    path: '/admin/session/:code/:tab?',
+    name: 'admin-session',
+    component: AdminView,
+    meta: { requiresAuth: true }
+  },
   { path: '/join/:code?', component: PlayerJoinView },
   { path: '/view/:code/:tab?', name: 'player-view', component: PlayerInboxView },
   { path: '/player/:tab?', name: 'player-self', component: PlayerInboxView },

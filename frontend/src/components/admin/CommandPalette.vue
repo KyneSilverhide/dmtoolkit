@@ -12,6 +12,7 @@ import { rarityColor } from '@/utils/rarity.js'
 import { parseEcole, levelLabel, schoolColor } from '@/utils/spellSchool.js'
 import { SHOW_IMAGE, SHOW_VIDEO, SHOW_MAP, MAP_SET_FOG, SHOW_MERCHANT } from '@/socket-events.js'
 import { requestAudioLaunch } from '@/composables/useAudioLaunch.js'
+import { adminTabRoute } from '@/utils/adminRoute.js'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -273,7 +274,7 @@ function showOnTv(entry) {
 function launchAudio(entry) {
   if (!sessionStore.activeSession || entry.kind !== 'audio') return
   requestAudioLaunch(entry.trackId)
-  router.push({ name: 'admin', params: { tab: 'audio' } })
+  router.push(adminTabRoute('audio'))
   close()
 }
 
@@ -366,9 +367,9 @@ async function runLiveSearch(q) {
 function selectEntry(entry) {
   if (!entry) return
   if (entry.kind === 'section' || entry.tabKey) {
-    router.push({ name: 'admin', params: { tab: entry.tabKey } })
+    router.push(adminTabRoute(entry.tabKey))
   } else {
-    router.push({ path: `/admin/${entry.subTab}`, query: { q: entry.query, slug: entry.slug } })
+    router.push(adminTabRoute(entry.subTab, { q: entry.query, slug: entry.slug }))
   }
   close()
 }

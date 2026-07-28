@@ -35,6 +35,7 @@ import AdminNavSidebar from '../components/admin/AdminNavSidebar.vue'
 import AdminTvSidebar from '../components/admin/AdminTvSidebar.vue'
 import PlayerRollToasts from '../components/admin/PlayerRollToasts.vue'
 import { applyTheme, getThemePreference, setThemePreference, getNextTheme } from '../utils/themePreferences.js'
+import { adminTabRoute } from '../utils/adminRoute.js'
 import DemoBanner from '../components/DemoBanner.vue'
 import { releaseNotesStore } from '../stores/releaseNotes.js'
 import {
@@ -95,7 +96,7 @@ const activeTab = computed(() => (
 const currentTabComponent = computed(() => tabComponents[activeTab.value] || null)
 
 function goToTab(key) {
-  router.push({ name: 'admin', params: { tab: key } })
+  router.push(adminTabRoute(key))
 }
 
 const hasActiveVote = ref(false)
@@ -386,11 +387,24 @@ async function verifySession() {
   } catch { /* erreur réseau — pas un problème d'auth */ }
 }
 
+// Au montage (notamment un F5 sur /admin/session/:code), la session active vit en mémoire
+// (sessionStore) et n'est jamais restaurée automatiquement : on la retrouve via le code
+// présent dans l'URL parmi les sessions de l'admin, sinon on retombe sur /admin sans code.
+async function restoreSessionFromRoute() {
+  await loadSessions()
+  if (sessionStore.activeSession) return
+  const code = route.params.code
+  if (!code) return
+  const match = sessionStore.sessions.find(s => s.code === code && s.status === 'active')
+  if (match) sessionStore.setActiveSession(match)
+  else router.replace({ name: 'admin', params: { tab: activeTab.value } })
+}
+
 // ── Lifecycle ─────────────────────────────────────────────────────────────
 onMounted(() => {
   document.body.classList.add('page-admin')
   window.addEventListener('keydown', onGlobalKeydown)
-  loadSessions()
+  restoreSessionFromRoute()
   loadConfig()
   verifySession()
   releaseNotesStore.load()
@@ -472,6 +486,23 @@ watch(
     socket.emit('set-tv-theme', { sessionId, theme: theme.value })
   },
   { immediate: true }
+)
+
+// Garde l'URL synchronisée quand la session active change EN COURS DE VIE du composant
+// (sélection/création/fermeture dans SessionManager) — PAS `immediate: true` : au montage,
+// activeSession vaut encore null pendant que restoreSessionFromRoute() résout le code de
+// l'URL ; un déclenchement immédiat verrait ce null et effacerait le code avant restauration.
+watch(
+  () => sessionStore.activeSession?.code,
+  (code) => {
+    if (code) {
+      if (route.params.code !== code) {
+        router.replace({ name: 'admin-session', params: { code, tab: activeTab.value } })
+      }
+    } else if (route.name === 'admin-session') {
+      router.replace({ name: 'admin', params: { tab: isContentTab.value ? activeTab.value : undefined } })
+    }
+  }
 )
 
 onUnmounted(() => {

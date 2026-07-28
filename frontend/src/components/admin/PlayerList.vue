@@ -8,6 +8,7 @@ import HelpTip from '../HelpTip.vue'
 import { useConditions } from '@/composables/useConditions.js'
 import { apiFetch } from '@/utils/apiFetch.js'
 import { getDefensiveSummary } from '@/utils/defensiveTraits.js'
+import { adminTabRoute } from '@/utils/adminRoute.js'
 
 import { BACKEND_URL } from '@/config.js'
 
@@ -66,7 +67,7 @@ const router = useRouter()
 function openConditionSheet(cid) {
   const cond = CONDITION_LABELS.value[cid]
   if (!cond?.slug) return
-  router.push({ path: '/admin/conditions', query: { q: cond.label, slug: cond.slug } })
+  router.push(adminTabRoute('conditions', { q: cond.label, slug: cond.slug }))
 }
 
 function parseConditions(player) {

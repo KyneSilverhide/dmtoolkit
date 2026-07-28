@@ -7,5 +7,6 @@
 export function contentBasePath(route) {
   if (route.name === 'player-view') return `/view/${route.params.code}`
   if (route.name === 'player-self') return '/player'
+  if (route.name === 'admin-session') return `/admin/session/${route.params.code}`
   return '/admin'
 }

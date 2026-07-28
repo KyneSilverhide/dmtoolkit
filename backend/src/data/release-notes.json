@@ -1,6 +1,13 @@
 {
   "notes": [
     {
+      "version": "2.0.3",
+      "date": "2026-07-28",
+      "changes": [
+        { "type": "fix", "role": "admin", "text": "Session — le code de la session active est désormais conservé dans l'URL ; un rafraîchissement (F5) de l'écran MJ ne renvoie plus à l'écran de sélection de session." }
+      ]
+    },
+    {
       "version": "2.0.0",
       "date": "2026-07-26",
       "changes": [
