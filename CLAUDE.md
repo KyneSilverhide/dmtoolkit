@@ -74,6 +74,7 @@ cd frontend && npm run dev
 ### Backend
 - **CommonJS uniquement** — pas d'`import`/`export` ESM.
 - Les erreurs dans les handlers socket sont catchées avec `console.error(err)` — pattern à respecter.
+- Quand une erreur socket émise vers un joueur concerne un champ précis d'un formulaire (ex. `join-session`), inclure `field` dans le payload `error` (`{ message, field: 'sessionCode' }`) en plus de `message`, pour que le frontend affiche l'erreur au plus près du champ fautif plutôt qu'en bas de page. Omettre `field` pour une erreur générique.
 - `middleware/auth.js` renvoie **401** pour token absent/invalide/expiré, **403** uniquement pour les erreurs métier (ex. : session pas la vôtre). Le frontend distingue les deux.
 - CORS : autoriser `app://obsidian.md` et `capacitor://obsidian.md` en plus de `FRONTEND_URL`.
 

@@ -1,6 +1,13 @@
 {
   "notes": [
     {
+      "version": "2.0.4",
+      "date": "2026-07-28",
+      "changes": [
+        { "type": "improvement", "role": "player", "text": "Connexion — les erreurs (code de session invalide, nom déjà pris…) s'affichent désormais directement sous le champ concerné avec bordure rouge, au lieu d'un message générique en bas de page." }
+      ]
+    },
+    {
       "version": "2.0.3",
       "date": "2026-07-28",
       "changes": [

@@ -314,7 +314,10 @@ const OBSIDIAN_SHOW_IMAGE = 'obsidian-show-image'
 /** Sent to Obsidian when the requested image is not found in the session: { message } */
 const OBSIDIAN_IMAGE_ERROR = 'obsidian-image-error'
 
-/** Generic error event: { message } */
+/** Generic error event: { message, field? } — field est optionnel, présent quand l'erreur
+ * concerne un champ précis d'un formulaire (ex. 'sessionCode', 'playerName' pour join-session)
+ * afin que le client puisse afficher le message au plus près du champ fautif plutôt qu'en bas
+ * de page. Absent = erreur générique (connexion, erreur serveur inattendue). */
 const ERROR = 'error'
 
 /** Error in TV control operations: { message } */

@@ -1,5 +1,5 @@
 ﻿<script setup>
-import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, watch, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSocket } from '../socket.js'
 import { sessionStore } from '../stores/session.js'
@@ -52,8 +52,47 @@ const race = computed(() => isCustomRace.value ? customRace.value.trim() : selec
 
 const avatarFile = ref(null)
 const avatarPreview = ref(null)
-const error = ref('')
 const loading = ref(false)
+
+// Erreurs affichées au plus près du champ concerné (au lieu d'un message générique en bas
+// de formulaire) — sessionCode/playerName sont les deux seuls champs pouvant échouer côté
+// serveur (voir errorField dans le handler ERROR plus bas). generalError couvre le reste
+// (perte de connexion, erreur inattendue) et reste affiché près du bouton d'envoi.
+const fieldErrors = reactive({ sessionCode: '', playerName: '' })
+const generalError = ref('')
+const sessionCodeInputRef = ref(null)
+const playerNameInputRef = ref(null)
+
+watch(sessionCode, () => { fieldErrors.sessionCode = '' })
+watch(playerName, () => { fieldErrors.playerName = '' })
+
+function focusField(field) {
+  nextTick(() => {
+    if (field === 'sessionCode') sessionCodeInputRef.value?.focus()
+    else if (field === 'playerName') playerNameInputRef.value?.focus()
+  })
+}
+
+// Validation locale avant tout appel réseau : couvre les cas que le serveur ne peut pas
+// détecter lui-même (champ vide, format du code) pour donner un retour immédiat.
+function validateForm() {
+  fieldErrors.sessionCode = ''
+  fieldErrors.playerName = ''
+  let firstInvalid = ''
+  if (!sessionCode.value.trim()) {
+    fieldErrors.sessionCode = 'Veuillez indiquer le code de session.'
+    firstInvalid ||= 'sessionCode'
+  } else if (!/^\d{4}$/.test(sessionCode.value.trim())) {
+    fieldErrors.sessionCode = 'Le code de session doit contenir 4 chiffres.'
+    firstInvalid ||= 'sessionCode'
+  }
+  if (!playerName.value.trim()) {
+    fieldErrors.playerName = 'Veuillez indiquer le nom de votre personnage.'
+    firstInvalid ||= 'playerName'
+  }
+  if (firstInvalid) focusField(firstInvalid)
+  return !firstInvalid
+}
 
 const theme = ref(getThemePreference('player', 'dark'))
 const currentThemeMeta = computed(() => getThemeMeta(theme.value))
@@ -189,18 +228,16 @@ async function uploadAvatar() {
 }
 
 async function joinSession() {
-  if (!sessionCode.value || !playerName.value) {
-    error.value = 'Veuillez remplir tous les champs.'
-    return
-  }
+  generalError.value = ''
+  if (!validateForm()) return
   loading.value = true
-  error.value = ''
 
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionCode.value}`)
+    const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionCode.value.trim()}`)
     if (!res.ok) {
-      error.value = 'Session introuvable ou fermée.'
+      fieldErrors.sessionCode = 'Session introuvable ou fermée.'
       loading.value = false
+      focusField('sessionCode')
       return
     }
 
@@ -259,8 +296,14 @@ async function joinSession() {
     _pendingErrorHandler = (err) => {
       _pendingJoinedHandler = null
       _pendingErrorHandler = null
-      error.value = err.message || 'Erreur lors de la connexion.'
       loading.value = false
+      const message = err.message || 'Erreur lors de la connexion.'
+      if (err.field === 'sessionCode' || err.field === 'playerName') {
+        fieldErrors[err.field] = message
+        focusField(err.field)
+      } else {
+        generalError.value = message
+      }
     }
 
     socket.once(SESSION_JOINED, _pendingJoinedHandler)
@@ -277,7 +320,7 @@ async function joinSession() {
       avatarUrl,
     })
   } catch {
-    error.value = 'Erreur de connexion au serveur.'
+    generalError.value = 'Erreur de connexion au serveur.'
     loading.value = false
   }
 }
@@ -299,8 +342,24 @@ async function joinSession() {
 
         <div class="form-group">
           <label class="form-label">Code de session</label>
-          <input v-model="sessionCode" type="text" inputmode="numeric" pattern="[0-9]*" class="form-input"
-            placeholder="Code à 4 chiffres" data-testid="session-code-input" />
+          <input
+            ref="sessionCodeInputRef"
+            v-model="sessionCode"
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="4"
+            class="form-input"
+            :class="{ 'has-error': fieldErrors.sessionCode }"
+            :aria-invalid="!!fieldErrors.sessionCode"
+            placeholder="Code à 4 chiffres"
+            data-testid="session-code-input"
+          />
+          <Transition name="error-fade">
+            <p v-if="fieldErrors.sessionCode" class="field-error" role="alert" data-testid="session-code-error">
+              <AppIcon icon="lucide:alert-circle" size="0.85em" /> {{ fieldErrors.sessionCode }}
+            </p>
+          </Transition>
           <p class="form-hint">Fourni par votre MJ ou via le QR Code.</p>
           <p v-if="sessionCode === '0000'" class="form-hint demo-hint">
             🎲 Ce code correspond à la session de démonstration — le contenu est effacé chaque nuit à minuit.
@@ -309,7 +368,21 @@ async function joinSession() {
 
         <div class="form-group">
           <label class="form-label">Nom du personnage</label>
-          <input v-model="playerName" type="text" class="form-input" placeholder="Gandalf le Gris" data-testid="player-name-input" />
+          <input
+            ref="playerNameInputRef"
+            v-model="playerName"
+            type="text"
+            class="form-input"
+            :class="{ 'has-error': fieldErrors.playerName }"
+            :aria-invalid="!!fieldErrors.playerName"
+            placeholder="Gandalf le Gris"
+            data-testid="player-name-input"
+          />
+          <Transition name="error-fade">
+            <p v-if="fieldErrors.playerName" class="field-error" role="alert" data-testid="player-name-error">
+              <AppIcon icon="lucide:alert-circle" size="0.85em" /> {{ fieldErrors.playerName }}
+            </p>
+          </Transition>
         </div>
 
         <div class="form-group">
@@ -412,7 +485,11 @@ async function joinSession() {
 
         <ReleaseNotesBell variant="banner" role="player" />
 
-        <p v-if="error" class="form-error" data-testid="join-error">{{ error }}</p>
+        <Transition name="error-fade">
+          <p v-if="generalError" class="form-error" role="alert" data-testid="join-error">
+            <AppIcon icon="lucide:alert-circle" size="0.9em" /> {{ generalError }}
+          </p>
+        </Transition>
 
         <button type="submit" class="submit-btn" :disabled="loading" data-testid="join-button">
           <AppIcon v-if="!loading" icon="game-icons:crossed-swords" size="1em" />
@@ -612,11 +689,40 @@ async function joinSession() {
 .avatar-input-hidden { display: none; }
 
 .form-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   color: var(--color-danger);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.9rem;
-  text-align: center;
+  font-size: 0.85rem;
+  background: var(--color-danger-soft);
+  border: 1px solid var(--color-danger-border);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  margin: 0;
 }
+
+/* !important nécessaire : la règle globale .form-input (style.css) force border-color
+   avec !important pour la cohérence du thème — voir la même contrainte au-dessus. */
+.form-input.has-error {
+  border-color: var(--color-danger) !important;
+}
+
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-danger);
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+/* noinspection CssUnusedSymbol */
+.error-fade-enter-active, .error-fade-leave-active { transition: all 0.2s ease; }
+/* noinspection CssUnusedSymbol */
+.error-fade-enter-from, .error-fade-leave-to { opacity: 0; transform: translateY(-4px); }
 
 .submit-btn {
   padding: 1rem;

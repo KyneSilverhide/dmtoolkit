@@ -410,7 +410,7 @@ function setupSocket(io) {
       try {
         const cleanName = sanitizePlayerName(playerName)
         if (!cleanName) {
-          socket.emit('error', { message: 'Le nom du personnage ne peut pas être vide.' })
+          socket.emit('error', { message: 'Le nom du personnage ne peut pas être vide.', field: 'playerName' })
           return
         }
         const sessionResult = await pool.query(
@@ -419,7 +419,7 @@ function setupSocket(io) {
            JOIN admins a ON a.id = s.created_by
            WHERE s.code = $1 AND s.status = 'active'`, [code])
         const session = sessionResult.rows[0]
-        if (!session) { socket.emit('error', { message: 'Session introuvable ou fermée.' }); return }
+        if (!session) { socket.emit('error', { message: 'Session introuvable ou fermée.', field: 'sessionCode' }); return }
         const acVal = Math.max(1, parseInt(ac) || 10)
         const hpVal = Math.max(1, parseInt(hp) || 20)
         // maxHp is optional: if provided, use it as max_hp for new players.
@@ -444,7 +444,7 @@ function setupSocket(io) {
           if (existingPlayer.socket_id && existingPlayer.socket_id !== socket.id) {
             const existingSocket = io.sockets.sockets.get(existingPlayer.socket_id)
             if (existingSocket) {
-              socket.emit('error', { message: 'Ce nom est déjà pris dans cette session.' })
+              socket.emit('error', { message: 'Ce nom est déjà pris dans cette session.', field: 'playerName' })
               return
             }
           }
