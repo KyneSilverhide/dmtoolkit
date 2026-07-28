@@ -90,7 +90,7 @@ function handleFileUpload(event) {
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
-  color: var(--color-gold-bright);
+  color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.07em;

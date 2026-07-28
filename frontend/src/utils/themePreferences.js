@@ -1,19 +1,21 @@
 const STORAGE_KEY = 'cf_theme_preferences'
-const VALID_THEMES = new Set(['dark', 'light'])
+const VALID_THEMES = new Set(['dark', 'light', 'sceau'])
 // Secours si --color-bg n'est pas résolvable (ex. tests sans style.css chargé) —
 // la source de vérité reste --color-bg dans style.css ; garder synchronisé si modifié.
 const THEME_META_COLORS_FALLBACK = {
   dark: '#181411',
   light: '#f5f1e8',
+  sceau: '#ffffff',
 }
 
 // Ordre de cycle du bouton de bascule (voir toggleTheme() dans AdminView/HomeView/
 // PlayerJoinView/PlayerInboxView, et AdminHeader.vue) — un clic avance d'une position.
-export const THEME_ORDER = ['dark', 'light']
+export const THEME_ORDER = ['dark', 'light', 'sceau']
 
 const THEME_META = {
   dark: { label: 'Sombre', icon: 'lucide:moon' },
   light: { label: 'Clair', icon: 'lucide:sun' },
+  sceau: { label: 'Sceau', icon: 'lucide:store' },
 }
 
 function readAll() {

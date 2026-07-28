@@ -320,6 +320,7 @@ async function login() {
 .mj-btn {
   border-color: var(--color-gold-dark);
   background: var(--gradient-accent-action);
+  color: var(--color-text-on-accent);
 }
 .mj-btn:hover {
   border-color: var(--color-gold);
@@ -465,7 +466,7 @@ async function login() {
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
-  color: var(--color-gold-bright);
+  color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
   font-size: 0.9rem;
   letter-spacing: 0.12em;

@@ -2,7 +2,7 @@
 
 * 2. Code review l'entièreté du code uniquement sur l'axe du refactoring, pour se prémunir de doublons de logique ou de rendu 
 
-* 3. Imagine un tout nouveau thème inspiré  de ???
+* 3. Imagine un tout nouveau thème inspiré de la charte graphique de https://dndstore.wizards.com/eu/fr, en préservant le coté clair, et juste un peu de foncé pour l'accent, les boutons, etc. 
 
 * 4. La race du Forgelier/Warforged est manquante
 

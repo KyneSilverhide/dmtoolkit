@@ -42,7 +42,7 @@ const emit = defineEmits(['zoom-in', 'zoom-out', 'reset'])
 .action-btn {
   padding: 0.45rem 0.85rem;
   background: var(--gradient-accent-action); border: 1px solid var(--color-gold-dark);
-  border-radius: 8px; color: var(--color-gold-bright);
+  border-radius: 8px; color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif; font-size: 0.72rem; letter-spacing: 0.08em; cursor: pointer;
 }
 .action-btn:hover:not(:disabled) { background: var(--gradient-accent-action-hover); }

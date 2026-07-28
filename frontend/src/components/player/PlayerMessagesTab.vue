@@ -154,7 +154,7 @@ const emit = defineEmits([
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
-  color: var(--color-gold-bright);
+  color: var(--color-text-on-accent);
   display: flex;
   align-items: center;
   justify-content: center;

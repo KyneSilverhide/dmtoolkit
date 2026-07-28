@@ -279,7 +279,7 @@ onUnmounted(() => {
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.85rem;
-  color: var(--color-text);
+  color: var(--color-text-on-accent);
   transition: opacity 0.15s;
 }
 .upload-label:hover { opacity: 0.85; }
@@ -370,7 +370,7 @@ onUnmounted(() => {
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 4px;
-  color: var(--color-text);
+  color: var(--color-text-on-accent);
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;

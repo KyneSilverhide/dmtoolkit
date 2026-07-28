@@ -290,7 +290,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   background: var(--gradient-accent-action, linear-gradient(135deg, #c9a84c, #8b6914));
   border: none;
   border-radius: 8px;
-  color: var(--color-dark-text-on-gold);
+  color: var(--color-text-on-accent);
   font-family: var(--font-ui), sans-serif;
   font-size: 0.85rem;
   font-weight: 600;

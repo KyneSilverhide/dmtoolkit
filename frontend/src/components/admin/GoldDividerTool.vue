@@ -694,7 +694,7 @@ function reset() {
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
-  color: var(--color-gold-bright);
+  color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.08em;

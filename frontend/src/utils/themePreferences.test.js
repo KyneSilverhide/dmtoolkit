@@ -74,9 +74,10 @@ describe('themePreferences', () => {
   })
 
   describe('getNextTheme', () => {
-    it('cycles dark -> light -> dark', () => {
+    it('cycles dark -> light -> sceau -> dark', () => {
       expect(getNextTheme('dark')).toBe('light')
-      expect(getNextTheme('light')).toBe('dark')
+      expect(getNextTheme('light')).toBe('sceau')
+      expect(getNextTheme('sceau')).toBe('dark')
     })
 
     it('falls back to dark for an invalid theme', () => {
@@ -86,7 +87,7 @@ describe('themePreferences', () => {
 
   describe('getThemeMeta', () => {
     it('returns a label and icon for every valid theme', () => {
-      for (const t of ['dark', 'light']) {
+      for (const t of ['dark', 'light', 'sceau']) {
         const meta = getThemeMeta(t)
         expect(meta.label).toBeTruthy()
         expect(meta.icon).toBeTruthy()

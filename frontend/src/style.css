@@ -15,6 +15,7 @@
   --color-text: #e4dcc9;
   --color-text-dim: #958e83;
   --color-text-muted: #958e83;
+  --color-text-on-accent: var(--color-text);
   --color-border: #322e29;
   --color-shadow: rgba(0, 0, 0, 0.65);
   --color-surface: #231e1a;
@@ -210,6 +211,7 @@
   --color-text: #31281d;
   --color-text-dim: #665847;
   --color-text-muted: #665847;
+  --color-text-on-accent: var(--color-text);
   --color-border: #cdbfa9;
   --color-shadow: rgba(65, 49, 24, 0.16);
   --color-surface: #fffdf9;
@@ -259,6 +261,98 @@
   --gradient-danger-action-hover: linear-gradient(160deg, #f7e7e4, #eed7d3);
   --text-shadow-emphasis: 0 0 20px rgba(184, 137, 47, 0.14), 0 1px 0 rgba(255, 255, 255, 0.72);
   --text-shadow-accent: 0 0 14px rgba(184, 137, 47, 0.18), 0 1px 0 rgba(255, 255, 255, 0.72);
+  --combat-melee-accent: #a5464e;
+  --combat-melee-accent-light: #b24a43;
+  --combat-melee-glow: rgba(178, 74, 67, 0.2);
+  --combat-distance-accent: #2f8a68;
+  --combat-distance-accent-light: #2f8a68;
+  --combat-distance-glow: rgba(47, 138, 104, 0.18);
+  --combat-magique-accent: #5f58a7;
+  --combat-magique-accent-light: #5f58a7;
+  --combat-magique-glow: rgba(95, 88, 167, 0.2);
+  --school-abjuration: #567ca8;
+  --school-divination: #7565a2;
+  --school-enchantement: #af6376;
+  --school-evocation: #b17b3f;
+  --school-illusion: #5b8d99;
+  --school-invocation: #4f8e56;
+  --school-necromancie: #7d68a8;
+  --school-transmutation: #9e8f49;
+  --school-default: var(--color-gold-dark);
+  color-scheme: light;
+}
+
+:root[data-theme='sceau'] {
+  /* Palette "Sceau" — thème additionnel inspiré de la charte graphique de la boutique
+     officielle D&D (dndstore.wizards.com/eu/fr), couleurs extraites de sa feuille de style
+     publique : fond blanc, encre quasi-noire (#12181C, couleur du header du site), rouge
+     sceau (#C50009), ardoise (#374045), gris clair (#DFDFD7). Fond clair dominant ; le foncé
+     du header sert d'accent pour les boutons d'action (voir --gradient-accent-action, qui
+     bascule vers le rouge de marque au survol) et --color-text-on-accent assure un texte
+     lisible dessus. */
+  --color-bg: #ffffff;
+  --color-bg2: #f5f3ed;
+  --color-parchment: #12181c;
+  --color-parchment-dark: #374045;
+  --color-gold: #c50009;
+  --color-gold-bright: #7d160f;
+  --color-gold-dark: #96201a;
+  --color-red: #a1382d;
+  --color-red-bright: #c23b3b;
+  --color-crimson: #7d160f;
+  --color-text: #1c2226;
+  --color-text-dim: #55606a;
+  --color-text-muted: #55606a;
+  --color-text-on-accent: #ffffff;
+  --color-border: #dfdfd7;
+  --color-shadow: rgba(18, 24, 28, 0.16);
+  --color-surface: #ffffff;
+  --color-surface-alt: #f7f6f2;
+  --color-surface-soft: #efece4;
+  --color-success: #2f8a68;
+  --color-success-soft: rgba(47, 138, 104, 0.12);
+  --color-success-border: rgba(47, 138, 104, 0.28);
+  --color-success-rgb: 47, 138, 104;
+  --color-warning: #a96d12;
+  --color-warning-soft: rgba(169, 109, 18, 0.11);
+  --color-warning-border: rgba(169, 109, 18, 0.25);
+  --color-warning-rgb: 169, 109, 18;
+  --color-info: #4f7fc2;
+  --color-info-bright: #3d69a6;
+  --color-info-soft: rgba(79, 127, 194, 0.12);
+  --color-info-border: rgba(79, 127, 194, 0.25);
+  --color-danger: #b24a43;
+  --color-danger-soft: rgba(178, 74, 67, 0.11);
+  --color-danger-border: rgba(178, 74, 67, 0.25);
+  --color-danger-rgb: 178, 74, 67;
+  --color-pending: #6d5aa3;
+  --color-pending-rgb: 109, 90, 163;
+  --surface-raised: rgba(18, 24, 28, 0.05);
+  --surface-hover: rgba(18, 24, 28, 0.09);
+  --surface-track: rgba(18, 24, 28, 0.08);
+  --surface-ghost: rgba(18, 24, 28, 0.04);
+  --surface-highlight: rgba(255, 255, 255, 0.72);
+  --surface-gold-soft: rgba(197, 0, 9, 0.08);
+  --surface-gold-soft-strong: rgba(197, 0, 9, 0.14);
+  --surface-danger-soft: rgba(178, 74, 67, 0.12);
+  --surface-info-soft: rgba(79, 127, 194, 0.12);
+  --surface-overlay: rgba(18, 24, 28, 0.46);
+  --shadow-soft: 0 4px 16px rgba(18, 24, 28, 0.1);
+  --shadow-medium: 0 10px 28px rgba(18, 24, 28, 0.14);
+  --shadow-strong: 0 16px 40px rgba(18, 24, 28, 0.16);
+  --gradient-page: radial-gradient(ellipse at 50% 0%, #ffffff 0%, #f5f3ed 68%);
+  --gradient-panel: linear-gradient(160deg, var(--color-surface), var(--color-surface-alt));
+  --gradient-panel-soft: linear-gradient(160deg, var(--color-surface-alt), var(--color-surface-soft));
+  --gradient-accent-action: linear-gradient(160deg, #12181c, #05070a);
+  --gradient-accent-action-hover: linear-gradient(160deg, #c50009, #7d160f);
+  --gradient-info-action: linear-gradient(160deg, #d7e4f8, #c6d9f1);
+  --gradient-info-action-hover: linear-gradient(160deg, #dfe9f9, #cfe0f4);
+  --gradient-success-action: linear-gradient(160deg, #d9efe5, #c8e4d8);
+  --gradient-success-action-hover: linear-gradient(160deg, #e1f3eb, #d2eadf);
+  --gradient-danger-action: linear-gradient(160deg, #f4dfdc, #eccfcb);
+  --gradient-danger-action-hover: linear-gradient(160deg, #f7e7e4, #eed7d3);
+  --text-shadow-emphasis: 0 0 20px rgba(197, 0, 9, 0.14), 0 1px 0 rgba(255, 255, 255, 0.72);
+  --text-shadow-accent: 0 0 14px rgba(197, 0, 9, 0.18), 0 1px 0 rgba(255, 255, 255, 0.72);
   --combat-melee-accent: #a5464e;
   --combat-melee-accent-light: #b24a43;
   --combat-melee-glow: rgba(178, 74, 67, 0.2);
