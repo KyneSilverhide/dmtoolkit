@@ -374,6 +374,97 @@
   color-scheme: light;
 }
 
+:root[data-theme='arcane'] {
+  /* Palette "Arcane" — quatrième thème, création libre : fond charcoal neutre
+     et traditionnel (plutôt que la variante indigo/mauve de la première
+     version), accent violet améthyste réservé aux éléments d'action pour
+     évoquer la magie arcanique sans teinter l'arrière-plan. --color-pending
+     est décalé vers le cyan pour rester lisible à côté de l'accent violet
+     désormais utilisé pour les boutons d'action. */
+  --color-bg: #0f0f12;
+  --color-bg2: #16161a;
+  --color-parchment: #edeef1;
+  --color-parchment-dark: #9b9ba6;
+  --color-gold: #8b5cf6;
+  --color-gold-bright: #a78bfa;
+  --color-gold-dark: #6d28d9;
+  --color-red: #e0475c;
+  --color-red-bright: #f3697c;
+  --color-crimson: #9c2f45;
+  --color-text: #e1e1e6;
+  --color-text-dim: #8f8f9c;
+  --color-text-muted: #8f8f9c;
+  --color-text-on-accent: #ffffff;
+  --color-border: #2a2a32;
+  --color-shadow: rgba(0, 0, 0, 0.55);
+  --color-surface: #17171c;
+  --color-surface-alt: #1c1c22;
+  --color-surface-soft: #212127;
+  --color-success: #34d399;
+  --color-success-soft: rgba(52, 211, 153, 0.12);
+  --color-success-border: rgba(52, 211, 153, 0.35);
+  --color-success-rgb: 52, 211, 153;
+  --color-warning: #f0a63a;
+  --color-warning-soft: rgba(240, 166, 58, 0.12);
+  --color-warning-border: rgba(240, 166, 58, 0.32);
+  --color-warning-rgb: 240, 166, 58;
+  --color-info: #60a5fa;
+  --color-info-bright: #93c5fd;
+  --color-info-soft: rgba(96, 165, 250, 0.14);
+  --color-info-border: rgba(96, 165, 250, 0.4);
+  --color-danger: #f2555f;
+  --color-danger-soft: rgba(242, 85, 95, 0.14);
+  --color-danger-border: rgba(242, 85, 95, 0.4);
+  --color-danger-rgb: 242, 85, 95;
+  --color-pending: #22d3ee;
+  --color-pending-rgb: 34, 211, 238;
+  --surface-raised: rgba(255, 255, 255, 0.05);
+  --surface-hover: rgba(255, 255, 255, 0.08);
+  --surface-track: rgba(255, 255, 255, 0.08);
+  --surface-ghost: rgba(255, 255, 255, 0.03);
+  --surface-highlight: rgba(255, 255, 255, 0.07);
+  --surface-gold-soft: rgba(139, 92, 246, 0.12);
+  --surface-gold-soft-strong: rgba(139, 92, 246, 0.18);
+  --surface-danger-soft: rgba(156, 47, 69, 0.15);
+  --surface-info-soft: rgba(96, 165, 250, 0.14);
+  --surface-overlay: rgba(0, 0, 0, 0.78);
+  --shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-strong: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --gradient-page: radial-gradient(ellipse at 50% 0%, #1a1a20 0%, #0f0f12 60%);
+  --gradient-panel: linear-gradient(160deg, var(--color-surface), var(--color-surface-alt));
+  --gradient-panel-soft: linear-gradient(160deg, var(--color-surface-soft), var(--color-surface));
+  --gradient-accent-action: linear-gradient(160deg, #7c3aed, #4c1d95);
+  --gradient-accent-action-hover: linear-gradient(160deg, #8b5cf6, #6d28d9);
+  --gradient-info-action: linear-gradient(160deg, #1e3a5f, #12253d);
+  --gradient-info-action-hover: linear-gradient(160deg, #2a4a72, #1e3a5f);
+  --gradient-success-action: linear-gradient(160deg, #0f3d2e, #0a2921);
+  --gradient-success-action-hover: linear-gradient(160deg, #155a44, #0f3d2e);
+  --gradient-danger-action: linear-gradient(160deg, #4a1420, #2e0c15);
+  --gradient-danger-action-hover: linear-gradient(160deg, #6b1c2e, #4a1420);
+  --text-shadow-emphasis: 0 0 24px rgba(139, 92, 246, 0.32), 0 2px 4px rgba(0, 0, 0, 0.7);
+  --text-shadow-accent: 0 0 18px rgba(167, 139, 250, 0.42), 0 2px 4px rgba(0, 0, 0, 0.7);
+  --combat-melee-accent: #e0475c;
+  --combat-melee-accent-light: #f3697c;
+  --combat-melee-glow: rgba(224, 71, 92, 0.4);
+  --combat-distance-accent: #34d399;
+  --combat-distance-accent-light: #5eead4;
+  --combat-distance-glow: rgba(52, 211, 153, 0.4);
+  --combat-magique-accent: #8b5cf6;
+  --combat-magique-accent-light: #a78bfa;
+  --combat-magique-glow: rgba(139, 92, 246, 0.4);
+  --school-abjuration: #89c4ff;
+  --school-divination: #c4a0ff;
+  --school-enchantement: #ff9eb5;
+  --school-evocation: #ffb347;
+  --school-illusion: #b0e0e6;
+  --school-invocation: #98ff98;
+  --school-necromancie: #cc99ff;
+  --school-transmutation: #f0e68c;
+  --school-default: var(--color-gold);
+  color-scheme: dark;
+}
+
 * {
   margin: 0;
   padding: 0;

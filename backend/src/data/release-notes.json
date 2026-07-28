@@ -1,6 +1,13 @@
 {
   "notes": [
     {
+      "version": "2.0.6",
+      "date": "2026-07-28",
+      "changes": [
+        { "type": "feature", "role": "all", "text": "Nouveau thème « Arcane » : fond charcoal neutre et accent violet améthyste réservé aux boutons d'action, pour une ambiance sobre et professionnelle. Accessible via le bouton de bascule de thème, aux côtés de Sombre, Clair et Sceau." }
+      ]
+    },
+    {
       "version": "2.0.5",
       "date": "2026-07-28",
       "changes": [
