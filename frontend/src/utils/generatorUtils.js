@@ -7,8 +7,8 @@ export const GENERATOR_TYPES = [
       {
         key: 'race',
         label: 'Race',
-        choices: ['humain', 'elfe', 'nain', 'halfelin', 'gnome', 'demi-elfe', 'demi-orc', 'tieffelin'],
-        default: 'humain',
+        dynamicChoices: 'races',
+        default: 'Humain',
       },
       {
         key: 'genre',
@@ -51,8 +51,8 @@ export const GENERATOR_TYPES = [
       {
         key: 'race',
         label: 'Race',
-        choices: ['humain', 'elfe', 'nain', 'halfelin', 'gnome', 'demi-elfe', 'demi-orc', 'tieffelin'],
-        default: 'humain',
+        dynamicChoices: 'races',
+        default: 'Humain',
       },
     ],
   },

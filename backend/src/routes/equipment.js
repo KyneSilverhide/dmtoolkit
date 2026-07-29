@@ -1,29 +1,8 @@
 const express = require('express')
-const path = require('path')
-const fs = require('fs')
 const { authenticateToken } = require('../middleware/auth')
+const { getStandardItems } = require('../data/itemsLoader')
 
 const router = express.Router()
-
-// Load standard items once at startup
-let itemsCache = null
-
-function getStandardItems() {
-  if (itemsCache) return itemsCache
-  try {
-    const filePath = path.join(__dirname, '../data/aidedd_standard_items.json')
-    const raw = fs.readFileSync(filePath, 'utf8')
-    const data = JSON.parse(raw)
-    itemsCache = (data.items || [])
-  } catch (err) {
-    console.error('Failed to load standard items JSON:', err)
-    itemsCache = []
-  }
-  return itemsCache
-}
-
-// Pre-load on module import
-getStandardItems()
 
 function handleSearch(req, res) {
   const q = (req.query.q || '').trim().toLowerCase()

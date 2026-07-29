@@ -23,8 +23,11 @@ Application web D&D 5e pour Maître du Jeu (français) : gestion de session en t
 │       ├── middleware/auth.js
 │       ├── gridDetection.js
 │       ├── data/           # JSON statiques (sorts, objets, races, classes, origines…)
+│       │                   # + itemsLoader.js (cache partagé equipment/magic-items)
 │       └── routes/         # auth, sessions, uploads, spells, magic-items, equipment,
 │                           # races, classes, backgrounds, generate, release-notes, puzzles
+│                           # + contentRouterFactory.js (fabrique commune GET /, /public,
+│                           #   /public/full, /search pour le contenu de référence statique)
 ├── obsidian-plugin/ # TypeScript — sync Initiative Tracker ↔ DM Toolkit
 ├── e2e/             # Playwright — specs/, page-objects/, fixtures/, helpers/
 └── docker-compose.yml / docker-compose.prod.yml

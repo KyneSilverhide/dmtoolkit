@@ -37,6 +37,7 @@ const meta = computed(() => CATEGORY_META[props.category])
 const query = ref('')
 const results = ref([])
 const loading = ref(false)
+const loadError = ref(false)
 const searched = ref(false)
 // Slug exact ciblé depuis la palette de commande (Ctrl+K) : si renseigné, les résultats
 // sont réduits à ce seul objet plutôt qu'à tous ceux correspondant au texte recherché.
@@ -60,13 +61,19 @@ const PAGE_SIZE = 20
 
 async function loadAll() {
   loading.value = true
+  loadError.value = false
   try {
     const res = props.playerMode
       ? await fetch(`${BACKEND_URL}/api/magic-items/public`)
       : await apiFetch('/api/magic-items', { headers: { Authorization: `Bearer ${authStore.token}` } })
-    if (res.ok) allRaw.value = await res.json()
+    if (res.ok) {
+      allRaw.value = await res.json()
+    } else {
+      loadError.value = true
+    }
   } catch (err) {
     console.error(err)
+    loadError.value = true
   } finally {
     loading.value = false
   }
@@ -136,6 +143,7 @@ async function search() {
     return
   }
   loading.value = true
+  loadError.value = false
   searched.value = false
   try {
     const res = props.playerMode
@@ -145,9 +153,12 @@ async function search() {
       const data = await res.json()
       rawCache.set(q, data)
       results.value = filterByCategory(data)
+    } else {
+      loadError.value = true
     }
   } catch (err) {
     console.error(err)
+    loadError.value = true
   } finally {
     loading.value = false
     searched.value = true
@@ -232,6 +243,10 @@ onUnmounted(() => {
       <span class="loading-dot">●</span>
       <span class="loading-dot">●</span>
       <span class="loading-dot">●</span>
+    </div>
+
+    <div v-else-if="loadError" class="no-results">
+      <p class="no-results-text">Impossible de charger les {{ meta.nounPlural }}.</p>
     </div>
 
     <div v-else-if="!isBrowsing && searched && results.length === 0" class="no-results">

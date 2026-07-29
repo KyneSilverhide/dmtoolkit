@@ -33,3 +33,17 @@ export const CONDITION_STYLES_MAP = Object.fromEntries(
   CONDITION_STYLES.map(c => [c.id, c])
 )
 
+// Parse le champ `conditions` d'un joueur (colonne JSON stockée en base, exposée telle
+// quelle par le backend — string JSON ou déjà un tableau selon le point d'entrée) en un
+// tableau d'ids de conditions. Tolérant : renvoie [] sur JSON invalide plutôt que de
+// lever, puisque ce champ vient de données déjà persistées qu'on ne peut pas rejeter.
+export function parsePlayerConditions(raw) {
+  try {
+    if (!raw) return []
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+

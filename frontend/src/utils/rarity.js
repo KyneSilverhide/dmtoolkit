@@ -1,3 +1,5 @@
+import { stripAccents } from './slugify.js'
+
 // Couleur associée à une rareté d'objet D&D 5e (utilisé par les recherches
 // d'objets/objets magiques admin et joueur, et par la palette de commande).
 const RARITY_COLORS = {
@@ -7,10 +9,6 @@ const RARITY_COLORS = {
   'tres rare': 'var(--rarity-epic)',
   'legendaire': 'var(--rarity-legendary)',
   'artefact': 'var(--rarity-artifact)',
-}
-
-function stripAccents(str) {
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 
 export function rarityColor(rarity) {

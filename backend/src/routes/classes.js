@@ -1,29 +1,5 @@
-const express = require('express')
-const path = require('path')
-const fs = require('fs')
 const { authenticateToken } = require('../middleware/auth')
-
-const router = express.Router()
-
-// Load classes once at startup
-let classesCache = null
-
-function getClasses() {
-  if (classesCache) return classesCache
-  try {
-    const filePath = path.join(__dirname, '../data/dnd_classes.json')
-    const raw = fs.readFileSync(filePath, 'utf8')
-    const data = JSON.parse(raw)
-    classesCache = data.classes || []
-  } catch (err) {
-    console.error('Failed to load classes JSON:', err)
-    classesCache = []
-  }
-  return classesCache
-}
-
-// Pre-load on module import
-getClasses()
+const { createContentRouter } = require('./contentRouterFactory')
 
 function classMatches(dndClass, q) {
   if (dndClass.name.toLowerCase().includes(q)) return true
@@ -53,39 +29,25 @@ function findMatchedTrait(dndClass, q) {
   return null
 }
 
-router.get('/', authenticateToken, (req, res) => {
-  res.json(getClasses())
-})
-
-// Public (sans auth) — liste allégée nom + sous-classes, utilisée par l'écran de
-// connexion joueur (PlayerJoinView) pour peupler les listes déroulantes classe/sous-classe
-// sans exposer les descriptions complètes (contenu de référence) à un client non authentifié.
-router.get('/public', (req, res) => {
-  res.json(getClasses().map(dndClass => ({
+const router = createContentRouter({
+  jsonFile: 'dnd_classes.json',
+  dataKey: 'classes',
+  matches: classMatches,
+  // /public — liste allégée nom + sous-classes, utilisée par l'écran de connexion joueur
+  // (PlayerJoinView) pour peupler les listes déroulantes classe/sous-classe sans exposer
+  // les descriptions complètes (contenu de référence) à un client non authentifié.
+  publicProjection: classes => classes.map(dndClass => ({
     slug: dndClass.slug,
     name: dndClass.name,
     subclasses: (dndClass.subclasses || []).map(sc => ({ name: sc.name })),
-  })))
-})
-
-// Public (sans auth) — fiches complètes, utilisées par l'onglet Classes de l'écran joueur
-// (parité de contenu avec le MJ, masqué en mode démo côté client).
-router.get('/public/full', (req, res) => {
-  res.json(getClasses())
-})
-
-router.get('/search', authenticateToken, (req, res) => {
-  const q = (req.query.q || '').trim().toLowerCase()
-  const classes = getClasses()
-  if (!q) return res.json(classes)
-  res.json(
-    classes
-      .filter(dndClass => classMatches(dndClass, q))
-      .map(dndClass => {
-        const matchedTrait = findMatchedTrait(dndClass, q)
-        return matchedTrait ? { ...dndClass, matchedTrait } : dndClass
-      })
-  )
+  })),
+  // /public/full — fiches complètes, utilisées par l'onglet Classes de l'écran joueur
+  // (parité de contenu avec le MJ, masqué en mode démo côté client).
+  withPublicFull: true,
+  searchTransform: (dndClass, q) => {
+    const matchedTrait = findMatchedTrait(dndClass, q)
+    return matchedTrait ? { ...dndClass, matchedTrait } : dndClass
+  },
 })
 
 function slugify(str) {
@@ -102,8 +64,6 @@ function slugify(str) {
 // une liste d'options (ex: Métamagie, Invocations occultes, Manoeuvres — voir champ
 // `options` sur la feature/trait source) sont elles-mêmes aplaties en sous-entrées
 // individuellement recherchables (Métamagie : Sort distant, etc.).
-let abilitiesCache = null
-
 function buildAbility({ name, description, level, options }, dndClass, subclass) {
   const id = [dndClass.slug, subclass ? slugify(subclass.name) : null, slugify(name), level]
     .filter(Boolean).join('__')
@@ -146,10 +106,9 @@ function buildOptionAbilities({ name: parentName, level, options }, dndClass, su
   })
 }
 
-function getAbilities() {
-  if (abilitiesCache) return abilitiesCache
+function buildAbilities() {
   const abilities = []
-  for (const dndClass of getClasses()) {
+  for (const dndClass of router.getItems()) {
     for (const feature of dndClass.features || []) {
       abilities.push(buildAbility(feature, dndClass, null))
       abilities.push(...buildOptionAbilities(feature, dndClass, null))
@@ -161,16 +120,20 @@ function getAbilities() {
       }
     }
   }
-  abilitiesCache = abilities
-  return abilitiesCache
+  return abilities
 }
 
 function abilityMatches(ability, q) {
   if (ability.name.toLowerCase().includes(q)) return true
   if (ability.description.toLowerCase().includes(q)) return true
   if (ability.className.toLowerCase().includes(q)) return true
-  if ((ability.subclassName || '').toLowerCase().includes(q)) return true
-  return false
+  return (ability.subclassName || '').toLowerCase().includes(q)
+}
+
+let abilitiesCache = null
+function getAbilities() {
+  if (!abilitiesCache) abilitiesCache = buildAbilities()
+  return abilitiesCache
 }
 
 router.get('/abilities', authenticateToken, (req, res) => {

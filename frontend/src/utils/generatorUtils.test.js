@@ -146,7 +146,7 @@ describe('getGeneratorType', () => {
 
 describe('getDefaultOptions', () => {
   it('retourne les valeurs par défaut pour npc_name', () => {
-    expect(getDefaultOptions('npc_name')).toMatchObject({ race: 'humain', genre: 'neutre' })
+    expect(getDefaultOptions('npc_name')).toMatchObject({ race: 'Humain', genre: 'neutre' })
   })
 
   it('retourne les valeurs par défaut pour place_name', () => {

@@ -70,10 +70,15 @@ test('magic item search returns results', async ({ browser, adminToken }) => {
     await adminPage.selectSession(code)
     await adminPage.switchTab('magic')
 
-    const searchInput = adminPage.page.locator('input[placeholder*="objet" i], input[placeholder*="item" i]').first()
+    // Le placeholder réel d'ItemSearch.vue en catégorie "magic" est "Nom, type, rareté,
+    // description…" — ni "objet" ni "item" n'y figurent (le sélecteur précédent ne
+    // matchait donc rien, d'où le timeout de fill() en attente d'un élément inexistant).
+    // .filter({ visible: true }) protège aussi contre les autres onglets de recherche
+    // restés montés via <KeepAlive>, qui partagent la même classe .search-input.
+    const searchInput = adminPage.page.locator('input[placeholder*="rareté" i]').filter({ visible: true }).first()
     await searchInput.fill('épée')
     await adminPage.page.keyboard.press('Enter')
-    await expect(adminPage.page.locator('[class*="result"], [class*="item"]').first()).toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.locator('.item-result-card').first()).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
   }

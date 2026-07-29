@@ -1,5 +1,5 @@
 ﻿<script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { authStore } from '@/stores/auth.js'
 import { sessionStore } from '@/stores/session.js'
 import AppIcon from '../AppIcon.vue'
@@ -24,13 +24,40 @@ const quota = ref(null)
 const sessionRequestCount = ref(0)
 const copiedIndex = ref(null)
 const unavailable = ref(false)
+const raceChoices = ref([])
 
 const currentTypeDef = computed(() => getGeneratorType(selectedType.value))
+
+// Choix affichés pour un `<select>` d'option : liste dynamique (fetchée depuis
+// le contenu de référence) si `dynamicChoices` est renseigné, sinon la liste
+// statique de generatorUtils.js.
+function choicesFor(opt) {
+  if (opt.dynamicChoices === 'races') return raceChoices.value
+  return opt.choices || []
+}
 
 watch(selectedType, (newType) => {
   options.value = getDefaultOptions(newType)
   results.value = []
   error.value = ''
+})
+
+onMounted(async () => {
+  try {
+    // /public : liste allégée {slug, name} — largement suffisante pour un <select>,
+    // pas besoin des fiches complètes (traits, sous-races...) que renvoie /api/races.
+    const res = await apiFetch('/api/races/public')
+    if (res.ok) {
+      const races = await res.json()
+      raceChoices.value = races
+        // Variantes UA (Unearthed Arcana) : le suffixe "(UA)" n'a pas sa place dans un
+        // prompt de génération de nom de PNJ ("de race Drakéide chromatique (UA)").
+        .map((r) => r.name.replace(/\s*\(UA\)$/, ''))
+        .sort((a, b) => a.localeCompare(b, 'fr'))
+    }
+  } catch {
+    // liste de races indisponible — le select gardera juste la valeur par défaut
+  }
 })
 
 const quotaDisplay = computed(() => formatQuotaDisplay(quota.value))
@@ -128,7 +155,7 @@ async function copyResult(text, index) {
           <div v-for="opt in currentTypeDef.options" :key="opt.key" class="form-row">
             <label class="form-label">{{ opt.label }}</label>
             <select v-model="options[opt.key]" class="form-select">
-              <option v-for="choice in opt.choices" :key="choice" :value="choice">
+              <option v-for="choice in choicesFor(opt)" :key="choice" :value="choice">
                 {{ choice }}
               </option>
             </select>

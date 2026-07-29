@@ -10,6 +10,7 @@ import { COMMAND_INDEX } from '@/utils/commandIndex.js'
 import { itemTypeStyle } from '@/utils/itemTypes.js'
 import { rarityColor } from '@/utils/rarity.js'
 import { parseEcole, levelLabel, schoolColor } from '@/utils/spellSchool.js'
+import { stripAccents } from '@/utils/slugify.js'
 import { SHOW_IMAGE, SHOW_VIDEO, SHOW_MAP, MAP_SET_FOG, SHOW_MERCHANT } from '@/socket-events.js'
 import { requestAudioLaunch } from '@/composables/useAudioLaunch.js'
 import { adminTabRoute } from '@/utils/adminRoute.js'
@@ -36,9 +37,6 @@ const liveCache = new Map()
 let liveTimer = null
 let liveRequestId = 0
 
-function stripAccents(str) {
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-}
 function normalize(str) {
   return stripAccents(str || '').toLowerCase()
 }

@@ -62,8 +62,11 @@ test('player hidden roll notifies admin without showing result to player', async
     await playerPage.switchTab('des')
     await playerPg.locator('button.roll-btn.hidden').click()
 
-    // Player sees "hidden sent" feedback
-    await expect(playerPg.getByText(/caché/i)).toBeVisible({ timeout: 8_000 })
+    // Player sees "hidden sent" feedback — scoped to PlayerDiceTool's own feedback
+    // element (.hidden-sent), pas un texte global : les onglets Contenu restent montés
+    // en permanence (<KeepAlive>) et une fiche d'origine/aptitude peut très bien contenir
+    // le mot "caché" dans sa description (voir memory feedback_e2e_locators).
+    await expect(playerPg.locator('.hidden-sent')).toBeVisible({ timeout: 8_000 })
 
     // Admin sees the roll toast (toast lives 6s, emitted right after hidden roll)
     await expect(adminPage.page.getByTestId('player-roll-toast')).toBeVisible({ timeout: 8_000 })

@@ -29,6 +29,7 @@ const descTooltip = ref(null)
 const query = ref('')
 const results = ref([])
 const loading = ref(false)
+const loadError = ref(false)
 const searched = ref(false)
 const activeClassFilter = ref(null)
 // Slug exact ciblé depuis la palette de commande (Ctrl+K) : si renseigné, les résultats
@@ -46,13 +47,19 @@ const PAGE_SIZE = 20
 
 async function loadAllSpells() {
   loading.value = true
+  loadError.value = false
   try {
     const res = props.playerMode
       ? await fetch(`${BACKEND_URL}/api/spells/public`)
       : await apiFetch('/api/spells', { headers: { Authorization: `Bearer ${authStore.token}` } })
-    if (res.ok) allSpells.value = await res.json()
+    if (res.ok) {
+      allSpells.value = await res.json()
+    } else {
+      loadError.value = true
+    }
   } catch (err) {
     console.error(err)
+    loadError.value = true
   } finally {
     loading.value = false
   }
@@ -98,6 +105,7 @@ async function search() {
     return
   }
   loading.value = true
+  loadError.value = false
   searched.value = false
   try {
     const res = props.playerMode
@@ -107,9 +115,12 @@ async function search() {
       const data = await res.json()
       results.value = data
       spellCache.set(q, data)
+    } else {
+      loadError.value = true
     }
   } catch (err) {
     console.error(err)
+    loadError.value = true
   } finally {
     loading.value = false
     searched.value = true
@@ -120,6 +131,7 @@ async function searchByClass(className) {
   if (autoSearchTimer) clearTimeout(autoSearchTimer)
   activeClassFilter.value = className
   loading.value = true
+  loadError.value = false
   searched.value = false
   try {
     const res = props.playerMode
@@ -127,9 +139,12 @@ async function searchByClass(className) {
       : await apiFetch(`/api/spells/by-class/${encodeURIComponent(className)}`, { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) {
       results.value = await res.json()
+    } else {
+      loadError.value = true
     }
   } catch (err) {
     console.error(err)
+    loadError.value = true
   } finally {
     loading.value = false
     searched.value = true
@@ -235,6 +250,10 @@ onUnmounted(() => {
       <span class="loading-dot">●</span>
       <span class="loading-dot">●</span>
       <span class="loading-dot">●</span>
+    </div>
+
+    <div v-else-if="loadError" class="no-results">
+      <p class="no-results-text">Impossible de charger les sorts.</p>
     </div>
 
     <div v-else-if="!isBrowsing && searched && results.length === 0" class="no-results">

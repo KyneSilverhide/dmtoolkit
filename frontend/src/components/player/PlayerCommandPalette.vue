@@ -7,6 +7,7 @@ import { usePlayerContentCatalogs } from '@/composables/usePlayerContentCatalogs
 import { itemTypeStyle } from '@/utils/itemTypes.js'
 import { rarityColor } from '@/utils/rarity.js'
 import { parseEcole, levelLabel, schoolColor } from '@/utils/spellSchool.js'
+import { stripAccents } from '@/utils/slugify.js'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -25,11 +26,8 @@ let requestId = 0
 const { conditions, load: loadConditions } = useConditions()
 const { races, classes, backgrounds, abilities, services, load: loadCatalogs } = usePlayerContentCatalogs()
 
-function stripAccents(str) {
-  return (str || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
-}
 function normalize(str) {
-  return stripAccents(str).toLowerCase()
+  return stripAccents(str || '').toLowerCase()
 }
 
 function snippet(text, max = 90) {

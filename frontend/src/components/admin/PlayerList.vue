@@ -6,6 +6,8 @@ import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
 import { useConditions } from '@/composables/useConditions.js'
+import { parsePlayerConditions } from '@/utils/conditions.js'
+import { hpTier } from '@/utils/hp.js'
 import { apiFetch } from '@/utils/apiFetch.js'
 import { getDefensiveSummary } from '@/utils/defensiveTraits.js'
 import { adminTabRoute } from '@/utils/adminRoute.js'
@@ -43,17 +45,21 @@ function hpPercent(player) {
   if (!player.max_hp) return 100
   return Math.min(100, Math.max(0, (player.current_hp / player.max_hp) * 100))
 }
+const HP_TIER_COLORS = {
+  healthy: 'var(--admin-success-text, var(--color-success))',
+  warning: 'var(--admin-warning-text, var(--color-warning))',
+  critical: 'var(--admin-danger-text, var(--color-danger))',
+}
+const HP_TIER_GLOW = {
+  healthy: 'rgba(var(--color-success-rgb), 0.18)',
+  warning: 'rgba(var(--color-warning-rgb), 0.18)',
+  critical: 'rgba(var(--color-danger-rgb), 0.22)',
+}
 function hpColor(player) {
-  const pct = hpPercent(player)
-  if (pct > 50) return 'var(--admin-success-text, var(--color-success))'
-  if (pct > 20) return 'var(--admin-warning-text, var(--color-warning))'
-  return 'var(--admin-danger-text, var(--color-danger))'
+  return HP_TIER_COLORS[hpTier(hpPercent(player))]
 }
 function hpGlow(player) {
-  const pct = hpPercent(player)
-  if (pct > 50) return 'rgba(var(--color-success-rgb), 0.18)'
-  if (pct > 20) return 'rgba(var(--color-warning-rgb), 0.18)'
-  return 'rgba(var(--color-danger-rgb), 0.22)'
+  return HP_TIER_GLOW[hpTier(hpPercent(player))]
 }
 
 const { conditions: dndConditions, load: loadConditions } = useConditions()
@@ -71,12 +77,7 @@ function openConditionSheet(cid) {
 }
 
 function parseConditions(player) {
-  try {
-    const raw = player.conditions
-    if (!raw) return []
-    const arr = typeof raw === 'string' ? JSON.parse(raw) : raw
-    return Array.isArray(arr) ? arr : []
-  } catch { return [] }
+  return parsePlayerConditions(player.conditions)
 }
 
 function kickPlayer(player) {

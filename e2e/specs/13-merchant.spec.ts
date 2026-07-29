@@ -132,7 +132,10 @@ test('player can add item to cart', async ({ browser, adminToken }) => {
     await expect(playerPg.getByTestId('player-tab-boutique').filter({ visible: true })).not.toBeDisabled({ timeout: 8_000 })
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('boutique')
-    await expect(playerPg.getByText('Nourriture')).toBeVisible({ timeout: 8_000 })
+    // Scopé à .shop-item-name (PlayerMerchantTab) : un texte générique matcherait aussi
+    // un composant de sort/objet de la palette de contenu ("...un morceau de nourriture")
+    // resté monté via <KeepAlive> (voir memory feedback_e2e_locators).
+    await expect(playerPg.locator('.shop-item-name', { hasText: 'Nourriture' })).toBeVisible({ timeout: 8_000 })
 
     // Add to cart
     await playerPg.locator('button.qty-btn').last().click()

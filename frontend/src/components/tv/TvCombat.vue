@@ -2,6 +2,8 @@
 import { computed, onMounted } from 'vue'
 import AppIcon from '../AppIcon.vue'
 import { useConditions } from '@/composables/useConditions.js'
+import { parsePlayerConditions } from '@/utils/conditions.js'
+import { hpTier } from '@/utils/hp.js'
 import { BACKEND_URL } from '@/config.js'
 
 const TEMP_HP_COLOR = 'var(--tv-info-text)'
@@ -33,12 +35,14 @@ function hpPercent(player) {
   return Math.min(100, Math.max(0, (displayedBaseHp / player.max_hp) * 100))
 }
 
+const HP_TIER_COLORS = {
+  healthy: 'var(--tv-success-text)',
+  warning: 'var(--tv-warning-text)',
+  critical: 'var(--tv-danger-text)',
+}
 function hpBarColor(player) {
   if (temporaryHp(player) > 0) return TEMP_HP_COLOR
-  const pct = hpPercent(player)
-  if (pct > 50) return 'var(--tv-success-text)'
-  if (pct > 20) return 'var(--tv-warning-text)'
-  return 'var(--tv-danger-text)'
+  return HP_TIER_COLORS[hpTier(hpPercent(player))]
 }
 
 function temporaryHp(player) {
@@ -53,12 +57,7 @@ function displayedCurrentHp(player) {
 }
 
 function parseConditions(player) {
-  try {
-    const raw = player.conditions
-    if (!raw) return []
-    const arr = typeof raw === 'string' ? JSON.parse(raw) : raw
-    return Array.isArray(arr) ? arr : []
-  } catch { return [] }
+  return parsePlayerConditions(player.conditions)
 }
 </script>
 

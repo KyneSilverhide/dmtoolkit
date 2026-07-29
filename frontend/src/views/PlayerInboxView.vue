@@ -24,6 +24,8 @@ import PlayerVoteTab from '../components/player/PlayerVoteTab.vue'
 import PlayerMessagesTab from '../components/player/PlayerMessagesTab.vue'
 import PlayerPuzzleOverlay from '../components/player/PlayerPuzzleOverlay.vue'
 import { getLastKnownPlayer, saveLastKnownPlayer, removeLastKnownPlayer } from '../utils/playerSessionMemory.js'
+import { parsePlayerConditions } from '../utils/conditions.js'
+import { hpTier } from '../utils/hp.js'
 import { applyTheme, getThemePreference, setThemePreference, getNextTheme, getThemeMeta } from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
 import HelpTip from '../components/HelpTip.vue'
@@ -199,13 +201,7 @@ function applyJoinedState(data) {
   isConcentrating.value = !!data.player.is_concentrating
   isDemo.value = !!data.isDemo
   if (isDemo.value && CONTENT_TABS.includes(activeTab.value)) switchTab('combat')
-  try {
-    const rawConds = data.player.conditions
-    const parsed = typeof rawConds === 'string' ? JSON.parse(rawConds) : rawConds
-    activeConditions.value = Array.isArray(parsed) ? parsed : []
-  } catch {
-    activeConditions.value = []
-  }
+  activeConditions.value = parsePlayerConditions(data.player.conditions)
   rememberCurrentPlayer(data.session.code)
 }
 
@@ -376,12 +372,14 @@ const hpPercent = computed(() => {
 const temporaryHp = computed(() => Math.max(0, pendingHp.value - maxHp.value))
 const confirmedTemporaryHp = computed(() => Math.max(0, currentHp.value - maxHp.value))
 const confirmedDisplayedHp = computed(() => Math.min(currentHp.value, maxHp.value))
+const HP_TIER_COLORS = {
+  healthy: 'var(--player-success-text)',
+  warning: 'var(--player-warning-text)',
+  critical: 'var(--player-danger-text)',
+}
 const hpBarColor = computed(() => {
   if (temporaryHp.value > 0) return TEMP_HP_COLOR
-  const pct = hpPercent.value
-  if (pct > 50) return 'var(--player-success-text)'
-  if (pct > 20) return 'var(--player-warning-text)'
-  return 'var(--player-danger-text)'
+  return HP_TIER_COLORS[hpTier(hpPercent.value)]
 })
 
 // ── Concentration ────────────────────────────────────────────────────────

@@ -1,26 +1,15 @@
 const express = require('express')
-const path = require('path')
-const fs = require('fs')
 const { authenticateToken } = require('../middleware/auth')
+const { getStandardItems, getMagicItems } = require('../data/itemsLoader')
 
 const router = express.Router()
 
 let allItemsCache = null
 
-function loadJson(filename) {
-  try {
-    const raw = fs.readFileSync(path.join(__dirname, '../data', filename), 'utf8')
-    return JSON.parse(raw).items || []
-  } catch (err) {
-    console.error(`Failed to load ${filename}:`, err)
-    return []
-  }
-}
-
 function getAllItems() {
   if (allItemsCache) return allItemsCache
-  const magic = loadJson('aidedd_magic_items.json').map(i => ({ ...i, source_category: 'magic' }))
-  const standard = loadJson('aidedd_standard_items.json').map(i => ({ ...i, source_category: 'standard' }))
+  const magic = getMagicItems().map(i => ({ ...i, source_category: 'magic' }))
+  const standard = getStandardItems().map(i => ({ ...i, source_category: 'standard' }))
   allItemsCache = [...magic, ...standard]
   return allItemsCache
 }

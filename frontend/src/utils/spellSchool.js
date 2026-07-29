@@ -1,3 +1,5 @@
+import { stripAccents } from './slugify.js'
+
 // Parsing du champ "école" des sorts D&D 5e (aidedd_spells.json) et couleur
 // associée à chaque école, partagés entre la recherche de sorts admin/joueur
 // et la palette de commande.
@@ -10,10 +12,6 @@ const SCHOOL_COLORS = {
   invocation: 'var(--school-invocation)',
   necromancie: 'var(--school-necromancie)',
   transmutation: 'var(--school-transmutation)',
-}
-
-function stripAccents(str) {
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 
 export function parseEcole(ecole) {

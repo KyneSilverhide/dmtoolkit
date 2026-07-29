@@ -1,29 +1,4 @@
-const express = require('express')
-const path = require('path')
-const fs = require('fs')
-const { authenticateToken } = require('../middleware/auth')
-
-const router = express.Router()
-
-// Load services once at startup
-let servicesCache = null
-
-function getServices() {
-  if (servicesCache) return servicesCache
-  try {
-    const filePath = path.join(__dirname, '../data/dnd_services.json')
-    const raw = fs.readFileSync(filePath, 'utf8')
-    const data = JSON.parse(raw)
-    servicesCache = data.services || []
-  } catch (err) {
-    console.error('Failed to load services JSON:', err)
-    servicesCache = []
-  }
-  return servicesCache
-}
-
-// Pre-load on module import
-getServices()
+const { createContentRouter } = require('./contentRouterFactory')
 
 function serviceMatches(service, q) {
   if (service.name.toLowerCase().includes(q)) return true
@@ -31,20 +6,11 @@ function serviceMatches(service, q) {
   return (service.description || '').toLowerCase().includes(q)
 }
 
-router.get('/', authenticateToken, (req, res) => {
-  res.json(getServices())
-})
-
-// Public (sans auth) — utilisé par l'onglet Services de l'écran joueur.
-router.get('/public', (req, res) => {
-  res.json(getServices())
-})
-
-router.get('/search', authenticateToken, (req, res) => {
-  const q = (req.query.q || '').trim().toLowerCase()
-  const services = getServices()
-  if (!q) return res.json(services)
-  res.json(services.filter(service => serviceMatches(service, q)))
+const router = createContentRouter({
+  jsonFile: 'dnd_services.json',
+  dataKey: 'services',
+  matches: serviceMatches,
+  // /public (sans auth) — utilisé par l'onglet Services de l'écran joueur.
 })
 
 module.exports = router

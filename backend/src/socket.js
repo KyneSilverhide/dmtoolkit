@@ -298,6 +298,71 @@ function serializeTimer(session) {
 }
 
 /**
+ * Vérifie qu'une session appartient bien à cet admin, sans en récupérer le contenu.
+ * Couvre le cas — répété une douzaine de fois dans les handlers ci-dessous — où seule
+ * l'existence de l'appartenance importe (les handlers qui ont besoin de colonnes
+ * précises de la session continuent leur propre SELECT).
+ * @param {number} sessionId
+ * @param {number} adminId
+ * @returns {Promise<boolean>}
+ */
+async function assertSessionOwnership(sessionId, adminId) {
+  const result = await pool.query('SELECT id FROM sessions WHERE id = $1 AND created_by = $2', [sessionId, adminId])
+  return !!result.rows[0]
+}
+
+/**
+ * Marchand actif (si le mode TV est 'merchant') et puzzle actif (si le mode TV est
+ * 'puzzle') pour une session — calculé à l'identique par join-session/admin-join/tv-join.
+ * @param {object} session - A row from the sessions table
+ */
+async function getActiveMerchantAndPuzzle(session) {
+  return {
+    activeMerchant: (session.current_merchant_id && session.tv_mode === 'merchant')
+      ? await getMerchantData(session.current_merchant_id)
+      : null,
+    activePuzzle: session.tv_mode === 'puzzle' && session.current_puzzle_image_id ? {
+      puzzleImageId: session.current_puzzle_image_id,
+      puzzleSeed: parseInt(session.current_puzzle_seed, 10),
+      puzzleClicks: puzzleClicks.get(session.id) || [],
+    } : null,
+  }
+}
+
+/**
+ * Snapshot complet de l'état d'une session, partagé à l'identique par admin-join
+ * (event 'admin-state') et tv-join (event 'tv-snapshot') — seuls les champs propres à
+ * chaque audience (sessionId côté admin ; session/players/qrCodeDataUrl/currentImage*
+ * côté tv) restent construits par l'appelant. join-session n'utilise volontairement
+ * QUE getActiveMerchantAndPuzzle() : reconstruire le snapshot complet à chaque connexion
+ * joueur déclencherait des requêtes (factions, vote, grille de carte) inutiles pour lui.
+ * @param {object} session - A row from the sessions table
+ * @param {boolean} isDemo - Précalculé par l'appelant : la source diffère selon le
+ *   contexte (JWT admin pour admin-join, colonne jointe `admin_is_demo` pour tv-join).
+ */
+async function buildSessionSnapshot(session, isDemo) {
+  const { activeMerchant, activePuzzle } = await getActiveMerchantAndPuzzle(session)
+  return {
+    tvMode: session.tv_mode || 'lobby',
+    doomClock: serializeDoomClock(session),
+    tensionScale: serializeTensionScale(session),
+    timeScale: serializeTimeScale(session),
+    activeVote: await getActiveVote(session.id, session.current_vote_id),
+    activeMerchant,
+    mapState: serializeMapState(session, await getMapGridConfig(session.id, session.current_map_url)),
+    combatRound: session.combat_round || 0,
+    timer: serializeTimer(session),
+    lobbyBgUrl: session.lobby_bg_url || null,
+    currentVideoUrl: session.current_video_url || null,
+    activePuzzle,
+    isDemo: !!isDemo,
+    factions: await getFactionsBySession(session.id),
+    tvTheme: session.tv_theme || 'dark',
+    activeContent: serializeCurrentContent(session),
+  }
+}
+
+/**
  * Middleware authenticates admin sockets via JWT from socket.handshake.auth.token.
  *
  * Socket rooms:
@@ -319,6 +384,44 @@ function setupSocket(io) {
   })
 
   /**
+   * Diffuse un même événement + payload vers plusieurs rooms d'une session
+   * ('tv'/'admin'/'session' → `${room}:${sessionId}`). Couvre le cas dominant (répété
+   * une vingtaine de fois) où admin et TV reçoivent le même event avec le même payload ;
+   * les diffusions à audience/payload différents par room restent écrites en clair.
+   * @param {number} sessionId
+   * @param {string} event
+   * @param {*} [payload]
+   * @param {string[]} [rooms]
+   */
+  function broadcastToSession(sessionId, event, payload, rooms = ['tv', 'admin']) {
+    for (const room of rooms) {
+      if (payload === undefined) io.to(`${room}:${sessionId}`).emit(event)
+      else io.to(`${room}:${sessionId}`).emit(event, payload)
+    }
+  }
+
+  /**
+   * Enregistre un événement dans le journal de session (table session_events) et le
+   * diffuse à l'admin. playerName/value sont omis du payload émis quand non fournis,
+   * pour rester fidèle aux payloads historiques par site d'appel (certains événements
+   * n'ont ni joueur ni valeur associée).
+   * @param {number} sessionId
+   * @param {string} eventType
+   * @param {string} description
+   * @param {{playerName?: string, value?: number}} [extra]
+   */
+  async function logSessionEvent(sessionId, eventType, description, { playerName, value } = {}) {
+    await pool.query(
+      'INSERT INTO session_events (session_id, event_type, description, player_name, value) VALUES ($1, $2, $3, $4, $5)',
+      [sessionId, eventType, description, playerName ?? null, value ?? null]
+    )
+    const payload = { eventType, description, createdAt: new Date() }
+    if (playerName !== undefined) payload.playerName = playerName
+    if (value !== undefined) payload.value = value
+    io.to(`admin:${sessionId}`).emit('session-event', payload)
+  }
+
+  /**
    * Re-fetches the current vote for a session and broadcasts updated results
    * to admin and TV. Automatically closes the vote if all players have voted.
    * @param {number} sessionId
@@ -329,14 +432,11 @@ function setupSocket(io) {
     if (!voteId) return
     const voteUpdate = await getVoteState(sessionId, voteId, true)
     if (!voteUpdate) return
-    io.to(`tv:${sessionId}`).emit('vote-updated', voteUpdate)
-    io.to(`admin:${sessionId}`).emit('vote-updated', voteUpdate)
+    broadcastToSession(sessionId, 'vote-updated', voteUpdate)
     if (voteUpdate.totalVotes >= voteUpdate.totalPlayers) {
       const closed = await pool.query('UPDATE votes SET status = $1 WHERE id = $2 AND status = $3 RETURNING id', ['closed', voteId, 'active'])
       if (closed.rows[0]) {
-        io.to(`tv:${sessionId}`).emit('vote-closed', voteUpdate)
-        io.to(`session:${sessionId}`).emit('vote-closed', voteUpdate)
-        io.to(`admin:${sessionId}`).emit('vote-closed', voteUpdate)
+        broadcastToSession(sessionId, 'vote-closed', voteUpdate, ['tv', 'session', 'admin'])
       }
     }
   }
@@ -385,17 +485,11 @@ function setupSocket(io) {
       }
       socket.leave(`session:${socket.sessionId}`)
       const event = { playerId: socket.playerId }
-      io.to(`admin:${socket.sessionId}`).emit('player-left', event)
-      io.to(`tv:${socket.sessionId}`).emit('player-left', event)
+      broadcastToSession(socket.sessionId, 'player-left', event)
       await refreshVoteForSession(socket.sessionId)
 
       // Log session event
-      await pool.query(
-        'INSERT INTO session_events (session_id, event_type, description, player_name) VALUES ($1, $2, $3, $4)',
-        [socket.sessionId, 'leave', `${playerName} a quitté la session`, playerName]
-      )
-      const leaveEvent = { eventType: 'leave', description: `${playerName} a quitté la session`, playerName, createdAt: new Date() }
-      io.to(`admin:${socket.sessionId}`).emit('session-event', leaveEvent)
+      await logSessionEvent(socket.sessionId, 'leave', `${playerName} a quitté la session`, { playerName })
 
       socket.playerId = null
       socket.sessionId = null
@@ -476,27 +570,14 @@ function setupSocket(io) {
         socket.emit('session-joined', {
           session: { id: session.id, name: session.name, code: session.code },
           player: { id: player.id, player_name: player.player_name, ac: player.ac, max_hp: player.max_hp, current_hp: player.current_hp, dnd_class: player.dnd_class, race: player.race, subclass: player.subclass, avatar_url: player.avatar_url, initiative: player.initiative, conditions: player.conditions, is_concentrating: player.is_concentrating },
-          activeMerchant: (session.current_merchant_id && session.tv_mode === 'merchant')
-            ? await getMerchantData(session.current_merchant_id)
-            : null,
-          activePuzzle: session.tv_mode === 'puzzle' && session.current_puzzle_image_id ? {
-            puzzleImageId: session.current_puzzle_image_id,
-            puzzleSeed: parseInt(session.current_puzzle_seed, 10),
-            puzzleClicks: puzzleClicks.get(session.id) || [],
-          } : null,
+          ...(await getActiveMerchantAndPuzzle(session)),
           isDemo: !!session.admin_is_demo,
         })
-        io.to(`admin:${session.id}`).emit('player-joined', player)
-        io.to(`tv:${session.id}`).emit('player-joined', player)
+        broadcastToSession(session.id, 'player-joined', player)
 
         // Log session event
         if (!existingPlayer) {
-          await pool.query(
-            'INSERT INTO session_events (session_id, event_type, description, player_name) VALUES ($1, $2, $3, $4)',
-            [session.id, 'join', `${cleanName} a rejoint la session`, cleanName]
-          )
-          const joinEvent = { eventType: 'join', description: `${cleanName} a rejoint la session`, playerName: cleanName, createdAt: new Date() }
-          io.to(`admin:${session.id}`).emit('session-event', joinEvent)
+          await logSessionEvent(session.id, 'join', `${cleanName} a rejoint la session`, { playerName: cleanName })
         }
       } catch (err) { console.error(err); socket.emit('error', { message: 'Impossible de rejoindre la session.' }) }
     })
@@ -514,8 +595,7 @@ function setupSocket(io) {
         const wasConcentrating = prev.rows[0]?.is_concentrating ?? false
         await pool.query('UPDATE players SET current_hp = $1 WHERE id = $2', [hp, socket.playerId])
         const event = { playerId: socket.playerId, newHp: hp }
-        io.to(`admin:${socket.sessionId}`).emit('hp-updated', event)
-        io.to(`tv:${socket.sessionId}`).emit('hp-updated', event)
+        broadcastToSession(socket.sessionId, 'hp-updated', event)
         socket.emit('hp-update-confirmed', { newHp: hp })
 
         // Log session event
@@ -528,8 +608,7 @@ function setupSocket(io) {
             if (wasConcentrating) {
               await pool.query('UPDATE players SET is_concentrating = FALSE WHERE id = $1', [socket.playerId])
               const concEvent = { playerId: socket.playerId, isConcentrating: false }
-              io.to(`admin:${socket.sessionId}`).emit('concentration-updated', concEvent)
-              io.to(`tv:${socket.sessionId}`).emit('concentration-updated', concEvent)
+              broadcastToSession(socket.sessionId, 'concentration-updated', concEvent)
             }
           } else if (delta < 0) {
             eventType = 'damage'
@@ -542,12 +621,7 @@ function setupSocket(io) {
             eventType = 'heal'
             description = `${playerName} récupère ${delta} PV (${oldHp} → ${hp} PV)`
           }
-          await pool.query(
-            'INSERT INTO session_events (session_id, event_type, description, player_name, value) VALUES ($1, $2, $3, $4, $5)',
-            [socket.sessionId, eventType, description, playerName, delta]
-          )
-          const sessionEvent = { eventType, description, playerName, value: delta, createdAt: new Date() }
-          io.to(`admin:${socket.sessionId}`).emit('session-event', sessionEvent)
+          await logSessionEvent(socket.sessionId, eventType, description, { playerName, value: delta })
         }
       } catch (err) { console.error(err) }
     })
@@ -565,8 +639,7 @@ function setupSocket(io) {
         if (!player) return
         socket.emit('max-hp-update-confirmed', { newMaxHp: player.max_hp })
         const event = { playerId: socket.playerId, newHp: player.current_hp, newMaxHp: player.max_hp }
-        io.to(`admin:${socket.sessionId}`).emit('hp-updated', event)
-        io.to(`tv:${socket.sessionId}`).emit('hp-updated', event)
+        broadcastToSession(socket.sessionId, 'hp-updated', event)
       } catch (err) { console.error(err) }
     })
 
@@ -580,8 +653,7 @@ function setupSocket(io) {
         const conditionsJson = JSON.stringify(validConditions)
         await pool.query('UPDATE players SET conditions = $1 WHERE id = $2', [conditionsJson, socket.playerId])
         const event = { playerId: socket.playerId, conditions: validConditions }
-        io.to(`admin:${socket.sessionId}`).emit('conditions-updated', event)
-        io.to(`tv:${socket.sessionId}`).emit('conditions-updated', event)
+        broadcastToSession(socket.sessionId, 'conditions-updated', event)
       } catch (err) { console.error(err) }
     })
 
@@ -591,8 +663,7 @@ function setupSocket(io) {
       try {
         await pool.query('UPDATE players SET is_concentrating = $1 WHERE id = $2', [isConcentrating, socket.playerId])
         const event = { playerId: socket.playerId, isConcentrating }
-        io.to(`admin:${socket.sessionId}`).emit('concentration-updated', event)
-        io.to(`tv:${socket.sessionId}`).emit('concentration-updated', event)
+        broadcastToSession(socket.sessionId, 'concentration-updated', event)
         socket.emit('concentration-confirmed', { isConcentrating })
       } catch (err) { console.error(err) }
     })
@@ -605,8 +676,7 @@ function setupSocket(io) {
         const value = Number.isFinite(parsed) ? Math.max(INITIATIVE_MIN, Math.min(INITIATIVE_MAX, parsed)) : null
         await pool.query('UPDATE players SET initiative = $1 WHERE id = $2', [value, socket.playerId])
         const event = { playerId: socket.playerId, initiative: value }
-        io.to(`admin:${socket.sessionId}`).emit('initiative-updated', event)
-        io.to(`tv:${socket.sessionId}`).emit('initiative-updated', event)
+        broadcastToSession(socket.sessionId, 'initiative-updated', event)
         socket.emit('initiative-confirmed', { initiative: value })
       } catch (err) { console.error(err) }
     })
@@ -627,28 +697,7 @@ function setupSocket(io) {
         socket.adminSessionId = sessionId
         socket.emit('admin-state', {
           sessionId,
-          tvMode: session.tv_mode || 'lobby',
-          doomClock: serializeDoomClock(session),
-          tensionScale: serializeTensionScale(session),
-          timeScale: serializeTimeScale(session),
-          activeVote: await getActiveVote(session.id, session.current_vote_id),
-          activeMerchant: (session.current_merchant_id && session.tv_mode === 'merchant')
-            ? await getMerchantData(session.current_merchant_id)
-            : null,
-          mapState: serializeMapState(session, await getMapGridConfig(session.id, session.current_map_url)),
-          combatRound: session.combat_round || 0,
-          timer: serializeTimer(session),
-          lobbyBgUrl: session.lobby_bg_url || null,
-          currentVideoUrl: session.current_video_url || null,
-          activePuzzle: session.tv_mode === 'puzzle' && session.current_puzzle_image_id ? {
-            puzzleImageId: session.current_puzzle_image_id,
-            puzzleSeed: parseInt(session.current_puzzle_seed, 10),
-            puzzleClicks: puzzleClicks.get(sessionId) || [],
-          } : null,
-          isDemo: !!socket.admin.is_demo,
-          factions: await getFactionsBySession(session.id),
-          tvTheme: session.tv_theme || 'dark',
-          activeContent: serializeCurrentContent(session),
+          ...(await buildSessionSnapshot(session, socket.admin.is_demo)),
         })
       } catch (err) { console.error(err) }
     })
@@ -673,38 +722,14 @@ function setupSocket(io) {
         const joinUrl = `${frontendUrl}/join/${session.code}`
         const qrCodeDataUrl = await QRCode.toDataURL(joinUrl)
 
-        const activeVote = await getActiveVote(session.id, session.current_vote_id)
-        const doomClock = serializeDoomClock(session)
-
         socket.emit('tv-snapshot', {
           session: { id: session.id, name: session.name },
           players: playersResult.rows,
-          tvMode: session.tv_mode || 'lobby',
           sessionCode: session.code,
           qrCodeDataUrl,
           currentImageUrl: session.current_image_url,
           currentImageLabel: session.current_image_label || null,
-          currentVideoUrl: session.current_video_url || null,
-          activeVote,
-          doomClock,
-          tensionScale: serializeTensionScale(session),
-          timeScale: serializeTimeScale(session),
-          activeMerchant: (session.current_merchant_id && session.tv_mode === 'merchant')
-            ? await getMerchantData(session.current_merchant_id)
-            : null,
-          mapState: serializeMapState(session, await getMapGridConfig(session.id, session.current_map_url)),
-          combatRound: session.combat_round || 0,
-          timer: serializeTimer(session),
-          lobbyBgUrl: session.lobby_bg_url || null,
-          activePuzzle: session.tv_mode === 'puzzle' && session.current_puzzle_image_id ? {
-            puzzleImageId: session.current_puzzle_image_id,
-            puzzleSeed: parseInt(session.current_puzzle_seed, 10),
-            puzzleClicks: puzzleClicks.get(session.id) || [],
-          } : null,
-          isDemo: !!session.admin_is_demo,
-          factions: await getFactionsBySession(session.id),
-          tvTheme: session.tv_theme || 'dark',
-          activeContent: serializeCurrentContent(session),
+          ...(await buildSessionSnapshot(session, session.admin_is_demo)),
         })
       } catch (err) { console.error(err) }
     })
@@ -724,8 +749,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         await pool.query('UPDATE sessions SET tv_mode = $1 WHERE id = $2 AND created_by = $3', [mode, sessionId, socket.admin.id])
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode })
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode })
       } catch (err) { console.error(err) }
     })
 
@@ -744,8 +768,7 @@ function setupSocket(io) {
           ['content', contentType, dataStr, sessionId, socket.admin.id]
         )
         if (result.rowCount === 0) return
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'content', contentType, contentData })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'content', contentType, contentData })
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'content', contentType, contentData })
       } catch (err) { console.error(err); socket.emit('tv-control-error', { message: 'Impossible d\'afficher ce contenu sur la TV.' }) }
     })
 
@@ -755,7 +778,7 @@ function setupSocket(io) {
       try {
         const parsedDuration = parseInt(durationSeconds, 10)
         if (Number.isNaN(parsedDuration)) {
-          socket.emit('tv-control-error', { message: 'Durée invalide (entre 5 secondes et 24 heures).' })
+          socket.emit('tv-control-error', { message: 'Durée invalide (entre 5 secondes et 24 heures).', field: 'durationSeconds' })
           return
         }
         const safeDuration = Math.max(MIN_DOOM_DURATION_SECONDS, Math.min(MAX_DOOM_DURATION_SECONDS, parsedDuration))
@@ -769,15 +792,9 @@ function setupSocket(io) {
         )
         if (updateRes.rowCount === 0) return
         const payload = { title: safeTitle, endAt: endAt.toISOString() }
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'doom' })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'doom' })
-        io.to(`tv:${sessionId}`).emit('doom-clock-started', payload)
-        io.to(`admin:${sessionId}`).emit('doom-clock-started', payload)
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'doom_clock_started', `Doom Clock lancée : "${safeTitle}"`]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'doom_clock_started', description: `Doom Clock lancée : "${safeTitle}"`, createdAt: new Date() })
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'doom' })
+        broadcastToSession(sessionId, 'doom-clock-started', payload)
+        await logSessionEvent(sessionId, 'doom_clock_started', `Doom Clock lancée : "${safeTitle}"`)
       } catch (err) { console.error(err) }
     })
 
@@ -792,15 +809,9 @@ function setupSocket(io) {
           [sessionId, socket.admin.id]
         )
         if (stopRes.rowCount === 0) return
-        io.to(`tv:${sessionId}`).emit('doom-clock-stopped')
-        io.to(`admin:${sessionId}`).emit('doom-clock-stopped')
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'doom_clock_stopped', 'Doom Clock arrêtée']
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'doom_clock_stopped', description: 'Doom Clock arrêtée', createdAt: new Date() })
+        broadcastToSession(sessionId, 'doom-clock-stopped')
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'lobby' })
+        await logSessionEvent(sessionId, 'doom_clock_stopped', 'Doom Clock arrêtée')
       } catch (err) { console.error(err) }
     })
 
@@ -810,7 +821,7 @@ function setupSocket(io) {
       try {
         const parsedSteps = parseInt(steps, 10)
         if (Number.isNaN(parsedSteps)) {
-          socket.emit('tv-control-error', { message: "Nombre d'étapes invalide (entre 2 et 20)." })
+          socket.emit('tv-control-error', { message: "Nombre d'étapes invalide (entre 2 et 20).", field: 'steps' })
           return
         }
         const safeSteps = Math.max(MIN_TENSION_STEPS, Math.min(MAX_TENSION_STEPS, parsedSteps))
@@ -833,15 +844,9 @@ function setupSocket(io) {
           direction: row.tension_direction,
           vibrationEnabled: row.tension_vibration,
         }
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'tension' })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'tension' })
-        io.to(`tv:${sessionId}`).emit('tension-scale-updated', payload)
-        io.to(`admin:${sessionId}`).emit('tension-scale-updated', payload)
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'tension_started', `Tension lancée : "${safeTitle}" (${safeSteps} étapes)`]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'tension_started', description: `Tension lancée : "${safeTitle}" (${safeSteps} étapes)`, createdAt: new Date() })
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'tension' })
+        broadcastToSession(sessionId, 'tension-scale-updated', payload)
+        await logSessionEvent(sessionId, 'tension_started', `Tension lancée : "${safeTitle}" (${safeSteps} étapes)`)
       } catch (err) { console.error(err) }
     })
 
@@ -866,13 +871,8 @@ function setupSocket(io) {
           direction: row.tension_direction,
           vibrationEnabled: row.tension_vibration,
         }
-        io.to(`tv:${sessionId}`).emit('tension-scale-updated', payload)
-        io.to(`admin:${sessionId}`).emit('tension-scale-updated', payload)
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'tension_updated', `Tension : niveau ${row.tension_level}/${row.tension_steps} — "${row.tension_title}"`]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'tension_updated', description: `Tension : niveau ${row.tension_level}/${row.tension_steps} — "${row.tension_title}"`, createdAt: new Date() })
+        broadcastToSession(sessionId, 'tension-scale-updated', payload)
+        await logSessionEvent(sessionId, 'tension_updated', `Tension : niveau ${row.tension_level}/${row.tension_steps} — "${row.tension_title}"`)
       } catch (err) { console.error(err) }
     })
 
@@ -893,15 +893,9 @@ function setupSocket(io) {
            WHERE id = $1 AND created_by = $2`,
           [sessionId, socket.admin.id]
         )
-        io.to(`tv:${sessionId}`).emit('tension-scale-ended')
-        io.to(`admin:${sessionId}`).emit('tension-scale-ended')
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'tension_ended', `Tension terminée : "${tensionTitle}"`]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'tension_ended', description: `Tension terminée : "${tensionTitle}"`, createdAt: new Date() })
+        broadcastToSession(sessionId, 'tension-scale-ended')
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'lobby' })
+        await logSessionEvent(sessionId, 'tension_ended', `Tension terminée : "${tensionTitle}"`)
       } catch (err) { console.error(err) }
     })
 
@@ -913,11 +907,11 @@ function setupSocket(io) {
         const parsedSlots = parseInt(slotCount) || 0
         const parsedRest = parseInt(restSlots) || 1
         if (parsedHours < MIN_TIMESCALE_HOURS || parsedHours > MAX_TIMESCALE_HOURS) {
-          socket.emit('tv-control-error', { message: `Durée invalide (entre ${MIN_TIMESCALE_HOURS} et ${MAX_TIMESCALE_HOURS} heures).` })
+          socket.emit('tv-control-error', { message: `Durée invalide (entre ${MIN_TIMESCALE_HOURS} et ${MAX_TIMESCALE_HOURS} heures).`, field: 'totalHours' })
           return
         }
         if (parsedSlots < MIN_TIMESCALE_SLOTS || parsedSlots > MAX_TIMESCALE_SLOTS) {
-          socket.emit('tv-control-error', { message: `Nombre de paliers invalide (entre ${MIN_TIMESCALE_SLOTS} et ${MAX_TIMESCALE_SLOTS}).` })
+          socket.emit('tv-control-error', { message: `Nombre de paliers invalide (entre ${MIN_TIMESCALE_SLOTS} et ${MAX_TIMESCALE_SLOTS}).`, field: 'slotCount' })
           return
         }
         const safeTitle = (title || 'Échelle de temps').trim().slice(0, MAX_TITLE_LENGTH) || 'Échelle de temps'
@@ -935,16 +929,10 @@ function setupSocket(io) {
         const row = result.rows[0]
         if (!row) return
         const payload = serializeTimeScale(row)
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'timescale' })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'timescale' })
-        io.to(`tv:${sessionId}`).emit('time-scale-updated', payload)
-        io.to(`admin:${sessionId}`).emit('time-scale-updated', payload)
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'timescale' })
+        broadcastToSession(sessionId, 'time-scale-updated', payload)
         const slotHours = safeHours / safeSlots
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'timescale_started', `Échelle de temps : "${safeTitle}" (${safeSlots} paliers de ${slotHours}h)`]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'timescale_started', description: `Échelle de temps : "${safeTitle}" (${safeSlots} paliers de ${slotHours}h)`, createdAt: new Date() })
+        await logSessionEvent(sessionId, 'timescale_started', `Échelle de temps : "${safeTitle}" (${safeSlots} paliers de ${slotHours}h)`)
       } catch (err) { console.error(err) }
     })
 
@@ -963,17 +951,12 @@ function setupSocket(io) {
         const row = result.rows[0]
         if (!row) return
         const payload = serializeTimeScale(row)
-        io.to(`tv:${sessionId}`).emit('time-scale-updated', payload)
-        io.to(`admin:${sessionId}`).emit('time-scale-updated', payload)
+        broadcastToSession(sessionId, 'time-scale-updated', payload)
         const elapsed = row.timescale_elapsed_slots
         const total = row.timescale_slot_count
         const slotHours = row.timescale_total_hours / total
         const sign = safeDelta >= 0 ? '+' : ''
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'timescale_advanced', `Temps : palier ${elapsed}/${total} — "${row.timescale_title}" (${sign}${safeDelta * slotHours}h)`]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'timescale_advanced', description: `Temps : palier ${elapsed}/${total} — "${row.timescale_title}" (${sign}${safeDelta * slotHours}h)`, createdAt: new Date() })
+        await logSessionEvent(sessionId, 'timescale_advanced', `Temps : palier ${elapsed}/${total} — "${row.timescale_title}" (${sign}${safeDelta * slotHours}h)`)
       } catch (err) { console.error(err) }
     })
 
@@ -1004,14 +987,9 @@ function setupSocket(io) {
           [newElapsed, sessionId, socket.admin.id]
         )
         const payload = serializeTimeScale({ ...row, timescale_elapsed_slots: newElapsed, timescale_rest_taken: true })
-        io.to(`tv:${sessionId}`).emit('time-scale-updated', payload)
-        io.to(`admin:${sessionId}`).emit('time-scale-updated', payload)
+        broadcastToSession(sessionId, 'time-scale-updated', payload)
         const restHours = (row.timescale_total_hours / slotCount) * restSlots
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'timescale_rest', `Repos long pris (${restHours}h) — "${row.timescale_title}" : palier ${newElapsed}/${slotCount}`]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'timescale_rest', description: `Repos long pris (${restHours}h) — "${row.timescale_title}" : palier ${newElapsed}/${slotCount}`, createdAt: new Date() })
+        await logSessionEvent(sessionId, 'timescale_rest', `Repos long pris (${restHours}h) — "${row.timescale_title}" : palier ${newElapsed}/${slotCount}`)
       } catch (err) { console.error(err) }
     })
 
@@ -1032,15 +1010,9 @@ function setupSocket(io) {
            WHERE id = $1 AND created_by = $2`,
           [sessionId, socket.admin.id]
         )
-        io.to(`tv:${sessionId}`).emit('time-scale-ended')
-        io.to(`admin:${sessionId}`).emit('time-scale-ended')
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'timescale_ended', `Échelle de temps terminée : "${scaleTitle}"`]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'timescale_ended', description: `Échelle de temps terminée : "${scaleTitle}"`, createdAt: new Date() })
+        broadcastToSession(sessionId, 'time-scale-ended')
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'lobby' })
+        await logSessionEvent(sessionId, 'timescale_ended', `Échelle de temps terminée : "${scaleTitle}"`)
       } catch (err) { console.error(err) }
     })
 
@@ -1048,11 +1020,7 @@ function setupSocket(io) {
     socket.on('create-vote', async ({ sessionId, question, options, isAnonymous }) => {
       if (!socket.admin) return
       try {
-        const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
-          [sessionId, socket.admin.id]
-        )
-        if (!sessionCheck.rows[0]) return
+        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
         const voteRes = await pool.query(
           'INSERT INTO votes (session_id, question, options, is_anonymous) VALUES ($1, $2, $3, $4) RETURNING *',
           [sessionId, question, JSON.stringify(options), isAnonymous || false]
@@ -1060,17 +1028,10 @@ function setupSocket(io) {
         const vote = voteRes.rows[0]
         await pool.query('UPDATE sessions SET tv_mode = $1, current_vote_id = $2 WHERE id = $3', ['vote', vote.id, sessionId])
         const voteData = await getVoteState(sessionId, vote.id, true)
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'vote' })
-        io.to(`tv:${sessionId}`).emit('vote-started', voteData)
-        io.to(`session:${sessionId}`).emit('vote-started', voteData)
-        io.to(`admin:${sessionId}`).emit('vote-started', voteData)
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'vote' })
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'vote' })
+        broadcastToSession(sessionId, 'vote-started', voteData, ['tv', 'session', 'admin'])
         const safeQuestion = (question || '').slice(0, 200)
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'vote_started', `Vote lancé : "${safeQuestion}"`]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'vote_started', description: `Vote lancé : "${safeQuestion}"`, createdAt: new Date() })
+        await logSessionEvent(sessionId, 'vote_started', `Vote lancé : "${safeQuestion}"`)
       } catch (err) { console.error(err) }
     })
 
@@ -1096,21 +1057,14 @@ function setupSocket(io) {
 
         const voteUpdate = await getVoteState(socket.sessionId, voteId, true)
         if (!voteUpdate) return
-        io.to(`tv:${socket.sessionId}`).emit('vote-updated', voteUpdate)
-        io.to(`admin:${socket.sessionId}`).emit('vote-updated', voteUpdate)
+        broadcastToSession(socket.sessionId, 'vote-updated', voteUpdate)
 
         if (voteUpdate.totalVotes >= voteUpdate.totalPlayers) {
           const closed = await pool.query('UPDATE votes SET status = $1 WHERE id = $2 AND status = $3 RETURNING id', ['closed', voteId, 'active'])
           if (closed.rows[0]) {
-            io.to(`tv:${socket.sessionId}`).emit('vote-closed', voteUpdate)
-            io.to(`session:${socket.sessionId}`).emit('vote-closed', voteUpdate)
-            io.to(`admin:${socket.sessionId}`).emit('vote-closed', voteUpdate)
+            broadcastToSession(socket.sessionId, 'vote-closed', voteUpdate, ['tv', 'session', 'admin'])
             const closedQuestion = (voteUpdate.question || '').slice(0, 200)
-            await pool.query(
-              'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-              [socket.sessionId, 'vote_closed', `Vote clôturé : "${closedQuestion}"`]
-            )
-            io.to(`admin:${socket.sessionId}`).emit('session-event', { eventType: 'vote_closed', description: `Vote clôturé : "${closedQuestion}"`, createdAt: new Date() })
+            await logSessionEvent(socket.sessionId, 'vote_closed', `Vote clôturé : "${closedQuestion}"`)
           }
         }
       } catch (err) { console.error(err) }
@@ -1130,15 +1084,9 @@ function setupSocket(io) {
         if (!voteUpdate) return
         const voteCloseRes = await pool.query('UPDATE votes SET status = $1 WHERE id = $2 AND status = $3', ['closed', voteId, 'active'])
         if (voteCloseRes.rowCount === 0) return
-        io.to(`tv:${sessionId}`).emit('vote-closed', voteUpdate)
-        io.to(`session:${sessionId}`).emit('vote-closed', voteUpdate)
-        io.to(`admin:${sessionId}`).emit('vote-closed', voteUpdate)
+        broadcastToSession(sessionId, 'vote-closed', voteUpdate, ['tv', 'session', 'admin'])
         const closedQuestion = (voteUpdate.question || '').slice(0, 200)
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description) VALUES ($1, $2, $3)',
-          [sessionId, 'vote_closed', `Vote clôturé : "${closedQuestion}"`]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'vote_closed', description: `Vote clôturé : "${closedQuestion}"`, createdAt: new Date() })
+        await logSessionEvent(sessionId, 'vote_closed', `Vote clôturé : "${closedQuestion}"`)
       } catch (err) { console.error(err) }
     })
 
@@ -1155,8 +1103,7 @@ function setupSocket(io) {
           'UPDATE sessions SET tv_mode = $1, current_image_url = $2, current_image_label = $3 WHERE id = $4 AND created_by = $5',
           ['image', imageUrl, imageLabel, sessionId, socket.admin.id]
         )
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
       } catch (err) { console.error(err) }
     })
 
@@ -1169,8 +1116,7 @@ function setupSocket(io) {
           'UPDATE sessions SET tv_mode = $1, current_video_url = $2 WHERE id = $3 AND created_by = $4',
           ['video', videoUrl, sessionId, socket.admin.id]
         )
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'video', videoUrl })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'video', videoUrl })
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'video', videoUrl })
       } catch (err) { console.error(err) }
     })
 
@@ -1198,10 +1144,7 @@ function setupSocket(io) {
         const sid = parseInt(sessionId, 10)
         const iid = parseInt(imageId, 10)
         if (!Number.isInteger(sid) || !Number.isInteger(iid)) return
-        const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2', [sid, socket.admin.id]
-        )
-        if (!sessionCheck.rows[0]) return
+        if (!await assertSessionOwnership(sid, socket.admin.id)) return
         const imageCheck = await pool.query(
           "SELECT id, url, original_name FROM session_images WHERE id = $1 AND session_id = $2 AND type = 'puzzle'",
           [iid, sid]
@@ -1214,8 +1157,7 @@ function setupSocket(io) {
         )
         puzzleClicks.set(sid, [])
         const payload = { mode: 'puzzle', puzzleImageId: iid, puzzleSeed: seed }
-        io.to(`tv:${sid}`).emit('tv-mode-changed', payload)
-        io.to(`admin:${sid}`).emit('tv-mode-changed', payload)
+        broadcastToSession(sid, 'tv-mode-changed', payload)
         io.to(`session:${sid}`).emit('puzzle-started', { puzzleImageId: iid, puzzleSeed: seed, puzzleClicks: [] })
       } catch (err) { console.error(err) }
     })
@@ -1226,19 +1168,14 @@ function setupSocket(io) {
       try {
         const sid = parseInt(sessionId, 10)
         if (!Number.isInteger(sid)) return
-        const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2', [sid, socket.admin.id]
-        )
-        if (!sessionCheck.rows[0]) return
+        if (!await assertSessionOwnership(sid, socket.admin.id)) return
         await pool.query(
           "UPDATE sessions SET tv_mode = 'lobby', current_puzzle_image_id = NULL, current_puzzle_url = NULL, current_puzzle_seed = NULL WHERE id = $1",
           [sid]
         )
         puzzleClicks.delete(sid)
-        io.to(`tv:${sid}`).emit('tv-mode-changed', { mode: 'lobby' })
-        io.to(`admin:${sid}`).emit('tv-mode-changed', { mode: 'lobby' })
-        io.to(`session:${sid}`).emit('puzzle-closed')
-        io.to(`admin:${sid}`).emit('puzzle-closed')
+        broadcastToSession(sid, 'tv-mode-changed', { mode: 'lobby' })
+        broadcastToSession(sid, 'puzzle-closed', undefined, ['session', 'admin'])
       } catch (err) { console.error(err) }
     })
 
@@ -1260,8 +1197,7 @@ function setupSocket(io) {
       try {
         const url = (imageUrl && typeof imageUrl === 'string') ? imageUrl : null
         await pool.query('UPDATE sessions SET lobby_bg_url = $1 WHERE id = $2 AND created_by = $3', [url, sessionId, socket.admin.id])
-        io.to(`tv:${sessionId}`).emit('lobby-bg-updated', { url })
-        io.to(`admin:${sessionId}`).emit('lobby-bg-updated', { url })
+        broadcastToSession(sessionId, 'lobby-bg-updated', { url })
       } catch (err) { console.error(err) }
     })
 
@@ -1292,10 +1228,8 @@ function setupSocket(io) {
           gridCellH: gridConfig?.gridCellH ?? null,
           fogCells: [],
         }
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'map' })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'map' })
-        io.to(`tv:${sessionId}`).emit('map-state', mapState)
-        io.to(`admin:${sessionId}`).emit('map-state', mapState)
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'map' })
+        broadcastToSession(sessionId, 'map-state', mapState)
       } catch (err) { console.error(err) }
     })
 
@@ -1307,8 +1241,7 @@ function setupSocket(io) {
           'UPDATE sessions SET map_fog_enabled = $1 WHERE id = $2 AND created_by = $3',
           [!!enabled, sessionId, socket.admin.id]
         )
-        io.to(`tv:${sessionId}`).emit('map-fog-updated', { enabled: !!enabled })
-        io.to(`admin:${sessionId}`).emit('map-fog-updated', { enabled: !!enabled })
+        broadcastToSession(sessionId, 'map-fog-updated', { enabled: !!enabled })
       } catch (err) { console.error(err) }
     })
 
@@ -1349,8 +1282,7 @@ function setupSocket(io) {
           'UPDATE sessions SET map_fog_strokes = $1 WHERE id = $2 AND created_by = $3',
           [JSON.stringify(combined), sessionId, socket.admin.id]
         )
-        io.to(`tv:${sessionId}`).emit('map-fog-patch', { strokes })
-        io.to(`admin:${sessionId}`).emit('map-fog-patch', { strokes })
+        broadcastToSession(sessionId, 'map-fog-patch', { strokes })
       } catch (err) { console.error(err) }
     })
 
@@ -1362,8 +1294,7 @@ function setupSocket(io) {
           "UPDATE sessions SET map_fog_strokes = '[]', map_fog_cells = '[]' WHERE id = $1 AND created_by = $2",
           [sessionId, socket.admin.id]
         )
-        io.to(`tv:${sessionId}`).emit('map-fog-reset')
-        io.to(`admin:${sessionId}`).emit('map-fog-reset')
+        broadcastToSession(sessionId, 'map-fog-reset')
       } catch (err) { console.error(err) }
     })
 
@@ -1389,8 +1320,7 @@ function setupSocket(io) {
           'UPDATE sessions SET map_fog_cells = $1 WHERE id = $2 AND created_by = $3',
           [JSON.stringify(merged), sessionId, socket.admin.id]
         )
-        io.to(`tv:${sessionId}`).emit('map-fog-cells-patch', { cells: validCells })
-        io.to(`admin:${sessionId}`).emit('map-fog-cells-patch', { cells: validCells })
+        broadcastToSession(sessionId, 'map-fog-cells-patch', { cells: validCells })
       } catch (err) { console.error(err) }
     })
 
@@ -1407,8 +1337,7 @@ function setupSocket(io) {
         gridCellW: gridCellW ?? null,
         gridCellH: gridCellH ?? null,
       }
-      io.to(`tv:${sessionId}`).emit('map-grid-updated', payload)
-      io.to(`admin:${sessionId}`).emit('map-grid-updated', payload)
+      broadcastToSession(sessionId, 'map-grid-updated', payload)
     })
 
     // ── Admin: reset cell-based fog ─────────────────────────────────────────
@@ -1419,8 +1348,7 @@ function setupSocket(io) {
           "UPDATE sessions SET map_fog_cells = '[]' WHERE id = $1 AND created_by = $2",
           [sessionId, socket.admin.id]
         )
-        io.to(`tv:${sessionId}`).emit('map-fog-cells-reset')
-        io.to(`admin:${sessionId}`).emit('map-fog-cells-reset')
+        broadcastToSession(sessionId, 'map-fog-cells-reset')
       } catch (err) { console.error(err) }
     })
 
@@ -1442,8 +1370,7 @@ function setupSocket(io) {
           [JSON.stringify(tokens), sessionId, socket.admin.id]
         )
         const saved = tokens[String(playerId)]
-        io.to(`tv:${sessionId}`).emit('map-token-moved', { playerId, nx: saved.nx, ny: saved.ny, ...(saved.name ? { name: saved.name } : {}) })
-        io.to(`admin:${sessionId}`).emit('map-token-moved', { playerId, nx: saved.nx, ny: saved.ny, ...(saved.name ? { name: saved.name } : {}) })
+        broadcastToSession(sessionId, 'map-token-moved', { playerId, nx: saved.nx, ny: saved.ny, ...(saved.name ? { name: saved.name } : {}) })
       } catch (err) { console.error(err) }
     })
 
@@ -1463,8 +1390,7 @@ function setupSocket(io) {
           'UPDATE sessions SET map_tokens = $1 WHERE id = $2 AND created_by = $3',
           [JSON.stringify(tokens), sessionId, socket.admin.id]
         )
-        io.to(`tv:${sessionId}`).emit('map-token-removed', { playerId })
-        io.to(`admin:${sessionId}`).emit('map-token-removed', { playerId })
+        broadcastToSession(sessionId, 'map-token-removed', { playerId })
       } catch (err) { console.error(err) }
     })
 
@@ -1472,11 +1398,7 @@ function setupSocket(io) {
     socket.on('send-message', async ({ sessionId, toPlayerId, type, content, voiceStyle, textEffect, authorName, authorColor }) => {
       if (!socket.admin) return
       try {
-        const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
-          [sessionId, socket.admin.id]
-        )
-        if (!sessionCheck.rows[0]) return
+        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
         if (!toPlayerId) {
           const cnt = await pool.query('SELECT COUNT(*)::int AS total FROM players WHERE session_id = $1', [sessionId])
           if ((cnt.rows[0]?.total || 0) === 0) { socket.emit('send-error', { message: 'Aucun joueur connecté.' }); return }
@@ -1501,11 +1423,7 @@ function setupSocket(io) {
     socket.on('send-dice-result', async ({ sessionId, combatType, rollValue, resultText, toPlayerId }) => {
       if (!socket.admin) return
       try {
-        const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
-          [sessionId, socket.admin.id]
-        )
-        if (!sessionCheck.rows[0]) return
+        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
         if (!toPlayerId) {
           const cnt = await pool.query('SELECT COUNT(*)::int AS total FROM players WHERE session_id = $1', [sessionId])
           if ((cnt.rows[0]?.total || 0) === 0) { socket.emit('send-error', { message: 'Aucun joueur connecté.' }); return }
@@ -1610,11 +1528,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         if (!Array.isArray(shares) || shares.length === 0) return
-        const sessionRes = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
-          [sessionId, socket.admin.id]
-        )
-        if (!sessionRes.rows[0]) return
+        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
 
         for (const share of shares) {
           const { playerId, pp = 0, po = 0, pe = 0, pa = 0, pc = 0 } = share
@@ -1647,11 +1561,7 @@ function setupSocket(io) {
     socket.on('create-merchant', async ({ sessionId, name, description, items }) => {
       if (!socket.admin) return
       try {
-        const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
-          [sessionId, socket.admin.id]
-        )
-        if (!sessionCheck.rows[0]) return
+        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
         const mr = await pool.query(
           'INSERT INTO merchants (session_id, name, description) VALUES ($1, $2, $3) RETURNING *',
           [sessionId, name, description || '']
@@ -1677,8 +1587,7 @@ function setupSocket(io) {
           ['merchant', merchantId, sessionId, socket.admin.id]
         )
         const merchantData = await getMerchantData(merchantId)
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'merchant', merchantData })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'merchant', merchantData })
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'merchant', merchantData })
         io.to(`session:${sessionId}`).emit('merchant-shown', merchantData)
       } catch (err) { console.error(err) }
     })
@@ -1789,14 +1698,9 @@ function setupSocket(io) {
           if (playerSocketId) io.to(playerSocketId).emit('batch-accepted', { items, totalPrice: req.base_price })
           const merchantData = await getMerchantData(req.merchant_id)
           socket.emit('merchant-updated', merchantData)
-          io.to(`tv:${req.session_id}`).emit('merchant-items-updated', merchantData)
-          io.to(`session:${req.session_id}`).emit('merchant-items-updated', merchantData)
+          broadcastToSession(req.session_id, 'merchant-items-updated', merchantData, ['tv', 'session'])
           const purchaseDesc = `Achat accepté : ${req.quantity}× ${req.item_name} (${req.base_price} po) — ${req.player_name}`.slice(0, 200)
-          await pool.query(
-            'INSERT INTO session_events (session_id, event_type, description, player_name, value) VALUES ($1, $2, $3, $4, $5)',
-            [req.session_id, 'purchase_accepted', purchaseDesc, req.player_name, req.base_price]
-          )
-          io.to(`admin:${req.session_id}`).emit('session-event', { eventType: 'purchase_accepted', description: purchaseDesc, playerName: req.player_name, value: req.base_price, createdAt: new Date() })
+          await logSessionEvent(req.session_id, 'purchase_accepted', purchaseDesc, { playerName: req.player_name, value: req.base_price })
         } else if (action === 'discount' || action === 'increase') {
           const fp = Math.max(0, parseInt(finalPrice) || req.base_price)
           await pool.query('UPDATE purchase_requests SET status = $1, final_price = $2 WHERE id = $3', [action, fp, requestId])
@@ -1806,11 +1710,7 @@ function setupSocket(io) {
           const items = [{ item_name: req.item_name, quantity: req.quantity, total_price: req.base_price }]
           if (playerSocketId) io.to(playerSocketId).emit('batch-rejected', { items })
           const rejectDesc = `Achat refusé : ${req.quantity}× ${req.item_name} — ${req.player_name}`.slice(0, 200)
-          await pool.query(
-            'INSERT INTO session_events (session_id, event_type, description, player_name) VALUES ($1, $2, $3, $4)',
-            [req.session_id, 'purchase_rejected', rejectDesc, req.player_name]
-          )
-          io.to(`admin:${req.session_id}`).emit('session-event', { eventType: 'purchase_rejected', description: rejectDesc, playerName: req.player_name, createdAt: new Date() })
+          await logSessionEvent(req.session_id, 'purchase_rejected', rejectDesc, { playerName: req.player_name })
         }
         socket.emit('purchase-responded', { requestId, action })
       } catch (err) { console.error(err) }
@@ -1860,15 +1760,10 @@ function setupSocket(io) {
           if (playerSocketId) io.to(playerSocketId).emit('batch-accepted', { batchId, items, totalPrice: finalTotal })
           const merchantData = await getMerchantData(reqs[0].merchant_id)
           socket.emit('merchant-updated', merchantData)
-          io.to(`tv:${reqs[0].session_id}`).emit('merchant-items-updated', merchantData)
-          io.to(`session:${reqs[0].session_id}`).emit('merchant-items-updated', merchantData)
+          broadcastToSession(reqs[0].session_id, 'merchant-items-updated', merchantData, ['tv', 'session'])
           socket.emit('purchase-responded', { batchId, action, totalPrice: finalTotal })
           const batchDesc = `Achat accepté : ${items.map(i => `${i.quantity}× ${i.item_name}`).join(', ')} (${finalTotal} po) — ${reqs[0].player_name}`.slice(0, 200)
-          await pool.query(
-            'INSERT INTO session_events (session_id, event_type, description, player_name, value) VALUES ($1, $2, $3, $4, $5)',
-            [reqs[0].session_id, 'purchase_accepted', batchDesc, reqs[0].player_name, finalTotal]
-          )
-          io.to(`admin:${reqs[0].session_id}`).emit('session-event', { eventType: 'purchase_accepted', description: batchDesc, playerName: reqs[0].player_name, value: finalTotal, createdAt: new Date() })
+          await logSessionEvent(reqs[0].session_id, 'purchase_accepted', batchDesc, { playerName: reqs[0].player_name, value: finalTotal })
         } else if (action === 'reject') {
           for (const req of reqs) {
             await pool.query('UPDATE purchase_requests SET status = $1 WHERE id = $2', ['rejected', req.id])
@@ -1877,11 +1772,7 @@ function setupSocket(io) {
           if (playerSocketId) io.to(playerSocketId).emit('batch-rejected', { batchId, items })
           socket.emit('purchase-responded', { batchId, action })
           const batchRejectDesc = `Achat refusé : ${items.map(i => `${i.quantity}× ${i.item_name}`).join(', ')} — ${reqs[0].player_name}`.slice(0, 200)
-          await pool.query(
-            'INSERT INTO session_events (session_id, event_type, description, player_name) VALUES ($1, $2, $3, $4)',
-            [reqs[0].session_id, 'purchase_rejected', batchRejectDesc, reqs[0].player_name]
-          )
-          io.to(`admin:${reqs[0].session_id}`).emit('session-event', { eventType: 'purchase_rejected', description: batchRejectDesc, playerName: reqs[0].player_name, createdAt: new Date() })
+          await logSessionEvent(reqs[0].session_id, 'purchase_rejected', batchRejectDesc, { playerName: reqs[0].player_name })
         }
       } catch (err) { console.error(err) }
     })
@@ -1894,8 +1785,7 @@ function setupSocket(io) {
           "UPDATE sessions SET tv_mode = 'lobby', current_merchant_id = NULL WHERE id = $1 AND created_by = $2",
           [sessionId, socket.admin.id]
         )
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'lobby' })
         io.to(`session:${sessionId}`).emit('merchant-closed')
       } catch (err) { console.error(err) }
     })
@@ -1952,8 +1842,7 @@ function setupSocket(io) {
           socket.emit('counter-offer-result', { requestId, accepted: true, itemName: req.item_name, finalPrice: req.final_price })
           const merchantData = await getMerchantData(req.merchant_id)
           io.to(`admin:${socket.sessionId}`).emit('merchant-updated', merchantData)
-          io.to(`tv:${socket.sessionId}`).emit('merchant-items-updated', merchantData)
-          io.to(`session:${socket.sessionId}`).emit('merchant-items-updated', merchantData)
+          broadcastToSession(socket.sessionId, 'merchant-items-updated', merchantData, ['tv', 'session'])
         } else {
           await pool.query('UPDATE purchase_requests SET status = $1 WHERE id = $2', ['declined', requestId])
           socket.emit('counter-offer-result', { requestId, accepted: false, itemName: req.item_name })
@@ -1972,14 +1861,9 @@ function setupSocket(io) {
           [safeRound, sessionId, socket.admin.id]
         )
         if (roundUpdateRes.rowCount === 0) return
-        io.to(`tv:${sessionId}`).emit('round-updated', { round: safeRound })
-        io.to(`admin:${sessionId}`).emit('round-updated', { round: safeRound })
+        broadcastToSession(sessionId, 'round-updated', { round: safeRound })
         const roundDesc = safeRound === 0 ? 'Réinitialisation du round de combat' : `Round de combat : ${safeRound}`
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description, value) VALUES ($1, $2, $3, $4)',
-          [sessionId, 'combat_round', roundDesc, safeRound]
-        )
-        io.to(`admin:${sessionId}`).emit('session-event', { eventType: 'combat_round', description: roundDesc, value: safeRound, createdAt: new Date() })
+        await logSessionEvent(sessionId, 'combat_round', roundDesc, { value: safeRound })
       } catch (err) { console.error(err) }
     })
 
@@ -1997,8 +1881,7 @@ function setupSocket(io) {
           [safeLabel, endAt, sessionId, socket.admin.id]
         )
         const payload = { label: safeLabel, endAt: endAt.toISOString() }
-        io.to(`tv:${sessionId}`).emit('timer-updated', payload)
-        io.to(`admin:${sessionId}`).emit('timer-updated', payload)
+        broadcastToSession(sessionId, 'timer-updated', payload)
       } catch (err) { console.error(err) }
     })
 
@@ -2010,8 +1893,7 @@ function setupSocket(io) {
           'UPDATE sessions SET timer_label = NULL, timer_end_at = NULL WHERE id = $1 AND created_by = $2',
           [sessionId, socket.admin.id]
         )
-        io.to(`tv:${sessionId}`).emit('timer-stopped')
-        io.to(`admin:${sessionId}`).emit('timer-stopped')
+        broadcastToSession(sessionId, 'timer-stopped')
       } catch (err) { console.error(err) }
     })
 
@@ -2020,11 +1902,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       if (!Array.isArray(updates) || updates.length === 0) return
       try {
-        const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
-          [sessionId, socket.admin.id]
-        )
-        if (!sessionCheck.rows[0]) return
+        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
 
         const client = await pool.connect()
         const updatedPlayers = []
@@ -2053,8 +1931,7 @@ function setupSocket(io) {
         }
         for (const p of updatedPlayers) {
           const event = { playerId: p.id, initiative: p.initiative }
-          io.to(`admin:${sessionId}`).emit('initiative-updated', event)
-          io.to(`tv:${sessionId}`).emit('initiative-updated', event)
+          broadcastToSession(sessionId, 'initiative-updated', event)
         }
       } catch (err) { console.error(err) }
     })
@@ -2064,11 +1941,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       if (typeof playerName !== 'string' || playerName.trim() === '') return
       try {
-        const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
-          [sessionId, socket.admin.id]
-        )
-        if (!sessionCheck.rows[0]) return
+        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
 
         const parsed = parseInt(currentHp, 10)
         if (!Number.isFinite(parsed)) return
@@ -2083,16 +1956,10 @@ function setupSocket(io) {
         if (!player) return
 
         const event = { playerId: player.id, newHp: player.current_hp }
-        io.to(`admin:${sessionId}`).emit('hp-updated', event)
-        io.to(`tv:${sessionId}`).emit('hp-updated', event)
+        broadcastToSession(sessionId, 'hp-updated', event)
 
         if (player.current_hp === 0) {
-          await pool.query(
-            'INSERT INTO session_events (session_id, event_type, description, player_name) VALUES ($1, $2, $3, $4)',
-            [sessionId, 'death', `${player.player_name} est tombé à 0 PV`, player.player_name]
-          )
-          const deathEvent = { eventType: 'death', description: `${player.player_name} est tombé à 0 PV`, playerName: player.player_name, createdAt: new Date() }
-          io.to(`admin:${sessionId}`).emit('session-event', deathEvent)
+          await logSessionEvent(sessionId, 'death', `${player.player_name} est tombé à 0 PV`, { playerName: player.player_name })
         }
       } catch (err) { console.error(err) }
     })
@@ -2168,8 +2035,7 @@ function setupSocket(io) {
           'UPDATE sessions SET tv_mode = $1, current_image_url = $2, current_image_label = $3 WHERE id = $4 AND created_by = $5',
           ['image', imageUrl, imageLabel, sessionId, socket.admin.id]
         )
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
         socket.emit('obsidian-image-shown', { imageName: imageName.trim() })
       } catch (err) { console.error(err) }
     })
@@ -2215,16 +2081,10 @@ function setupSocket(io) {
           client.release()
         }
         // Notify admin and TV
-        io.to(`admin:${player.session_id}`).emit('player-left', { playerId })
-        io.to(`tv:${player.session_id}`).emit('player-left', { playerId })
+        broadcastToSession(player.session_id, 'player-left', { playerId })
         await refreshVoteForSession(player.session_id)
         // Log event
-        await pool.query(
-          'INSERT INTO session_events (session_id, event_type, description, player_name) VALUES ($1, $2, $3, $4)',
-          [player.session_id, 'leave', `${player.player_name} a été expulsé de la session`, player.player_name]
-        )
-        const leaveEvent = { eventType: 'leave', description: `${player.player_name} a été expulsé de la session`, playerName: player.player_name, createdAt: new Date() }
-        io.to(`admin:${player.session_id}`).emit('session-event', leaveEvent)
+        await logSessionEvent(player.session_id, 'leave', `${player.player_name} a été expulsé de la session`, { playerName: player.player_name })
       } catch (err) { console.error(err) }
     })
 
@@ -2232,11 +2092,7 @@ function setupSocket(io) {
     socket.on('create-faction', async ({ sessionId, name, minValue, maxValue, initialValue }) => {
       if (!socket.admin) return
       try {
-        const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
-          [sessionId, socket.admin.id]
-        )
-        if (!sessionCheck.rows[0]) return
+        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
         const safeName = String(name || '').trim().slice(0, MAX_TITLE_LENGTH)
         if (!safeName) return
         const safeMin = Math.max(MIN_FACTION_VALUE, Math.min(-1, parseInt(minValue) || -5))
@@ -2254,11 +2110,7 @@ function setupSocket(io) {
     socket.on('update-faction-value', async ({ sessionId, factionId, delta }) => {
       if (!socket.admin) return
       try {
-        const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
-          [sessionId, socket.admin.id]
-        )
-        if (!sessionCheck.rows[0]) return
+        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
         const safeDelta = Math.max(-100, Math.min(100, parseInt(delta) || 0))
         if (safeDelta === 0) return
         const r = await pool.query(
@@ -2275,8 +2127,7 @@ function setupSocket(io) {
         const newValue = faction.current_value
         if (oldValue === newValue) return
         const factions = await getFactionsBySession(sessionId)
-        io.to(`admin:${sessionId}`).emit('factions-updated', factions)
-        io.to(`tv:${sessionId}`).emit('factions-updated', factions)
+        broadcastToSession(sessionId, 'factions-updated', factions)
         const sessionRow = await pool.query('SELECT tv_mode FROM sessions WHERE id = $1', [sessionId])
         if (sessionRow.rows[0]?.tv_mode !== 'reputation') {
           io.to(`tv:${sessionId}`).emit('reputation-toast', {
@@ -2295,11 +2146,7 @@ function setupSocket(io) {
     socket.on('delete-faction', async ({ sessionId, factionId }) => {
       if (!socket.admin) return
       try {
-        const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
-          [sessionId, socket.admin.id]
-        )
-        if (!sessionCheck.rows[0]) return
+        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
         await pool.query('DELETE FROM factions WHERE id = $1 AND session_id = $2', [factionId, sessionId])
         io.to(`admin:${sessionId}`).emit('faction-deleted', { factionId })
       } catch (err) { console.error(err) }
@@ -2309,17 +2156,11 @@ function setupSocket(io) {
     socket.on('show-reputation', async ({ sessionId }) => {
       if (!socket.admin) return
       try {
-        const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
-          [sessionId, socket.admin.id]
-        )
-        if (!sessionCheck.rows[0]) return
+        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
         await pool.query('UPDATE sessions SET tv_mode = $1 WHERE id = $2', ['reputation', sessionId])
         const factions = await getFactionsBySession(sessionId)
-        io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'reputation' })
-        io.to(`admin:${sessionId}`).emit('tv-mode-changed', { mode: 'reputation' })
-        io.to(`tv:${sessionId}`).emit('factions-updated', factions)
-        io.to(`admin:${sessionId}`).emit('factions-updated', factions)
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'reputation' })
+        broadcastToSession(sessionId, 'factions-updated', factions)
       } catch (err) { console.error(err) }
     })
   })
