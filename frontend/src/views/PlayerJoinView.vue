@@ -128,8 +128,17 @@ onMounted(async () => {
       fetch(`${BACKEND_URL}/api/classes/public`),
       fetch(`${BACKEND_URL}/api/races/public`),
     ])
-    if (classesRes.ok) classesList.value = await classesRes.json()
-    if (racesRes.ok) racesList.value = await racesRes.json()
+    if (classesRes.ok) {
+      const data = await classesRes.json()
+      for (const dndClass of data) {
+        if (dndClass.subclasses?.length) dndClass.subclasses.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+      }
+      classesList.value = data.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+    }
+    if (racesRes.ok) {
+      const data = await racesRes.json()
+      racesList.value = data.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+    }
   } catch {
     // Selects restent vides ; l'utilisateur peut toujours saisir une classe/race libre.
   }

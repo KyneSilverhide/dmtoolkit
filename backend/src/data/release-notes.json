@@ -1,6 +1,15 @@
 {
   "notes": [
     {
+      "version": "2.0.7",
+      "date": "2026-07-29",
+      "changes": [
+        { "type": "feature", "role": "all", "text": "Races — ajout du Forgelier (Warforged), qui manquait à la liste." },
+        { "type": "improvement", "role": "all", "text": "Races, classes et sous-classes sont désormais triées par ordre alphabétique dans les onglets Contenu." },
+        { "type": "feature", "role": "all", "text": "Races et classes — ajout d'illustrations sur les fiches ; survolez une image pour l'agrandir en plein format." }
+      ]
+    },
+    {
       "version": "2.0.6",
       "date": "2026-07-28",
       "changes": [

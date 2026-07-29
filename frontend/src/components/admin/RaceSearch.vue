@@ -38,7 +38,11 @@ async function loadRaces() {
       ? await fetch(`${BACKEND_URL}/api/races/public/full`)
       : await apiFetch('/api/races', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) {
-      races.value = await res.json()
+      const data = await res.json()
+      for (const race of data) {
+        if (race.subraces?.length) race.subraces.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+      }
+      races.value = data.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
     } else {
       loadError.value = true
     }
@@ -162,6 +166,14 @@ onUnmounted(() => {
 
     <div class="results-grid">
       <div v-for="race in filteredRaces" :key="race.slug" class="race-card">
+        <template v-if="race.image">
+          <div class="race-image-hover-zone"></div>
+          <div class="race-image-float">
+            <img :src="race.image" :alt="race.name" class="race-image" loading="lazy" />
+            <span v-if="race.image_credit" class="race-image-credit">{{ race.image_credit }}</span>
+          </div>
+        </template>
+
         <div class="race-header">
           <AppIcon :icon="race.icon" size="1.6rem" class="race-icon" />
           <div class="race-header-main">
@@ -169,6 +181,8 @@ onUnmounted(() => {
             <span class="ability-badge">{{ race.ability_bonus }}</span>
           </div>
         </div>
+
+        <p v-if="race.description" class="race-description">{{ race.description }}</p>
 
         <div class="race-attrs">
           <span class="race-attr"><AppIcon icon="lucide:ruler" size="0.75em" /> {{ race.size }}</span>
@@ -294,6 +308,9 @@ onUnmounted(() => {
 }
 
 .race-card {
+  position: relative;
+  z-index: 0;
+  overflow: hidden;
   background: var(--gradient-panel-soft);
   border: 1px solid var(--color-border);
   border-radius: 12px;
@@ -304,6 +321,88 @@ onUnmounted(() => {
   transition: border-color 0.2s;
 }
 .race-card:hover { border-color: var(--color-gold-dark); }
+/* Le zoom ne doit se déclencher qu'au survol de l'image elle-même, pas de toute la
+   carte : voir le commentaire équivalent dans ClassSearch.vue pour le détail du
+   raisonnement (:has() remonte l'effet du déclencheur descendant jusqu'à la carte). */
+.race-card:has(.race-image-hover-zone:hover) {
+  z-index: 10;
+  overflow: visible;
+}
+
+.race-description {
+  margin: 0;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--color-text-dim);
+}
+
+/* Incrustation en fond de carte : même traitement que ClassSearch.vue (image derrière
+   le texte via z-index négatif, fondue vers le fond, crédit placé après l'image plutôt
+   que dessus). */
+.race-image-float {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 55%;
+  max-width: 320px;
+  z-index: -1;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  transition: all 0.25s ease;
+}
+/* Zone invisible calquée sur la position/taille par défaut de l'image mais placée
+   au-dessus du texte (z-index positif) pour capter le survol — voir ClassSearch.vue. */
+.race-image-hover-zone {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 55%;
+  max-width: 320px;
+  height: 11rem;
+  z-index: 4;
+  cursor: zoom-in;
+}
+.race-image-hover-zone:hover ~ .race-image-float {
+  z-index: 3;
+  width: auto;
+  max-width: min(90vw, 480px);
+  background: var(--gradient-panel-soft);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 10px;
+  padding: 0.5rem;
+  box-shadow: -16px 12px 32px rgba(0, 0, 0, 0.6);
+}
+.race-image {
+  width: 100%;
+  height: 11rem;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  opacity: 1;
+  -webkit-mask-image: linear-gradient(to left, black 40%, transparent 100%);
+  mask-image: linear-gradient(to left, black 40%, transparent 100%);
+  transition: all 0.25s ease;
+}
+.race-image-hover-zone:hover ~ .race-image-float .race-image {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: min(70vh, 480px);
+  border-radius: 6px;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+.race-image-credit {
+  margin-top: 0.2rem;
+  padding-right: 0.3rem;
+  font-size: 0.55rem;
+  letter-spacing: 0.03em;
+  color: var(--color-text-dim);
+  opacity: 0.7;
+}
 
 .race-header {
   display: flex;
@@ -374,18 +473,18 @@ onUnmounted(() => {
 .subrace-list {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.35rem;
   border-top: 1px dashed var(--color-border);
   padding-top: 0.75rem;
 }
 .subrace-card {
   background: var(--surface-ghost);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  padding: 0.35rem 0.6rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.3rem;
 }
 .subrace-header {
   display: flex;
@@ -428,4 +527,14 @@ onUnmounted(() => {
   transition: color 0.2s;
 }
 .race-link:hover { color: var(--color-gold-bright); }
+
+/* L'incrustation en fond de carte (petite, en z-index négatif) et son survol pour zoom
+   n'ont pas de sens sur mobile : pas de hover tactile, et l'image chevauche le texte sur
+   un écran étroit. On la masque plutôt que d'essayer de l'adapter. */
+@media (max-width: 767px) {
+  .race-image-hover-zone,
+  .race-image-float {
+    display: none;
+  }
+}
 </style>

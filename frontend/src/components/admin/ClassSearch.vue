@@ -70,7 +70,11 @@ async function loadClasses() {
       ? await fetch(`${BACKEND_URL}/api/classes/public/full`)
       : await apiFetch('/api/classes', { headers: { Authorization: `Bearer ${authStore.token}` } })
     if (res.ok) {
-      classes.value = await res.json()
+      const data = await res.json()
+      for (const dndClass of data) {
+        if (dndClass.subclasses?.length) dndClass.subclasses.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+      }
+      classes.value = data.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
     } else {
       loadError.value = true
     }
@@ -312,6 +316,14 @@ onUnmounted(() => {
 
     <div class="results-grid">
       <div v-for="dndClass in filteredClasses" :key="dndClass.slug" class="class-card">
+        <template v-if="dndClass.image">
+          <div class="class-image-hover-zone"></div>
+          <div class="class-image-float">
+            <img :src="dndClass.image" :alt="dndClass.name" class="class-image" loading="lazy" />
+            <span v-if="dndClass.image_credit" class="class-image-credit">{{ dndClass.image_credit }}</span>
+          </div>
+        </template>
+
         <div class="class-header">
           <AppIcon :icon="dndClass.icon" size="1.6rem" class="class-icon" />
           <div class="class-header-main">
@@ -323,6 +335,8 @@ onUnmounted(() => {
             </span>
           </div>
         </div>
+
+        <p v-if="dndClass.description" class="class-description">{{ dndClass.description }}</p>
 
         <div class="class-attrs">
           <span class="class-attr"><AppIcon icon="lucide:shield-check" size="0.75em" /> JS : {{ dndClass.saving_throws.join(', ') }}</span>
@@ -536,6 +550,9 @@ onUnmounted(() => {
 }
 
 .class-card {
+  position: relative;
+  z-index: 0;
+  overflow: hidden;
   background: var(--gradient-panel-soft);
   border: 1px solid var(--color-border);
   border-radius: 12px;
@@ -546,6 +563,99 @@ onUnmounted(() => {
   transition: border-color 0.2s;
 }
 .class-card:hover { border-color: var(--color-gold-dark); }
+/* Le zoom ne doit se déclencher qu'au survol de l'image elle-même, pas de toute la
+   carte : quand la zone de survol dédiée à l'image est active, la carte passe devant
+   ses voisines (z-index) et autorise le débordement (overflow) pour que l'image
+   incrustée puisse s'agrandir sans être rognée par les bords arrondis ni recouverte par
+   la carte suivante. :has() est nécessaire pour remonter l'effet du déclencheur
+   (descendant) jusqu'à la carte (ancêtre). */
+.class-card:has(.class-image-hover-zone:hover) {
+  z-index: 10;
+  overflow: visible;
+}
+
+.class-description {
+  margin: 0;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--color-text-dim);
+}
+
+/* Incrustation en fond de carte : l'image occupe le coin supérieur droit derrière le
+   texte (z-index négatif), fondue vers le fond via un masque en dégradé, plutôt qu'une
+   vignette qui pousse le texte (le flex-direction: column du parent ignore de toute
+   façon `float` sur ses enfants). */
+.class-image-float {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 55%;
+  max-width: 320px;
+  z-index: -1;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  transition: all 0.25s ease;
+}
+/* Zone invisible calquée sur la position/taille par défaut de l'image, mais placée
+   au-dessus du texte (z-index positif) pour pouvoir réellement capter le survol —
+   l'image réelle est en z-index négatif (derrière le texte), donc `:hover` directement
+   dessus ne se déclencherait jamais, le texte capterait toujours la souris en premier. */
+.class-image-hover-zone {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 55%;
+  max-width: 320px;
+  height: 11rem;
+  z-index: 4;
+  cursor: zoom-in;
+}
+/* Au survol de cette zone, l'image passe devant le texte, se détache dans un panneau
+   au fond du thème (masque totalement le texte derrière plutôt que de le laisser
+   transparaître) et reprend sa taille d'origine — bornée pour rester dans le viewport —
+   sans son fondu ni son recadrage. pointer-events reste "none" sur l'image elle-même
+   donc elle ne bloque jamais les clics une fois agrandie. */
+.class-image-hover-zone:hover ~ .class-image-float {
+  z-index: 3;
+  width: auto;
+  max-width: min(90vw, 480px);
+  background: var(--gradient-panel-soft);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 10px;
+  padding: 0.5rem;
+  box-shadow: -16px 12px 32px rgba(0, 0, 0, 0.6);
+}
+.class-image {
+  width: 100%;
+  height: 11rem;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  opacity: 1;
+  -webkit-mask-image: linear-gradient(to left, black 40%, transparent 100%);
+  mask-image: linear-gradient(to left, black 40%, transparent 100%);
+  transition: all 0.25s ease;
+}
+.class-image-hover-zone:hover ~ .class-image-float .class-image {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: min(70vh, 480px);
+  border-radius: 6px;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+.class-image-credit {
+  margin-top: 0.2rem;
+  padding-right: 0.3rem;
+  font-size: 0.55rem;
+  letter-spacing: 0.03em;
+  color: var(--color-text-dim);
+  opacity: 0.7;
+}
 
 .class-header {
   display: flex;
@@ -744,15 +854,15 @@ onUnmounted(() => {
 .subclass-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.3rem;
   border-top: 1px dashed var(--color-border);
   padding-top: 0.6rem;
 }
 .subclass-card {
   background: var(--surface-ghost);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -792,4 +902,14 @@ onUnmounted(() => {
   transition: color 0.2s;
 }
 .class-link:hover { color: var(--color-gold-bright); }
+
+/* L'incrustation en fond de carte (petite, en z-index négatif) et son survol pour zoom
+   n'ont pas de sens sur mobile : pas de hover tactile, et l'image chevauche le texte sur
+   un écran étroit. On la masque plutôt que d'essayer de l'adapter. */
+@media (max-width: 767px) {
+  .class-image-hover-zone,
+  .class-image-float {
+    display: none;
+  }
+}
 </style>
