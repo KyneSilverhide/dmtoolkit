@@ -63,17 +63,18 @@ const stepsColumns = computed(() => {
 .tension-steps {
   display: grid;
   grid-template-columns: repeat(var(--step-cols, 10), 1fr);
-  gap: clamp(0.4rem, 0.8vw, 1rem);
+  gap: clamp(0.6rem, 1.2vw, 1.5rem);
   max-width: 90vw;
 }
 .tension-step {
-  width: clamp(2.4rem, 4.5vw, 5.5rem);
-  height: clamp(2.4rem, 4.5vw, 5.5rem);
+  width: clamp(3rem, 6.5vw, 9rem);
+  height: clamp(3rem, 6.5vw, 9rem);
   display: flex; align-items: center; justify-content: center;
   border-radius: 50%;
-  border: clamp(2px, 0.25vw, 4px) solid var(--color-border);
+  border: clamp(2px, 0.3vw, 5px) solid var(--color-border);
   font-family: var(--font-heading), sans-serif;
-  font-size: clamp(0.75rem, 1.6vw, 2rem);
+  font-size: clamp(1.2rem, 2.6vw, 3.5rem);
+  font-weight: 700;
   color: var(--color-text-dim);
   transition: all 0.3s;
 }
