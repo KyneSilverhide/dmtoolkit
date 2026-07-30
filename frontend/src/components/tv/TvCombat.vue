@@ -18,6 +18,23 @@ const { conditions: dndConditions, load: loadConditions } = useConditions()
 onMounted(loadConditions)
 const CONDITION_LABELS = computed(() => Object.fromEntries(dndConditions.value.map(c => [c.id, c])))
 
+// Grille de référence fixée à 3x2 (6 cases) : la taille des cartes reste constante de 1 à 6
+// joueurs (les cases inutilisées restent vides plutôt que de laisser les cartes grossir).
+// Au-delà de 6, la grille grandit (colonnes proches d'un carré) et les cartes rétrécissent pour
+// que tout le monde tienne sans scroller.
+const REFERENCE_COLS = 3
+const REFERENCE_ROWS = 2
+const gridCols = computed(() => {
+  const n = props.players.length
+  if (n <= REFERENCE_COLS * REFERENCE_ROWS) return REFERENCE_COLS
+  return Math.max(REFERENCE_COLS, Math.ceil(Math.sqrt(n)))
+})
+const gridRows = computed(() => {
+  const n = props.players.length
+  if (n <= REFERENCE_COLS * REFERENCE_ROWS) return REFERENCE_ROWS
+  return Math.max(REFERENCE_ROWS, Math.ceil(n / gridCols.value))
+})
+
 function resolveMediaUrl(url) {
   if (!url) return ''
   if (url.startsWith('http')) return url
@@ -73,7 +90,10 @@ function parseConditions(player) {
         <AppIcon icon="game-icons:crossed-swords" size="1em" /> Round {{ combatRound }}
       </div>
     </div>
-    <main class="party-grid">
+    <main
+      class="party-grid"
+      :style="{ gridTemplateColumns: `repeat(${gridCols}, 1fr)`, gridTemplateRows: `repeat(${gridRows}, 1fr)` }"
+    >
       <div
         v-for="player in players"
         :key="player.id"
@@ -86,7 +106,7 @@ function parseConditions(player) {
         }"
         :data-testid="`tv-player-card-${player.id}`"
       >
-        <div class="card-header">
+        <div class="card-top-row">
           <div class="card-avatar">
             <img v-if="avatarUrl(player)" :src="avatarUrl(player)" :alt="player.player_name" class="avatar-img" />
             <span v-else class="avatar-fallback">{{ player.player_name?.[0]?.toUpperCase() || '?' }}</span>
@@ -95,16 +115,17 @@ function parseConditions(player) {
             <span class="card-name">{{ player.player_name }}</span>
             <span v-if="player.dnd_class" class="class-badge">{{ player.dnd_class }}</span>
           </div>
-        </div>
-        <div class="card-stats-row">
-          <div class="initiative-badge"><AppIcon icon="game-icons:dice-six-faces-five" size="1em" /> {{ player.initiative ?? '—' }}</div>
-          <div class="ac-shield">
-            <span class="ac-icon"><AppIcon icon="game-icons:shield" size="1em" color="var(--color-gold-bright)" /></span>
-            <span class="ac-value">{{ player.ac ?? 10 }}</span>
+          <div class="mini-stats">
+            <span class="mini-badge" title="Initiative">
+              <AppIcon icon="game-icons:dice-six-faces-five" size="1.1em" /> {{ player.initiative ?? '—' }}
+            </span>
+            <span class="mini-badge mini-ac" title="Classe d'armure">
+              <AppIcon icon="game-icons:shield" size="1.1em" color="var(--color-gold-bright)" /> {{ player.ac ?? 10 }}
+            </span>
+            <span v-if="player.is_concentrating" class="concentration-badge" title="Concentration">
+              <AppIcon icon="game-icons:bullseye" size="1.3em" color="var(--tv-info-text, var(--color-info-bright))" />
+            </span>
           </div>
-          <span v-if="player.is_concentrating" class="concentration-badge" title="Concentration">
-            <AppIcon icon="game-icons:bullseye" size="1.4em" color="var(--tv-info-text, var(--color-info-bright))" />
-          </span>
         </div>
 
         <div class="hp-section">
@@ -125,12 +146,13 @@ function parseConditions(player) {
             v-for="cid in parseConditions(player)"
             :key="cid"
             class="condition-badge"
+            :style="{ '--cond-color': CONDITION_LABELS[cid]?.color || 'var(--color-text-dim)' }"
             :title="CONDITION_LABELS[cid]?.label || cid"
           >
             <AppIcon
               :icon="CONDITION_LABELS[cid]?.icon || 'game-icons:lightning-trio'"
               :color="CONDITION_LABELS[cid]?.color || 'currentColor'"
-              size="1em"
+              size="1.3em"
             />
             {{ CONDITION_LABELS[cid]?.label || cid }}
           </span>
@@ -187,8 +209,6 @@ function parseConditions(player) {
 .party-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
-  grid-auto-rows: 1fr;
   gap: 1.25rem;
   padding: 1.5rem;
   align-content: stretch;
@@ -199,11 +219,11 @@ function parseConditions(player) {
   background: var(--tv-panel-bg);
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  padding: 1.75rem;
+  padding: 1.5rem 1.75rem;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 1.5rem;
+  justify-content: space-between;
+  gap: 1rem;
   position: relative;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
@@ -235,31 +255,33 @@ function parseConditions(player) {
   50% { box-shadow: 0 0 20px var(--tv-danger-border); }
 }
 
-.card-header {
+.card-top-row {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
+  gap: 1rem;
 }
-.card-stats-row {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
+
+/* Médaillon avatar rond (ou carré si l'image ne l'est pas) plutôt qu'une bande pleine hauteur :
+   reste identifiable de loin sans imposer une forme qui ne correspond pas aux tokens des joueurs. */
 .card-avatar {
-  width: 5rem; height: 5rem;
+  flex: 0 0 clamp(80px, 11vw, 130px);
+  width: clamp(80px, 11vw, 130px);
+  height: clamp(80px, 11vw, 130px);
   border-radius: 50%;
   border: 3px solid var(--color-gold-dark);
   overflow: hidden;
   background: var(--tv-control-bg);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .avatar-img { width: 100%; height: 100%; object-fit: cover; }
 .avatar-fallback {
   font-family: var(--font-title), sans-serif;
-  font-size: 2rem;
+  font-size: clamp(2rem, 4vw, 3.4rem);
   color: var(--color-gold-dark);
 }
+
 .card-identity {
   flex: 1;
   display: flex;
@@ -268,8 +290,9 @@ function parseConditions(player) {
 }
 .card-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 2rem;
-  letter-spacing: 0.06em;
+  font-weight: 700;
+  font-size: clamp(1.9rem, 2.8vw, 2.8rem);
+  letter-spacing: 0.04em;
   color: var(--color-text);
   white-space: nowrap;
   overflow: hidden;
@@ -277,53 +300,58 @@ function parseConditions(player) {
 }
 .class-badge {
   font-family: var(--font-heading), sans-serif;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-dim);
 }
-.initiative-badge {
+
+.mini-stats {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.55rem 1.1rem;
+  flex-shrink: 0;
+}
+.mini-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
   background: var(--tv-control-bg-muted);
   border: 1px solid var(--color-border);
   border-radius: 8px;
   font-family: var(--font-heading), sans-serif;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
+  font-weight: 600;
   color: var(--color-text-dim);
   white-space: nowrap;
 }
-.ac-shield {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 0.95rem;
+.mini-badge.mini-ac {
   background: var(--tv-gold-bg);
-  border: 1px solid var(--color-gold-dark);
-  border-radius: 8px;
-  white-space: nowrap;
-}
-.ac-icon { display: flex; align-items: center; }
-.ac-value {
-  font-family: var(--font-heading), sans-serif;
-  font-size: 1.7rem;
-  font-weight: bold;
+  border-color: var(--color-gold-dark);
   color: var(--color-gold-bright);
+  font-weight: bold;
 }
 .concentration-badge { display: flex; align-items: center; }
 
-.hp-section { display: flex; flex-direction: column; gap: 0.7rem; }
+/* Section PV : le point focal de la carte, elle absorbe l'espace vertical disponible plutôt
+   que de laisser du vide entre l'en-tête et le bas de carte. */
+.hp-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.9rem;
+}
 .hp-numbers {
   display: flex;
   align-items: baseline;
   gap: 0.4rem;
   font-family: var(--font-heading), sans-serif;
 }
-.hp-current { font-size: 4rem; font-weight: bold; line-height: 1; }
-.hp-separator { font-size: 2rem; color: var(--color-text-dim); }
-.hp-max { font-size: 2rem; color: var(--color-text-dim); }
+.hp-current { font-size: clamp(3rem, 6vw, 5.5rem); font-weight: bold; line-height: 1; }
+.hp-separator { font-size: clamp(1.6rem, 2.4vw, 2.4rem); color: var(--color-text-dim); }
+.hp-max { font-size: clamp(1.6rem, 2.4vw, 2.4rem); color: var(--color-text-dim); }
 .hp-label {
   font-size: 1.2rem;
   letter-spacing: 0.12em;
@@ -338,14 +366,14 @@ function parseConditions(player) {
   margin-left: auto;
 }
 .hp-track {
-  height: 26px;
+  height: clamp(22px, 3vw, 40px);
   background: var(--tv-track-bg);
-  border-radius: 13px;
+  border-radius: 999px;
   overflow: hidden;
 }
 .hp-fill {
   height: 100%;
-  border-radius: 13px;
+  border-radius: 999px;
   transition: width 0.5s ease, background 0.5s ease;
 }
 
@@ -359,13 +387,14 @@ function parseConditions(player) {
   align-items: center;
   gap: 0.35rem;
   padding: 0.45rem 0.9rem;
-  background: var(--tv-control-bg-muted);
-  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--cond-color) 22%, var(--tv-panel-bg));
+  border: 1px solid var(--cond-color);
   border-radius: 999px;
   font-family: var(--font-heading), sans-serif;
   font-size: 1.4rem;
+  font-weight: 600;
   letter-spacing: 0.06em;
-  color: var(--color-text-dim);
+  color: var(--cond-color);
 }
 
 .hp-delta {
