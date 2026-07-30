@@ -77,7 +77,7 @@ const density = computed(() => {
 }
 .merchant-desc {
   font-family: var(--font-body), sans-serif;
-  font-size: 1.1rem;
+  font-size: clamp(1.1rem, 1.4vw, 1.8rem);
   color: var(--color-text-dim);
   margin: 0.5rem 0 0;
 }
@@ -85,7 +85,7 @@ const density = computed(() => {
   flex: 1;
   display: grid;
   grid-template-columns: repeat(var(--merchant-cols, 4), 1fr);
-  grid-auto-rows: minmax(0, clamp(170px, 30vh, 320px));
+  grid-auto-rows: minmax(0, clamp(170px, 30vh, 360px));
   align-content: center;
   gap: 1.75rem;
   min-height: 0;
@@ -109,7 +109,7 @@ const density = computed(() => {
 }
 .item-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 2.4rem;
+  font-size: clamp(1.8rem, 2.2vw, 3.2rem);
   letter-spacing: 0.04em;
   color: var(--color-text);
   line-height: 1.2;
@@ -125,31 +125,32 @@ const density = computed(() => {
 }
 .item-price {
   font-family: var(--font-heading), sans-serif;
-  font-size: 2rem;
+  font-size: clamp(1.5rem, 1.7vw, 2.6rem);
   color: var(--color-gold-bright);
   font-weight: bold;
 }
 .item-stock {
   font-family: var(--font-heading), sans-serif;
-  font-size: 1.5rem;
+  font-size: clamp(1.6rem, 1.9vw, 2.8rem);
+  font-weight: 700;
   color: var(--color-text-dim);
 }
-.item-stock.unlimited { color: var(--tv-success-text); font-size: 2.2rem; }
+.item-stock.unlimited { color: var(--tv-success-text); font-size: clamp(2rem, 2.4vw, 3.4rem); }
 .item-stock.empty { color: var(--tv-danger-text); }
 
 /* 3 rows: trim a notch so everything still fits. */
-.merchant-grid.dense { gap: 1.2rem; grid-auto-rows: minmax(0, clamp(140px, 22vh, 240px)); }
+.merchant-grid.dense { gap: 1.2rem; grid-auto-rows: minmax(0, clamp(140px, 22vh, 280px)); }
 .merchant-grid.dense .merchant-item { padding: 1.2rem 1.5rem; gap: 0.7rem; }
-.merchant-grid.dense .item-name { font-size: 1.9rem; }
-.merchant-grid.dense .item-price { font-size: 1.6rem; }
-.merchant-grid.dense .item-stock { font-size: 1.2rem; }
-.merchant-grid.dense .item-stock.unlimited { font-size: 1.8rem; }
+.merchant-grid.dense .item-name { font-size: clamp(1.5rem, 1.7vw, 2.4rem); }
+.merchant-grid.dense .item-price { font-size: clamp(1.3rem, 1.4vw, 2rem); }
+.merchant-grid.dense .item-stock { font-size: clamp(1.4rem, 1.6vw, 2.4rem); }
+.merchant-grid.dense .item-stock.unlimited { font-size: clamp(1.8rem, 2vw, 2.8rem); }
 
 /* 4+ rows: trim further still — name stays the dominant element. */
-.merchant-grid.denser { gap: 0.85rem; grid-auto-rows: minmax(0, clamp(105px, 16vh, 170px)); }
+.merchant-grid.denser { gap: 0.85rem; grid-auto-rows: minmax(0, clamp(105px, 16vh, 220px)); }
 .merchant-grid.denser .merchant-item { padding: 0.85rem 1.1rem; gap: 0.5rem; border-radius: 10px; }
-.merchant-grid.denser .item-name { font-size: 1.5rem; -webkit-line-clamp: 2; }
-.merchant-grid.denser .item-price { font-size: 1.25rem; }
-.merchant-grid.denser .item-stock { font-size: 1rem; }
-.merchant-grid.denser .item-stock.unlimited { font-size: 1.4rem; }
+.merchant-grid.denser .item-name { font-size: clamp(1.3rem, 1.6vw, 2.2rem); -webkit-line-clamp: 2; }
+.merchant-grid.denser .item-price { font-size: clamp(1.1rem, 1.3vw, 1.8rem); }
+.merchant-grid.denser .item-stock { font-size: clamp(1.3rem, 1.5vw, 2.2rem); }
+.merchant-grid.denser .item-stock.unlimited { font-size: clamp(1.6rem, 1.8vw, 2.6rem); }
 </style>

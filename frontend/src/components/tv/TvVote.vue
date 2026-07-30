@@ -51,12 +51,12 @@ function voterNamesFor(optionIndex) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2.5rem;
+  gap: clamp(2rem, 4vh, 4.5rem);
   padding: 3rem;
 }
 .vote-question {
   font-family: var(--font-title), sans-serif;
-  font-size: clamp(2.2rem, 5.5vw, 4.5rem);
+  font-size: clamp(2.5rem, 6.5vw, 7rem);
   color: var(--color-gold-bright);
   text-shadow: var(--text-shadow-accent);
   text-align: center;
@@ -65,17 +65,17 @@ function voterNamesFor(optionIndex) {
 }
 .vote-progress {
   font-family: var(--font-heading), sans-serif;
-  font-size: 1.4rem;
+  font-size: clamp(1.4rem, 2vw, 2.6rem);
   letter-spacing: 0.15em;
   color: var(--color-text-dim);
   text-transform: uppercase;
 }
 .vote-results {
   width: 100%;
-  max-width: 1200px;
+  max-width: min(1200px, 85vw);
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: clamp(2rem, 3vh, 3.5rem);
 }
 .vote-option { display: flex; flex-direction: column; gap: 0.6rem; }
 .vote-option-header {
@@ -85,30 +85,30 @@ function voterNamesFor(optionIndex) {
 }
 .vote-option-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 1.8rem;
+  font-size: clamp(1.8rem, 2.6vw, 3.2rem);
   letter-spacing: 0.06em;
   color: var(--color-text);
 }
 .vote-option-count {
   font-family: var(--font-heading), sans-serif;
-  font-size: 1.4rem;
+  font-size: clamp(1.4rem, 1.8vw, 2.2rem);
   color: var(--color-text-dim);
 }
 .vote-bar {
-  height: 28px;
+  height: clamp(24px, 2.4vw, 56px);
   background: var(--tv-track-bg);
-  border-radius: 14px;
+  border-radius: 999px;
   overflow: hidden;
 }
 .vote-bar-fill {
   height: 100%;
   background: var(--color-gold-bright);
-  border-radius: 14px;
+  border-radius: 999px;
   transition: width 0.6s ease;
 }
 .voter-names {
   font-family: var(--font-heading), sans-serif;
-  font-size: 1.15rem;
+  font-size: clamp(1.15rem, 1.4vw, 1.7rem);
   color: var(--color-text-dim);
   letter-spacing: 0.04em;
 }
@@ -116,19 +116,19 @@ function voterNamesFor(optionIndex) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
+  gap: clamp(2rem, 3vh, 3rem);
 }
 .vote-waiting p {
   font-family: var(--font-heading), sans-serif;
-  font-size: 1.6rem;
+  font-size: clamp(1.6rem, 2.4vw, 3rem);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-text-dim);
 }
 .vote-orb {
-  width: 96px; height: 96px;
+  width: clamp(96px, 9vw, 220px); height: clamp(96px, 9vw, 220px);
   border-radius: 50%;
-  border: 4px solid var(--color-gold-dark);
+  border: clamp(4px, 0.4vw, 8px) solid var(--color-gold-dark);
   border-top-color: var(--color-gold-bright);
   animation: spin 1.2s linear infinite;
 }

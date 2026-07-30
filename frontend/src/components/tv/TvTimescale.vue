@@ -111,7 +111,7 @@ const dramaClass = computed(() => {
   position: relative;
   z-index: 1;
   font-family: var(--font-title), sans-serif;
-  font-size: clamp(2.5rem, 6vw, 7rem);
+  font-size: clamp(2.5rem, 7.5vw, 9rem);
   color: var(--color-gold-bright);
   text-shadow: var(--text-shadow-accent);
   letter-spacing: 0.1em;
@@ -123,19 +123,20 @@ const dramaClass = computed(() => {
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(var(--tile-cols, 10), 1fr);
-  gap: clamp(0.4rem, 0.8vw, 1.2rem);
+  gap: clamp(0.6rem, 1.2vw, 1.8rem);
   max-width: 95vw;
 }
 .timescale-tile {
   display: flex; align-items: center; justify-content: center;
-  width: clamp(5rem, 8.5vw, 11rem);
-  height: clamp(5rem, 8.5vw, 11rem);
+  width: clamp(6rem, 11vw, 15rem);
+  height: clamp(6rem, 11vw, 15rem);
   background: var(--tv-control-bg-muted);
-  border: clamp(2px, 0.25vw, 4px) solid var(--color-border);
-  border-radius: 10px;
+  border: clamp(2px, 0.3vw, 5px) solid var(--color-border);
+  border-radius: 12px;
   padding: 0.5rem;
   font-family: var(--font-heading), sans-serif;
-  font-size: clamp(1.3rem, 2.2vw, 2.8rem);
+  font-size: clamp(1.6rem, 3.2vw, 4.2rem);
+  font-weight: 700;
   color: var(--color-text-dim);
   transition: all 0.4s;
 }
@@ -170,7 +171,7 @@ const dramaClass = computed(() => {
 }
 .timescale-bar {
   position: relative;
-  height: clamp(24px, 3.5vh, 50px);
+  height: clamp(28px, 4.5vh, 70px);
   background: var(--tv-track-bg);
   border-radius: 10px;
   overflow: hidden;
@@ -193,7 +194,7 @@ const dramaClass = computed(() => {
 .ts-fill-rest.impossible { background: var(--tv-danger-bg); border-color: var(--tv-danger-border); }
 .ts-rest-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: clamp(1rem, 1.5vw, 1.8rem);
+  font-size: clamp(1.2rem, 1.9vw, 2.4rem);
   color: var(--tv-info-text);
   letter-spacing: 0.04em;
   white-space: nowrap;
@@ -220,9 +221,9 @@ const dramaClass = computed(() => {
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: clamp(0.8rem, 1.3vw, 2rem);
+  gap: clamp(0.8rem, 1.6vw, 2.5rem);
   font-family: var(--font-heading), sans-serif;
-  font-size: clamp(1.5rem, 2.5vw, 3rem);
+  font-size: clamp(1.5rem, 3.2vw, 4rem);
   letter-spacing: 0.08em;
 }
 .ts-info-elapsed, .ts-info-remaining { color: var(--color-text-dim); }

@@ -54,12 +54,12 @@ function formatFactionValue(v) {
   flex-direction: column;
   justify-content: center;
   padding: 3rem 5rem;
-  gap: 2.5rem;
+  gap: clamp(2rem, 4vh, 4rem);
 }
 .tv-header { text-align: center; margin-bottom: 1rem; }
 .session-title {
   font-family: var(--font-title), sans-serif;
-  font-size: clamp(2.2rem, 5vw, 4rem);
+  font-size: clamp(2.2rem, 5vw, 6rem);
   color: var(--color-gold-bright);
   text-shadow: var(--text-shadow-accent);
   letter-spacing: 0.1em;
@@ -68,20 +68,20 @@ function formatFactionValue(v) {
 .tv-faction-list {
   display: flex;
   flex-direction: column;
-  gap: 2.2rem;
+  gap: clamp(2rem, 4vh, 4.5rem);
   overflow: auto;
 }
 .tv-faction-card {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: clamp(1.5rem, 2.5vw, 3rem);
 }
 .tv-faction-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 3.4rem;
+  font-size: clamp(2rem, 3.2vw, 5rem);
   letter-spacing: 0.08em;
   color: var(--color-text);
-  width: 720px;
+  width: clamp(200px, 18vw, 520px);
   flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -89,21 +89,21 @@ function formatFactionValue(v) {
 }
 .tv-faction-bar-track {
   flex: 1;
-  height: 30px;
+  height: clamp(24px, 2.4vw, 64px);
   background: var(--tv-track-bg);
-  border-radius: 15px;
+  border-radius: 999px;
   overflow: hidden;
 }
 .tv-faction-bar-fill {
   height: 100%;
-  border-radius: 15px;
+  border-radius: 999px;
   transition: width 0.6s ease, background 0.6s ease;
 }
 .tv-faction-value {
   font-family: var(--font-heading), sans-serif;
-  font-size: 2.6rem;
+  font-size: clamp(1.6rem, 2.6vw, 4rem);
   font-weight: bold;
-  width: 5.5rem;
+  width: clamp(4rem, 6vw, 7rem);
   flex-shrink: 0;
   text-align: right;
 }
