@@ -574,14 +574,14 @@ async function joinSession() {
   font-family: var(--font-title), sans-serif;
   font-size: 1.8rem;
   color: var(--color-parchment);
-  margin-top: 0.5rem;
+  margin-top: 1.5rem;
 }
 .title-accent { color: var(--color-gold-bright); }
 
 .join-main {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 2rem 1.5rem;
 }
