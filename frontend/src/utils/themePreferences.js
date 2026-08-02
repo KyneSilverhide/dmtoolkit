@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'cf_theme_preferences'
-const VALID_THEMES = new Set(['dark', 'light', 'sceau', 'arcane'])
+const VALID_THEMES = new Set(['dark', 'light', 'sceau', 'arcane', 'nacre'])
 // Secours si --color-bg n'est pas résolvable (ex. tests sans style.css chargé) —
 // la source de vérité reste --color-bg dans style.css ; garder synchronisé si modifié.
 const THEME_META_COLORS_FALLBACK = {
@@ -7,17 +7,19 @@ const THEME_META_COLORS_FALLBACK = {
   light: '#f5f1e8',
   sceau: '#ffffff',
   arcane: '#0f0f12',
+  nacre: '#f4f3f7',
 }
 
 // Ordre de cycle du bouton de bascule (voir toggleTheme() dans AdminView/HomeView/
 // PlayerJoinView/PlayerInboxView, et AdminHeader.vue) — un clic avance d'une position.
-export const THEME_ORDER = ['dark', 'light', 'sceau', 'arcane']
+export const THEME_ORDER = ['dark', 'light', 'sceau', 'arcane', 'nacre']
 
 const THEME_META = {
   dark: { label: 'Sombre', icon: 'lucide:moon' },
   light: { label: 'Clair', icon: 'lucide:sun' },
   sceau: { label: 'Sceau', icon: 'lucide:store' },
   arcane: { label: 'Arcane', icon: 'lucide:gem' },
+  nacre: { label: 'Nacre', icon: 'lucide:shell' },
 }
 
 function readAll() {

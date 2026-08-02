@@ -327,6 +327,9 @@ async function login() {
   box-shadow: var(--shadow-soft);
   transform: translateY(-2px);
 }
+/* Sur les thèmes dont --gradient-accent-action est foncé (sceau/arcane/nacre),
+   --color-text-dim est illisible : le sous-titre doit suivre la couleur on-accent. */
+.mj-btn .btn-sub { color: var(--color-text-on-accent); opacity: 0.75; }
 
 .player-btn {
   border-color: var(--color-success-border);

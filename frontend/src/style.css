@@ -465,6 +465,115 @@
   color-scheme: dark;
 }
 
+:root[data-theme='nacre'] {
+  /* Palette "Nacre" — cinquième thème, création libre : perle lavande + irisation
+     rose→indigo. Distincte des deux thèmes clairs existants ('light' = crème
+     parcheminé chaud, 'sceau' = blanc/rouge sceau) par sa base froide : blanc perle
+     à peine teinté lavande (et non bleuté-sarcelle — une base menthe/teal lit
+     "clinique" plutôt que "nacre"), encre ardoise-violette UNIFIÉE entre titres et
+     corps de texte. Duo d'accents façon reflet de nacre — rose profond désaturé
+     (--color-gold*, action principale) + indigo (--color-accent2*, second reflet) —
+     choisis ADJACENTS sur le cercle chromatique : le dégradé du bouton principal
+     (--gradient-accent-action) glisse rose→violet→indigo, une irisation
+     perceptuellement continue, là où un duo rose→sarcelle traverse des gris boueux.
+     --color-gold-bright reste côté violet pour ne pas se confondre avec
+     --color-danger dans les termes soulignés en pointillés (glossaire/sorts).
+     --color-pending est décalé vers le sarcelle (même précédent que 'arcane' qui
+     l'avait décalé cyan) car le violet #6d5aa3 des autres thèmes clairs serait
+     illisible à côté de l'accent indigo. --color-success (et le combat distance
+     qui le suit) est refroidi vers un vert d'eau pour s'accorder à la base froide —
+     le vert chaud de 'light'/'sceau' détonne sur fond lavande. Les autres teintes
+     sémantiques (warning/info/danger) et la palette --school-* sont reprises
+     telles quelles de 'light'/'sceau' pour rester cohérentes sur fond clair. */
+  --color-bg: #f4f3f7;
+  --color-bg2: #eae8f0;
+  --color-parchment: #262232;
+  --color-parchment-dark: #5b5369;
+  --color-gold: #a63d6f;
+  --color-gold-bright: #77234e;
+  --color-gold-dark: #8f2f5e;
+  --color-accent2: #5563c1;
+  --color-accent2-dark: #444fa6;
+  --color-accent2-bright: #333c85;
+  --surface-accent2-soft: rgba(85, 99, 193, 0.1);
+  --surface-accent2-soft-strong: rgba(85, 99, 193, 0.16);
+  --color-red: #b0483f;
+  --color-red-bright: #c65950;
+  --color-crimson: #8a352e;
+  --color-text: #2b2735;
+  --color-text-dim: #6b6478;
+  --color-text-muted: #6b6478;
+  --color-text-on-accent: #ffffff;
+  --color-border: #d9d5e2;
+  --color-shadow: rgba(39, 34, 60, 0.14);
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f3f9;
+  --color-surface-soft: #ece9f2;
+  --color-success: #1f8a71;
+  --color-success-soft: rgba(31, 138, 113, 0.12);
+  --color-success-border: rgba(31, 138, 113, 0.28);
+  --color-success-rgb: 31, 138, 113;
+  --color-warning: #a96d12;
+  --color-warning-soft: rgba(169, 109, 18, 0.11);
+  --color-warning-border: rgba(169, 109, 18, 0.25);
+  --color-warning-rgb: 169, 109, 18;
+  --color-info: #4f7fc2;
+  --color-info-bright: #3d69a6;
+  --color-info-soft: rgba(79, 127, 194, 0.12);
+  --color-info-border: rgba(79, 127, 194, 0.25);
+  --color-danger: #b24a43;
+  --color-danger-soft: rgba(178, 74, 67, 0.11);
+  --color-danger-border: rgba(178, 74, 67, 0.25);
+  --color-danger-rgb: 178, 74, 67;
+  --color-pending: #0f7280;
+  --color-pending-rgb: 15, 114, 128;
+  --surface-raised: rgba(43, 37, 68, 0.05);
+  --surface-hover: rgba(43, 37, 68, 0.09);
+  --surface-track: rgba(43, 37, 68, 0.08);
+  --surface-ghost: rgba(43, 37, 68, 0.04);
+  --surface-highlight: rgba(255, 255, 255, 0.78);
+  --surface-gold-soft: rgba(166, 61, 111, 0.1);
+  --surface-gold-soft-strong: rgba(166, 61, 111, 0.16);
+  --surface-danger-soft: rgba(178, 74, 67, 0.12);
+  --surface-info-soft: rgba(79, 127, 194, 0.12);
+  --surface-overlay: rgba(31, 27, 47, 0.46);
+  --shadow-soft: 0 4px 16px rgba(39, 34, 60, 0.1);
+  --shadow-medium: 0 10px 28px rgba(39, 34, 60, 0.14);
+  --shadow-strong: 0 16px 40px rgba(39, 34, 60, 0.16);
+  --gradient-page: radial-gradient(ellipse at 50% 0%, #fdfdfe 0%, #f4f3f7 68%);
+  --gradient-panel: linear-gradient(160deg, var(--color-surface), var(--color-surface-alt));
+  --gradient-panel-soft: linear-gradient(160deg, var(--color-surface-alt), var(--color-surface-soft));
+  --gradient-accent-action: linear-gradient(160deg, var(--color-gold-bright), var(--color-accent2-dark));
+  --gradient-accent-action-hover: linear-gradient(160deg, var(--color-gold), var(--color-accent2));
+  --gradient-info-action: linear-gradient(160deg, #d7e4f8, #c6d9f1);
+  --gradient-info-action-hover: linear-gradient(160deg, #dfe9f9, #cfe0f4);
+  --gradient-success-action: linear-gradient(160deg, #d3ebe4, #c0e1d7);
+  --gradient-success-action-hover: linear-gradient(160deg, #dcf0ea, #cae7de);
+  --gradient-danger-action: linear-gradient(160deg, #f4dfdc, #eccfcb);
+  --gradient-danger-action-hover: linear-gradient(160deg, #f7e7e4, #eed7d3);
+  --text-shadow-emphasis: 0 0 20px rgba(166, 61, 111, 0.16), 0 1px 0 rgba(255, 255, 255, 0.78);
+  --text-shadow-accent: 0 0 14px rgba(166, 61, 111, 0.2), 0 1px 0 rgba(255, 255, 255, 0.78);
+  --combat-melee-accent: #a5464e;
+  --combat-melee-accent-light: #b24a43;
+  --combat-melee-glow: rgba(178, 74, 67, 0.2);
+  --combat-distance-accent: #1f8a71;
+  --combat-distance-accent-light: #1f8a71;
+  --combat-distance-glow: rgba(31, 138, 113, 0.18);
+  --combat-magique-accent: #5f58a7;
+  --combat-magique-accent-light: #5f58a7;
+  --combat-magique-glow: rgba(95, 88, 167, 0.2);
+  --school-abjuration: #567ca8;
+  --school-divination: #7565a2;
+  --school-enchantement: #af6376;
+  --school-evocation: #b17b3f;
+  --school-illusion: #5b8d99;
+  --school-invocation: #4f8e56;
+  --school-necromancie: #7d68a8;
+  --school-transmutation: #9e8f49;
+  --school-default: var(--color-gold-dark);
+  color-scheme: light;
+}
+
 * {
   margin: 0;
   padding: 0;
