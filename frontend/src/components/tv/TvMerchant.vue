@@ -44,9 +44,9 @@ const density = computed(() => {
         v-for="item in activeMerchant?.items"
         :key="item.id"
         class="merchant-item"
-        :class="{ 'out-of-stock': item.stock === 0 }"
+        :class="{ 'out-of-stock': item.stock === 0, 'is-magic': item.is_magic }"
       >
-        <div class="item-name">{{ item.name }}</div>
+        <div class="item-name">{{ item.is_magic ? '✨ ' : '' }}{{ item.name }}</div>
         <div class="item-footer">
           <span class="item-price">{{ item.price }} po</span>
           <span v-if="item.stock === -1" class="item-stock unlimited">∞</span>
@@ -106,6 +106,10 @@ const density = computed(() => {
 .merchant-item.out-of-stock {
   opacity: 0.4;
   border-color: var(--color-border);
+}
+.merchant-item.is-magic {
+  border-color: var(--color-gold-bright);
+  box-shadow: 0 0 0 1px var(--color-gold-bright), inset 0 0 24px var(--surface-gold-soft);
 }
 .item-name {
   font-family: var(--font-heading), sans-serif;

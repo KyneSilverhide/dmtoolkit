@@ -26,10 +26,14 @@ const emit = defineEmits(['set-cart-qty', 'submit-cart', 'clear-cart'])
           v-for="item in activeMerchant.items"
           :key="item.id"
           class="shop-item"
-          :class="{ 'out-of-stock': item.stock === 0 }"
+          :class="{ 'out-of-stock': item.stock === 0, 'is-magic': item.is_magic }"
         >
           <div class="shop-item-info">
-            <span class="shop-item-cat">{{ item.category }}</span>
+            <span class="shop-item-cat">
+              <AppIcon v-if="item.is_magic" icon="lucide:sparkles" size="0.85em" color="var(--color-gold-bright)" />
+              {{ item.category }}
+              <span v-if="item.is_magic && item.rarity" class="shop-item-rarity">· {{ item.rarity }}</span>
+            </span>
             <span class="shop-item-name">{{ item.name }}</span>
             <p v-if="item.description" class="shop-item-desc">{{ item.description }}</p>
           </div>
@@ -110,9 +114,16 @@ const emit = defineEmits(['set-cart-qty', 'submit-cart', 'clear-cart'])
   border-radius: 8px;
 }
 .shop-item.out-of-stock { opacity: 0.45; }
+.shop-item.is-magic {
+  background: var(--surface-gold-soft);
+  border-color: var(--color-gold-dark);
+  box-shadow: inset 3px 0 0 var(--color-gold-bright);
+}
 .shop-item-info { flex: 1; min-width: 0; }
 .shop-item-cat {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
   font-family: var(--font-heading), sans-serif;
   font-size: 0.52rem;
   letter-spacing: 0.15em;
@@ -120,6 +131,7 @@ const emit = defineEmits(['set-cart-qty', 'submit-cart', 'clear-cart'])
   color: var(--color-gold-dark);
   margin-bottom: 0.1rem;
 }
+.shop-item-rarity { text-transform: capitalize; color: var(--color-gold-bright); }
 .shop-item-name { font-family: var(--font-heading), sans-serif; font-size: 0.85rem; color: var(--color-parchment); }
 .shop-item-desc { font-family: var(--font-body), sans-serif; font-size: 0.72rem; color: var(--color-text-dim); margin: 0.1rem 0 0; }
 .shop-item-right { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }

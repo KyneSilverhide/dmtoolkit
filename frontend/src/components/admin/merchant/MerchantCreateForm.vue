@@ -30,7 +30,7 @@ async function runEquipSearch() {
   equipLoading.value = true
   equipError.value = false
   try {
-    const res = await apiFetch(`/api/equipment/search?q=${encodeURIComponent(q)}`, {
+    const res = await apiFetch(`/api/magic-items/search?q=${encodeURIComponent(q)}`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
     if (res.ok) {
@@ -83,12 +83,15 @@ function equipCategory(itemType) {
 }
 
 function addEquipItem(eq) {
+  const isMagic = eq.source_category === 'magic'
   newItems.value.push({
     name: eq.name,
     description: eq.description || '',
     price: parsePrice(eq.list_data?.prix),
     stock: -1,
-    category: equipCategory(eq.item_type),
+    category: isMagic ? 'Objet magique' : equipCategory(eq.item_type),
+    isMagic,
+    rarity: isMagic ? (eq.rarity || '') : '',
   })
   equipSearch.value = ''
   equipResults.value = []
@@ -100,7 +103,7 @@ function applyPreset(preset) {
 }
 
 function addItem() {
-  newItems.value.push({ name: '', description: '', price: 10, stock: -1, category: 'Divers' })
+  newItems.value.push({ name: '', description: '', price: 10, stock: -1, category: 'Divers', isMagic: false, rarity: '' })
 }
 
 function removeItem(idx) {
@@ -184,10 +187,12 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
           v-for="eq in equipResults"
           :key="eq.slug"
           class="equip-result-item"
+          :class="{ 'is-magic-row': eq.source_category === 'magic' }"
           @click="addEquipItem(eq)"
         >
+          <span v-if="eq.source_category === 'magic'" class="equip-result-magic-badge" title="Objet magique">✨</span>
           <span class="equip-result-name">{{ eq.name }}</span>
-          <span class="equip-result-type">{{ eq.item_type }}</span>
+          <span class="equip-result-type">{{ eq.source_category === 'magic' ? eq.rarity : eq.item_type }}</span>
           <span v-if="eq.list_data?.prix" class="equip-result-price">{{ eq.list_data.prix }}</span>
         </li>
       </ul>
@@ -207,12 +212,13 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
         <span class="item-col-header col-price">🪙 Prix (po)</span>
         <span class="item-col-header col-stock">📦 Stock <HelpTip id="merchant.stock" /></span>
         <span class="item-col-header col-cat">Catégorie</span>
+        <span class="item-col-header col-magic">✨ Magique</span>
       </div>
       <span class="item-col-spacer" />
     </div>
 
     <div class="items-list">
-      <div v-for="(item, idx) in newItems" :key="idx" class="item-row">
+      <div v-for="(item, idx) in newItems" :key="idx" class="item-row" :class="{ 'is-magic-row': item.isMagic }">
         <div class="item-row-fields">
           <input v-model="item.name" class="form-input item-name-input" placeholder="Nom" />
           <input v-model="item.description" class="form-input item-desc-input" placeholder="Description" />
@@ -225,6 +231,9 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
             min="-1"
           />
           <input v-model="item.category" class="form-input item-cat-input" placeholder="Catégorie" />
+          <label class="item-magic-toggle">
+            <input type="checkbox" v-model="item.isMagic" />
+          </label>
         </div>
         <button class="remove-btn" @click="removeItem(idx)">✕</button>
       </div>
@@ -314,16 +323,19 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 .col-price { flex: 1; min-width: 60px; }
 .col-stock { flex: 1; min-width: 60px; }
 .col-cat   { flex: 1; min-width: 80px; }
+.col-magic { flex: 0 0 60px; min-width: 60px; text-align: center; }
 .item-col-spacer { width: 31px; flex-shrink: 0; }
 
 .items-list { display: flex; flex-direction: column; gap: 0.4rem; max-height: 300px; overflow-y: auto; }
-.item-row { display: flex; align-items: center; gap: 0.4rem; }
+.item-row { display: flex; align-items: center; gap: 0.4rem; border-radius: 6px; }
+.item-row.is-magic-row { background: var(--surface-gold-soft); box-shadow: inset 2px 0 0 var(--color-gold-bright); }
 .item-row-fields { display: flex; gap: 0.35rem; flex: 1; flex-wrap: wrap; }
 .item-name-input { flex: 2; min-width: 100px; }
 .item-desc-input { flex: 3; min-width: 120px; }
 .item-price-input { flex: 1; min-width: 60px; }
 .item-stock-input { flex: 1; min-width: 60px; }
 .item-cat-input { flex: 1; min-width: 80px; }
+.item-magic-toggle { flex: 0 0 60px; min-width: 60px; display: flex; align-items: center; justify-content: center; }
 .remove-btn {
   background: none;
   border: 1px solid var(--color-danger-border);
@@ -456,6 +468,8 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
   transition: all 0.15s;
 }
 .equip-result-item:hover { border-color: var(--color-gold-dark); background: var(--surface-gold-soft); }
+.equip-result-item.is-magic-row { border-color: var(--color-gold-dark); background: var(--surface-gold-soft); box-shadow: inset 2px 0 0 var(--color-gold-bright); }
+.equip-result-magic-badge { flex-shrink: 0; }
 .equip-result-name { flex: 1; font-family: var(--font-heading), sans-serif; font-size: 0.82rem; color: var(--color-parchment); }
 .equip-result-type { font-size: 0.68rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
 .equip-result-price { font-family: var(--font-heading), sans-serif; font-size: 0.75rem; color: var(--color-gold-bright); min-width: 52px; text-align: right; }

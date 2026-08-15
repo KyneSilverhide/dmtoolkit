@@ -284,6 +284,10 @@ ALTER TABLE players ADD COLUMN IF NOT EXISTS subclass VARCHAR(100);
 -- résolu côté client (voir socket.js 'show-content') ; stocké tel quel en JSON.
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_content_type VARCHAR(20);
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_content_data TEXT;
+
+-- Objets magiques en vente chez un marchand : mis en évidence dans l'interface de vente.
+ALTER TABLE merchant_items ADD COLUMN IF NOT EXISTS is_magic BOOLEAN DEFAULT FALSE;
+ALTER TABLE merchant_items ADD COLUMN IF NOT EXISTS rarity VARCHAR(30);
 `
 
 async function runMigrations() {

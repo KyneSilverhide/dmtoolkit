@@ -1569,13 +1569,16 @@ function setupSocket(io) {
         const merchant = mr.rows[0]
         for (const item of (items || [])) {
           await pool.query(
-            'INSERT INTO merchant_items (merchant_id, name, description, price, stock, category) VALUES ($1, $2, $3, $4, $5, $6)',
-            [merchant.id, item.name, item.description || '', item.price, item.stock ?? -1, item.category || 'Divers']
+            'INSERT INTO merchant_items (merchant_id, name, description, price, stock, category, is_magic, rarity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+            [merchant.id, item.name, item.description || '', item.price, item.stock ?? -1, item.category || 'Divers', !!item.isMagic, item.rarity || null]
           )
         }
         const merchantData = await getMerchantData(merchant.id)
         socket.emit('merchant-created', merchantData)
-      } catch (err) { console.error(err) }
+      } catch (err) {
+        console.error(err)
+        socket.emit('error', { message: 'Erreur lors de la création du marchand' })
+      }
     })
 
     // ── Admin: show merchant on TV ──────────────────────────────────────────

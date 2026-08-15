@@ -32,9 +32,9 @@ const emit = defineEmits(['show-tv', 'close-merchant', 'delete-merchant'])
         </div>
       </div>
       <div class="merchant-items-preview">
-        <div v-for="item in merchant.items" :key="item.id" class="preview-item">
+        <div v-for="item in merchant.items" :key="item.id" class="preview-item" :class="{ 'is-magic': item.is_magic }">
           <span class="preview-cat">{{ item.category }}</span>
-          <span class="preview-name">{{ item.name }}</span>
+          <span class="preview-name">{{ item.is_magic ? '✨ ' : '' }}{{ item.name }}</span>
           <span class="preview-price">{{ item.price }} po</span>
           <span class="preview-stock" :class="{ empty: item.stock === 0 }">
             {{ item.stock === -1 ? '∞' : item.stock === 0 ? 'Épuisé' : `×${item.stock}` }}
@@ -145,6 +145,7 @@ const emit = defineEmits(['show-tv', 'close-merchant', 'delete-merchant'])
   font-family: var(--font-heading), sans-serif;
   font-size: 0.65rem;
 }
+.preview-item.is-magic { background: var(--surface-gold-soft); box-shadow: inset 2px 0 0 var(--color-gold-bright); }
 .preview-cat {
   color: var(--color-gold-dark);
   letter-spacing: 0.1em;

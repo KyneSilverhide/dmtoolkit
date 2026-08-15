@@ -159,8 +159,13 @@ function submitRespond({ action, customPrice }) {
 
 // ── Socket handlers ──────────────────────────────────────────────────────
 function handleMerchantCreated(data) {
+  createInFlight = false
   merchants.value.unshift(data)
   view.value = 'list'
+}
+
+function handleSocketError() {
+  createInFlight = false
 }
 
 function handleMerchantUpdated(data) {
@@ -197,6 +202,7 @@ onMounted(() => {
   socket.on('purchase-request', handlePurchaseRequest)
   socket.on('purchase-responded', handlePurchaseResponded)
   socket.on('counter-offer-response', handleCounterOfferResponse)
+  socket.on('error', handleSocketError)
 })
 
 onUnmounted(() => {
@@ -207,6 +213,7 @@ onUnmounted(() => {
   socket.off('purchase-request', handlePurchaseRequest)
   socket.off('purchase-responded', handlePurchaseResponded)
   socket.off('counter-offer-response', handleCounterOfferResponse)
+  socket.off('error', handleSocketError)
 })
 </script>
 
