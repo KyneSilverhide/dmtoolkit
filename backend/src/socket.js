@@ -1812,13 +1812,22 @@ function setupSocket(io) {
           io.to(`tv:${sessionId}`).emit('tv-mode-changed', { mode: 'lobby' })
           io.to(`session:${sessionId}`).emit('merchant-closed')
         }
+        // purchase_requests.item_id n'a pas de ON DELETE CASCADE : détacher l'historique
+        // avant de laisser le cascade merchants → merchant_items s'exécuter, sinon la FK bloque le DELETE.
+        await pool.query(
+          'UPDATE purchase_requests SET item_id = NULL WHERE item_id IN (SELECT id FROM merchant_items WHERE merchant_id = $1)',
+          [merchantId]
+        )
         // Delete merchant (merchant_items cascade via FK)
         await pool.query(
           'DELETE FROM merchants WHERE id = $1 AND session_id = $2',
           [merchantId, sessionId]
         )
         io.to(`admin:${sessionId}`).emit('merchant-deleted', { merchantId })
-      } catch (err) { console.error(err) }
+      } catch (err) {
+        console.error(err)
+        socket.emit('error', { message: 'Erreur lors de la suppression du marchand' })
+      }
     })
 
     // ── Player: respond to counter offer ────────────────────────────────────
