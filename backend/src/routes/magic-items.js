@@ -48,8 +48,31 @@ function handleSearch(req, res) {
   return res.json([...nameMatches, ...otherMatches].slice(0, 80))
 }
 
+// Ordre croissant de rareté — les objets sans rareté reconnue (objets variables/artéfacts
+// encodés via item_type plutôt que rarity) sont exclus du tirage aléatoire.
+const RARITY_ORDER = ['commun', 'peu commun', 'rare', 'très rare', 'légendaire']
+
+function handleRandom(req, res) {
+  const maxRank = RARITY_ORDER.indexOf((req.query.maxRarity || '').toLowerCase())
+  const count = Math.max(1, Math.min(20, parseInt(req.query.count) || 1))
+
+  const eligible = getMagicItems().filter(i => {
+    const rank = RARITY_ORDER.indexOf((i.rarity || '').toLowerCase())
+    return rank !== -1 && (maxRank === -1 || rank <= maxRank)
+  })
+
+  const pool = [...eligible]
+  const picked = []
+  while (pool.length > 0 && picked.length < count) {
+    const idx = Math.floor(Math.random() * pool.length)
+    picked.push(pool.splice(idx, 1)[0])
+  }
+  return res.json(picked.map(i => ({ ...i, source_category: 'magic' })))
+}
+
 router.get('/', authenticateToken, handleList)
 router.get('/search', authenticateToken, handleSearch)
+router.get('/random', authenticateToken, handleRandom)
 router.get('/public/search', handleSearch)
 // Public (sans auth) — parcours complet sans recherche, utilisé par l'écran joueur qui
 // réutilise ItemSearch.vue en mode `player-mode`.

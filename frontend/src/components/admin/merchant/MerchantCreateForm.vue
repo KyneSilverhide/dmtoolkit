@@ -1,17 +1,32 @@
 <script setup>
-import { ref, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import AppIcon from '../../AppIcon.vue'
 import HelpTip from '../../HelpTip.vue'
 import MERCHANT_PRESETS from '../../../assets/merchantPresets.js'
 import { authStore } from '@/stores/auth.js'
 import { apiFetch } from '@/utils/apiFetch.js'
 
+const props = defineProps({
+  merchant: { type: Object, default: null },
+})
+
 const emit = defineEmits(['submit', 'cancel'])
 
+const isEditing = computed(() => !!props.merchant)
+
 const presetPanelOpen = ref(false)
-const newName = ref('')
-const newDesc = ref('')
-const newItems = ref([])
+const newName = ref(props.merchant?.name || '')
+const newDesc = ref(props.merchant?.description || '')
+const newItems = ref((props.merchant?.items || []).map(i => ({
+  id: i.id,
+  name: i.name,
+  description: i.description || '',
+  price: i.price,
+  stock: i.stock,
+  category: i.category || 'Divers',
+  isMagic: !!i.is_magic,
+  rarity: i.rarity || '',
+})))
 
 // Equipment search
 const equipSearch = ref('')
@@ -82,12 +97,23 @@ function equipCategory(itemType) {
   return 'Équipement'
 }
 
+// Prix indicatifs par rareté (DMG) utilisés quand l'objet magique n'a pas de prix
+// renseigné dans les données source — évite des objets à 0 po par défaut.
+const MAGIC_RARITY_DEFAULT_PRICE = {
+  'commun': 50,
+  'peu commun': 300,
+  'rare': 4000,
+  'très rare': 40000,
+  'légendaire': 200000,
+}
+
 function addEquipItem(eq) {
   const isMagic = eq.source_category === 'magic'
+  const explicitPrice = parsePrice(eq.list_data?.prix)
   newItems.value.push({
     name: eq.name,
     description: eq.description || '',
-    price: parsePrice(eq.list_data?.prix),
+    price: explicitPrice || (isMagic ? (MAGIC_RARITY_DEFAULT_PRICE[eq.rarity] || 100) : 0),
     stock: -1,
     category: isMagic ? 'Objet magique' : equipCategory(eq.item_type),
     isMagic,
@@ -95,6 +121,33 @@ function addEquipItem(eq) {
   })
   equipSearch.value = ''
   equipResults.value = []
+}
+
+// Random magic items
+const randomPanelOpen = ref(false)
+const randomCount = ref(3)
+const randomMaxRarity = ref('légendaire')
+const randomLoading = ref(false)
+const randomError = ref(false)
+
+async function addRandomMagicItems() {
+  randomLoading.value = true
+  randomError.value = false
+  try {
+    const count = Math.max(1, Math.min(20, parseInt(randomCount.value) || 1))
+    const res = await apiFetch(
+      `/api/magic-items/random?count=${count}&maxRarity=${encodeURIComponent(randomMaxRarity.value)}`,
+      { headers: { Authorization: `Bearer ${authStore.token}` } }
+    )
+    if (!res.ok) { randomError.value = true; return }
+    const picked = await res.json()
+    for (const eq of picked) addEquipItem(eq)
+  } catch (err) {
+    console.error(err)
+    randomError.value = true
+  } finally {
+    randomLoading.value = false
+  }
 }
 
 function applyPreset(preset) {
@@ -126,8 +179,9 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 
 <template>
   <div class="create-form">
-    <!-- Preset picker panel -->
-    <div class="preset-toggle-row">
+    <!-- Preset picker panel (uniquement à la création — sur un marchand existant, les
+         articles ont des ids liés à l'historique d'achat, un preset écraserait tout) -->
+    <div v-if="!isEditing" class="preset-toggle-row">
       <HelpTip id="merchant.preset">
         <button class="preset-toggle-btn" @click="presetPanelOpen = !presetPanelOpen">
           <AppIcon icon="game-icons:shop" size="0.85em" />
@@ -135,7 +189,7 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
         </button>
       </HelpTip>
     </div>
-    <div v-if="presetPanelOpen" class="preset-panel">
+    <div v-if="!isEditing && presetPanelOpen" class="preset-panel">
       <p class="preset-panel-hint">Cliquez sur un type pour pré-remplir le formulaire. Vous pourrez tout modifier ensuite.</p>
       <div class="preset-grid">
         <button
@@ -166,8 +220,36 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
         <button class="small-btn" @click="equipSearchOpen = !equipSearchOpen">
           <AppIcon icon="lucide:search" size="0.85em" /> Rechercher un objet
         </button>
+        <button class="small-btn" @click="randomPanelOpen = !randomPanelOpen">
+          <AppIcon icon="lucide:dices" size="0.85em" /> Objets magiques aléatoires
+        </button>
         <button class="small-btn" @click="addItem">+ Ajouter</button>
       </div>
+    </div>
+
+    <!-- Random magic items panel -->
+    <div v-if="randomPanelOpen" class="random-panel">
+      <div class="random-row">
+        <label class="random-label">
+          Nombre
+          <input v-model.number="randomCount" type="number" class="form-input random-count-input" min="1" max="20" />
+        </label>
+        <label class="random-label">
+          Rareté max
+          <select v-model="randomMaxRarity" class="form-input random-rarity-select">
+            <option value="commun">Commun</option>
+            <option value="peu commun">Peu commun</option>
+            <option value="rare">Rare</option>
+            <option value="très rare">Très rare</option>
+            <option value="légendaire">Légendaire</option>
+          </select>
+        </label>
+        <button class="small-btn random-generate-btn" :disabled="randomLoading" @click="addRandomMagicItems">
+          <AppIcon :icon="randomLoading ? 'lucide:loader' : 'lucide:sparkles'" size="0.85em" />
+          {{ randomLoading ? '…' : 'Générer' }}
+        </button>
+      </div>
+      <p v-if="randomError" class="equip-empty equip-err">⚠ Impossible de générer des objets magiques.</p>
     </div>
 
     <!-- Equipment search panel -->
@@ -239,13 +321,16 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
       </div>
     </div>
 
-    <button
-      class="action-btn"
-      :disabled="!canSubmit()"
-      @click="submit"
-    >
-      ✓ Créer le marchand
-    </button>
+    <div class="form-actions">
+      <button
+        class="action-btn"
+        :disabled="!canSubmit()"
+        @click="submit"
+      >
+        {{ isEditing ? '💾 Enregistrer les modifications' : '✓ Créer le marchand' }}
+      </button>
+      <button v-if="isEditing" class="cancel-btn" @click="emit('cancel')">Annuler</button>
+    </div>
   </div>
 </template>
 
@@ -349,6 +434,7 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 }
 .remove-btn:hover { background: var(--color-danger-soft); }
 
+.form-actions { display: flex; gap: 0.5rem; }
 .action-btn {
   padding: 0.55rem 1rem;
   background: var(--gradient-accent-action);
@@ -364,6 +450,21 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 }
 .action-btn:hover:not(:disabled) { background: var(--gradient-accent-action-hover); }
 .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.cancel-btn {
+  padding: 0.55rem 1rem;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cancel-btn:hover { border-color: var(--color-danger-border); color: var(--color-danger); }
 
 /* Preset picker */
 .preset-toggle-row { display: flex; justify-content: center; }
@@ -432,6 +533,32 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
   padding: 0.1rem 0.4rem;
   margin-top: 0.1rem;
 }
+
+/* Random magic items */
+.random-panel {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 10px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.random-row { display: flex; align-items: flex-end; gap: 0.5rem; flex-wrap: wrap; }
+.random-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+.random-count-input { width: 70px; }
+.random-rarity-select { min-width: 130px; }
+.random-generate-btn { align-self: flex-end; }
+.random-generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Equipment search */
 .equip-search-panel {

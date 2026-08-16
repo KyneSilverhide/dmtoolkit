@@ -73,6 +73,7 @@ cd frontend && npm run dev
 - **Jamais de DDL manuel.** Toujours `ALTER TABLE … ADD COLUMN IF NOT EXISTS …` à la fin de `migrations.js`.
 - Ne jamais supprimer de colonnes existantes.
 - Le code de session `0000` est **réservé** à la session démo — jamais généré par la logique normale (génère 1000–9999).
+- `purchase_requests.item_id` référence `merchant_items(id)` **sans** `ON DELETE CASCADE`. Un `DELETE FROM merchant_items` sur un item déjà référencé par une ligne `purchase_requests` (même `accepted`/`rejected`, ces lignes ne sont jamais purgées) échoue sur la contrainte FK. Avant de supprimer un `merchant_item`, vérifier l'absence d'historique (`SELECT 1 FROM purchase_requests WHERE item_id = …`) et archiver (`stock = 0`) plutôt que supprimer si l'historique existe — voir le handler socket `update-merchant`.
 
 ### Backend
 - **CommonJS uniquement** — pas d'`import`/`export` ESM.

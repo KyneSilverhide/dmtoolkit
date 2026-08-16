@@ -15,7 +15,8 @@ import MerchantRespondDialog from './merchant/MerchantRespondDialog.vue'
 const merchants = ref([])
 const pendingRequests = ref([])
 const loading = ref(false)
-const view = ref('list') // 'list' | 'create'
+const view = ref('list') // 'list' | 'create' | 'edit'
+const editingMerchant = ref(null)
 
 // Respond dialog
 const respondingRequest = ref(null)
@@ -103,6 +104,7 @@ function groupLoadedRequests(rows) {
 
 // ── Socket actions ───────────────────────────────────────────────────────
 let createInFlight = false
+let savingMerchantId = null
 
 function onCreateSubmit({ name, description, items }) {
   if (createInFlight || !sessionStore.activeSession) return
@@ -110,6 +112,30 @@ function onCreateSubmit({ name, description, items }) {
   const socket = getSocket()
   socket.emit('create-merchant', {
     sessionId: sessionStore.activeSession.id,
+    name,
+    description,
+    items,
+  })
+}
+
+function startEdit(merchant) {
+  editingMerchant.value = merchant
+  view.value = 'edit'
+}
+
+function cancelEdit() {
+  editingMerchant.value = null
+  view.value = 'list'
+}
+
+function onEditSubmit({ name, description, items }) {
+  if (createInFlight || !sessionStore.activeSession || !editingMerchant.value) return
+  createInFlight = true
+  savingMerchantId = editingMerchant.value.id
+  const socket = getSocket()
+  socket.emit('update-merchant', {
+    sessionId: sessionStore.activeSession.id,
+    merchantId: editingMerchant.value.id,
     name,
     description,
     items,
@@ -166,11 +192,18 @@ function handleMerchantCreated(data) {
 
 function handleSocketError() {
   createInFlight = false
+  savingMerchantId = null
 }
 
 function handleMerchantUpdated(data) {
   const idx = merchants.value.findIndex(m => m.id === data.id)
   if (idx !== -1) merchants.value[idx] = data
+  if (savingMerchantId === data.id) {
+    createInFlight = false
+    savingMerchantId = null
+    editingMerchant.value = null
+    view.value = 'list'
+  }
 }
 
 function handleMerchantDeleted({ merchantId }) {
@@ -222,14 +255,21 @@ onUnmounted(() => {
     <div class="manager-header">
       <h2 class="section-title"><AppIcon icon="game-icons:shop" size="0.9em" color="var(--color-gold-bright)" /> Gestion des Marchands</h2>
       <div class="header-actions">
-        <button class="tab-btn" :class="{ active: view === 'list' }" @click="view = 'list'">Liste</button>
-        <button class="tab-btn" :class="{ active: view === 'create' }" @click="view = 'create'">+ Créer</button>
+        <button class="tab-btn" :class="{ active: view === 'list' }" @click="view = 'list'; editingMerchant = null">Liste</button>
+        <button class="tab-btn" :class="{ active: view === 'create' }" @click="view = 'create'; editingMerchant = null">+ Créer</button>
       </div>
     </div>
 
     <MerchantRequestsBanner :requests="pendingRequests" @respond="openRespond" />
 
     <MerchantCreateForm v-if="view === 'create'" @submit="onCreateSubmit" />
+
+    <MerchantCreateForm
+      v-else-if="view === 'edit'"
+      :merchant="editingMerchant"
+      @submit="onEditSubmit"
+      @cancel="cancelEdit"
+    />
 
     <MerchantList
       v-else
@@ -238,6 +278,7 @@ onUnmounted(() => {
       @show-tv="showOnTv"
       @close-merchant="closeMerchant"
       @delete-merchant="deleteMerchant"
+      @edit-merchant="startEdit"
     />
 
     <MerchantRespondDialog

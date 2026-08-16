@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { rarityColor } from '@/utils/rarity.js'
 
 const props = defineProps({
   activeMerchant: { type: Object, default: null },
@@ -27,6 +28,18 @@ const density = computed(() => {
   if (rows.value === 3) return 'dense'
   return 'normal'
 })
+
+// Astuce anti-troncature : au lieu de couper le nom avec "…", on réduit sa taille de
+// police et on autorise une 3e ligne quand il est trop long pour tenir en 2 lignes à
+// taille normale — le nom complet reste toujours visible.
+function nameStyle(item) {
+  const label = (item.is_magic ? '✨ ' : '') + (item.name || '')
+  const len = label.length
+  if (len > 40) return { '--name-scale': 0.55, '-webkit-line-clamp': 3 }
+  if (len > 28) return { '--name-scale': 0.68, '-webkit-line-clamp': 3 }
+  if (len > 18) return { '--name-scale': 0.85, '-webkit-line-clamp': 2 }
+  return { '--name-scale': 1, '-webkit-line-clamp': 2 }
+}
 </script>
 
 <template>
@@ -45,8 +58,9 @@ const density = computed(() => {
         :key="item.id"
         class="merchant-item"
         :class="{ 'out-of-stock': item.stock === 0, 'is-magic': item.is_magic }"
+        :style="item.is_magic && item.rarity ? { '--rarity-color': rarityColor(item.rarity) } : {}"
       >
-        <div class="item-name">{{ item.is_magic ? '✨ ' : '' }}{{ item.name }}</div>
+        <div class="item-name" :style="nameStyle(item)">{{ item.is_magic ? '✨ ' : '' }}{{ item.name }}</div>
         <div class="item-footer">
           <span class="item-price">{{ item.price }} po</span>
           <span v-if="item.stock === -1" class="item-stock unlimited">∞</span>
@@ -108,12 +122,19 @@ const density = computed(() => {
   border-color: var(--color-border);
 }
 .merchant-item.is-magic {
-  border-color: var(--color-gold-bright);
-  box-shadow: 0 0 0 1px var(--color-gold-bright), inset 0 0 24px var(--surface-gold-soft);
+  /* !important requis : la règle globale .merchant-item (style.css) force déjà
+     background/border-color en !important pour l'animation d'entrée des cartes.
+     --tv-panel-bg est un gradient (pas une couleur unie) : color-mix() doit se baser
+     sur --color-surface-alt à la place, sous peine de déclaration invalide et ignorée. */
+  --rarity-color: var(--color-gold-bright);
+  border-color: var(--rarity-color) !important;
+  background: color-mix(in oklab, var(--rarity-color) 16%, var(--color-surface-alt)) !important;
+  box-shadow: 0 0 0 1px var(--rarity-color), inset 0 0 24px color-mix(in oklab, var(--rarity-color) 22%, transparent);
 }
 .item-name {
+  --name-scale: 1;
   font-family: var(--font-heading), sans-serif;
-  font-size: clamp(1.8rem, 2.2vw, 3.2rem);
+  font-size: calc(clamp(1.8rem, 2.2vw, 3.2rem) * var(--name-scale));
   letter-spacing: 0.04em;
   color: var(--color-text);
   line-height: 1.2;
@@ -145,7 +166,7 @@ const density = computed(() => {
 /* 3 rows: trim a notch so everything still fits. */
 .merchant-grid.dense { gap: 1.2rem; grid-auto-rows: minmax(0, clamp(140px, 22vh, 280px)); }
 .merchant-grid.dense .merchant-item { padding: 1.2rem 1.5rem; gap: 0.7rem; }
-.merchant-grid.dense .item-name { font-size: clamp(1.5rem, 1.7vw, 2.4rem); }
+.merchant-grid.dense .item-name { font-size: calc(clamp(1.5rem, 1.7vw, 2.4rem) * var(--name-scale)); }
 .merchant-grid.dense .item-price { font-size: clamp(1.3rem, 1.4vw, 2rem); }
 .merchant-grid.dense .item-stock { font-size: clamp(1.4rem, 1.6vw, 2.4rem); }
 .merchant-grid.dense .item-stock.unlimited { font-size: clamp(1.8rem, 2vw, 2.8rem); }
@@ -153,7 +174,7 @@ const density = computed(() => {
 /* 4+ rows: trim further still — name stays the dominant element. */
 .merchant-grid.denser { gap: 0.85rem; grid-auto-rows: minmax(0, clamp(105px, 16vh, 220px)); }
 .merchant-grid.denser .merchant-item { padding: 0.85rem 1.1rem; gap: 0.5rem; border-radius: 10px; }
-.merchant-grid.denser .item-name { font-size: clamp(1.3rem, 1.6vw, 2.2rem); -webkit-line-clamp: 2; }
+.merchant-grid.denser .item-name { font-size: calc(clamp(1.3rem, 1.6vw, 2.2rem) * var(--name-scale)); }
 .merchant-grid.denser .item-price { font-size: clamp(1.1rem, 1.3vw, 1.8rem); }
 .merchant-grid.denser .item-stock { font-size: clamp(1.3rem, 1.5vw, 2.2rem); }
 .merchant-grid.denser .item-stock.unlimited { font-size: clamp(1.6rem, 1.8vw, 2.6rem); }

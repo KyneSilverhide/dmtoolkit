@@ -1581,6 +1581,58 @@ function setupSocket(io) {
       }
     })
 
+    // ── Admin: update merchant (name/description + items upsert) ────────────
+    socket.on('update-merchant', async ({ sessionId, merchantId, name, description, items }) => {
+      if (!socket.admin) return
+      try {
+        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
+        const mr = await pool.query(
+          'UPDATE merchants SET name = $1, description = $2 WHERE id = $3 AND session_id = $4 RETURNING *',
+          [name, description || '', merchantId, sessionId]
+        )
+        if (!mr.rows[0]) return
+
+        const existingRes = await pool.query('SELECT id FROM merchant_items WHERE merchant_id = $1', [merchantId])
+        const existingIds = new Set(existingRes.rows.map(r => r.id))
+        const keptIds = new Set()
+
+        for (const item of (items || [])) {
+          if (item.id && existingIds.has(item.id)) {
+            keptIds.add(item.id)
+            await pool.query(
+              'UPDATE merchant_items SET name = $1, description = $2, price = $3, stock = $4, category = $5, is_magic = $6, rarity = $7 WHERE id = $8',
+              [item.name, item.description || '', item.price, item.stock ?? -1, item.category || 'Divers', !!item.isMagic, item.rarity || null, item.id]
+            )
+          } else {
+            await pool.query(
+              'INSERT INTO merchant_items (merchant_id, name, description, price, stock, category, is_magic, rarity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+              [merchantId, item.name, item.description || '', item.price, item.stock ?? -1, item.category || 'Divers', !!item.isMagic, item.rarity || null]
+            )
+          }
+        }
+
+        // Items retirés du formulaire : suppression directe si jamais achetés, sinon
+        // archivage (stock à 0) car purchase_requests.item_id référence merchant_items
+        // sans ON DELETE CASCADE — un DELETE échouerait sur une contrainte FK.
+        for (const id of existingIds) {
+          if (keptIds.has(id)) continue
+          const historyRes = await pool.query('SELECT 1 FROM purchase_requests WHERE item_id = $1 LIMIT 1', [id])
+          if (historyRes.rows.length > 0) {
+            await pool.query('UPDATE merchant_items SET stock = 0 WHERE id = $1', [id])
+          } else {
+            await pool.query('DELETE FROM merchant_items WHERE id = $1', [id])
+          }
+        }
+
+        const merchantData = await getMerchantData(merchantId)
+        socket.emit('merchant-updated', merchantData)
+        broadcastToSession(sessionId, 'merchant-items-updated', merchantData, ['tv', 'session'])
+      } catch (err) {
+        console.error(err)
+        socket.emit('error', { message: 'Erreur lors de la mise à jour du marchand' })
+      }
+    })
+
     // ── Admin: show merchant on TV ──────────────────────────────────────────
     socket.on('show-merchant', async ({ sessionId, merchantId }) => {
       if (!socket.admin) return

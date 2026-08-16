@@ -6,7 +6,7 @@ defineProps({
   loading: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['show-tv', 'close-merchant', 'delete-merchant'])
+const emit = defineEmits(['show-tv', 'close-merchant', 'delete-merchant', 'edit-merchant'])
 </script>
 
 <template>
@@ -24,6 +24,9 @@ const emit = defineEmits(['show-tv', 'close-merchant', 'delete-merchant'])
         <div class="merchant-actions">
           <button class="show-tv-btn" @click="emit('show-tv', merchant.id)">
             <AppIcon icon="lucide:monitor" size="0.85em" /> Sur TV
+          </button>
+          <button class="edit-merchant-btn" @click="emit('edit-merchant', merchant)" title="Éditer ce marchand">
+            <AppIcon icon="lucide:pencil" size="0.85em" /> Éditer
           </button>
           <button class="close-merchant-btn" @click="emit('close-merchant')" title="Clôturer le marchand pour les joueurs">✕ Fermer</button>
           <button class="delete-merchant-btn" @click="emit('delete-merchant', merchant.id)" title="Supprimer définitivement ce marchand">
@@ -97,6 +100,21 @@ const emit = defineEmits(['show-tv', 'close-merchant', 'delete-merchant'])
   flex-shrink: 0;
 }
 .show-tv-btn:hover { background: var(--surface-gold-soft-strong); border-color: var(--color-gold-bright); color: var(--color-gold-bright); }
+.edit-merchant-btn {
+  padding: 0.35rem 0.75rem;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.edit-merchant-btn:hover { border-color: var(--color-gold-dark); color: var(--color-gold-dark); }
 .close-merchant-btn {
   padding: 0.35rem 0.75rem;
   background: var(--color-danger-soft);
