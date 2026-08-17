@@ -26,8 +26,25 @@ export class AdminPage {
     await this.page.getByText(code).first().click()
   }
 
+  // Depuis la refonte UI, les 24 clés d'onglet sont groupées par domaine dans le rail
+  // (AdminNavSidebar.vue) : seul le domaine actif est déplié (`v-show`), les autres
+  // `tab-<key>` existent dans le DOM mais restent invisibles tant qu'on n'a pas ouvert
+  // leur domaine parent — sans ce garde-fou, .click() attend un élément qui ne devient
+  // jamais visible et le test time out. On dérive le testid du domaine depuis le DOM
+  // (closest .rail-domain) plutôt que de dupliquer la table DOMAINS ici, pour rester
+  // valide même si les regroupements changent côté composant.
   async switchTab(key: string) {
-    await this.page.getByTestId(`tab-${key}`).click()
+    const tab = this.page.getByTestId(`tab-${key}`)
+    if (!(await tab.isVisible().catch(() => false))) {
+      const domainTestId = await tab.evaluate(
+        (el) => el.closest('.rail-domain')?.querySelector('[data-testid^="domain-"]')?.getAttribute('data-testid') || null
+      )
+      if (domainTestId) {
+        await this.page.getByTestId(domainTestId).click()
+        await tab.waitFor({ state: 'visible' })
+      }
+    }
+    await tab.click()
   }
 
   // Depuis la refonte UI, les modes TV vivent dans le sélecteur de la barre de scène
