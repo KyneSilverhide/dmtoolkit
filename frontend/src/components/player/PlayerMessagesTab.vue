@@ -71,7 +71,7 @@ const emit = defineEmits([
   background: var(--player-panel-bg);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 1rem;
+  padding: var(--space-4);
   box-shadow: var(--shadow-soft);
 }
 
@@ -81,36 +81,36 @@ const emit = defineEmits([
   align-items: center;
   justify-content: center;
   min-height: 200px;
-  gap: 0.5rem;
+  gap: var(--space-2);
   border-style: dashed;
 }
 .empty-icon { font-size: 2.5rem; opacity: 0.4; }
-.empty-text { font-family: var(--font-heading), sans-serif; font-size: 0.9rem; letter-spacing: 0.1em; color: var(--color-text-dim); }
-.empty-sub { font-family: var(--font-body), sans-serif; color: var(--color-border); font-size: 0.8rem; }
+.empty-text { font-family: var(--font-heading), sans-serif; font-size: var(--text-base); letter-spacing: 0.1em; color: var(--color-text-dim); }
+.empty-sub { font-family: var(--font-body), sans-serif; color: var(--color-border); font-size: var(--text-sm); }
 
-.messages-list { display: flex; flex-direction: column; gap: 1rem; }
+.messages-list { display: flex; flex-direction: column; gap: var(--space-4); }
 
 .player-compose {
-  margin-top: 1.25rem;
+  margin-top: var(--space-5);
   border-top: 1px solid var(--color-border);
-  padding-top: 1rem;
+  padding-top: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .reply-context {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.35rem 0.75rem;
+  padding: var(--space-1) var(--space-3);
   background: var(--color-surface-alt);
   border-radius: 6px;
   border-left: 2px solid var(--color-gold-dark);
 }
 .reply-context-label {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -121,14 +121,14 @@ const emit = defineEmits([
   border: none;
   color: var(--color-text-dim);
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   flex-shrink: 0;
   padding: 0 0.25rem;
 }
 
 .compose-row {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
   align-items: flex-end;
 }
 .compose-textarea {
@@ -136,10 +136,10 @@ const emit = defineEmits([
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.6rem 0.8rem;
+  padding: var(--space-2) var(--space-3);
   color: var(--color-parchment);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   resize: none;
   outline: none;
   transition: border-color 0.2s;
@@ -166,7 +166,7 @@ const emit = defineEmits([
 
 .compose-feedback {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-success, #34d399);
   text-align: center;
 }

@@ -293,7 +293,7 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .drop-overlay {
@@ -304,13 +304,13 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
   background: var(--overlay-scrim);
   border: 2px dashed var(--color-gold-dark);
   border-radius: 10px;
   color: var(--color-gold-bright);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   pointer-events: none;
@@ -320,7 +320,7 @@ onUnmounted(() => {
 
 .section-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
@@ -330,9 +330,9 @@ onUnmounted(() => {
 .upload-card {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
-  padding: 0.55rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   background: var(--surface-gold-soft);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
@@ -342,13 +342,13 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.45rem 0.85rem;
+  padding: var(--space-2) var(--space-3);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   cursor: pointer;
   transition: background 0.2s;
@@ -362,26 +362,26 @@ onUnmounted(() => {
 .upload-error {
   color: var(--color-danger);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
 }
 
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  padding: 2rem 1rem;
+  gap: var(--space-1);
+  padding: var(--space-8) var(--space-4);
   color: var(--color-text-dim);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   text-align: center;
 }
-.empty-hint { font-size: 0.75rem; opacity: 0.7; }
+.empty-hint { font-size: var(--text-sm); opacity: 0.7; }
 
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 .gallery-item {
   min-width: 0;
@@ -398,11 +398,11 @@ onUnmounted(() => {
 .search-bar {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  padding: 0.3rem 0.5rem;
+  padding: var(--space-1) var(--space-2);
 }
 .search-icon { color: var(--color-text-dim); flex-shrink: 0; }
 .search-input {
@@ -412,21 +412,21 @@ onUnmounted(() => {
   outline: none;
   color: var(--color-text);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.04em;
 }
 .search-input::placeholder { color: var(--color-border); font-style: italic; }
 .search-input::-webkit-search-cancel-button { cursor: pointer; }
 .search-count {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.58rem;
+  font-size: var(--text-2xs);
   color: var(--color-text-dim);
   white-space: nowrap;
 }
 
 .img-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   color: var(--color-text-dim);
   letter-spacing: 0.03em;
   margin: 0.2rem 0 0.15rem;
@@ -439,14 +439,14 @@ onUnmounted(() => {
 .tv-label-input {
   width: 100%;
   box-sizing: border-box;
-  padding: 0.2rem 0.4rem;
+  padding: 0.2rem var(--space-2);
   margin-bottom: 0.2rem;
   background: var(--color-surface);
   border: 1px dashed var(--color-border);
   border-radius: 4px;
   color: var(--color-gold-bright);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.55rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.05em;
   outline: none;
   transition: border-color 0.15s;
@@ -456,13 +456,13 @@ onUnmounted(() => {
 
 .show-btn {
   width: 100%;
-  padding: 0.3rem 0.25rem;
+  padding: var(--space-1) 0.25rem;
   background: var(--surface-gold-soft);
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-gold);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.04em;
   cursor: pointer;
   transition: all 0.2s;
@@ -509,7 +509,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-danger, #e74c3c);
   border-radius: 50%;
   color: var(--color-danger, #e74c3c);
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   opacity: 0;
@@ -571,15 +571,15 @@ onUnmounted(() => {
 .lobby-bg-active {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   color: var(--color-info-bright, #7ecfff);
   background: var(--color-info-soft, rgba(58,143,186,0.12));
   border: 1px solid var(--color-info-border, #3a8fba);
   border-radius: 6px;
-  padding: 0.35rem 0.6rem;
+  padding: var(--space-1) var(--space-2);
 }
 
 .lobby-bg-clear-btn {
@@ -587,13 +587,13 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  padding: 0.15rem 0.5rem;
+  padding: 0.15rem var(--space-2);
   background: transparent;
   border: 1px solid var(--color-danger, #e74c3c);
   border-radius: 4px;
   color: var(--color-danger, #e74c3c);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: all 0.15s;

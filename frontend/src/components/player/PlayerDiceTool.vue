@@ -259,18 +259,18 @@ const totalColor = computed(() => {
 .dice-tool {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .section {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .section-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -280,19 +280,19 @@ const totalColor = computed(() => {
 .die-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 
 .die-btn {
   flex: 1;
   min-width: 46px;
-  padding: 0.5rem 0.4rem;
+  padding: var(--space-2) var(--space-2);
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--player-control-bg, var(--surface-raised));
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.06em;
   cursor: pointer;
   transition: all 0.15s;
@@ -311,20 +311,20 @@ const totalColor = computed(() => {
 
 .row-controls {
   flex-direction: row;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .control-group {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 
 .stepper {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .step-btn {
@@ -356,23 +356,23 @@ const totalColor = computed(() => {
 }
 
 .mod-value {
-  font-size: 1rem;
+  font-size: var(--text-md);
 }
 
 .roll-type-btns {
   display: flex;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 
 .roll-type-btn {
   flex: 1;
-  padding: 0.5rem 0.3rem;
+  padding: var(--space-2) var(--space-1);
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--player-control-bg, var(--surface-raised));
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
@@ -400,7 +400,7 @@ const totalColor = computed(() => {
 .dice-preview {
   text-align: center;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.12em;
   color: var(--color-text-dim);
   margin: 0;
@@ -410,8 +410,8 @@ const totalColor = computed(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
-  padding: 1rem 0;
+  gap: var(--space-2);
+  padding: var(--space-4) 0;
 }
 
 .result-total {
@@ -424,7 +424,7 @@ const totalColor = computed(() => {
 
 .rolls-detail {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   color: var(--color-text-dim);
   letter-spacing: 0.08em;
 }
@@ -432,12 +432,12 @@ const totalColor = computed(() => {
 .hidden-sent {
   text-align: center;
   font-family: var(--font-body), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   color: var(--player-info-text, var(--color-info-bright));
   background: var(--player-info-bg, var(--color-info-soft));
   border: 1px solid var(--player-info-border, var(--color-info-border));
   border-radius: 8px;
-  padding: 0.6rem 1rem;
+  padding: var(--space-2) var(--space-4);
   animation: fadeIn 0.2s ease;
 }
 
@@ -448,7 +448,7 @@ const totalColor = computed(() => {
 
 .action-btns {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .roll-btn {
@@ -456,11 +456,11 @@ const totalColor = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.85rem 1rem;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
   border-radius: 10px;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
@@ -516,12 +516,12 @@ const totalColor = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.4rem;
+  margin-bottom: var(--space-2);
 }
 
 .anim-value {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--color-gold-bright);
   min-width: 2.5rem;
   text-align: right;

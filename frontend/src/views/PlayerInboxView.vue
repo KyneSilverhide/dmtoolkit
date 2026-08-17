@@ -23,10 +23,17 @@ import PlayerMerchantTab from '../components/player/PlayerMerchantTab.vue'
 import PlayerVoteTab from '../components/player/PlayerVoteTab.vue'
 import PlayerMessagesTab from '../components/player/PlayerMessagesTab.vue'
 import PlayerPuzzleOverlay from '../components/player/PlayerPuzzleOverlay.vue'
+import PlayerNav from '../components/player/PlayerNav.vue'
+import PlayerGrimoireIndex from '../components/player/PlayerGrimoireIndex.vue'
 import { getLastKnownPlayer, saveLastKnownPlayer, removeLastKnownPlayer } from '../utils/playerSessionMemory.js'
 import { parsePlayerConditions } from '../utils/conditions.js'
 import { hpTier } from '../utils/hp.js'
-import { applyTheme, getThemePreference, setThemePreference, getNextTheme, getThemeMeta } from '../utils/themePreferences.js'
+import ThemePicker from '../components/ThemePicker.vue'
+import DensityToggle from '../components/DensityToggle.vue'
+import {
+  applyTheme, getThemePreference, setThemePreference,
+  applyDensity, getDensityPreference, setDensityPreference,
+} from '../utils/themePreferences.js'
 import AppIcon from '../components/AppIcon.vue'
 import HelpTip from '../components/HelpTip.vue'
 import DemoBanner from '../components/DemoBanner.vue'
@@ -77,7 +84,7 @@ let hasRequestedNotificationPermission = false
 const rejoinError = ref('')
 const rejoining = ref(false)
 const theme = ref(getThemePreference('player', 'dark'))
-const currentThemeMeta = computed(() => getThemeMeta(theme.value))
+const density = ref(getDensityPreference('player', 'compact'))
 const notificationPermission = ref(readNotificationPermission())
 const attentionToasts = ref([])
 let attentionToastId = 0
@@ -92,10 +99,18 @@ const showLeaveConfirm = ref(false)
 const isDemo = ref(false)
 
 // ── Contenu de référence : onglets accessibles hors mode démo, avec parité MJ ──────────
-// Clés identiques à CONTENT_TABS côté admin (AdminView.vue) — nécessaire pour que
+// Sous-ensemble de CONTENT_TABS côté admin (AdminView.vue) — nécessaire pour que
 // useContentTabQuery() (partagé avec les composants admin réutilisés ici) matche le bon
-// onglet actif via route.params.tab.
-const CONTENT_TABS = ['spells', 'equipment', 'magic', 'races', 'classes', 'backgrounds', 'abilities', 'services', 'conditions']
+// onglet actif via route.params.tab. Volontairement SANS 'magic' : les objets magiques ne
+// sont pas consultables par les joueurs (voir PlayerGrimoireIndex.vue) pour ne pas spoiler
+// rareté/effet avant qu'ils ne les obtiennent.
+const CONTENT_TABS = ['spells', 'equipment', 'races', 'classes', 'backgrounds', 'abilities', 'services', 'conditions']
+
+// Les clés ci-dessus ne sont plus des entrées de navigation : elles vivent derrière un
+// écran d'index « Grimoire » (PlayerGrimoireIndex.vue). Chaque clé reste une destination
+// distincte — `grimoire` est une destination SUPPLÉMENTAIRE, pas un remplacement, et
+// aucune route n'a besoin d'être ajoutée (/player/:tab? matche déjà n'importe quelle clé).
+const GRIMOIRE_TAB = 'grimoire'
 
 // ── Recherche globale (Ctrl+K équivalent joueur) ────────────────────────────
 const showCommandPalette = ref(false)
@@ -108,10 +123,16 @@ function handlePaletteSelect({ tab, query, slug }) {
   showHeaderMenu.value = false
 }
 
-function toggleTheme() {
-  theme.value = getNextTheme(theme.value)
-  setThemePreference('player', theme.value)
-  applyTheme(theme.value)
+function setTheme(next) {
+  theme.value = next
+  setThemePreference('player', next)
+  applyTheme(next)
+}
+
+function setDensity(next) {
+  density.value = next
+  setDensityPreference('player', next)
+  applyDensity(next)
 }
 
 function readNotificationPermission() {
@@ -200,7 +221,10 @@ function applyJoinedState(data) {
   initiativeValue.value = data.player.initiative
   isConcentrating.value = !!data.player.is_concentrating
   isDemo.value = !!data.isDemo
-  if (isDemo.value && CONTENT_TABS.includes(activeTab.value)) switchTab('combat')
+  // `grimoire` inclus : en démo son entrée de navigation est masquée, mais l'URL reste
+  // atteignable directement — sans ce garde-fou on afficherait un index de 9 destinations
+  // toutes verrouillées.
+  if (isDemo.value && (activeTab.value === GRIMOIRE_TAB || CONTENT_TABS.includes(activeTab.value))) switchTab('combat')
   activeConditions.value = parsePlayerConditions(data.player.conditions)
   rememberCurrentPlayer(data.session.code)
 }
@@ -313,6 +337,65 @@ function switchTab(tab) {
   showHeaderMenu.value = false
   if (tab === 'messages') unreadMessages.value = 0
   requestNotificationPermissionOnce({ interactive: true }).catch(() => {})
+}
+
+// ── Navigation : une seule source, rendue une seule fois (voir PlayerNav.vue) ─────
+// Cinq entrées de base — Combat · Dés · Grimoire · Messages · Notes — plus les entrées
+// contextuelles Boutique/Vote/Puzzle, qui n'existent (v-if côté liste) que tant que le MJ
+// diffuse la chose correspondante. Ce conditionnement est un contrat e2e : 13-merchant
+// vérifie l'ABSENCE de `player-tab-boutique` quand aucun marchand n'est actif.
+const navItems = computed(() => {
+  const items = [
+    { key: 'combat', label: 'Combat', icon: 'game-icons:crossed-swords' },
+    { key: 'dés',    label: 'Dés',    icon: 'game-icons:dice-six-faces-five', testid: 'des' },
+  ]
+  if (!isDemo.value) {
+    items.push({ key: GRIMOIRE_TAB, label: 'Grimoire', icon: 'lucide:book-open' })
+  }
+  items.push({
+    key: 'messages', label: 'Messages', icon: 'lucide:inbox',
+    notify: unreadMessages.value > 0,
+    badge: unreadMessages.value > 0 ? unreadMessages.value : null,
+    badgeTone: 'urgent',
+  })
+  items.push({ key: 'notes', label: 'Notes', icon: 'lucide:notebook-pen' })
+
+  if (activeMerchant.value) {
+    items.push({
+      key: 'boutique', label: 'Boutique', icon: 'game-icons:shop',
+      notify: cartItemCount.value === 0 && activeTab.value !== 'boutique',
+      badge: cartItemCount.value > 0 ? cartItemCount.value : (activeTab.value !== 'boutique' ? '!' : null),
+      badgeTone: cartItemCount.value > 0 ? 'urgent' : 'pulse',
+    })
+  }
+  if (activeVote.value) {
+    items.push({
+      key: 'vote', label: 'Vote', icon: 'lucide:check-square',
+      notify: hasNewVote.value && activeTab.value !== 'vote',
+      badge: hasNewVote.value && activeTab.value !== 'vote' ? '!' : null,
+      badgeTone: 'pulse',
+    })
+  }
+  if (activePuzzle.value) {
+    items.push({
+      key: 'puzzle', label: 'Puzzle', icon: 'lucide:puzzle',
+      notify: activeTab.value !== 'puzzle',
+      badge: activeTab.value !== 'puzzle' ? '!' : null,
+      badgeTone: 'pulse',
+    })
+  }
+  return items
+})
+
+// L'entrée Grimoire reste surlignée pendant qu'on consulte une des 9 familles, sinon la
+// navigation n'indiquerait plus rien dès qu'on ouvre une fiche depuis l'index.
+const activeNavKey = computed(() => (
+  CONTENT_TABS.includes(activeTab.value) ? GRIMOIRE_TAB : activeTab.value
+))
+
+function onNavSelect(item) {
+  switchTab(item.key)
+  if (item.key === 'vote') hasNewVote.value = false
 }
 
 // ── HP tracking ──────────────────────────────────────────────────────────
@@ -968,6 +1051,8 @@ onUnmounted(() => {
             :class="{ active: showHeaderMenu }"
             @click.stop="showHeaderMenu = !showHeaderMenu"
             aria-label="Menu"
+            aria-haspopup="true"
+            :aria-expanded="showHeaderMenu"
             data-testid="header-menu-btn"
           >
             <AppIcon icon="lucide:more-vertical" size="1rem" />
@@ -976,14 +1061,21 @@ onUnmounted(() => {
             <div v-if="showHeaderMenu" class="header-menu-backdrop" @click="showHeaderMenu = false" />
             <Transition name="menu-drop">
               <div v-if="showHeaderMenu" class="header-menu-dropdown" @click.stop>
-                <button class="menu-item" :class="notificationButtonClass" @click="handleNotificationButton; showHeaderMenu = false">
+                <!-- `handleNotificationButton()` avec les parenthèses : sans elles, l'expression
+                     inline évaluait la référence de fonction sans jamais l'appeler — le bouton
+                     ne faisait que refermer le menu. -->
+                <button class="menu-item" :class="notificationButtonClass" @click="handleNotificationButton(); showHeaderMenu = false">
                   <AppIcon :icon="notificationButtonIcon" size="0.95em" />
                   <span>Notifications — {{ notificationButtonText }}</span>
                 </button>
-                <button class="menu-item" @click="toggleTheme(); showHeaderMenu = false" data-testid="player-theme-toggle">
-                  <AppIcon :icon="currentThemeMeta.icon" size="0.95em" />
-                  <span>Thème {{ currentThemeMeta.label.toLowerCase() }}</span>
-                </button>
+                <div class="menu-section">
+                  <span class="menu-section-label">Thème</span>
+                  <ThemePicker :model-value="theme" @update:model-value="setTheme" />
+                </div>
+                <div class="menu-section">
+                  <span class="menu-section-label">Densité</span>
+                  <DensityToggle :model-value="density" @update:model-value="setDensity" />
+                </div>
                 <div class="menu-divider" />
                 <button class="menu-item menu-item-danger" @click="showLeaveConfirm = true; showHeaderMenu = false" data-testid="leave-button">
                   <AppIcon icon="lucide:log-out" size="0.95em" />
@@ -1007,110 +1099,16 @@ onUnmounted(() => {
       <button class="resume-action-btn" @click="router.push(`/join/${route.params.code || ''}`)">Rejoindre manuellement</button>
     </section>
 
-    <!-- ── Main layout : sidebar (desktop) + contenu ───────────────────── -->
+    <!-- ── Main layout : navigation + contenu ──────────────────────────── -->
     <div v-else class="inbox-lower">
 
-      <!-- Sidebar navigation (desktop uniquement) -->
-      <nav class="sidebar-nav" aria-label="Navigation principale">
-        <button class="sidebar-item" :class="{ active: activeTab === 'combat' }" @click="switchTab('combat')" aria-label="Combat" data-testid="player-tab-combat">
-          <span class="sidebar-icon"><AppIcon icon="game-icons:crossed-swords" size="1.2rem" /></span>
-          <span class="sidebar-label">Combat</span>
-        </button>
-        <button class="sidebar-item" :class="{ active: activeTab === 'dés' }" @click="switchTab('dés')" aria-label="Dés" data-testid="player-tab-des">
-          <span class="sidebar-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="1.2rem" /></span>
-          <span class="sidebar-label">Dés</span>
-        </button>
-        <button class="sidebar-item" :class="{ active: activeTab === 'notes' }" @click="switchTab('notes')" aria-label="Notes" data-testid="player-tab-notes">
-          <span class="sidebar-icon"><AppIcon icon="lucide:notebook-pen" size="1.2rem" /></span>
-          <span class="sidebar-label">Notes</span>
-        </button>
-        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'spells' }" @click="switchTab('spells')" aria-label="Sorts" data-testid="player-tab-spells">
-          <span class="sidebar-icon"><AppIcon icon="lucide:sparkles" size="1.2rem" /></span>
-          <span class="sidebar-label">Sorts</span>
-        </button>
-        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'equipment' }" @click="switchTab('equipment')" aria-label="Objets" data-testid="player-tab-equipment">
-          <span class="sidebar-icon"><AppIcon icon="lucide:package" size="1.2rem" /></span>
-          <span class="sidebar-label">Objets</span>
-        </button>
-        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'magic' }" @click="switchTab('magic')" aria-label="Objets magiques" data-testid="player-tab-magic">
-          <span class="sidebar-icon"><AppIcon icon="lucide:gem" size="1.2rem" /></span>
-          <span class="sidebar-label">Objets magiques</span>
-        </button>
-        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'races' }" @click="switchTab('races')" aria-label="Races" data-testid="player-tab-races">
-          <span class="sidebar-icon"><AppIcon icon="game-icons:vitruvian-man" size="1.2rem" /></span>
-          <span class="sidebar-label">Races</span>
-        </button>
-        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'classes' }" @click="switchTab('classes')" aria-label="Classes" data-testid="player-tab-classes">
-          <span class="sidebar-icon"><AppIcon icon="game-icons:round-shield" size="1.2rem" /></span>
-          <span class="sidebar-label">Classes</span>
-        </button>
-        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'backgrounds' }" @click="switchTab('backgrounds')" aria-label="Origines" data-testid="player-tab-backgrounds">
-          <span class="sidebar-icon"><AppIcon icon="game-icons:quill-ink" size="1.2rem" /></span>
-          <span class="sidebar-label">Origines</span>
-        </button>
-        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'abilities' }" @click="switchTab('abilities')" aria-label="Aptitudes" data-testid="player-tab-abilities">
-          <span class="sidebar-icon"><AppIcon icon="lucide:zap" size="1.2rem" /></span>
-          <span class="sidebar-label">Aptitudes</span>
-        </button>
-        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'services' }" @click="switchTab('services')" aria-label="Services" data-testid="player-tab-services">
-          <span class="sidebar-icon"><AppIcon icon="lucide:hand-coins" size="1.2rem" /></span>
-          <span class="sidebar-label">Services</span>
-        </button>
-        <button v-if="!isDemo" class="sidebar-item" :class="{ active: activeTab === 'conditions' }" @click="switchTab('conditions')" aria-label="États" data-testid="player-tab-conditions">
-          <span class="sidebar-icon"><AppIcon icon="lucide:skull" size="1.2rem" /></span>
-          <span class="sidebar-label">États</span>
-        </button>
-        <button
-          v-if="activeMerchant"
-          class="sidebar-item"
-          :class="{ active: activeTab === 'boutique' }"
-          @click="switchTab('boutique')"
-          aria-label="Boutique"
-          data-testid="player-tab-boutique"
-        >
-          <span class="sidebar-icon" :class="{ 'tab-icon-notify': cartItemCount === 0 && activeTab !== 'boutique' }">
-            <AppIcon icon="game-icons:shop" size="1.2rem" />
-          </span>
-          <span class="sidebar-label">Boutique</span>
-          <span v-if="cartItemCount > 0" class="tab-badge tab-badge-urgent">{{ cartItemCount }}</span>
-          <span v-else-if="activeTab !== 'boutique'" class="tab-badge tab-badge-pulse">!</span>
-        </button>
-        <button
-          v-if="activeVote"
-          class="sidebar-item"
-          :class="{ active: activeTab === 'vote' }"
-          @click="switchTab('vote'); hasNewVote = false"
-          aria-label="Vote"
-          data-testid="player-tab-vote"
-        >
-          <span class="sidebar-icon" :class="{ 'tab-icon-notify': hasNewVote && activeTab !== 'vote' }">
-            <AppIcon icon="lucide:check-square" size="1.2rem" />
-          </span>
-          <span class="sidebar-label">Vote</span>
-          <span v-if="hasNewVote && activeTab !== 'vote'" class="tab-badge tab-badge-pulse">!</span>
-        </button>
-        <button
-          v-if="activePuzzle"
-          class="sidebar-item"
-          :class="{ active: activeTab === 'puzzle' }"
-          @click="switchTab('puzzle')"
-          aria-label="Puzzle"
-          data-testid="player-tab-puzzle"
-        >
-          <span class="sidebar-icon" :class="{ 'tab-icon-notify': activeTab !== 'puzzle' }">
-            <AppIcon icon="lucide:puzzle" size="1.2rem" />
-          </span>
-          <span class="sidebar-label">Puzzle</span>
-          <span v-if="activeTab !== 'puzzle'" class="tab-badge tab-badge-pulse">!</span>
-        </button>
-        <button class="sidebar-item" :class="{ active: activeTab === 'messages' }" @click="switchTab('messages')" aria-label="Messages" data-testid="player-tab-messages">
-          <span class="sidebar-icon" :class="{ 'tab-icon-notify': unreadMessages > 0 }">
-            <AppIcon icon="lucide:inbox" size="1.2rem" />
-          </span>
-          <span class="sidebar-label">Messages</span>
-          <span v-if="unreadMessages > 0" class="tab-badge tab-badge-urgent">{{ unreadMessages }}</span>
-        </button>
-      </nav>
+      <!-- Navigation unique (une seule instance dans le DOM) : rail latéral ≥1024 px,
+           barre basse en dessous — le placement est piloté par `order` en CSS. -->
+      <PlayerNav
+        :items="navItems"
+        :active-key="activeNavKey"
+        @select="onNavSelect"
+      />
 
       <!-- Zone de contenu principale -->
       <div class="inbox-main">
@@ -1181,6 +1179,11 @@ onUnmounted(() => {
               </div>
             </div>
 
+            <!-- ── GRIMOIRE : index des 9 familles de contenu ─────────────── -->
+            <div v-show="activeTab === 'grimoire' && !isDemo" class="tab-panel">
+              <PlayerGrimoireIndex @open="switchTab" @search="showCommandPalette = true" />
+            </div>
+
             <!-- ── SORTS tab ──────────────────────────────────────────────── -->
             <div v-show="activeTab === 'spells' && !isDemo" class="tab-panel">
               <SpellSearch player-mode />
@@ -1189,11 +1192,6 @@ onUnmounted(() => {
             <!-- ── OBJETS tab ─────────────────────────────────────────────── -->
             <div v-show="activeTab === 'equipment' && !isDemo" class="tab-panel">
               <ItemSearch category="equipment" player-mode />
-            </div>
-
-            <!-- ── OBJETS MAGIQUES tab ───────────────────────────────────── -->
-            <div v-show="activeTab === 'magic' && !isDemo" class="tab-panel">
-              <ItemSearch category="magic" player-mode />
             </div>
 
             <!-- ── RACES tab ──────────────────────────────────────────────── -->
@@ -1286,7 +1284,18 @@ onUnmounted(() => {
       </div><!-- end inbox-main -->
     </div><!-- end inbox-lower -->
 
-    <TransitionGroup name="toast" tag="div" class="toast-stack">
+    <!-- role="status" + aria-live : c'est le canal d'alerte temps réel du joueur (attention
+         du MJ, jet de concentration, réponse à une demande d'achat). Le conteneur est monté
+         en permanence, hors de tout `v-if` — une région live créée en même temps que son
+         contenu n'annonce rien. `polite` et non `assertive` : la pile est partagée avec des
+         messages anodins (« Notifications prêtes »), qui n'ont pas à couper la parole. -->
+    <TransitionGroup
+      name="toast"
+      tag="div"
+      class="toast-stack"
+      role="status"
+      aria-live="polite"
+    >
       <button
         v-for="toast in attentionToasts"
         :key="toast.id"
@@ -1299,194 +1308,6 @@ onUnmounted(() => {
       </button>
     </TransitionGroup>
 
-    <!-- ── Bottom tab bar ────────────────────────────────────────────────── -->
-    <nav v-if="!rejoining && !rejoinError" class="tab-bar" role="tablist">
-      <button
-        class="tab-item"
-        :class="{ active: activeTab === 'combat' }"
-        @click="switchTab('combat')"
-        aria-label="Combat"
-        data-testid="player-tab-combat"
-      >
-        <span class="tab-icon"><AppIcon icon="game-icons:crossed-swords" size="1.4rem" /></span>
-        <span class="tab-label">Combat</span>
-      </button>
-      <button
-        class="tab-item"
-        :class="{ active: activeTab === 'dés' }"
-        @click="switchTab('dés')"
-        aria-label="Dés"
-        data-testid="player-tab-des"
-      >
-        <span class="tab-icon"><AppIcon icon="game-icons:dice-six-faces-five" size="1.4rem" /></span>
-        <span class="tab-label">Dés</span>
-      </button>
-      <button
-        class="tab-item"
-        :class="{ active: activeTab === 'notes' }"
-        @click="switchTab('notes')"
-        aria-label="Notes"
-        data-testid="player-tab-notes"
-      >
-        <span class="tab-icon"><AppIcon icon="lucide:notebook-pen" size="1.4rem" /></span>
-        <span class="tab-label">Notes</span>
-      </button>
-      <button
-        v-if="!isDemo"
-        class="tab-item"
-        :class="{ active: activeTab === 'spells' }"
-        @click="switchTab('spells')"
-        aria-label="Sorts"
-        data-testid="player-tab-spells"
-      >
-        <span class="tab-icon"><AppIcon icon="lucide:sparkles" size="1.4rem" /></span>
-        <span class="tab-label">Sorts</span>
-      </button>
-      <button
-        v-if="!isDemo"
-        class="tab-item"
-        :class="{ active: activeTab === 'equipment' }"
-        @click="switchTab('equipment')"
-        aria-label="Objets"
-        data-testid="player-tab-equipment"
-      >
-        <span class="tab-icon"><AppIcon icon="lucide:package" size="1.4rem" /></span>
-        <span class="tab-label">Objets</span>
-      </button>
-      <button
-        v-if="!isDemo"
-        class="tab-item"
-        :class="{ active: activeTab === 'magic' }"
-        @click="switchTab('magic')"
-        aria-label="Objets magiques"
-        data-testid="player-tab-magic"
-      >
-        <span class="tab-icon"><AppIcon icon="lucide:gem" size="1.4rem" /></span>
-        <span class="tab-label">Objets magiques</span>
-      </button>
-      <button
-        v-if="!isDemo"
-        class="tab-item"
-        :class="{ active: activeTab === 'races' }"
-        @click="switchTab('races')"
-        aria-label="Races"
-        data-testid="player-tab-races"
-      >
-        <span class="tab-icon"><AppIcon icon="game-icons:vitruvian-man" size="1.4rem" /></span>
-        <span class="tab-label">Races</span>
-      </button>
-      <button
-        v-if="!isDemo"
-        class="tab-item"
-        :class="{ active: activeTab === 'classes' }"
-        @click="switchTab('classes')"
-        aria-label="Classes"
-        data-testid="player-tab-classes"
-      >
-        <span class="tab-icon"><AppIcon icon="game-icons:round-shield" size="1.4rem" /></span>
-        <span class="tab-label">Classes</span>
-      </button>
-      <button
-        v-if="!isDemo"
-        class="tab-item"
-        :class="{ active: activeTab === 'backgrounds' }"
-        @click="switchTab('backgrounds')"
-        aria-label="Origines"
-        data-testid="player-tab-backgrounds"
-      >
-        <span class="tab-icon"><AppIcon icon="game-icons:quill-ink" size="1.4rem" /></span>
-        <span class="tab-label">Origines</span>
-      </button>
-      <button
-        v-if="!isDemo"
-        class="tab-item"
-        :class="{ active: activeTab === 'abilities' }"
-        @click="switchTab('abilities')"
-        aria-label="Aptitudes"
-        data-testid="player-tab-abilities"
-      >
-        <span class="tab-icon"><AppIcon icon="lucide:zap" size="1.4rem" /></span>
-        <span class="tab-label">Aptitudes</span>
-      </button>
-      <button
-        v-if="!isDemo"
-        class="tab-item"
-        :class="{ active: activeTab === 'services' }"
-        @click="switchTab('services')"
-        aria-label="Services"
-        data-testid="player-tab-services"
-      >
-        <span class="tab-icon"><AppIcon icon="lucide:hand-coins" size="1.4rem" /></span>
-        <span class="tab-label">Services</span>
-      </button>
-      <button
-        v-if="!isDemo"
-        class="tab-item"
-        :class="{ active: activeTab === 'conditions' }"
-        @click="switchTab('conditions')"
-        aria-label="États"
-        data-testid="player-tab-conditions"
-      >
-        <span class="tab-icon"><AppIcon icon="lucide:skull" size="1.4rem" /></span>
-        <span class="tab-label">États</span>
-      </button>
-      <button
-        v-if="activeMerchant"
-        class="tab-item"
-        :class="{ active: activeTab === 'boutique' }"
-        @click="switchTab('boutique')"
-        aria-label="Boutique"
-        data-testid="player-tab-boutique"
-      >
-        <span class="tab-icon" :class="{ 'tab-icon-notify': cartItemCount === 0 && activeTab !== 'boutique' }">
-          <AppIcon icon="game-icons:shop" size="1.4rem" />
-        </span>
-        <span class="tab-label">Boutique</span>
-        <span v-if="cartItemCount > 0" class="tab-badge tab-badge-urgent">{{ cartItemCount }}</span>
-        <span v-else-if="activeTab !== 'boutique'" class="tab-badge tab-badge-pulse">!</span>
-      </button>
-      <button
-        v-if="activeVote"
-        class="tab-item"
-        :class="{ active: activeTab === 'vote' }"
-        @click="switchTab('vote'); hasNewVote = false"
-        aria-label="Vote"
-        data-testid="player-tab-vote"
-      >
-        <span class="tab-icon" :class="{ 'tab-icon-notify': hasNewVote && activeTab !== 'vote' }">
-          <AppIcon icon="lucide:check-square" size="1.4rem" />
-        </span>
-        <span class="tab-label">Vote</span>
-        <span v-if="hasNewVote && activeTab !== 'vote'" class="tab-badge tab-badge-pulse">!</span>
-      </button>
-      <button
-        v-if="activePuzzle"
-        class="tab-item"
-        :class="{ active: activeTab === 'puzzle' }"
-        @click="switchTab('puzzle')"
-        aria-label="Puzzle"
-        data-testid="player-tab-puzzle"
-      >
-        <span class="tab-icon" :class="{ 'tab-icon-notify': activeTab !== 'puzzle' }">
-          <AppIcon icon="lucide:puzzle" size="1.4rem" />
-        </span>
-        <span class="tab-label">Puzzle</span>
-        <span v-if="activeTab !== 'puzzle'" class="tab-badge tab-badge-pulse">!</span>
-      </button>
-      <button
-        class="tab-item"
-        :class="{ active: activeTab === 'messages' }"
-        @click="switchTab('messages')"
-        aria-label="Messages"
-        data-testid="player-tab-messages"
-      >
-        <span class="tab-icon" :class="{ 'tab-icon-notify': unreadMessages > 0 }">
-          <AppIcon icon="lucide:inbox" size="1.4rem" />
-        </span>
-        <span class="tab-label">Messages</span>
-        <span v-if="unreadMessages > 0" class="tab-badge tab-badge-urgent">{{ unreadMessages }}</span>
-      </button>
-    </nav>
 
     <PlayerCommandPalette
       :open="showCommandPalette"
@@ -1541,15 +1362,15 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.6rem 0.85rem;
+  padding: var(--space-2) var(--space-3);
   background: var(--player-header-bg);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
-  gap: 0.5rem;
+  gap: var(--space-2);
   min-height: 56px;
 }
-.header-left { display: flex; align-items: center; gap: 0.6rem; min-width: 0; flex: 1; }
-.header-right { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
+.header-left { display: flex; align-items: center; gap: var(--space-2); min-width: 0; flex: 1; }
+.header-right { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
 
 .player-avatar-wrap {
   width: 40px; height: 40px;
@@ -1566,7 +1387,7 @@ onUnmounted(() => {
 .header-info { min-width: 0; }
 .player-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.92rem;
+  font-size: var(--text-base);
   color: var(--color-parchment);
   letter-spacing: 0.02em;
   margin: 0;
@@ -1574,7 +1395,7 @@ onUnmounted(() => {
 }
 .session-name {
   font-family: var(--font-ui, var(--font-heading)), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -1583,13 +1404,13 @@ onUnmounted(() => {
 
 .ac-chip {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
   color: var(--color-gold-bright);
   background: var(--player-gold-bg);
   border: 1px solid var(--color-gold-dark);
   border-radius: 20px;
-  padding: 0.2rem 0.55rem;
+  padding: 0.2rem var(--space-2);
   white-space: nowrap;
   display: flex;
   align-items: center;
@@ -1601,12 +1422,12 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.2rem;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   color: var(--player-danger-text);
   background: var(--player-danger-bg);
   border: 1px solid var(--player-danger-border);
   border-radius: 20px;
-  padding: 0.2rem 0.5rem;
+  padding: 0.2rem var(--space-2);
   cursor: pointer;
   animation: urgentPulse 1.2s ease-in-out infinite;
   white-space: nowrap;
@@ -1620,7 +1441,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text-dim);
-  padding: 0.4rem;
+  padding: var(--space-2);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1649,7 +1470,7 @@ onUnmounted(() => {
   background: var(--player-panel-highlight-bg, var(--gradient-panel-soft));
   border: 1px solid var(--color-gold-dark);
   border-radius: 12px;
-  padding: 0.4rem;
+  padding: var(--space-2);
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -1667,14 +1488,14 @@ onUnmounted(() => {
 .menu-item {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.65rem 0.75rem;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3);
   border-radius: 8px;
   border: none;
   background: none;
   color: var(--color-text-dim);
   font-family: var(--font-ui, var(--font-heading)), sans-serif;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   cursor: pointer;
   transition: all 0.15s;
   text-align: left;
@@ -1688,7 +1509,23 @@ onUnmounted(() => {
 /* noinspection CssUnusedSymbol */
 .menu-item.is-pending { color: var(--player-warning-text); }
 .menu-item-danger:hover { color: var(--player-danger-text); background: var(--player-danger-bg); }
-.menu-divider { height: 1px; background: var(--color-border); margin: 0.2rem 0.4rem; }
+.menu-divider { height: 1px; background: var(--color-border); margin: 0.2rem var(--space-2); }
+
+/* Thème et densité sont des CHOIX, pas des actions : ils vivent en ligne dans le menu
+   plutôt que comme entrées cliquables qui cyclaient et refermaient le menu à chaque clic. */
+.menu-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+}
+.menu-section-label {
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
 
 .resume-state {
   flex: 1;
@@ -1696,8 +1533,8 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.65rem;
-  padding: 1.2rem;
+  gap: var(--space-3);
+  padding: var(--space-5);
   text-align: center;
 }
 .resume-state.error {
@@ -1705,25 +1542,25 @@ onUnmounted(() => {
 }
 .resume-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.95rem;
+  font-size: var(--text-md);
   letter-spacing: 0.08em;
   color: var(--color-parchment);
 }
 .resume-sub {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   color: var(--color-text-dim);
   max-width: 440px;
 }
 .resume-action-btn {
   margin-top: 0.2rem;
-  padding: 0.7rem 1rem;
+  padding: var(--space-3) var(--space-4);
   border-radius: 8px;
   border: 1px solid var(--color-gold-dark);
   background: var(--player-gold-bg);
   color: var(--color-gold);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -1734,7 +1571,7 @@ onUnmounted(() => {
 .inbox-content {
   flex: 1;
   overflow-y: auto;
-  padding: 0.85rem;
+  padding: var(--space-3);
   -webkit-overflow-scrolling: touch;
   position: relative;
 }
@@ -1743,7 +1580,7 @@ onUnmounted(() => {
   animation: tabFadeIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
   min-height: 100%;
 }
 
@@ -1762,16 +1599,16 @@ onUnmounted(() => {
   background: var(--player-panel-bg);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 1rem;
+  padding: var(--space-4);
   box-shadow: var(--shadow-soft);
 }
 .panel-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-dim);
-  margin: 0 0 0.75rem;
+  margin: 0 0 var(--space-3);
 }
 
 /* ── Empty state (puzzle fallback) ───────────────────────────────────── */
@@ -1781,121 +1618,30 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   min-height: 200px;
-  gap: 0.5rem;
+  gap: var(--space-2);
   border-style: dashed;
 }
 .empty-icon { font-size: 2.5rem; opacity: 0.4; }
-.empty-text { font-family: var(--font-heading), sans-serif; font-size: 0.9rem; letter-spacing: 0.1em; color: var(--color-text-dim); }
+.empty-text { font-family: var(--font-heading), sans-serif; font-size: var(--text-base); letter-spacing: 0.1em; color: var(--color-text-dim); }
 
 /* ── Contenu masqué en mode démo ─────────────────────────────────────── */
 .demo-locked-panel {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   text-align: center;
-  padding: 2.5rem 1rem;
+  padding: var(--space-10) var(--space-4);
   color: var(--color-warning);
 }
 .demo-locked-text {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   max-width: 360px;
   margin: 0;
 }
 
-/* ── Tab bar ─────────────────────────────────────────────────────────── */
-.tab-bar {
-  display: flex;
-  overflow-x: auto;
-  background: var(--player-header-bg);
-  border-top: 1px solid var(--color-border);
-  flex-shrink: 0;
-  padding-bottom: env(safe-area-inset-bottom, 0);
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.tab-bar::-webkit-scrollbar { display: none; }
-
-.tab-item {
-  flex: 1;
-  flex-shrink: 0;
-  min-width: 56px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.1rem;
-  padding: 0.55rem 0.3rem 0.5rem;
-  min-height: 56px;
-  background: none;
-  border: none;
-  color: var(--color-text-dim);
-  font-family: var(--font-ui, var(--font-heading)), sans-serif;
-  cursor: pointer;
-  transition: color 0.18s;
-  position: relative;
-  touch-action: manipulation;
-}
-.tab-item:hover:not(:disabled) { color: var(--color-parchment); }
-.tab-item.active { color: var(--color-gold-bright); }
-
-.tab-item.active::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 15%; right: 15%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--color-gold-bright), transparent);
-  border-radius: 0 0 2px 2px;
-}
-
-.tab-item:disabled { opacity: 0.3; cursor: not-allowed; }
-.tab-icon {
-  font-size: 1.4rem;
-  line-height: 1;
-  transition: transform 0.2s, filter 0.2s;
-}
-.tab-icon-notify {
-  animation: iconShake 0.6s ease-in-out infinite alternate;
-  filter: drop-shadow(0 0 6px var(--player-danger-text));
-}
-@keyframes iconShake {
-  0% { transform: rotate(-8deg) scale(1.1); }
-  100% { transform: rotate(8deg) scale(1.2); }
-}
-.tab-label { font-size: 0.5rem; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
-
-@media (max-width: 380px) {
-  .tab-label { display: none; }
-  .tab-item { min-height: 52px; padding: 0.65rem 0.2rem; }
-}
-.tab-badge {
-  position: absolute;
-  top: 4px; right: calc(50% - 20px);
-  min-width: 18px; height: 18px;
-  padding: 0 4px;
-  border-radius: 9px;
-  font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
-  font-weight: 700;
-  color: var(--color-invariant-white);
-  display: flex; align-items: center; justify-content: center;
-}
-.tab-badge-urgent {
-  background: var(--player-danger-text);
-  box-shadow: 0 0 8px var(--player-danger-text), 0 0 16px var(--player-danger-bg);
-  animation: urgentPulse 1s ease-in-out infinite;
-}
-.tab-badge-pulse {
-  background: var(--player-warning-text);
-  box-shadow: 0 0 8px var(--player-warning-text), 0 0 16px var(--player-warning-bg);
-  animation: urgentPulse 0.8s ease-in-out infinite;
-}
-@keyframes urgentPulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.35); opacity: 0.85; }
-}
 
 /* ── Modals ──────────────────────────────────────────────────────────── */
 .modal-overlay {
@@ -1906,18 +1652,18 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 1rem;
+  padding: var(--space-4);
 }
 .modal-box {
   background: var(--player-panel-highlight-bg, var(--gradient-panel-soft));
   border: 1px solid var(--color-gold-dark);
   border-radius: 16px;
-  padding: 2rem 1.5rem;
+  padding: var(--space-8) var(--space-6);
   width: min(400px, 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
   text-align: center;
 }
 .modal-icon { font-size: 3rem; line-height: 1; }
@@ -1931,7 +1677,7 @@ onUnmounted(() => {
 }
 .modal-body {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.95rem;
+  font-size: var(--text-md);
   color: var(--color-text-dim);
   margin: 0;
   line-height: 1.5;
@@ -1939,7 +1685,7 @@ onUnmounted(() => {
 .modal-body strong { color: var(--color-parchment); }
 .modal-hint {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -1950,26 +1696,26 @@ onUnmounted(() => {
   background: var(--player-info-bg, var(--color-info-soft));
   border: 1px solid var(--player-info-border, var(--color-info-border));
   border-radius: 20px;
-  padding: 0.2rem 0.7rem;
+  padding: 0.2rem var(--space-3);
   font-family: var(--font-heading), sans-serif;
-  font-size: 1rem;
+  font-size: var(--text-md);
   font-weight: 700;
   color: var(--player-info-text, var(--color-info-bright));
   letter-spacing: 0.05em;
 }
 .modal-close-btn {
-  padding: 0.7rem 2rem;
+  padding: var(--space-3) var(--space-8);
   border-radius: 10px;
   border: 1px solid var(--color-gold-dark);
   background: var(--player-gold-bg, var(--surface-gold-soft));
   color: var(--color-gold);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.2s;
-  margin-top: 0.5rem;
+  margin-top: var(--space-2);
 }
 .modal-close-btn:hover { background: var(--player-gold-bg-strong, var(--surface-gold-soft-strong)); }
 
@@ -1977,10 +1723,10 @@ onUnmounted(() => {
 .leave-confirm-modal .modal-title { color: var(--player-danger-text, var(--color-danger)); }
 .leave-confirm-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-3);
   width: 100%;
   justify-content: center;
-  margin-top: 0.5rem;
+  margin-top: var(--space-2);
 }
 .leave-confirm-cancel {
   border-color: var(--color-gold-dark);
@@ -2014,18 +1760,18 @@ onUnmounted(() => {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: var(--space-1);
   background: var(--player-control-bg, var(--surface-raised));
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
 }
 .purchase-modal-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   text-align: left;
 }
 .pmi-name { flex: 1; color: var(--color-parchment); }
@@ -2033,7 +1779,7 @@ onUnmounted(() => {
 .pmi-price { color: var(--color-gold-bright); }
 .purchase-modal-total {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   color: var(--color-text-dim);
   margin: 0;
 }
@@ -2047,7 +1793,7 @@ onUnmounted(() => {
   z-index: 1200;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: var(--space-3);
   width: min(340px, calc(100vw - 2rem));
   pointer-events: none;
 }
@@ -2062,7 +1808,7 @@ onUnmounted(() => {
   border: 1px solid var(--player-toast-border);
   background: var(--player-toast-bg);
   color: var(--color-text);
-  padding: 0.8rem 0.9rem;
+  padding: var(--space-3) var(--space-4);
   box-shadow: var(--player-toast-shadow);
   cursor: pointer;
 }
@@ -2085,13 +1831,13 @@ onUnmounted(() => {
 
 .toast-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .toast-message {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.88rem;
+  font-size: var(--text-base);
   line-height: 1.4;
   color: var(--color-text-dim);
 }
@@ -2127,6 +1873,10 @@ onUnmounted(() => {
   flex-direction: column;
 }
 .inbox-main {
+  /* PlayerNav est en `order: 2` : sur mobile la navigation passe donc sous le contenu
+     (barre basse) alors qu'elle est déclarée avant lui dans le template ; à partir de
+     1024 px elle repasse en `order: 0` et redevient le rail de gauche. */
+  order: 1;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -2134,58 +1884,11 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* ── Sidebar (cachée sur mobile/tablette) ────────────────────────────── */
-.sidebar-nav {
-  display: none;
-}
-.sidebar-item {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.7rem 1rem 0.7rem 0.85rem;
-  border: none;
-  border-left: 3px solid transparent;
-  border-radius: 0 8px 8px 0;
-  background: none;
-  color: var(--color-text-dim);
-  font-family: var(--font-ui, var(--font-heading)), sans-serif;
-  font-size: 0.82rem;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  transition: all 0.15s;
-  text-align: left;
-  width: 100%;
-  position: relative;
-  touch-action: manipulation;
-  min-height: 44px;
-  white-space: nowrap;
-}
-.sidebar-item:hover:not(:disabled) {
-  color: var(--color-parchment);
-  background: var(--surface-raised);
-}
-.sidebar-item.active {
-  border-left-color: var(--color-gold-bright);
-  color: var(--color-gold-bright);
-  background: var(--player-gold-bg);
-}
-.sidebar-icon {
-  flex-shrink: 0;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  transition: transform 0.2s, filter 0.2s;
-}
-.sidebar-label {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* ── Desktop (≥1024px) ───────────────────────────────────────────────── */
 @media (min-width: 640px) {
   .inbox-content {
-    padding: 1rem 1.5rem;
+    padding: var(--space-4) var(--space-6);
   }
   .toast-stack {
     left: 1.5rem;
@@ -2198,28 +1901,12 @@ onUnmounted(() => {
   .inbox-lower {
     flex-direction: row;
   }
-  .sidebar-nav {
-    display: flex;
-    flex-direction: column;
-    width: 160px;
-    flex-shrink: 0;
-    background: var(--player-header-bg);
-    border-right: 1px solid var(--color-border);
-    overflow-y: auto;
-    padding: 0.5rem 0.4rem 0.5rem 0;
-    gap: 0.1rem;
-    scrollbar-width: none;
-  }
-  .sidebar-nav::-webkit-scrollbar { display: none; }
   .inbox-main {
     flex: 1;
     min-width: 0;
   }
-  .tab-bar {
-    display: none;
-  }
   .inbox-content {
-    padding: 1.25rem 2rem;
+    padding: var(--space-5) var(--space-8);
   }
   .tab-anim-wrapper {
     max-width: 1000px;

@@ -227,7 +227,7 @@ function reset() {
 
       <div v-if="hasAnyCoin" class="section">
         <div class="split-mode-row">
-          <p class="section-label" style="margin: 0"><AppIcon icon="lucide:scale" size="0.85rem" /> Division entre {{ numPlayers }} joueur(s)</p>
+          <p class="section-label" style="margin: 0"><AppIcon icon="lucide:scale" size="var(--space-3)" /> Division entre {{ numPlayers }} joueur(s)</p>
           <div class="mode-toggle">
             <button
               :class="['mode-btn', { active: splitMode === 'exact' }]"
@@ -308,7 +308,7 @@ function reset() {
         </div>
 
         <div v-if="splitMode === 'exact'" class="remainders">
-          <p class="section-label" style="margin-top: 0.5rem"><AppIcon icon="game-icons:coins" size="0.85rem" /> Restes (non divisibles) <HelpTip id="gold.remainder" /></p>
+          <p class="section-label" style="margin-top: var(--space-2)"><AppIcon icon="game-icons:coins" size="var(--space-3)" /> Restes (non divisibles) <HelpTip id="gold.remainder" /></p>
           <div class="remainder-chips">
             <template v-for="coin in COINS" :key="coin.key">
               <span
@@ -349,18 +349,18 @@ function reset() {
 .gold-divider {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-5);
 }
 
 .section {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 
 .section-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -370,13 +370,13 @@ function reset() {
 .coin-inputs {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .coin-row {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .coin-label {
@@ -387,13 +387,13 @@ function reset() {
 
 .coin-abbr {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.95rem;
+  font-size: var(--text-md);
   font-weight: bold;
   letter-spacing: 0.05em;
 }
 
 .coin-name {
-  font-size: 0.62rem;
+  font-size: var(--text-2xs);
   font-family: var(--font-heading), sans-serif;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -403,7 +403,7 @@ function reset() {
 .coin-stepper {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   flex: 1;
 }
 
@@ -414,7 +414,7 @@ function reset() {
   border-radius: 6px;
   background: var(--admin-control-bg, var(--surface-raised));
   color: var(--color-parchment);
-  font-size: 1rem;
+  font-size: var(--text-md);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -427,10 +427,10 @@ function reset() {
   background: var(--admin-control-bg, var(--surface-raised));
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  padding: 0.4rem 0.5rem;
+  padding: var(--space-2) var(--space-2);
   color: var(--color-parchment);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   text-align: center;
   outline: none;
 }
@@ -445,9 +445,9 @@ function reset() {
   background: var(--admin-control-bg, var(--surface-raised));
   color: var(--color-text-dim);
   border-radius: 6px;
-  padding: 0.35rem 0.7rem;
+  padding: var(--space-1) var(--space-3);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
@@ -462,7 +462,7 @@ function reset() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .mode-toggle {
@@ -473,12 +473,12 @@ function reset() {
 }
 
 .mode-btn {
-  padding: 0.25rem 0.6rem;
+  padding: 0.25rem var(--space-2);
   border: none;
   background: var(--admin-control-bg, var(--surface-raised));
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.62rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -496,20 +496,20 @@ function reset() {
 
 .group-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .group-all-btn {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   border: 1px solid var(--color-border);
   background: var(--admin-control-bg, var(--surface-raised));
   color: var(--color-text-dim);
   border-radius: 6px;
-  padding: 0.3rem 0.6rem;
+  padding: var(--space-1) var(--space-2);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.62rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -523,14 +523,14 @@ function reset() {
 .players-table {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 
 .player-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 0.75rem;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--admin-control-bg, var(--surface-raised));
@@ -559,7 +559,7 @@ function reset() {
 
 .player-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.08em;
   color: var(--color-parchment);
   flex: 1;
@@ -567,7 +567,7 @@ function reset() {
 
 .player-share {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   color: var(--color-gold-bright);
   text-align: right;
 }
@@ -582,8 +582,8 @@ function reset() {
 .group-row-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 0.75rem;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
 }
 
 .group-expand-btn {
@@ -601,7 +601,7 @@ function reset() {
 
 .group-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.08em;
   color: var(--color-gold-bright);
   flex: 1;
@@ -620,8 +620,8 @@ function reset() {
 .group-member-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.75rem;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -635,12 +635,12 @@ function reset() {
 
 .player-share-dim {
   color: var(--color-text-dim);
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
 }
 
 .share-pc-value {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   color: var(--color-text-dim);
   white-space: nowrap;
   opacity: 0.7;
@@ -649,21 +649,21 @@ function reset() {
 .remainders {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 
 .remainder-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 
 .remainder-chip {
   border: 1px solid;
   border-radius: 20px;
-  padding: 0.2rem 0.65rem;
+  padding: 0.2rem var(--space-3);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
 }
 
@@ -674,29 +674,29 @@ function reset() {
 
 .approx-hint {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   margin: 0;
   display: flex;
   align-items: flex-start;
-  gap: 0.3rem;
+  gap: var(--space-1);
 }
 
 .send-section {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .send-btn {
   width: 100%;
-  padding: 0.6rem 1rem;
+  padding: var(--space-2) var(--space-4);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -714,7 +714,7 @@ function reset() {
 
 .send-feedback {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   color: var(--color-success);
   text-align: center;
   margin: 0;
@@ -722,7 +722,7 @@ function reset() {
 
 .send-hint {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   text-align: center;
   margin: 0;
@@ -731,7 +731,7 @@ function reset() {
 .no-session-hint {
   font-family: var(--font-body), sans-serif;
   color: var(--color-text-dim);
-  font-size: 0.9rem;
-  padding: 0.5rem 0;
+  font-size: var(--text-base);
+  padding: var(--space-2) 0;
 }
 </style>

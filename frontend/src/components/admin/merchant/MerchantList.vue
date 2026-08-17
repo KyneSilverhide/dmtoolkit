@@ -49,50 +49,50 @@ const emit = defineEmits(['show-tv', 'close-merchant', 'delete-merchant', 'edit-
 </template>
 
 <style scoped>
-.merchants-list { display: flex; flex-direction: column; gap: 1rem; }
+.merchants-list { display: flex; flex-direction: column; gap: var(--space-4); }
 .loading-text, .empty-msg {
   font-family: var(--font-body), sans-serif;
   color: var(--color-text-dim);
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   text-align: center;
-  padding: 1.5rem 0;
+  padding: var(--space-6) 0;
 }
 .merchant-card {
   background: linear-gradient(160deg, var(--color-surface), var(--color-surface-alt));
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  padding: 1rem;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 .merchant-card-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
-.merchant-actions { display: flex; gap: 0.4rem; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.merchant-actions { display: flex; gap: var(--space-2); flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
 .merchant-card-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   color: var(--color-parchment);
   margin: 0;
 }
 .merchant-card-desc {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   margin: 0.2rem 0 0;
 }
 .show-tv-btn {
-  padding: 0.35rem 0.75rem;
+  padding: var(--space-1) var(--space-3);
   background: var(--surface-gold-soft);
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-gold);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
   cursor: pointer;
   white-space: nowrap;
@@ -101,13 +101,13 @@ const emit = defineEmits(['show-tv', 'close-merchant', 'delete-merchant', 'edit-
 }
 .show-tv-btn:hover { background: var(--surface-gold-soft-strong); border-color: var(--color-gold-bright); color: var(--color-gold-bright); }
 .edit-merchant-btn {
-  padding: 0.35rem 0.75rem;
+  padding: var(--space-1) var(--space-3);
   background: none;
   border: 1px solid var(--color-border);
   border-radius: 6px;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
   cursor: pointer;
   white-space: nowrap;
@@ -116,13 +116,13 @@ const emit = defineEmits(['show-tv', 'close-merchant', 'delete-merchant', 'edit-
 }
 .edit-merchant-btn:hover { border-color: var(--color-gold-dark); color: var(--color-gold-dark); }
 .close-merchant-btn {
-  padding: 0.35rem 0.75rem;
+  padding: var(--space-1) var(--space-3);
   background: var(--color-danger-soft);
   border: 1px solid var(--color-danger-border);
   border-radius: 6px;
   color: var(--color-danger);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
   cursor: pointer;
   white-space: nowrap;
@@ -131,12 +131,12 @@ const emit = defineEmits(['show-tv', 'close-merchant', 'delete-merchant', 'edit-
 }
 .close-merchant-btn:hover { background: color-mix(in oklab, var(--color-danger-soft) 70%, var(--surface-highlight)); border-color: var(--color-danger); }
 .delete-merchant-btn {
-  padding: 0.35rem 0.55rem;
+  padding: var(--space-1) var(--space-2);
   background: none;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text-dim);
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
@@ -156,19 +156,19 @@ const emit = defineEmits(['show-tv', 'close-merchant', 'delete-merchant', 'edit-
 .preview-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.4rem;
+  gap: var(--space-2);
+  padding: 0.25rem var(--space-2);
   background: var(--surface-ghost);
   border-radius: 4px;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
 }
 .preview-item.is-magic { background: var(--surface-gold-soft); box-shadow: inset 2px 0 0 var(--color-gold-bright); }
 .preview-cat {
   color: var(--color-gold-dark);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   width: 90px;
   flex-shrink: 0;
   overflow: hidden;

@@ -1,6 +1,7 @@
 <script setup>
 import AppIcon from '@/components/AppIcon.vue'
 import HelpTip from '@/components/HelpTip.vue'
+import { rarityColor } from '@/utils/rarity.js'
 
 const props = defineProps({
   activeMerchant: { default: null },
@@ -27,6 +28,7 @@ const emit = defineEmits(['set-cart-qty', 'submit-cart', 'clear-cart'])
           :key="item.id"
           class="shop-item"
           :class="{ 'out-of-stock': item.stock === 0, 'is-magic': item.is_magic }"
+          :style="item.is_magic && item.rarity ? { '--rarity-color': rarityColor(item.rarity) } : {}"
         >
           <div class="shop-item-info">
             <span class="shop-item-cat">
@@ -35,7 +37,10 @@ const emit = defineEmits(['set-cart-qty', 'submit-cart', 'clear-cart'])
               <span v-if="item.is_magic && item.rarity" class="shop-item-rarity">· {{ item.rarity }}</span>
             </span>
             <span class="shop-item-name">{{ item.name }}</span>
-            <p v-if="item.description" class="shop-item-desc">{{ item.description }}</p>
+            <!-- Description volontairement masquée pour les objets magiques : elle spoile
+                 l'effet, réservé au MJ (voir ContentActionButtons / ItemSearch côté admin).
+                 Les objets mondains gardent la leur, simple texte d'équipement. -->
+            <p v-if="item.description && !item.is_magic" class="shop-item-desc">{{ item.description }}</p>
           </div>
           <div class="shop-item-right">
             <span class="shop-item-price">{{ item.price }} po</span>
@@ -84,7 +89,7 @@ const emit = defineEmits(['set-cart-qty', 'submit-cart', 'clear-cart'])
   background: var(--player-panel-bg);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 1rem;
+  padding: var(--space-4);
   box-shadow: var(--shadow-soft);
 }
 
@@ -95,29 +100,34 @@ const emit = defineEmits(['set-cart-qty', 'submit-cart', 'clear-cart'])
   align-items: center;
   justify-content: center;
   min-height: 200px;
-  gap: 0.5rem;
+  gap: var(--space-2);
   border-style: dashed;
 }
 .empty-icon { font-size: 2.5rem; opacity: 0.4; }
-.empty-text { font-family: var(--font-heading), sans-serif; font-size: 0.9rem; letter-spacing: 0.1em; color: var(--color-text-dim); }
+.empty-text { font-family: var(--font-heading), sans-serif; font-size: var(--text-base); letter-spacing: 0.1em; color: var(--color-text-dim); }
 
 /* ── Shop ────────────────────────────────────────────────────────────── */
-.shop-panel { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem; }
+.shop-panel { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); }
 .shop-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.65rem 0.5rem;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-2);
   background: var(--player-control-bg-muted);
   border: 1px solid var(--color-border);
   border-radius: 8px;
 }
 .shop-item.out-of-stock { opacity: 0.45; }
+/* Couleur de rareté de l'objet (--rarity-color, posée en style inline depuis rarity.js),
+   pas un accent or fixe identique pour tous les objets magiques — voir TvMerchant.vue pour
+   le même traitement côté TV. --color-surface-alt comme base de color-mix() : solide,
+   contrairement à --player-panel-bg qui est un gradient et rendrait le mix invalide. */
 .shop-item.is-magic {
-  background: var(--surface-gold-soft);
-  border-color: var(--color-gold-dark);
-  box-shadow: inset 3px 0 0 var(--color-gold-bright);
+  --rarity-color: var(--color-gold-bright);
+  border-color: var(--rarity-color);
+  background: color-mix(in oklab, var(--rarity-color) 16%, var(--color-surface-alt));
+  box-shadow: inset 3px 0 0 var(--rarity-color);
 }
 .shop-item-info { flex: 1; min-width: 0; }
 .shop-item-cat {
@@ -125,28 +135,28 @@ const emit = defineEmits(['set-cart-qty', 'submit-cart', 'clear-cart'])
   align-items: center;
   gap: 0.25rem;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.52rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
   margin-bottom: 0.1rem;
 }
 .shop-item-rarity { text-transform: capitalize; color: var(--color-gold-bright); }
-.shop-item-name { font-family: var(--font-heading), sans-serif; font-size: 0.85rem; color: var(--color-parchment); }
-.shop-item-desc { font-family: var(--font-body), sans-serif; font-size: 0.72rem; color: var(--color-text-dim); margin: 0.1rem 0 0; }
-.shop-item-right { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
-.shop-item-price { font-family: var(--font-title), sans-serif; font-size: 0.95rem; color: var(--color-gold-bright); }
-.shop-item-stock { font-family: var(--font-heading), sans-serif; font-size: 0.6rem; color: var(--color-text-dim); }
+.shop-item-name { font-family: var(--font-heading), sans-serif; font-size: var(--text-base); color: var(--color-parchment); }
+.shop-item-desc { font-family: var(--font-body), sans-serif; font-size: var(--text-xs); color: var(--color-text-dim); margin: 0.1rem 0 0; }
+.shop-item-right { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.shop-item-price { font-family: var(--font-title), sans-serif; font-size: var(--text-md); color: var(--color-gold-bright); }
+.shop-item-stock { font-family: var(--font-heading), sans-serif; font-size: var(--text-2xs); color: var(--color-text-dim); }
 .shop-item-stock.empty { color: var(--player-danger-text); }
 
-.qty-controls { display: flex; align-items: center; gap: 0.3rem; }
+.qty-controls { display: flex; align-items: center; gap: var(--space-1); }
 .qty-btn {
   width: 28px; height: 28px;
   border-radius: 6px;
   border: 1px solid var(--color-border);
   background: var(--player-control-bg);
   color: var(--color-parchment);
-  font-size: 1rem;
+  font-size: var(--text-md);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.15s;
@@ -155,7 +165,7 @@ const emit = defineEmits(['set-cart-qty', 'submit-cart', 'clear-cart'])
 .qty-btn:hover { border-color: var(--color-gold-dark); color: var(--color-gold-bright); }
 .qty-value {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   font-weight: 700;
   color: var(--color-parchment);
   min-width: 20px;
@@ -166,24 +176,24 @@ const emit = defineEmits(['set-cart-qty', 'submit-cart', 'clear-cart'])
 .cart-panel {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: var(--space-2);
   border-color: var(--color-gold-dark);
-  margin-top: 0.75rem;
+  margin-top: var(--space-3);
 }
 .cart-panel.cart-active { border-color: var(--color-gold-dark); background: var(--player-panel-highlight-bg); }
 .cart-summary { display: flex; align-items: center; justify-content: space-between; }
-.cart-label { font-family: var(--font-heading), sans-serif; font-size: 0.75rem; letter-spacing: 0.1em; color: var(--color-text-dim); }
+.cart-label { font-family: var(--font-heading), sans-serif; font-size: var(--text-sm); letter-spacing: 0.1em; color: var(--color-text-dim); }
 .cart-total { font-family: var(--font-title), sans-serif; font-size: 1.1rem; color: var(--color-gold-bright); }
-.cart-actions { display: flex; gap: 0.5rem; }
+.cart-actions { display: flex; gap: var(--space-2); }
 .cart-submit-btn {
   flex: 1;
-  padding: 0.65rem;
+  padding: var(--space-3);
   border-radius: 8px;
   border: 1px solid var(--color-gold-dark);
   background: var(--player-gold-bg);
   color: var(--color-gold);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.08em;
   cursor: pointer;
   transition: all 0.2s;
@@ -191,13 +201,13 @@ const emit = defineEmits(['set-cart-qty', 'submit-cart', 'clear-cart'])
 .cart-submit-btn:hover:not(:disabled) { background: var(--player-gold-bg-strong); }
 .cart-submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .cart-clear-btn {
-  padding: 0.65rem 0.9rem;
+  padding: var(--space-3) var(--space-4);
   border-radius: 8px;
   border: 1px solid var(--color-border);
   background: none;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   cursor: pointer;
   transition: all 0.2s;
 }

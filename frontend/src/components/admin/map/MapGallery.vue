@@ -76,23 +76,23 @@ function handleFileUpload(event) {
 .upload-card {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
-  padding: 0.55rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   background: var(--surface-gold-soft);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
 }
 
 .upload-btn {
-  display: inline-flex; align-items: center; gap: 0.3rem;
-  padding: 0.3rem 0.8rem;
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.07em;
   cursor: pointer;
   transition: background 0.2s;
@@ -101,20 +101,20 @@ function handleFileUpload(event) {
 .upload-btn.disabled { opacity: 0.65; cursor: not-allowed; pointer-events: none; }
 .file-input { display: none; }
 
-.upload-error { color: var(--color-danger); font-family: var(--font-body), sans-serif; font-size: 0.8rem; }
+.upload-error { color: var(--color-danger); font-family: var(--font-body), sans-serif; font-size: var(--text-sm); }
 
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  padding: 2rem 1rem;
+  gap: var(--space-1);
+  padding: var(--space-8) var(--space-4);
   color: var(--color-text-dim);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   text-align: center;
 }
-.empty-hint { font-size: 0.75rem; opacity: 0.7; }
+.empty-hint { font-size: var(--text-sm); opacity: 0.7; }
 
 .progress-track {
   flex: 1;
@@ -133,7 +133,7 @@ function handleFileUpload(event) {
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 .gallery-item {
   min-width: 0;
@@ -150,10 +150,10 @@ function handleFileUpload(event) {
 .gallery-item.selected { border-color: var(--color-gold-bright); }
 
 .show-btn {
-  width: 100%; padding: 0.3rem 0.25rem;
+  width: 100%; padding: var(--space-1) 0.25rem;
   background: var(--surface-gold-soft); border: 1px solid var(--color-gold-dark);
   border-radius: 6px; color: var(--color-gold);
-  font-family: var(--font-heading), sans-serif; font-size: 0.6rem;
+  font-family: var(--font-heading), sans-serif; font-size: var(--text-2xs);
   letter-spacing: 0.04em; cursor: pointer; transition: all 0.2s;
   text-align: center; white-space: nowrap;
 }
@@ -168,7 +168,7 @@ function handleFileUpload(event) {
   border: 1px solid var(--color-danger, #e74c3c);
   border-radius: 50%;
   color: var(--color-danger, #e74c3c);
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   opacity: 0;
@@ -186,6 +186,6 @@ function handleFileUpload(event) {
   border-radius: 4px;
   padding: 2px 4px;
   color: var(--color-gold-bright);
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
 }
 </style>

@@ -175,27 +175,27 @@ const bubbleStyle = computed(() => ({
   color: var(--helptip-text);
   border: 1px solid var(--helptip-border);
   border-radius: 6px;
-  padding: 0.55rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   box-shadow: var(--helptip-shadow);
   pointer-events: none;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: var(--space-1);
 }
 .reflink-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .reflink-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 .reflink-badge {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   opacity: 0.8;
@@ -203,12 +203,12 @@ const bubbleStyle = computed(() => ({
 }
 .reflink-desc {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   line-height: 1.45;
 }
 .reflink-hint {
   margin: 0;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.03em;
   text-transform: uppercase;
   opacity: 0.6;

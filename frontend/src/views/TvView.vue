@@ -646,13 +646,13 @@ onUnmounted(() => {
   font-size: 0.65rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--tv-danger-text);
+  color: var(--color-overlay-danger-text);
   opacity: 0.85;
 }
 .doom-overlay-timer {
   font-family: var(--font-title), sans-serif;
   font-size: 2rem;
-  color: var(--tv-danger-text);
+  color: var(--color-overlay-danger-text);
   line-height: 1;
   letter-spacing: 0.05em;
 }
@@ -677,23 +677,21 @@ onUnmounted(() => {
   font-size: 0.65rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--tv-info-text);
+  color: var(--color-overlay-text);
   opacity: 0.85;
 }
 .timer-overlay-time {
   font-family: var(--font-title), sans-serif;
   font-size: 2rem;
-  color: var(--tv-info-text);
+  color: var(--color-overlay-text);
   line-height: 1;
   letter-spacing: 0.05em;
 }
 
-:root[data-theme='light'] .timer-overlay-label,
-:root[data-theme='light'] .timer-overlay-time,
-:root[data-theme='light'] .doom-overlay-title,
-:root[data-theme='light'] .doom-overlay-timer {
-  color: var(--color-overlay-bright-text);
-}
+/* La couleur du texte posé sur un scrim noir vient désormais du token de thème
+   --color-overlay-text (style.css), au lieu d'un override ciblant le seul thème
+   'light' — qui laissait 'sceau' et 'nacre', tout aussi clairs, avec un bleu
+   foncé illisible sur fond noir. */
 
 @keyframes overlayPulse {
   0%, 100% { opacity: 1; }

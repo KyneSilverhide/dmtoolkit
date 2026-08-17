@@ -35,8 +35,8 @@ const activeSessionId = computed({
 </template>
 
 <style scoped>
-.session-context-bar { display: flex; gap: 0.6rem; align-items: center; margin: 0.8rem 0; }
-.bar-label { font-family: var(--font-heading), sans-serif; color: var(--color-text-dim); font-size: 0.7rem; text-transform: uppercase; }
+.session-context-bar { display: flex; gap: var(--space-2); align-items: center; margin: var(--space-3) 0; }
+.bar-label { font-family: var(--font-heading), sans-serif; color: var(--color-text-dim); font-size: var(--text-xs); text-transform: uppercase; }
 .bar-select { min-width: 260px; }
 .active-chip { font-family: var(--font-heading), sans-serif; color: var(--color-gold-bright); }
 </style>

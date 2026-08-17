@@ -88,7 +88,7 @@ defineProps({
 .content-sheet {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 .cs-title {
   font-family: var(--font-heading), sans-serif;
@@ -104,7 +104,7 @@ defineProps({
 .cs-attrs, .cs-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .cs-attr {
   font-family: var(--font-body), sans-serif;
@@ -115,7 +115,7 @@ defineProps({
   border: 1px solid var(--color-gold-dark);
   border-radius: 20px;
   color: var(--color-gold-bright);
-  padding: 0.1rem 0.6rem;
+  padding: 0.1rem var(--space-2);
 }
 .cs-note {
   font-family: var(--font-body), sans-serif;
@@ -171,21 +171,21 @@ defineProps({
 
 /* ── Variant: TV (grande taille, lisible à distance) ─────────────────────── */
 .variant-tv {
-  gap: 1.2rem;
+  gap: var(--space-5);
 }
 .variant-tv .cs-title { font-size: 3rem; }
 .variant-tv .cs-subtitle { font-size: 1.4rem; }
 .variant-tv .cs-attr, .variant-tv .cs-badge { font-size: 1.2rem; }
 .variant-tv .cs-note, .variant-tv .cs-price { font-size: 1.4rem; }
 .variant-tv .cs-desc, .variant-tv .cs-trait-list { font-size: 1.5rem; }
-.variant-tv .cs-vo { font-size: 1rem; }
+.variant-tv .cs-vo { font-size: var(--text-md); }
 
 /* ── Variant: compact (message joueur) ───────────────────────────────────── */
-.variant-compact { gap: 0.4rem; }
-.variant-compact .cs-title { font-size: 0.95rem; }
-.variant-compact .cs-subtitle { font-size: 0.68rem; }
-.variant-compact .cs-attr, .variant-compact .cs-badge { font-size: 0.65rem; }
-.variant-compact .cs-note, .variant-compact .cs-price { font-size: 0.72rem; }
-.variant-compact .cs-desc, .variant-compact .cs-trait-list { font-size: 0.78rem; }
-.variant-compact .cs-vo { font-size: 0.68rem; }
+.variant-compact { gap: var(--space-2); }
+.variant-compact .cs-title { font-size: var(--text-md); }
+.variant-compact .cs-subtitle { font-size: var(--text-xs); }
+.variant-compact .cs-attr, .variant-compact .cs-badge { font-size: var(--text-xs); }
+.variant-compact .cs-note, .variant-compact .cs-price { font-size: var(--text-xs); }
+.variant-compact .cs-desc, .variant-compact .cs-trait-list { font-size: var(--text-sm); }
+.variant-compact .cs-vo { font-size: var(--text-xs); }
 </style>

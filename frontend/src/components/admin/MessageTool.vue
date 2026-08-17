@@ -200,7 +200,7 @@ async function sendMessage() {
 
     <!-- ── Player inbox ──────────────────────────────────────────────────── -->
     <div class="inbox-section">
-      <button class="inbox-toggle" @click="toggleInbox">
+      <button class="inbox-toggle" :aria-expanded="inboxOpen" @click="toggleInbox">
         <span class="inbox-toggle-label">
           <AppIcon icon="lucide:inbox" size="0.85em" /> Reçus des joueurs
         </span>
@@ -372,12 +372,12 @@ async function sendMessage() {
 .message-tool {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .section-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
@@ -387,18 +387,18 @@ async function sendMessage() {
   font-family: var(--font-body), sans-serif;
   color: var(--color-text-dim);
   text-align: center;
-  padding: 2rem 0;
+  padding: var(--space-8) 0;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 
 .form-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -409,10 +409,10 @@ async function sendMessage() {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.65rem 1rem;
+  padding: var(--space-3) var(--space-4);
   color: var(--color-parchment);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.95rem;
+  font-size: var(--text-md);
   outline: none;
   transition: border-color 0.2s;
 }
@@ -425,13 +425,13 @@ async function sendMessage() {
 .form-file {
   color: var(--color-text-dim);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
 }
 
 /* ── Author row with color palette ───────────────────── */
 .author-row {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
   align-items: center;
 }
 
@@ -493,7 +493,7 @@ async function sendMessage() {
 }
 
 .custom-icon {
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   color: var(--color-text-dim);
   pointer-events: none;
   line-height: 1;
@@ -502,7 +502,7 @@ async function sendMessage() {
 /* ── Toggles ─────────────────────────────────────────── */
 .type-toggle {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .effects-toggle {
@@ -511,13 +511,13 @@ async function sendMessage() {
 
 .toggle-btn {
   flex: 1;
-  padding: 0.5rem;
+  padding: var(--space-2);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 6px;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.1em;
   cursor: pointer;
   transition: all 0.2s;
@@ -530,7 +530,7 @@ async function sendMessage() {
   background: var(--admin-gold-bg, var(--surface-gold-soft));
 }
 
-.img-source-toggle { margin-bottom: 0.4rem; }
+.img-source-toggle { margin-bottom: var(--space-2); }
 
 .gallery-picker {
   border: 1px solid var(--color-border);
@@ -539,9 +539,9 @@ async function sendMessage() {
 }
 
 .gallery-empty {
-  padding: 1rem;
+  padding: var(--space-4);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   text-align: center;
 }
@@ -574,7 +574,7 @@ async function sendMessage() {
 
 .feedback {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   color: var(--admin-success-text, var(--color-success));
   text-align: center;
 }
@@ -583,13 +583,13 @@ async function sendMessage() {
 
 .send-btn {
   width: 100%;
-  padding: 0.6rem 1rem;
+  padding: var(--space-2) var(--space-4);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -614,13 +614,13 @@ async function sendMessage() {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 0.9rem;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
   background: var(--color-surface);
   border: none;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
@@ -629,14 +629,14 @@ async function sendMessage() {
 
 .inbox-toggle:hover { background: var(--color-surface-alt); }
 
-.inbox-toggle-label { flex: 1; text-align: left; display: flex; align-items: center; gap: 0.35rem; }
+.inbox-toggle-label { flex: 1; text-align: left; display: flex; align-items: center; gap: var(--space-1); }
 
 .inbox-badge {
   background: var(--color-gold-dark);
   color: var(--color-bg);
   border-radius: 10px;
-  font-size: 0.65rem;
-  padding: 0.05rem 0.45rem;
+  font-size: var(--text-xs);
+  padding: 0.05rem var(--space-2);
   font-weight: 700;
   min-width: 1.3rem;
   text-align: center;
@@ -652,19 +652,19 @@ async function sendMessage() {
 }
 
 .inbox-empty {
-  padding: 1rem;
+  padding: var(--space-4);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   text-align: center;
 }
 
 .inbox-entry {
-  padding: 0.65rem 0.9rem;
+  padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: var(--space-1);
 }
 
 .inbox-entry:last-child { border-bottom: none; }
@@ -680,7 +680,7 @@ async function sendMessage() {
 
 .inbox-entry-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
@@ -688,13 +688,13 @@ async function sendMessage() {
 
 .inbox-entry-time {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   color: var(--color-text-dim);
 }
 
 .inbox-entry-content {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.88rem;
+  font-size: var(--text-base);
   color: var(--color-parchment);
   line-height: 1.4;
   white-space: pre-wrap;
@@ -704,9 +704,9 @@ async function sendMessage() {
 .inbox-entry-content.dice-roll {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   color: var(--msg-swatch-arcane);
-  font-size: 0.85rem;
+  font-size: var(--text-base);
 }
 
 .inbox-reply-btn {
@@ -716,9 +716,9 @@ async function sendMessage() {
   border-radius: 5px;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
-  padding: 0.2rem 0.55rem;
+  padding: 0.2rem var(--space-2);
   cursor: pointer;
   transition: all 0.15s;
 }

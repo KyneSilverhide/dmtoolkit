@@ -39,29 +39,29 @@ const emit = defineEmits(['toggle', 'reset', 'update:brushRadius'])
 <style scoped>
 .subsection-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
-  margin: 0 0 0.4rem;
+  margin: 0 0 var(--space-2);
 }
 .control-section {
   background: var(--admin-panel-bg, var(--gradient-panel));
   border: 1px solid var(--color-border); border-radius: 10px;
-  padding: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem;
+  padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2);
 }
-.inline-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; align-items: center; }
+.inline-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
 .action-btn {
-  padding: 0.45rem 0.85rem;
+  padding: var(--space-2) var(--space-3);
   background: var(--gradient-accent-action); border: 1px solid var(--color-gold-dark);
   border-radius: 8px; color: var(--color-text-on-accent);
-  font-family: var(--font-heading), sans-serif; font-size: 0.72rem; letter-spacing: 0.08em; cursor: pointer;
+  font-family: var(--font-heading), sans-serif; font-size: var(--text-xs); letter-spacing: 0.08em; cursor: pointer;
 }
 .action-btn:hover:not(:disabled) { background: var(--gradient-accent-action-hover); }
 .action-btn.active { background: var(--gradient-accent-action-hover); border-color: var(--color-gold-bright); }
 .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .danger-btn { border-color: var(--admin-danger-border, var(--color-danger-border)); color: var(--admin-danger-text, var(--color-danger)); background: var(--gradient-danger-action); }
-.brush-controls { display: flex; flex-direction: column; gap: 0.4rem; }
-.brush-label { display: flex; align-items: center; gap: 0.4rem; color: var(--color-text-dim); font-family: var(--font-heading), sans-serif; font-size: 0.7rem; }
+.brush-controls { display: flex; flex-direction: column; gap: var(--space-2); }
+.brush-label { display: flex; align-items: center; gap: var(--space-2); color: var(--color-text-dim); font-family: var(--font-heading), sans-serif; font-size: var(--text-xs); }
 .brush-slider { flex: 1; accent-color: var(--color-gold); }
 </style>

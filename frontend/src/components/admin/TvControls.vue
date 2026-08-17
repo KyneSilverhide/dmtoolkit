@@ -416,25 +416,25 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.tv-controls { display: flex; flex-direction: column; gap: 1rem; }
+.tv-controls { display: flex; flex-direction: column; gap: var(--space-4); }
 .control-section {
   background: var(--admin-panel-bg, var(--gradient-panel));
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  padding: 1rem;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: var(--space-3);
 }
 .section-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
 }
-.inline-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; }
-.tension-adjust-row { display: flex; gap: 0.45rem; align-items: center; margin-top: 0.3rem; }
+.inline-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.tension-adjust-row { display: flex; gap: var(--space-2); align-items: center; margin-top: var(--space-1); }
 .tension-delta-input { width: 4rem; text-align: center; flex: 0 0 auto; }
 .tension-delta-btn { flex: 1; font-weight: 700; }
 .round-display {
@@ -442,12 +442,12 @@ onUnmounted(() => {
   font-size: 1.1rem;
   color: var(--color-gold-bright);
   text-align: center;
-  padding: 0.3rem 0;
+  padding: var(--space-1) 0;
 }
 .round-display strong {
   font-size: 1.5rem;
 }
-.form-row { display: flex; gap: 0.45rem; }
+.form-row { display: flex; gap: var(--space-2); }
 .form-row.split > * { flex: 1; }
 .form-input {
   width: 100%;
@@ -455,27 +455,27 @@ onUnmounted(() => {
   background: var(--admin-control-bg, var(--surface-raised));
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.5rem 0.65rem;
+  padding: var(--space-2) var(--space-3);
   color: var(--color-parchment);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
 }
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
 }
 .action-btn {
-  padding: 0.45rem 0.85rem;
+  padding: var(--space-2) var(--space-3);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   cursor: pointer;
 }
@@ -485,20 +485,20 @@ onUnmounted(() => {
 .status-line {
   margin: 0;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   color: var(--color-text-dim);
 }
 .error-line {
   margin: 0;
   font-family: var(--font-body), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--admin-danger-text, var(--color-danger));
 }
 .labeled-input { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; }
 .input-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -506,7 +506,7 @@ onUnmounted(() => {
 .hint-line {
   margin: 0;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   color: var(--color-text-dim);
 }
 .warn-hint { color: var(--admin-danger-text, var(--color-danger)); }

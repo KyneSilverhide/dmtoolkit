@@ -880,42 +880,42 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
 </template>
 
 <style scoped>
-.map-manager { position: relative; display: flex; flex-direction: column; gap: 1rem; }
+.map-manager { position: relative; display: flex; flex-direction: column; gap: var(--space-4); }
 
-.map-view-topbar { display: flex; align-items: center; gap: 0.5rem; }
+.map-view-topbar { display: flex; align-items: center; gap: var(--space-2); }
 .map-back-btn {
-  display: inline-flex; align-items: center; gap: 0.35rem;
-  padding: 0.4rem 0.85rem;
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
   background: var(--surface-raised, rgba(255,255,255,0.05));
   border: 1px solid var(--color-border); border-radius: 8px;
   color: var(--color-text-dim);
-  font-family: var(--font-heading), sans-serif; font-size: 0.72rem; letter-spacing: 0.06em;
+  font-family: var(--font-heading), sans-serif; font-size: var(--text-xs); letter-spacing: 0.06em;
   cursor: pointer; transition: all 0.18s;
 }
 .map-back-btn:hover { border-color: var(--color-gold-dark); color: var(--color-gold-bright); background: var(--surface-gold-soft); }
 
 .drop-overlay {
   position: absolute; inset: 0; z-index: 10;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2);
   background: var(--overlay-scrim); border: 2px dashed var(--color-gold-dark); border-radius: 10px;
-  color: var(--color-gold-bright); font-family: var(--font-heading), sans-serif; font-size: 0.9rem;
+  color: var(--color-gold-bright); font-family: var(--font-heading), sans-serif; font-size: var(--text-base);
   letter-spacing: 0.12em; text-transform: uppercase; pointer-events: none;
 }
 .drag-active > *:not(.drop-overlay) { opacity: 0.35; pointer-events: none; }
 
 .section-title {
-  font-family: var(--font-heading), sans-serif; font-size: 0.75rem;
+  font-family: var(--font-heading), sans-serif; font-size: var(--text-sm);
   letter-spacing: 0.2em; text-transform: uppercase; color: var(--color-gold-dark); margin-bottom: 0.25rem;
 }
 
-.map-active-layout { display: grid; grid-template-columns: 1fr 280px; gap: 0.75rem; align-items: start; }
-.map-canvas-col { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
-.map-controls-col { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; max-height: 80vh; overflow-y: auto; scrollbar-width: thin; }
+.map-active-layout { display: grid; grid-template-columns: 1fr 280px; gap: var(--space-3); align-items: start; }
+.map-canvas-col { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.map-controls-col { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; max-height: 80vh; overflow-y: auto; scrollbar-width: thin; }
 
 .canvas-hint { margin: 0; }
 .canvas-container { width: 100%; height: 72vh; border-radius: 8px; border: 1px solid var(--color-border); overflow: hidden; background: var(--color-media-letterbox); user-select: none; }
 .map-canvas { width: 100%; height: 100%; display: block; touch-action: none; }
-.hint-text { font-family: var(--font-body), sans-serif; font-size: 0.75rem; color: var(--color-text-dim); margin: 0; }
+.hint-text { font-family: var(--font-body), sans-serif; font-size: var(--text-sm); color: var(--color-text-dim); margin: 0; }
 
 @media (max-width: 900px) {
   .map-active-layout { grid-template-columns: 1fr; }

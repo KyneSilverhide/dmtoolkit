@@ -364,21 +364,21 @@ onMounted(loadSessions)
 .session-manager {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-6);
 }
 
 .section-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-3);
 }
 
 .create-form {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .form-input {
@@ -386,10 +386,10 @@ onMounted(loadSessions)
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.65rem 1rem;
+  padding: var(--space-3) var(--space-4);
   color: var(--color-parchment);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.95rem;
+  font-size: var(--text-md);
   outline: none;
 }
 
@@ -397,13 +397,13 @@ onMounted(loadSessions)
 .form-input::placeholder { color: var(--color-border); }
 
 .create-btn {
-  padding: 0.65rem 1.25rem;
+  padding: var(--space-3) var(--space-5);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.1em;
   cursor: pointer;
   transition: all 0.2s;
@@ -418,7 +418,7 @@ onMounted(loadSessions)
 
 .form-error {
   color: var(--admin-danger-text, var(--color-danger));
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   margin-top: 0.25rem;
 }
 
@@ -426,8 +426,8 @@ onMounted(loadSessions)
   background: linear-gradient(160deg, var(--color-surface), var(--color-surface));
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  padding: 1rem;
-  margin-bottom: 0.5rem;
+  padding: var(--space-4);
+  margin-bottom: var(--space-2);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -451,14 +451,14 @@ onMounted(loadSessions)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
 .session-name-area {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   flex: 1;
   min-width: 0;
 }
@@ -471,7 +471,7 @@ onMounted(loadSessions)
   background: var(--admin-gold-bg, var(--surface-gold-soft));
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
-  padding: 0.2rem 0.75rem;
+  padding: 0.2rem var(--space-3);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -480,8 +480,8 @@ onMounted(loadSessions)
 .session-two-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
 @media (max-width: 480px) {
@@ -493,19 +493,19 @@ onMounted(loadSessions)
 .session-col {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.75rem;
+  padding: var(--space-3);
 }
 
 .col-label {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-gold);
@@ -524,7 +524,7 @@ onMounted(loadSessions)
 .col-url {
   display: block;
   font-family: monospace;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   color: var(--color-gold);
   word-break: break-all;
   line-height: 1.4;
@@ -537,14 +537,14 @@ onMounted(loadSessions)
 .col-copy-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.3rem 0.65rem;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
   background: var(--admin-gold-bg, var(--surface-gold-soft));
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-gold);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: all 0.18s;
@@ -557,21 +557,21 @@ onMounted(loadSessions)
 
 .col-tv-actions {
   display: flex;
-  gap: 0.4rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
 .col-open-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.05em;
   color: var(--color-gold);
   text-decoration: none;
   border: 1px solid var(--color-gold-dark);
-  padding: 0.3rem 0.65rem;
+  padding: var(--space-1) var(--space-3);
   border-radius: 6px;
   transition: all 0.18s;
   white-space: nowrap;
@@ -583,7 +583,7 @@ onMounted(loadSessions)
 
 .col-hint {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   color: var(--color-text-dim);
   margin: 0;
   margin-top: auto;
@@ -592,8 +592,8 @@ onMounted(loadSessions)
 /* ── Pied danger ──────────────────────────────────────────── */
 .session-danger-footer {
   display: flex;
-  gap: 0.5rem;
-  padding-top: 0.75rem;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
   border-top: 1px solid var(--color-border);
   margin-top: 0.25rem;
 }
@@ -606,24 +606,24 @@ onMounted(loadSessions)
 
 .session-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.95rem;
+  font-size: var(--text-md);
   color: var(--color-parchment);
   margin: 0;
 }
 
 .session-code {
   font-family: monospace;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   margin-top: 0.2rem;
 }
 
 .session-status {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 0.2rem 0.5rem;
+  padding: 0.2rem var(--space-2);
   border-radius: 20px;
 }
 
@@ -650,13 +650,13 @@ onMounted(loadSessions)
 
 .close-btn {
   flex: 1;
-  padding: 0.6rem;
+  padding: var(--space-2);
   background: none;
   border: 1px solid var(--admin-danger-border, var(--color-danger-border));
   border-radius: 6px;
   color: var(--admin-danger-text, var(--color-danger));
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
@@ -674,10 +674,10 @@ onMounted(loadSessions)
   background: var(--color-surface);
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
-  padding: 0.3rem 0.6rem;
+  padding: var(--space-1) var(--space-2);
   color: var(--color-parchment);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   outline: none;
   min-width: 0;
   width: 100%;
@@ -701,7 +701,7 @@ onMounted(loadSessions)
   border-radius: 6px;
   background: transparent;
   color: var(--color-success);
-  padding: 0.25rem 0.4rem;
+  padding: 0.25rem var(--space-2);
   cursor: pointer;
   line-height: 1;
 }
@@ -713,7 +713,7 @@ onMounted(loadSessions)
   border-radius: 6px;
   background: transparent;
   color: var(--color-text-dim);
-  padding: 0.25rem 0.4rem;
+  padding: 0.25rem var(--space-2);
   cursor: pointer;
   line-height: 1;
 }
@@ -722,24 +722,24 @@ onMounted(loadSessions)
 .session-actions-right {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-shrink: 0;
 }
 
 .delete-btn {
-  padding: 0.6rem 0.9rem;
+  padding: var(--space-2) var(--space-4);
   background: var(--admin-danger-bg, var(--color-danger-soft));
   border: 1px solid var(--admin-danger-border, var(--color-danger-border));
   border-radius: 6px;
   color: var(--admin-danger-text, var(--color-danger));
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   transition: opacity 0.2s;
   white-space: nowrap;
 }
@@ -750,8 +750,8 @@ onMounted(loadSessions)
   border-radius: 6px;
   background: transparent;
   color: var(--admin-success-text, var(--color-success));
-  font-size: 0.85rem;
-  padding: 0.25rem 0.4rem;
+  font-size: var(--text-base);
+  padding: 0.25rem var(--space-2);
   cursor: pointer;
   line-height: 1;
 }
@@ -762,8 +762,8 @@ onMounted(loadSessions)
   border-radius: 6px;
   background: transparent;
   color: var(--admin-danger-text, var(--color-danger));
-  font-size: 0.85rem;
-  padding: 0.25rem 0.4rem;
+  font-size: var(--text-base);
+  padding: 0.25rem var(--space-2);
   cursor: pointer;
   line-height: 1;
 }

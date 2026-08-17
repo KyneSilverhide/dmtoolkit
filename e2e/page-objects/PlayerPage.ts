@@ -44,8 +44,22 @@ export class PlayerPage {
     await this.page.getByTestId('concentration-toggle').click()
   }
 
-  async switchTab(tab: 'combat' | 'des' | 'notes' | 'spells' | 'equipment' | 'magic' | 'races' | 'classes' | 'backgrounds' | 'abilities' | 'services' | 'conditions' | 'boutique' | 'vote' | 'messages') {
-    await this.page.getByTestId(`player-tab-${tab}`).filter({ visible: true }).click()
+  // Depuis la refonte UI, les familles de contenu ne sont plus des entrées de navigation :
+  // elles vivent derrière l'écran d'index « Grimoire ». Leurs clés d'onglet (et donc leurs
+  // URL) sont inchangées, seul le chemin pour y arriver demande un saut supplémentaire.
+  // 'magic' est volontairement absent : les objets magiques ne sont pas consultables par
+  // les joueurs (voir PlayerGrimoireIndex.vue côté frontend).
+  private static readonly GRIMOIRE_TABS = [
+    'spells', 'equipment', 'races', 'classes', 'backgrounds', 'abilities', 'services', 'conditions',
+  ]
+
+  async switchTab(tab: 'combat' | 'des' | 'notes' | 'grimoire' | 'spells' | 'equipment' | 'races' | 'classes' | 'backgrounds' | 'abilities' | 'services' | 'conditions' | 'boutique' | 'vote' | 'messages') {
+    if (PlayerPage.GRIMOIRE_TABS.includes(tab)) {
+      await this.page.getByTestId('player-tab-grimoire').click()
+      await this.page.getByTestId(`grimoire-entry-${tab}`).click()
+      return
+    }
+    await this.page.getByTestId(`player-tab-${tab}`).click()
   }
 
   async leave() {

@@ -32,9 +32,12 @@ import GeneratorTool from '../components/admin/GeneratorTool.vue'
 import AppIcon from '../components/AppIcon.vue'
 import AdminHeader from '../components/admin/AdminHeader.vue'
 import AdminNavSidebar from '../components/admin/AdminNavSidebar.vue'
-import AdminTvSidebar from '../components/admin/AdminTvSidebar.vue'
+import AdminSceneBar from '../components/admin/AdminSceneBar.vue'
 import PlayerRollToasts from '../components/admin/PlayerRollToasts.vue'
-import { applyTheme, getThemePreference, setThemePreference, getNextTheme } from '../utils/themePreferences.js'
+import {
+  applyTheme, getThemePreference, setThemePreference,
+  applyDensity, getDensityPreference, setDensityPreference,
+} from '../utils/themePreferences.js'
 import { adminTabRoute } from '../utils/adminRoute.js'
 import DemoBanner from '../components/DemoBanner.vue'
 import { releaseNotesStore } from '../stores/releaseNotes.js'
@@ -58,6 +61,7 @@ const generatorEnabled = ref(true) // optimistic default — updated by loadConf
 const isSessionPanelCollapsed = ref(false)
 const tvMode = ref('lobby')
 const theme = ref(getThemePreference('admin', 'dark'))
+const density = ref(getDensityPreference('admin', 'compact'))
 const isNavCollapsed = ref(false)
 const isPaletteOpen = ref(false)
 
@@ -109,7 +113,11 @@ const hasActiveTimeScale = ref(false)
 const hasActiveMap = ref(false)
 const activePuzzle = ref(null)
 const hasActiveReputation = ref(false)
-const hasActiveContent = ref(false)
+// Objet complet `{ contentType, contentData }` (et non un simple booléen) : la barre de
+// scène affiche le nom de la fiche projetée et son type, « Contenu » seul étant trop vague
+// quand n'importe quel sort/objet/race peut être à l'écran.
+const activeContent = ref(null)
+const hasActiveContent = computed(() => !!activeContent.value)
 const combatRound = ref(0)
 
 // Onglets verrouillés (grisés + tooltip). Map { [tabKey]: { title, text } }.
@@ -136,15 +144,23 @@ const lockedTabs = computed(() => {
   return locked
 })
 
+// La pastille signifie « diffusé sur la TV en ce moment », pas « du contenu existe ».
+// `hasActiveMap` / `hasActiveReputation` restent des indicateurs de « prêt à diffuser »
+// (utilisés par `tvModes[].ready` ci-dessous : une carte déjà chargée, des factions déjà
+// créées, restent sélectionnables depuis le sélecteur générique même après avoir quitté ce
+// mode) — une carte ou des réputations, une fois créées, ne « ferment » jamais au sens où
+// un vote ou un marchand se ferment. `hasActiveMerchant`, lui, reflète déjà « diffusé
+// maintenant » (le serveur ne le pose que si `tv_mode === 'merchant'`, cf. handleTvModeChanged)
+// donc sert directement ici sans dérivation supplémentaire.
 const tabActivity = computed(() => ({
   vote: hasActiveVote.value,
   images: hasActiveImage.value,
   videos: hasActiveVideo.value,
   merchants: hasActiveMerchant.value,
   tension: hasActiveDoom.value || hasActiveTension.value || hasActiveTimeScale.value,
-  map: hasActiveMap.value,
+  map: tvMode.value === 'map',
   puzzle: !!activePuzzle.value,
-  reputation: hasActiveReputation.value,
+  reputation: tvMode.value === 'reputation',
 }))
 
 // Keeps the socket instance used in onMounted so onUnmounted can clean up
@@ -257,10 +273,41 @@ const tvModes = computed(() => ([
   { key: 'content',    label: 'Contenu',          hint: 'Depuis un onglet Contenu',      ready: hasActiveContent.value },
 ]))
 
+// Libellés des 7 `CONTENT_TYPES` acceptés par `show-content` (backend/src/socket.js).
+// `item` couvre équipement ET objet magique côté serveur : on retrouve la nuance via
+// `source_category`, seul indice disponible dans la fiche déjà chargée côté client.
+const CONTENT_TYPE_LABELS = {
+  spell:      'Sort',
+  item:       'Objet',
+  race:       'Race',
+  background: 'Origine',
+  ability:    'Aptitude',
+  service:    'Service',
+  condition:  'État',
+}
+
+function contentTypeLabel(content) {
+  if (!content) return ''
+  if (content.contentType === 'item') {
+    return content.contentData?.source_category === 'magic' ? 'Objet magique' : 'Objet'
+  }
+  return CONTENT_TYPE_LABELS[content.contentType] || 'Contenu'
+}
+
 const activeTvModeLabel = computed(() => {
+  // En mode « contenu », le nom de la fiche est plus informatif que le mode lui-même.
+  // Les 7 familles exposent toutes un `name` (cf. les *Preview() de CommandPalette).
+  if (tvMode.value === 'content' && activeContent.value?.contentData?.name) {
+    return activeContent.value.contentData.name
+  }
   const mode = tvModes.value.find(item => item.key === tvMode.value)
   return mode?.label || tvMode.value
 })
+
+// Précision affichée entre parenthèses à côté du libellé : le type de fiche projetée.
+const activeTvModeDetail = computed(() => (
+  tvMode.value === 'content' ? contentTypeLabel(activeContent.value) : ''
+))
 
 const activeSessionLabel = computed(() => {
   if (!sessionStore.activeSession) return ''
@@ -294,14 +341,21 @@ function onGlobalKeydown(e) {
   }
 }
 
-function toggleTheme() {
-  theme.value = getNextTheme(theme.value)
-  setThemePreference('admin', theme.value)
-  applyTheme(theme.value)
+function setTheme(next) {
+  theme.value = next
+  setThemePreference('admin', next)
+  applyTheme(next)
+  // La TV suit le thème du MJ via ce socket — contrat inchangé par la refonte.
   if (sessionStore.activeSession?.id) {
     const socket = getSocket(authStore.token)
-    socket.emit('set-tv-theme', { sessionId: sessionStore.activeSession.id, theme: theme.value })
+    socket.emit('set-tv-theme', { sessionId: sessionStore.activeSession.id, theme: next })
   }
+}
+
+function setDensity(next) {
+  density.value = next
+  setDensityPreference('admin', next)
+  applyDensity(next)
 }
 
 function adjustRound(delta) {
@@ -333,7 +387,7 @@ function handleAdminState(data) {
   hasActiveMap.value = !!(data.mapState?.mapUrl)
   activePuzzle.value = data.activePuzzle || null
   hasActiveReputation.value = Array.isArray(data.factions) && data.factions.length > 0
-  hasActiveContent.value = !!data.activeContent
+  activeContent.value = data.activeContent || null
   if (data.isDemo !== undefined && authStore.admin) {
     authStore.admin = { ...authStore.admin, is_demo: data.isDemo }
   }
@@ -343,8 +397,17 @@ function handleTvModeChanged(payload) {
   if (payload?.mode) tvMode.value = payload.mode
   if (payload?.imageUrl !== undefined) hasActiveImage.value = !!payload.imageUrl
   if (payload?.videoUrl !== undefined) hasActiveVideo.value = !!payload.videoUrl
-  if (payload?.merchantData !== undefined) hasActiveMerchant.value = !!payload.merchantData
-  if (payload?.mode === 'content' && payload?.contentData) hasActiveContent.value = true
+  // Basé sur `mode`, pas sur la présence de `merchantData` : `close-merchant` et un
+  // changement de mode générique (`set-tv-mode`) émettent tous deux `{ mode }` SANS clé
+  // `merchantData` — `!== undefined` ne s'y déclenchait donc jamais, et le marchand restait
+  // « actif » indéfiniment après fermeture (pastille bloquée + `ready` resté vrai, ce qui
+  // permettait de resélectionner « Marchand » depuis le sélecteur générique sans
+  // `current_merchant_id` associé côté serveur → TV blanche, aucune des branches `v-else-if`
+  // de TvView ne correspondant).
+  if (payload?.mode !== undefined) hasActiveMerchant.value = payload.mode === 'merchant'
+  if (payload?.mode === 'content' && payload?.contentData) {
+    activeContent.value = { contentType: payload.contentType, contentData: payload.contentData }
+  }
   if (payload?.mode === 'puzzle' && payload?.puzzleImageId) {
     activePuzzle.value = { puzzleImageId: payload.puzzleImageId, puzzleSeed: payload.puzzleSeed, puzzleClicks: activePuzzle.value?.puzzleClicks || [] }
   }
@@ -439,7 +502,10 @@ onMounted(() => {
   _socket.on(VOTE_STARTED, () => { hasActiveVote.value = true })
   _socket.on(VOTE_CLOSED, () => { hasActiveVote.value = false })
   _socket.on(MAP_STATE, (data) => { hasActiveMap.value = !!(data?.mapUrl) })
-  _socket.on(MERCHANT_ITEMS_UPDATED, () => { hasActiveMerchant.value = true })
+  // Ne force plus `true` inconditionnellement : cet événement suit aussi les éditions
+  // d'un marchand qui n'est pas forcément diffusé (voir le commentaire de
+  // handleTvModeChanged pour la même confusion « existe » / « diffusé »).
+  _socket.on(MERCHANT_ITEMS_UPDATED, () => { hasActiveMerchant.value = tvMode.value === 'merchant' })
   _socket.on(PUZZLE_CLOSED, () => {
     activePuzzle.value = null
     if (tvMode.value === 'puzzle') tvMode.value = 'lobby'
@@ -547,13 +613,27 @@ onUnmounted(() => {
       :admin="authStore.admin"
       :app-version="appVersion"
       :theme="theme"
+      :density="density"
       :is-session-panel-collapsed="isSessionPanelCollapsed"
       :active-session-label="activeSessionLabel"
       :has-active-session="!!sessionStore.activeSession"
       @logout="logout"
-      @toggle-theme="toggleTheme"
+      @update:theme="setTheme"
+      @update:density="setDensity"
       @toggle-session-panel="isSessionPanelCollapsed = !isSessionPanelCollapsed"
       @open-search="openPalette"
+    />
+
+    <AdminSceneBar
+      :tv-modes="tvModes"
+      :tv-mode="tvMode"
+      :has-active-session="!!sessionStore.activeSession"
+      :active-tv-mode-label="activeTvModeLabel"
+      :active-tv-mode-detail="activeTvModeDetail"
+      :combat-round="combatRound"
+      @set-mode="setTvMode"
+      @adjust-round="adjustRound"
+      @reset-round="resetRound"
     />
 
     <div class="admin-body">
@@ -591,19 +671,8 @@ onUnmounted(() => {
                 </KeepAlive>
               </Transition>
             </template>
-            <p v-else class="no-session-msg">Sélectionnez ou créez une session pour accéder aux outils de jeu — ou consultez Sorts, Objets, Races, Classes et Origines dans le menu « Contenu » à gauche, sans session.</p>
+            <p v-else class="no-session-msg">Sélectionnez ou créez une session pour accéder aux outils de jeu — ou consultez Sorts, Objets, Races, Classes et Origines dans le domaine « Grimoire » à gauche, sans session.</p>
           </section>
-
-          <AdminTvSidebar
-            :tv-modes="tvModes"
-            :tv-mode="tvMode"
-            :has-active-session="!!sessionStore.activeSession"
-            :active-tv-mode-label="activeTvModeLabel"
-            :combat-round="combatRound"
-            @set-mode="setTvMode"
-            @adjust-round="adjustRound"
-            @reset-round="resetRound"
-          />
         </div>
       </div>
     </div>
@@ -649,12 +718,14 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
+/* Une seule colonne depuis que la régie TV est passée en barre de scène persistante :
+   le panneau de travail récupère les 320 px de la colonne droite supprimée. */
 .admin-main-grid {
   flex: 1;
-  padding: 1.25rem;
+  padding: var(--space-5);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
   align-items: start;
 }
 
@@ -662,31 +733,36 @@ onUnmounted(() => {
   min-width: 0;
   background: var(--gradient-panel);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+}
+/* Rapatrié depuis style.css, où la règle avait besoin d'un `!important` pour passer
+   devant la déclaration scoped ci-dessus. */
+@media (min-width: 1024px) {
+  .admin-main { padding: var(--space-8); }
 }
 
-.no-session-msg { font-size: 0.88rem; color: var(--color-text-dim); padding: 1rem 0; }
+.no-session-msg { font-size: var(--text-base); color: var(--color-text-dim); padding: var(--space-4) 0; }
 
 .locked-tab-panel {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   text-align: center;
-  padding: 2.5rem 1rem;
+  padding: var(--space-10) var(--space-4);
   color: var(--color-warning);
 }
 .locked-tab-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .locked-tab-text {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   max-width: 360px;
 }
@@ -695,8 +771,8 @@ onUnmounted(() => {
   background: var(--surface-raised);
   border: 1px solid var(--color-border);
   border-radius: 3px;
-  padding: 0 0.3rem;
-  font-size: 0.75rem;
+  padding: 0 var(--space-1);
+  font-size: var(--text-sm);
   color: var(--color-gold-bright);
 }
 
@@ -705,13 +781,11 @@ onUnmounted(() => {
 /* noinspection CssUnusedSymbol */
 .tab-fade-enter-from, .tab-fade-leave-to { opacity: 0; }
 
-@media (max-width: 1100px) {
-  .admin-main-grid { grid-template-columns: 1fr; }
-}
-
+/* Le point de rupture à 1100 px n'a plus lieu d'être : il existait pour escamoter la colonne
+   de régie TV, qui est maintenant une barre persistante visible à tous les gabarits. */
 @media (max-width: 767px) {
   .admin-body { flex-direction: column; }
-  .admin-main-grid { padding: 0.75rem; }
-  .admin-main { padding: 0.85rem; }
+  .admin-main-grid { padding: var(--space-3); }
+  .admin-main { padding: var(--space-3); }
 }
 </style>

@@ -169,7 +169,9 @@ test('TV mode buttons reflect ready state', async ({ browser, adminToken }) => {
     await adminPage.login(token)
     await adminPage.selectSession(code)
 
-    // Lobby and combat are always ready
+    // Lobby and combat are always ready — les modes vivent désormais dans le sélecteur
+    // de la barre de scène, qu'il faut ouvrir d'abord.
+    await adminPage.openTvModePicker()
     await expect(adminPage.page.getByTestId('tv-mode-btn-lobby')).toBeVisible()
     await expect(adminPage.page.getByTestId('tv-mode-btn-combat')).toBeVisible()
   } finally {

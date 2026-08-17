@@ -78,17 +78,17 @@ const emit = defineEmits([
 </template>
 
 <style scoped>
-.category-section { display: flex; flex-direction: column; gap: 0.4rem; }
+.category-section { display: flex; flex-direction: column; gap: var(--space-2); }
 
 .cat-header {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 .cat-icon { color: var(--color-gold-dark); flex-shrink: 0; }
 .cat-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
@@ -96,11 +96,11 @@ const emit = defineEmits([
 }
 .cat-count {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.58rem;
+  font-size: var(--text-2xs);
   color: var(--color-text-dim);
   background: var(--surface-track);
   border-radius: 10px;
-  padding: 0 0.35rem;
+  padding: 0 var(--space-1);
   min-width: 1.4em;
   text-align: center;
   flex-shrink: 0;
@@ -130,7 +130,7 @@ const emit = defineEmits([
 
 /* Catégorie Musique : exclusive, mise en avant visuellement */
 .category-music {
-  padding: 0.5rem 0.6rem;
+  padding: var(--space-2) var(--space-2);
   border: 1px solid var(--color-accent-border, var(--color-gold-dark));
   border-radius: 8px;
   background: var(--surface-accent-soft, var(--surface-gold-soft));
@@ -143,19 +143,19 @@ const emit = defineEmits([
   gap: 0.2rem;
   flex-shrink: 0;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.55rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--color-accent, var(--color-gold-bright));
   background: var(--surface-accent-soft-strong, var(--surface-gold-soft-strong));
   border: 1px solid var(--color-accent-border, var(--color-gold-dark));
   border-radius: 10px;
-  padding: 0.05rem 0.4rem;
+  padding: 0.05rem var(--space-2);
 }
 
 .track-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
-  gap: 0.45rem;
+  gap: var(--space-2);
 }
 </style>

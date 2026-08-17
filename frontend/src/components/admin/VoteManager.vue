@@ -163,12 +163,12 @@ onUnmounted(() => {
 .vote-manager {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .section-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
@@ -178,18 +178,18 @@ onUnmounted(() => {
 .create-form {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 
 .form-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -199,10 +199,10 @@ onUnmounted(() => {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   color: var(--color-parchment);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   outline: none;
   width: 100%;
   box-sizing: border-box;
@@ -212,7 +212,7 @@ onUnmounted(() => {
 
 .option-row {
   display: flex;
-  gap: 0.4rem;
+  gap: var(--space-2);
   align-items: center;
 }
 
@@ -221,9 +221,9 @@ onUnmounted(() => {
   border: 1px solid var(--admin-danger-border, var(--color-danger-border));
   border-radius: 4px;
   color: var(--admin-danger-text, var(--color-danger));
-  padding: 0.3rem 0.5rem;
+  padding: var(--space-1) var(--space-2);
   cursor: pointer;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   flex-shrink: 0;
   transition: all 0.2s;
 }
@@ -233,10 +233,10 @@ onUnmounted(() => {
   background: none;
   border: 1px dashed var(--color-border);
   border-radius: 6px;
-  padding: 0.4rem;
+  padding: var(--space-2);
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: all 0.2s;
@@ -247,22 +247,22 @@ onUnmounted(() => {
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   color: var(--color-text-dim);
   cursor: pointer;
 }
 
 .action-btn {
   width: 100%;
-  padding: 0.6rem 1rem;
+  padding: var(--space-2) var(--space-4);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.08em;
   cursor: pointer;
   transition: all 0.2s;
@@ -281,29 +281,29 @@ onUnmounted(() => {
 .active-vote {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .vote-status-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .vote-question-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   color: var(--color-parchment);
   flex: 1;
 }
 
 .vote-badge {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 0.2rem 0.5rem;
+  padding: 0.2rem var(--space-2);
   border-radius: 20px;
 }
 .vote-badge.active {
@@ -319,7 +319,7 @@ onUnmounted(() => {
 
 .vote-progress-text {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   color: var(--color-text-dim);
   letter-spacing: 0.1em;
 }
@@ -327,7 +327,7 @@ onUnmounted(() => {
 .vote-results {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .result-row {
@@ -344,13 +344,13 @@ onUnmounted(() => {
 
 .result-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-parchment);
 }
 
 .result-count {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   color: var(--color-gold-dark);
 }
 
@@ -370,7 +370,7 @@ onUnmounted(() => {
 
 .voter-names {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   color: var(--color-text-dim);
   font-style: italic;
 }

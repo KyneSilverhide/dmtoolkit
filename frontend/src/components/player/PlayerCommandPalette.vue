@@ -4,8 +4,6 @@ import AppIcon from '../AppIcon.vue'
 import { BACKEND_URL } from '@/config.js'
 import { useConditions } from '@/composables/useConditions.js'
 import { usePlayerContentCatalogs } from '@/composables/usePlayerContentCatalogs.js'
-import { itemTypeStyle } from '@/utils/itemTypes.js'
-import { rarityColor } from '@/utils/rarity.js'
 import { parseEcole, levelLabel, schoolColor } from '@/utils/spellSchool.js'
 import { stripAccents } from '@/utils/slugify.js'
 
@@ -42,14 +40,6 @@ function spellPreview(spell) {
     id: `spell-${spell.slug}`, label: spell.name, icon: 'lucide:sparkles',
     tagLabel: [school, levelLabel(level)].filter(Boolean).join(' · '), tagColor: schoolColor(school),
     snippet: snippet(spell.description), tab: 'spells', prefillQuery: spell.name, prefillSlug: spell.slug,
-  }
-}
-function itemPreview(item) {
-  const kind = item.source_category === 'magic' ? 'magic' : 'equipment'
-  return {
-    id: `item-${item.slug}`, label: item.name, icon: itemTypeStyle(item.item_type).icon,
-    tagLabel: item.item_type, tagColor: kind === 'magic' ? rarityColor(item.rarity) : itemTypeStyle(item.item_type).color,
-    snippet: snippet(item.description), tab: kind, prefillQuery: item.name, prefillSlug: item.slug,
   }
 }
 function racePreview(race) {
@@ -109,10 +99,7 @@ async function runSearch(q) {
   const id = ++requestId
   loading.value = true
   try {
-    const [spells, items] = await Promise.all([
-      fetchPublicSearch('/api/spells/public/search', q),
-      fetchPublicSearch('/api/magic-items/public/search', q),
-    ])
+    const spells = await fetchPublicSearch('/api/spells/public/search', q)
     if (id !== requestId) return
     const nq = normalize(q)
     const localRaces = races.value.filter(r => normalize(r.name).includes(nq)).slice(0, 3)
@@ -123,7 +110,6 @@ async function runSearch(q) {
     const localConditions = conditions.value.filter(c => normalize(c.label).includes(nq)).slice(0, 3)
     results.value = [
       ...spells.slice(0, 4).map(spellPreview),
-      ...items.slice(0, 4).map(itemPreview),
       ...localRaces.map(racePreview),
       ...localClasses.map(classPreview),
       ...localBackgrounds.map(backgroundPreview),
@@ -254,7 +240,7 @@ onUnmounted(() => {
   align-items: flex-start;
   justify-content: center;
   z-index: 960;
-  padding: 8vh 1rem 1rem;
+  padding: 8vh var(--space-4) var(--space-4);
 }
 .pcp-card {
   position: relative;
@@ -272,8 +258,8 @@ onUnmounted(() => {
 .pcp-input-row {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.85rem 1rem;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -285,10 +271,10 @@ onUnmounted(() => {
   outline: none;
   color: var(--color-parchment);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.95rem;
+  font-size: var(--text-md);
 }
 .pcp-input::placeholder { color: var(--color-text-dim); }
-.pcp-loading-dot { font-size: 0.5rem; color: var(--color-gold-dark); animation: pcpDotPulse 1s ease-in-out infinite; }
+.pcp-loading-dot { font-size: var(--text-2xs); color: var(--color-gold-dark); animation: pcpDotPulse 1s ease-in-out infinite; }
 @keyframes pcpDotPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 .pcp-close {
   background: none;
@@ -302,19 +288,19 @@ onUnmounted(() => {
   transition: color 0.15s;
 }
 .pcp-close:hover { color: var(--color-parchment); }
-.pcp-results { overflow-y: auto; padding: 0.5rem; scrollbar-gutter: stable; }
+.pcp-results { overflow-y: auto; padding: var(--space-2); scrollbar-gutter: stable; }
 .pcp-row {
   display: flex;
   align-items: flex-start;
-  gap: 0.6rem;
+  gap: var(--space-2);
   width: 100%;
   background: none;
   border: none;
   border-radius: 8px;
-  padding: 0.55rem 0.65rem;
+  padding: var(--space-2) var(--space-3);
   color: var(--color-parchment);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   text-align: left;
   cursor: pointer;
   transition: background 0.12s;
@@ -322,12 +308,12 @@ onUnmounted(() => {
 .pcp-row:hover, .pcp-row.active { background: var(--surface-gold-soft); }
 .pcp-row-icon { flex-shrink: 0; margin-top: 0.15rem; }
 .pcp-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
-.pcp-row-top { display: flex; align-items: center; gap: 0.4rem; }
+.pcp-row-top { display: flex; align-items: center; gap: var(--space-2); }
 .pcp-row-label { flex-shrink: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pcp-row-snippet {
   margin: 0;
   color: var(--color-text-dim);
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   line-height: 1.35;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -336,25 +322,25 @@ onUnmounted(() => {
 .pcp-tag {
   --tag-color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.58rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   border: 1px solid color-mix(in oklab, var(--tag-color) 50%, transparent);
   background: color-mix(in oklab, var(--tag-color) 16%, transparent);
   color: var(--tag-color);
   border-radius: 20px;
-  padding: 0.05rem 0.45rem;
+  padding: 0.05rem var(--space-2);
   flex-shrink: 0;
   white-space: nowrap;
 }
-.pcp-empty { margin: 0; padding: 1.25rem 0.6rem; text-align: center; color: var(--color-text-dim); font-size: 0.82rem; }
+.pcp-empty { margin: 0; padding: var(--space-5) var(--space-2); text-align: center; color: var(--color-text-dim); font-size: var(--text-sm); }
 .pcp-footer {
   display: flex;
-  gap: 1rem;
-  padding: 0.55rem 1rem;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-4);
   border-top: 1px solid var(--color-border);
   color: var(--color-text-dim);
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   flex-shrink: 0;
 }
 .pcp-footer span { display: inline-flex; align-items: center; gap: 0.25rem; }
@@ -363,11 +349,11 @@ onUnmounted(() => {
   background: var(--surface-ghost);
   border: 1px solid var(--color-border);
   border-radius: 4px;
-  padding: 0 0.3rem;
-  font-size: 0.65rem;
+  padding: 0 var(--space-1);
+  font-size: var(--text-xs);
 }
 @media (max-width: 640px) {
-  .pcp-backdrop { padding: 4vh 0.5rem 0.5rem; }
+  .pcp-backdrop { padding: 4vh var(--space-2) var(--space-2); }
 }
 /* noinspection CssUnusedSymbol */
 .pcp-modal-enter-active { transition: opacity 0.15s ease; }

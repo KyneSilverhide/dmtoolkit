@@ -75,7 +75,7 @@ function imageFullUrl(url) {
       <AppIcon icon="lucide:map-pin" size="0.85em" /> Cliquez sur la carte pour placer
     </p>
 
-    <div v-if="Object.keys(mapTokens).some(k => k.startsWith('custom_'))" class="token-tray" style="margin-top:0.4rem">
+    <div v-if="Object.keys(mapTokens).some(k => k.startsWith('custom_'))" class="token-tray" style="margin-top:var(--space-2)">
       <template v-for="(tokenPos, pid) in mapTokens" :key="pid">
         <div
           v-if="String(pid).startsWith('custom_')"
@@ -95,22 +95,22 @@ function imageFullUrl(url) {
 <style scoped>
 .subsection-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
-  margin: 0 0 0.4rem;
+  margin: 0 0 var(--space-2);
 }
 .control-section {
   background: var(--admin-panel-bg, var(--gradient-panel));
   border: 1px solid var(--color-border); border-radius: 10px;
-  padding: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem;
+  padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2);
 }
-.hint-text { font-family: var(--font-body), sans-serif; font-size: 0.75rem; color: var(--color-text-dim); margin: 0; }
-.token-tray { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.hint-text { font-family: var(--font-body), sans-serif; font-size: var(--text-sm); color: var(--color-text-dim); margin: 0; }
+.token-tray { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .token-chip {
-  display: flex; align-items: center; gap: 0.35rem;
-  padding: 0.3rem 0.55rem 0.3rem 0.35rem;
+  display: flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
   background: var(--surface-raised, #1e1e2e);
   border: 1.5px solid var(--color-border);
   border-radius: 999px;
@@ -126,25 +126,25 @@ function imageFullUrl(url) {
   flex-shrink: 0; display: flex; align-items: center; justify-content: center;
 }
 .chip-img { width: 100%; height: 100%; object-fit: cover; }
-.chip-initial { font-family: var(--font-heading), sans-serif; font-size: 0.75rem; color: var(--color-gold-dark); }
-.chip-name { font-family: var(--font-heading), sans-serif; font-size: 0.65rem; letter-spacing: 0.05em; color: var(--color-text-dim); }
-.chip-badge { font-size: 0.7rem; color: var(--color-gold-bright); font-weight: bold; }
+.chip-initial { font-family: var(--font-heading), sans-serif; font-size: var(--text-sm); color: var(--color-gold-dark); }
+.chip-name { font-family: var(--font-heading), sans-serif; font-size: var(--text-xs); letter-spacing: 0.05em; color: var(--color-text-dim); }
+.chip-badge { font-size: var(--text-xs); color: var(--color-gold-bright); font-weight: bold; }
 .pending-badge { color: var(--color-pending); }
 .placement-hint { color: var(--color-pending) !important; font-style: italic; }
-.custom-token-form { display: flex; gap: 0.4rem; align-items: center; }
+.custom-token-form { display: flex; gap: var(--space-2); align-items: center; }
 .custom-token-input {
-  flex: 1; padding: 0.35rem 0.6rem;
+  flex: 1; padding: var(--space-1) var(--space-2);
   background: var(--surface-raised, #1e1e2e);
   border: 1px solid var(--color-border); border-radius: 8px;
   color: var(--color-text, #fff);
-  font-family: var(--font-heading), sans-serif; font-size: 0.72rem; outline: none;
+  font-family: var(--font-heading), sans-serif; font-size: var(--text-xs); outline: none;
 }
 .custom-token-input:focus { border-color: var(--color-gold-dark); }
 .action-btn {
-  padding: 0.45rem 0.85rem;
+  padding: var(--space-2) var(--space-3);
   background: var(--gradient-accent-action); border: 1px solid var(--color-gold-dark);
   border-radius: 8px; color: var(--color-text-on-accent);
-  font-family: var(--font-heading), sans-serif; font-size: 0.72rem; letter-spacing: 0.08em; cursor: pointer;
+  font-family: var(--font-heading), sans-serif; font-size: var(--text-xs); letter-spacing: 0.08em; cursor: pointer;
 }
 .action-btn:hover:not(:disabled) { background: var(--gradient-accent-action-hover); }
 .action-btn.active { background: var(--gradient-accent-action-hover); border-color: var(--color-gold-bright); }

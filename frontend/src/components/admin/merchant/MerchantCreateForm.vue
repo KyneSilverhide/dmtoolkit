@@ -338,16 +338,16 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 .create-form {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
   background: linear-gradient(160deg, var(--color-surface), var(--color-surface-alt));
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  padding: 1rem;
+  padding: var(--space-4);
 }
-.form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+.form-group { display: flex; flex-direction: column; gap: var(--space-1); }
 .form-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -356,10 +356,10 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   color: var(--color-parchment);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   outline: none;
   width: 100%;
   box-sizing: border-box;
@@ -368,15 +368,15 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 .form-input::placeholder { color: var(--color-border); }
 
 .items-header { display: flex; align-items: center; justify-content: space-between; }
-.items-actions { display: flex; gap: 0.4rem; }
+.items-actions { display: flex; gap: var(--space-2); }
 .small-btn {
-  padding: 0.3rem 0.6rem;
+  padding: var(--space-1) var(--space-2);
   background: none;
   border: 1px dashed var(--color-border);
   border-radius: 6px;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: all 0.2s;
@@ -385,17 +385,17 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 
 .no-items {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   text-align: center;
-  padding: 1rem 0;
+  padding: var(--space-4) 0;
 }
 
-.item-row-header { display: flex; align-items: center; gap: 0.4rem; padding: 0 0 0.1rem; }
-.item-header-fields { display: flex; gap: 0.35rem; flex: 1; flex-wrap: wrap; }
+.item-row-header { display: flex; align-items: center; gap: var(--space-2); padding: 0 0 0.1rem; }
+.item-header-fields { display: flex; gap: var(--space-1); flex: 1; flex-wrap: wrap; }
 .item-col-header {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.55rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -411,10 +411,10 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 .col-magic { flex: 0 0 60px; min-width: 60px; text-align: center; }
 .item-col-spacer { width: 31px; flex-shrink: 0; }
 
-.items-list { display: flex; flex-direction: column; gap: 0.4rem; max-height: 300px; overflow-y: auto; }
-.item-row { display: flex; align-items: center; gap: 0.4rem; border-radius: 6px; }
+.items-list { display: flex; flex-direction: column; gap: var(--space-2); max-height: 300px; overflow-y: auto; }
+.item-row { display: flex; align-items: center; gap: var(--space-2); border-radius: 6px; }
 .item-row.is-magic-row { background: var(--surface-gold-soft); box-shadow: inset 2px 0 0 var(--color-gold-bright); }
-.item-row-fields { display: flex; gap: 0.35rem; flex: 1; flex-wrap: wrap; }
+.item-row-fields { display: flex; gap: var(--space-1); flex: 1; flex-wrap: wrap; }
 .item-name-input { flex: 2; min-width: 100px; }
 .item-desc-input { flex: 3; min-width: 120px; }
 .item-price-input { flex: 1; min-width: 60px; }
@@ -426,23 +426,23 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
   border: 1px solid var(--color-danger-border);
   border-radius: 4px;
   color: var(--color-danger);
-  padding: 0.3rem 0.5rem;
+  padding: var(--space-1) var(--space-2);
   cursor: pointer;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   flex-shrink: 0;
   transition: all 0.2s;
 }
 .remove-btn:hover { background: var(--color-danger-soft); }
 
-.form-actions { display: flex; gap: 0.5rem; }
+.form-actions { display: flex; gap: var(--space-2); }
 .action-btn {
-  padding: 0.55rem 1rem;
+  padding: var(--space-2) var(--space-4);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.1em;
   cursor: pointer;
   transition: all 0.2s;
@@ -451,13 +451,13 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 .action-btn:hover:not(:disabled) { background: var(--gradient-accent-action-hover); }
 .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .cancel-btn {
-  padding: 0.55rem 1rem;
+  padding: var(--space-2) var(--space-4);
   background: none;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.1em;
   cursor: pointer;
   transition: all 0.2s;
@@ -471,14 +471,14 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 .preset-toggle-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 1.2rem;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-5);
   background: var(--surface-gold-soft);
   border: 1px solid var(--color-gold-dark);
   border-radius: 10px;
   color: var(--color-gold-bright);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
@@ -491,23 +491,23 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
   background: var(--color-surface-alt);
   border: 1px solid var(--color-gold-dark);
   border-radius: 12px;
-  padding: 0.9rem;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
-.preset-panel-hint { font-size: 0.75rem; color: var(--color-text-dim); text-align: center; margin: 0; }
+.preset-panel-hint { font-size: var(--text-sm); color: var(--color-text-dim); text-align: center; margin: 0; }
 .preset-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .preset-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.65rem 0.4rem;
+  padding: var(--space-3) var(--space-2);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 10px;
@@ -518,7 +518,7 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 .preset-card:hover { border-color: var(--color-gold-dark); background: var(--surface-gold-soft); transform: translateY(-1px); }
 .preset-card-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--color-gold-bright);
@@ -526,11 +526,11 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 }
 .preset-card-count {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   color: var(--color-text-dim);
   background: var(--surface-ghost);
   border-radius: 6px;
-  padding: 0.1rem 0.4rem;
+  padding: 0.1rem var(--space-2);
   margin-top: 0.1rem;
 }
 
@@ -539,18 +539,18 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
   background: var(--color-surface-alt);
   border: 1px solid var(--color-gold-dark);
   border-radius: 10px;
-  padding: 0.75rem;
+  padding: var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
-.random-row { display: flex; align-items: flex-end; gap: 0.5rem; flex-wrap: wrap; }
+.random-row { display: flex; align-items: flex-end; gap: var(--space-2); flex-wrap: wrap; }
 .random-label {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -565,14 +565,14 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
   background: var(--color-surface-alt);
   border: 1px solid var(--color-gold-dark);
   border-radius: 10px;
-  padding: 0.75rem;
+  padding: var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
-.equip-search-row { display: flex; align-items: center; gap: 0.5rem; }
+.equip-search-row { display: flex; align-items: center; gap: var(--space-2); }
 .equip-search-input { flex: 1; }
-.equip-loading { font-family: var(--font-heading), sans-serif; font-size: 0.8rem; color: var(--color-text-dim); }
+.equip-loading { font-family: var(--font-heading), sans-serif; font-size: var(--text-sm); color: var(--color-text-dim); }
 .equip-results {
   list-style: none;
   margin: 0;
@@ -586,8 +586,8 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 .equip-result-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.6rem;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2);
   border-radius: 6px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
@@ -597,9 +597,9 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 .equip-result-item:hover { border-color: var(--color-gold-dark); background: var(--surface-gold-soft); }
 .equip-result-item.is-magic-row { border-color: var(--color-gold-dark); background: var(--surface-gold-soft); box-shadow: inset 2px 0 0 var(--color-gold-bright); }
 .equip-result-magic-badge { flex-shrink: 0; }
-.equip-result-name { flex: 1; font-family: var(--font-heading), sans-serif; font-size: 0.82rem; color: var(--color-parchment); }
-.equip-result-type { font-size: 0.68rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
-.equip-result-price { font-family: var(--font-heading), sans-serif; font-size: 0.75rem; color: var(--color-gold-bright); min-width: 52px; text-align: right; }
-.equip-empty { font-size: 0.78rem; color: var(--color-text-dim); text-align: center; margin: 0; padding: 0.4rem; }
+.equip-result-name { flex: 1; font-family: var(--font-heading), sans-serif; font-size: var(--text-sm); color: var(--color-parchment); }
+.equip-result-type { font-size: var(--text-xs); color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.equip-result-price { font-family: var(--font-heading), sans-serif; font-size: var(--text-sm); color: var(--color-gold-bright); min-width: 52px; text-align: right; }
+.equip-empty { font-size: var(--text-sm); color: var(--color-text-dim); text-align: center; margin: 0; padding: var(--space-2); }
 .equip-err { color: var(--color-danger); }
 </style>

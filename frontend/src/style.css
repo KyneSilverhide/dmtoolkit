@@ -1,4 +1,9 @@
-﻿:root {
+﻿/* L1 — échelles invariantes par thème (espacement, typo, rayons, motion).
+   Importé en premier : les blocs de palette ci-dessous ne redéfinissent QUE des
+   couleurs, jamais une échelle. Voir docs/refonte-ui.md §3.1. */
+@import './styles/tokens.derive.css';
+
+:root {
   /* Palette "Braise" — inspirée de dd2024.fr (fond quasi-noir, ambre chaud, rouge braise),
      en remplacement de l'ancien thème sombre parchemin/chandelle. Couleurs extraites des
      custom properties HSL du site (--background/--primary/--card/--border/--muted-foreground/--destructive). */
@@ -95,6 +100,17 @@
   --overlay-track-bg: rgba(255, 255, 255, 0.1);
   --overlay-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
   --color-overlay-bright-text: #9ed3ff;
+  /* Texte posé SUR un scrim noir (overlays timer/doom clock de la TV). Sur un thème
+     sombre, --color-info-bright est déjà clair et convient ; sur un thème clair il
+     devient un bleu foncé illisible sur fond noir — d'où l'override dans 'sceau' et
+     'nacre' plus bas. Avant ce token, TvView.vue corrigeait le cas à la main pour le
+     seul thème 'light' (supprimé), laissant 'sceau' et 'nacre' avec le bug. */
+  --color-overlay-text: var(--color-info-bright);
+  /* Pendant « danger » du précédent (doom clock). L'ancien override 'light' peignait
+     le doom clock EN BLEU, perdant la sémantique d'urgence ; on garde le rouge et on
+     l'éclaircit sur fond clair — #b24a43 sur scrim noir ne tient que 2,8:1, sous le
+     seuil AA grand texte de 3:1. */
+  --color-overlay-danger-text: var(--color-danger);
 
   /* ── Gold-tint borders (companion to --surface-gold-soft* fills) — theme-invariant ── */
   --border-gold-soft: rgba(201, 168, 76, 0.2);
@@ -197,91 +213,6 @@
   color-scheme: dark;
 }
 
-:root[data-theme='light'] {
-  --color-bg: #f5f1e8;
-  --color-bg2: #ece4d5;
-  --color-parchment: #2f261a;
-  --color-parchment-dark: #5f503d;
-  --color-gold: #9b7a35;
-  --color-gold-bright: #634918;
-  --color-gold-dark: #806126;
-  --color-red: #a54a42;
-  --color-red-bright: #bf5d55;
-  --color-crimson: #8d3d37;
-  --color-text: #31281d;
-  --color-text-dim: #665847;
-  --color-text-muted: #665847;
-  --color-text-on-accent: var(--color-text);
-  --color-border: #cdbfa9;
-  --color-shadow: rgba(65, 49, 24, 0.16);
-  --color-surface: #fffdf9;
-  --color-surface-alt: #f6efe3;
-  --color-surface-soft: #efe6d6;
-  --color-success: #2f8a68;
-  --color-success-soft: rgba(47, 138, 104, 0.12);
-  --color-success-border: rgba(47, 138, 104, 0.28);
-  --color-success-rgb: 47, 138, 104;
-  --color-warning: #a96d12;
-  --color-warning-soft: rgba(169, 109, 18, 0.11);
-  --color-warning-border: rgba(169, 109, 18, 0.25);
-  --color-warning-rgb: 169, 109, 18;
-  --color-info: #4f7fc2;
-  --color-info-bright: #3d69a6;
-  --color-info-soft: rgba(79, 127, 194, 0.12);
-  --color-info-border: rgba(79, 127, 194, 0.25);
-  --color-danger: #b24a43;
-  --color-danger-soft: rgba(178, 74, 67, 0.11);
-  --color-danger-border: rgba(178, 74, 67, 0.25);
-  --color-danger-rgb: 178, 74, 67;
-  --color-pending: #6d5aa3;
-  --color-pending-rgb: 109, 90, 163;
-  --surface-raised: rgba(105, 79, 36, 0.06);
-  --surface-hover: rgba(105, 79, 36, 0.1);
-  --surface-track: rgba(70, 52, 24, 0.08);
-  --surface-ghost: rgba(70, 52, 24, 0.04);
-  --surface-highlight: rgba(255, 255, 255, 0.72);
-  --surface-gold-soft: rgba(155, 122, 53, 0.11);
-  --surface-gold-soft-strong: rgba(155, 122, 53, 0.17);
-  --surface-danger-soft: rgba(178, 74, 67, 0.12);
-  --surface-info-soft: rgba(79, 127, 194, 0.12);
-  --surface-overlay: rgba(51, 39, 23, 0.44);
-  --shadow-soft: 0 4px 16px rgba(65, 49, 24, 0.12);
-  --shadow-medium: 0 10px 28px rgba(65, 49, 24, 0.16);
-  --shadow-strong: 0 16px 40px rgba(65, 49, 24, 0.18);
-  --gradient-page: radial-gradient(ellipse at 50% 0%, #faf5ea 0%, #f5f1e8 68%);
-  --gradient-panel: linear-gradient(160deg, var(--color-surface), var(--color-surface-alt));
-  --gradient-panel-soft: linear-gradient(160deg, var(--color-surface-alt), var(--color-surface-soft));
-  --gradient-accent-action: linear-gradient(160deg, #d5c1a2, #cdb48e);
-  --gradient-accent-action-hover: linear-gradient(160deg, #dbcab0, #cfb891);
-  --gradient-info-action: linear-gradient(160deg, #d7e4f8, #c6d9f1);
-  --gradient-info-action-hover: linear-gradient(160deg, #dfe9f9, #cfe0f4);
-  --gradient-success-action: linear-gradient(160deg, #d9efe5, #c8e4d8);
-  --gradient-success-action-hover: linear-gradient(160deg, #e1f3eb, #d2eadf);
-  --gradient-danger-action: linear-gradient(160deg, #f4dfdc, #eccfcb);
-  --gradient-danger-action-hover: linear-gradient(160deg, #f7e7e4, #eed7d3);
-  --text-shadow-emphasis: 0 0 20px rgba(184, 137, 47, 0.14), 0 1px 0 rgba(255, 255, 255, 0.72);
-  --text-shadow-accent: 0 0 14px rgba(184, 137, 47, 0.18), 0 1px 0 rgba(255, 255, 255, 0.72);
-  --combat-melee-accent: #a5464e;
-  --combat-melee-accent-light: #b24a43;
-  --combat-melee-glow: rgba(178, 74, 67, 0.2);
-  --combat-distance-accent: #2f8a68;
-  --combat-distance-accent-light: #2f8a68;
-  --combat-distance-glow: rgba(47, 138, 104, 0.18);
-  --combat-magique-accent: #5f58a7;
-  --combat-magique-accent-light: #5f58a7;
-  --combat-magique-glow: rgba(95, 88, 167, 0.2);
-  --school-abjuration: #567ca8;
-  --school-divination: #7565a2;
-  --school-enchantement: #af6376;
-  --school-evocation: #b17b3f;
-  --school-illusion: #5b8d99;
-  --school-invocation: #4f8e56;
-  --school-necromancie: #7d68a8;
-  --school-transmutation: #9e8f49;
-  --school-default: var(--color-gold-dark);
-  color-scheme: light;
-}
-
 :root[data-theme='sceau'] {
   /* Palette "Sceau" — thème additionnel inspiré de la charte graphique de la boutique
      officielle D&D (dndstore.wizards.com/eu/fr), couleurs extraites de sa feuille de style
@@ -319,6 +250,8 @@
   --color-warning-rgb: 169, 109, 18;
   --color-info: #4f7fc2;
   --color-info-bright: #3d69a6;
+  --color-overlay-text: var(--color-overlay-bright-text);
+  --color-overlay-danger-text: #f87171;
   --color-info-soft: rgba(79, 127, 194, 0.12);
   --color-info-border: rgba(79, 127, 194, 0.25);
   --color-danger: #b24a43;
@@ -519,6 +452,8 @@
   --color-warning-rgb: 169, 109, 18;
   --color-info: #4f7fc2;
   --color-info-bright: #3d69a6;
+  --color-overlay-text: var(--color-overlay-bright-text);
+  --color-overlay-danger-text: #f87171;
   --color-info-soft: rgba(79, 127, 194, 0.12);
   --color-info-border: rgba(79, 127, 194, 0.25);
   --color-danger: #b24a43;
@@ -601,6 +536,17 @@ body {
 }
 
 
+/* Anneau de focus clavier — UNE règle pour ~600 éléments interactifs.
+   Avant : 30 déclarations `:focus`/`:focus-visible` réparties sur 23 composants,
+   le reste s'en remettant à l'anneau par défaut du navigateur — noir, donc
+   quasiment invisible sur `dark` et `arcane`. Les rares composants qui déclarent
+   déjà le leur (HelpTip, RefLink…) gardent la main : un sélecteur de classe passe
+   devant celui-ci. */
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
 /* Personnalisation scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -665,24 +611,32 @@ button:hover:not(:disabled),
   transform: translateY(-1px);
 }
 
+/* Fond par défaut des surfaces « carte ». Sans `!important` depuis la refonte : les règles
+   scoped des composants gagnent, ce qui est l'intention (`--gradient-panel-soft` pour les
+   fiches de contenu, fond plat pour les cartes de session). Pour `.panel` et
+   `.merchant-item` la valeur résolue est identique — `--player-panel-bg` et `--tv-panel-bg`
+   sont des alias de `--gradient-panel` posés sur la racine de PlayerInboxView / TvView. */
 .session-card,
-.player-item,
 .panel,
 .merchant-item,
 .spell-card,
 .message-card {
-  background: var(--gradient-panel) !important;
-  border-color: var(--color-border) !important;
+  background: var(--gradient-panel);
+  border-color: var(--color-border);
   box-shadow: var(--shadow-soft);
   animation: fadeUp 0.28s ease both;
 }
 
+/* `.search-input` et `.custom-price-input` sont volontairement HORS de cette liste : le
+   premier est un champ sans bordure posé dans un conteneur déjà stylé (Audio/Image/Video
+   Manager), le second affiche un prix en or — les forcer ici cassait les deux. Le reste
+   garde `!important` en attendant la migration composant par composant : `--surface-raised`
+   est translucide alors que les règles scoped veulent `--color-surface` opaque, et basculer
+   tous les champs d'un coup est un changement visuel à part entière. */
 .form-input,
 .form-select,
 .form-textarea,
-.search-input,
-.recipient-select,
-.custom-price-input {
+.recipient-select {
   background: var(--surface-raised) !important;
   color: var(--color-text) !important;
   border-color: var(--color-border) !important;
@@ -692,15 +646,7 @@ button:hover:not(:disabled),
 .form-select::placeholder,
 .form-textarea::placeholder,
 .search-input::placeholder {
-  color: var(--color-text-dim) !important;
-}
-
-.admin-header,
-.inbox-header,
-.tv-header,
-.login-header,
-.home-header {
-  background: transparent !important;
+  color: var(--color-text-dim);
 }
 
 @keyframes fadeUp {
@@ -733,14 +679,8 @@ button:hover:not(:disabled),
 .tab-slide-enter-from   { opacity: 0; transform: translateX(24px); }
 .tab-slide-leave-to     { opacity: 0; transform: translateX(-24px); }
 
-@media (min-width: 1024px) {
-  .admin-main {
-    padding: 2rem !important;
-  }
-}
-
 @media (max-width: 900px) {
   #app {
-    padding-bottom: 1rem;
+    padding-bottom: var(--space-4);
   }
 }

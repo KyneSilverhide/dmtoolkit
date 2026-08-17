@@ -321,12 +321,12 @@ onUnmounted(() => {
 .search-tool {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-5);
 }
 
 .section-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
@@ -335,7 +335,7 @@ onUnmounted(() => {
 
 .search-bar {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .search-input {
@@ -343,10 +343,10 @@ onUnmounted(() => {
   background: var(--admin-control-bg, var(--surface-raised));
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.6rem 0.9rem;
+  padding: var(--space-2) var(--space-4);
   color: var(--color-parchment);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   outline: none;
   transition: border-color 0.2s;
 }
@@ -354,13 +354,13 @@ onUnmounted(() => {
 .search-input::placeholder { color: var(--color-border); }
 
 .search-btn {
-  padding: 0.6rem 1.1rem;
+  padding: var(--space-2) var(--space-4);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.08em;
   cursor: pointer;
   white-space: nowrap;
@@ -373,11 +373,11 @@ onUnmounted(() => {
 .search-loading {
   display: flex;
   justify-content: center;
-  gap: 0.4rem;
-  padding: 1.5rem 0;
+  gap: var(--space-2);
+  padding: var(--space-6) 0;
 }
 .loading-dot {
-  font-size: 0.5rem;
+  font-size: var(--text-2xs);
   color: var(--color-gold-dark);
   animation: dotBounce 1.2s ease-in-out infinite;
 }
@@ -388,15 +388,15 @@ onUnmounted(() => {
 /* No results */
 .no-results {
   text-align: center;
-  padding: 2rem 0;
+  padding: var(--space-8) 0;
 }
 .no-results-icon { font-size: 2.5rem; opacity: 0.4; margin: 0; }
-.no-results-text { font-family: var(--font-heading), sans-serif; font-size: 0.85rem; color: var(--color-text-dim); margin: 0.5rem 0 0; }
+.no-results-text { font-family: var(--font-heading), sans-serif; font-size: var(--text-base); color: var(--color-text-dim); margin: var(--space-2) 0 0; }
 
 /* Results count */
 .results-info {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -405,14 +405,14 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  margin-left: 0.5rem;
+  margin-left: var(--space-2);
   background: none;
   border: 1px solid var(--color-border);
   border-radius: 20px;
-  padding: 0.1rem 0.5rem;
+  padding: 0.1rem var(--space-2);
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
@@ -424,7 +424,7 @@ onUnmounted(() => {
 .results-grid {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 /* Item card */
@@ -432,33 +432,35 @@ onUnmounted(() => {
   background: var(--gradient-panel-soft);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 1rem;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
   transition: border-color 0.2s;
 }
 .spell-card:hover { border-color: var(--color-gold-dark); }
 
+/* `!important` retiré : la règle globale `.spell-card` (style.css) ne force plus
+   `border-color`, la spécificité de classe suffit désormais. */
 .item-result-card {
-  border-color: color-mix(in oklab, var(--item-type-color, var(--color-text-dim)) 55%, var(--color-border)) !important;
+  border-color: color-mix(in oklab, var(--item-type-color, var(--color-text-dim)) 55%, var(--color-border));
 }
 .item-result-card:hover {
-  border-color: color-mix(in oklab, var(--item-type-color, var(--color-text-dim)) 80%, var(--color-border)) !important;
+  border-color: color-mix(in oklab, var(--item-type-color, var(--color-text-dim)) 80%, var(--color-border));
 }
 
-.spell-header { display: flex; flex-direction: column; gap: 0.35rem; }
+.spell-header { display: flex; flex-direction: column; gap: var(--space-1); }
 
 .spell-title-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
 .spell-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 1rem;
+  font-size: var(--text-md);
   letter-spacing: 0.06em;
   color: var(--color-parchment);
   margin: 0;
@@ -467,35 +469,35 @@ onUnmounted(() => {
 
 .ritual-badge {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.55rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-info-bright);
   background: var(--color-info-soft);
   border: 1px solid var(--color-info-border);
   border-radius: 20px;
-  padding: 0.1rem 0.45rem;
+  padding: 0.1rem var(--space-2);
   flex-shrink: 0;
 }
 
 .spell-meta-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
 .item-type-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   border: 1px solid;
   border-radius: 20px;
-  padding: 0.1rem 0.5rem;
+  padding: 0.1rem var(--space-2);
   color: var(--item-type-color, var(--color-text-dim));
   border-color: color-mix(in oklab, var(--item-type-color, var(--color-text-dim)) 50%, transparent);
   background: color-mix(in oklab, var(--item-type-color, var(--color-text-dim)) 16%, transparent);
@@ -506,24 +508,24 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.25rem;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   color: var(--color-gold-bright);
   background: var(--surface-gold-soft-strong);
   border: 1px solid var(--color-gold-dark);
   border-radius: 20px;
-  padding: 0.1rem 0.5rem;
+  padding: 0.1rem var(--space-2);
 }
 
 .rarity-badge {
   --rarity-color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   border: 1px solid;
   border-radius: 20px;
-  padding: 0.1rem 0.5rem;
+  padding: 0.1rem var(--space-2);
   color: var(--rarity-color);
   border-color: color-mix(in oklab, var(--rarity-color) 50%, transparent);
   background: color-mix(in oklab, var(--rarity-color) 14%, transparent);
@@ -532,29 +534,29 @@ onUnmounted(() => {
 /* Description */
 .item-desc {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   line-height: 1.55;
   max-height: 260px;
   overflow-y: auto;
   padding-right: 0.25rem;
 }
-.item-desc :deep(p) { margin: 0.3rem 0; }
+.item-desc :deep(p) { margin: var(--space-1) 0; }
 .item-desc :deep(p:first-child) { margin-top: 0; }
 .item-desc :deep(br) { display: block; content: ''; margin-top: 0.2rem; }
 .item-desc :deep(strong), .item-desc :deep(b) { color: var(--color-parchment); font-weight: 600; }
 .item-desc :deep(em), .item-desc :deep(i) { font-style: italic; color: var(--color-gold-dark); }
-.item-desc :deep(ul), .item-desc :deep(ol) { margin: 0.3rem 0; padding-left: 1.2rem; }
+.item-desc :deep(ul), .item-desc :deep(ol) { margin: var(--space-1) 0; padding-left: var(--space-5); }
 .item-desc :deep(li) { margin: 0.1rem 0; }
 .item-desc :deep(table) {
   border-collapse: collapse;
   width: 100%;
-  margin: 0.5rem 0;
-  font-size: 0.75rem;
+  margin: var(--space-2) 0;
+  font-size: var(--text-sm);
 }
 .item-desc :deep(th), .item-desc :deep(td) {
   border: 1px solid var(--color-border);
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem var(--space-2);
   text-align: left;
   vertical-align: top;
 }
@@ -570,7 +572,7 @@ onUnmounted(() => {
 
 .item-source {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   color: var(--color-text-dim);
   opacity: 0.7;
@@ -581,12 +583,12 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .spell-link {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-gold-dark);

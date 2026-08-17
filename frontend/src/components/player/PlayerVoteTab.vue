@@ -45,7 +45,7 @@ const emit = defineEmits(['submit-vote'])
   background: var(--player-panel-bg);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 1rem;
+  padding: var(--space-4);
   box-shadow: var(--shadow-soft);
 }
 
@@ -55,32 +55,32 @@ const emit = defineEmits(['submit-vote'])
   align-items: center;
   justify-content: center;
   min-height: 200px;
-  gap: 0.5rem;
+  gap: var(--space-2);
   border-style: dashed;
 }
 .empty-icon { font-size: 2.5rem; opacity: 0.4; }
-.empty-text { font-family: var(--font-heading), sans-serif; font-size: 0.9rem; letter-spacing: 0.1em; color: var(--color-text-dim); }
+.empty-text { font-family: var(--font-heading), sans-serif; font-size: var(--text-base); letter-spacing: 0.1em; color: var(--color-text-dim); }
 
-.vote-panel { display: flex; flex-direction: column; gap: 0.75rem; }
-.vote-anon-hint { margin: 0; font-size: 0.72rem; color: var(--color-text-dim); display: flex; align-items: center; gap: 0.3rem; font-family: var(--font-heading), sans-serif; letter-spacing: 0.07em; }
-.vote-title { font-family: var(--font-heading), sans-serif; font-size: 1rem; color: var(--color-gold-bright); letter-spacing: 0.05em; margin: 0; }
-.vote-options { display: flex; flex-direction: column; gap: 0.5rem; }
+.vote-panel { display: flex; flex-direction: column; gap: var(--space-3); }
+.vote-anon-hint { margin: 0; font-size: var(--text-xs); color: var(--color-text-dim); display: flex; align-items: center; gap: var(--space-1); font-family: var(--font-heading), sans-serif; letter-spacing: 0.07em; }
+.vote-title { font-family: var(--font-heading), sans-serif; font-size: var(--text-md); color: var(--color-gold-bright); letter-spacing: 0.05em; margin: 0; }
+.vote-options { display: flex; flex-direction: column; gap: var(--space-2); }
 .vote-option-btn {
-  padding: 0.7rem 1rem;
+  padding: var(--space-3) var(--space-4);
   background: var(--player-gold-bg);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-parchment);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   cursor: pointer;
   transition: all 0.2s;
   text-align: left;
 }
 .vote-option-btn:hover { background: var(--player-gold-bg-strong); border-color: var(--color-gold); color: var(--color-gold-bright); }
-.vote-done { font-family: var(--font-body), sans-serif; font-size: 0.9rem; color: var(--player-success-text); }
+.vote-done { font-family: var(--font-body), sans-serif; font-size: var(--text-base); color: var(--player-success-text); }
 .vote-done strong { color: var(--color-parchment); }
-.vote-closed-label { font-family: var(--font-heading), sans-serif; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-dim); margin: 0 0 0.25rem; }
-.vote-result-line { font-family: var(--font-body), sans-serif; font-size: 0.85rem; color: var(--color-text-dim); margin: 0.1rem 0; }
+.vote-closed-label { font-family: var(--font-heading), sans-serif; font-size: var(--text-xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-dim); margin: 0 0 0.25rem; }
+.vote-result-line { font-family: var(--font-body), sans-serif; font-size: var(--text-base); color: var(--color-text-dim); margin: 0.1rem 0; }
 .vote-result-line strong { color: var(--color-parchment); }
 </style>

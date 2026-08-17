@@ -9,7 +9,8 @@ import AppIcon from '../components/AppIcon.vue'
 import ReleaseNotesBell from '../components/ReleaseNotesBell.vue'
 import { releaseNotesStore } from '../stores/releaseNotes.js'
 import { JOIN_SESSION, SESSION_JOINED, ERROR } from '../socket-events.js'
-import { applyTheme, getThemePreference, setThemePreference, getNextTheme, getThemeMeta } from '../utils/themePreferences.js'
+import ThemePicker from '../components/ThemePicker.vue'
+import { applyTheme, getThemePreference, setThemePreference } from '../utils/themePreferences.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -95,12 +96,11 @@ function validateForm() {
 }
 
 const theme = ref(getThemePreference('player', 'dark'))
-const currentThemeMeta = computed(() => getThemeMeta(theme.value))
 
-function toggleTheme() {
-  theme.value = getNextTheme(theme.value)
-  setThemePreference('player', theme.value)
-  applyTheme(theme.value)
+function setTheme(next) {
+  theme.value = next
+  setThemePreference('player', next)
+  applyTheme(next)
 }
 
 import { BACKEND_URL } from '@/config.js'
@@ -340,10 +340,7 @@ async function joinSession() {
     <header class="join-header">
       <button class="back-btn" @click="router.push('/')">← Retour</button>
       <h1 class="page-title">Rejoindre <span class="title-accent">une Session</span></h1>
-      <button class="theme-toggle-btn" @click="toggleTheme">
-        <AppIcon :icon="currentThemeMeta.icon" size="0.9em" />
-        {{ currentThemeMeta.label }}
-      </button>
+      <ThemePicker :model-value="theme" compact @update:model-value="setTheme" />
     </header>
 
     <main class="join-main">
@@ -523,16 +520,16 @@ async function joinSession() {
     max-width: 560px;
   }
   .join-header {
-    padding: 2.5rem 2rem 1.5rem;
+    padding: var(--space-10) var(--space-8) var(--space-6);
   }
   .join-main {
-    padding: 2rem 2rem;
+    padding: var(--space-8) var(--space-8);
   }
 }
 
 .join-header {
   text-align: center;
-  padding: 2rem 1.5rem 1.5rem;
+  padding: var(--space-8) var(--space-6) var(--space-6);
   position: relative;
 }
 
@@ -544,7 +541,7 @@ async function joinSession() {
   border: none;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   cursor: pointer;
 }
 .back-btn:hover { color: var(--color-gold); }
@@ -555,14 +552,14 @@ async function joinSession() {
   right: 1rem;
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   background: none;
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  padding: 0.35rem 0.65rem;
+  padding: var(--space-1) var(--space-3);
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   cursor: pointer;
   transition: all 0.18s;
   white-space: nowrap;
@@ -574,7 +571,7 @@ async function joinSession() {
   font-family: var(--font-title), sans-serif;
   font-size: 1.8rem;
   color: var(--color-parchment);
-  margin-top: 1.5rem;
+  margin-top: var(--space-6);
 }
 .title-accent { color: var(--color-gold-bright); }
 
@@ -583,7 +580,7 @@ async function joinSession() {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 2rem 1.5rem;
+  padding: var(--space-8) var(--space-6);
 }
 
 .join-form {
@@ -591,52 +588,52 @@ async function joinSession() {
   max-width: 380px;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-5);
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  gap: var(--space-3);
   align-items: end;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 
 .form-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-dim);
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
 }
 
 .form-input {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.75rem 1rem;
+  padding: var(--space-3) var(--space-4);
   color: var(--color-parchment);
   font-family: var(--font-body), sans-serif;
-  font-size: 1rem;
+  font-size: var(--text-md);
   outline: none;
   transition: border-color 0.2s;
 }
-.stat-input { text-align: center; font-size: 1.3rem; font-weight: 700; padding: 0.75rem 0.5rem; }
+.stat-input { text-align: center; font-size: 1.3rem; font-weight: 700; padding: var(--space-3) var(--space-2); }
 .form-select {
   cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b5a3a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.9rem center;
-  padding-right: 2.5rem;
+  padding-right: var(--space-10);
 }
 .form-select option { background: var(--color-surface); color: var(--color-parchment); }
 .form-input:focus { border-color: var(--color-gold-dark); }
@@ -644,7 +641,7 @@ async function joinSession() {
 
 .form-hint {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
 }
 
@@ -652,7 +649,7 @@ async function joinSession() {
 .avatar-upload-row {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 .avatar-preview-wrap {
   width: 56px;
@@ -682,13 +679,13 @@ async function joinSession() {
 .avatar-upload-btn {
   display: inline-flex;
   align-items: center;
-  padding: 0.5rem 1rem;
+  padding: var(--space-2) var(--space-4);
   background: var(--surface-raised);
   border: 1px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
@@ -701,14 +698,14 @@ async function joinSession() {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   color: var(--color-danger);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   background: var(--color-danger-soft);
   border: 1px solid var(--color-danger-border);
   border-radius: 8px;
-  padding: 0.55rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   margin: 0;
 }
 
@@ -721,10 +718,10 @@ async function joinSession() {
 .field-error {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   color: var(--color-danger);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   margin: 0;
 }
 
@@ -734,18 +731,18 @@ async function joinSession() {
 .error-fade-enter-from, .error-fade-leave-to { opacity: 0; transform: translateY(-4px); }
 
 .submit-btn {
-  padding: 1rem;
+  padding: var(--space-4);
   background: var(--gradient-success-action);
   border: 1px solid var(--color-success-border);
   border-radius: 8px;
   color: var(--color-parchment);
   font-family: var(--font-heading), sans-serif;
-  font-size: 1rem;
+  font-size: var(--text-md);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.2s;
-  margin-top: 0.5rem;
+  margin-top: var(--space-2);
 }
 .submit-btn:hover:not(:disabled) {
   background: var(--gradient-success-action-hover);

@@ -16,12 +16,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.45rem 1rem;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
   background: var(--demo-banner-gradient);
   color: var(--demo-banner-text);
   font-family: var(--font-heading, sans-serif);
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   position: sticky;
@@ -33,7 +33,7 @@
 
 .demo-banner-icon {
   flex-shrink: 0;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
 }
 
 .demo-banner-text {

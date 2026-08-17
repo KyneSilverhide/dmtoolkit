@@ -114,7 +114,11 @@ function avatarSrc(player) {
         class="player-card"
         :data-testid="`player-row-${player.id}`"
       >
-        <!-- Avatar + identité -->
+        <!-- Avatar + identité. Nom + badges sur une ligne fixe (comme la carte TV, cf.
+             TvCombat.vue) ; la ligne classe/sous-classe/race est plus longue ici qu'en TV
+             (qui n'affiche que la classe) et vit donc sur sa propre ligne pleine largeur —
+             sinon elle se retrouvait compressée dans les ~110px restants à côté des badges,
+             passait sur 3 lignes et étirait toute la carte de façon désaxée. -->
         <div class="card-header">
           <div class="avatar-wrap">
             <img v-if="avatarSrc(player)" :src="avatarSrc(player)" :alt="player.player_name" class="avatar-img" />
@@ -122,12 +126,7 @@ function avatarSrc(player) {
               <AppIcon icon="game-icons:crossed-swords" size="1.1rem" color="var(--color-gold-bright)" />
             </span>
           </div>
-          <div class="card-identity">
-            <span class="card-name" :data-testid="`player-name-${player.id}`">{{ player.player_name }}</span>
-            <span v-if="player.dnd_class || player.race" class="card-class">
-              {{ [player.dnd_class, player.subclass, player.race].filter(Boolean).join(' · ') }}
-            </span>
-          </div>
+          <span class="card-name" :data-testid="`player-name-${player.id}`">{{ player.player_name }}</span>
           <div class="card-badges">
             <AppIcon v-if="player.is_concentrating" icon="game-icons:bullseye" size="1rem"
               color="var(--color-info-bright)" title="Concentration"
@@ -148,6 +147,9 @@ function avatarSrc(player) {
             </button>
           </HelpTip>
         </div>
+        <span v-if="player.dnd_class || player.race" class="card-class">
+          {{ [player.dnd_class, player.subclass, player.race].filter(Boolean).join(' · ') }}
+        </span>
 
         <!-- Barre HP -->
         <div class="hp-section" v-if="player.max_hp">
@@ -210,18 +212,18 @@ function avatarSrc(player) {
 </template>
 
 <style scoped>
-.player-list { margin-top: 1rem; }
+.player-list { margin-top: var(--space-4); }
 
 .list-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.85rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 
 .section-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
@@ -230,8 +232,8 @@ function avatarSrc(player) {
 
 .player-count-badge {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.62rem;
-  padding: 0.1rem 0.45rem;
+  font-size: var(--text-2xs);
+  padding: 0.1rem var(--space-2);
   border-radius: 999px;
   background: var(--admin-gold-bg, var(--surface-gold-soft));
   border: 1px solid var(--color-gold-dark);
@@ -242,29 +244,37 @@ function avatarSrc(player) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  padding: 2rem 0;
+  gap: var(--space-2);
+  padding: var(--space-8) 0;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.1em;
 }
 
-/* Grid responsive */
+/* Grid responsive : 3 colonnes fixes en desktop plutôt que l'auto-fill précédent (qui
+   pouvait tomber à 2 et laisser les cartes trop larges) — plus de rangées visibles sans
+   scroll. Mobile-first, mêmes paliers que PlayerGrimoireIndex.vue. */
 .players-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 0.65rem;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+@media (min-width: 640px) {
+  .players-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .players-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 .player-card {
   background: var(--admin-panel-highlight-bg, var(--gradient-panel-soft));
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 0.75rem;
+  padding: var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .player-card:hover {
@@ -276,7 +286,7 @@ function avatarSrc(player) {
 .card-header {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: var(--space-2);
 }
 
 .avatar-wrap {
@@ -294,33 +304,32 @@ function avatarSrc(player) {
 .avatar-img { width: 100%; height: 100%; object-fit: cover; }
 .avatar-fallback { display: flex; }
 
-.card-identity {
+.card-name {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.05rem;
-}
-.card-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.88rem;
+  font-size: var(--text-md);
+  font-weight: 600;
   color: var(--color-parchment);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: break-word;
 }
+/* Ligne pleine largeur, sous card-header — voir le commentaire du template. */
 .card-class {
+  display: block;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.58rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .card-badges {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   flex-shrink: 0;
 }
 
@@ -329,9 +338,9 @@ function avatarSrc(player) {
   align-items: center;
   gap: 0.2rem;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.62rem;
+  font-size: var(--text-2xs);
   border-radius: 20px;
-  padding: 0.1rem 0.4rem;
+  padding: 0.1rem var(--space-2);
   border: 1px solid;
 }
 .badge-init {
@@ -346,17 +355,17 @@ function avatarSrc(player) {
 }
 
 /* Barre HP */
-.hp-section { display: flex; flex-direction: column; gap: 0.3rem; }
+.hp-section { display: flex; flex-direction: column; gap: var(--space-1); }
 .hp-label-row {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   font-family: var(--font-heading), sans-serif;
 }
 .hp-icon { display: flex; }
-.hp-value { font-size: 0.95rem; font-weight: 700; transition: color 0.35s; }
-.hp-max { font-size: 0.65rem; color: var(--color-text-dim); }
-.hp-pct { margin-left: auto; font-size: 0.62rem; color: var(--color-text-dim); }
+.hp-value { font-size: var(--text-md); font-weight: 700; transition: color 0.35s; }
+.hp-max { font-size: var(--text-xs); color: var(--color-text-dim); }
+.hp-pct { margin-left: auto; font-size: var(--text-2xs); color: var(--color-text-dim); }
 
 .hp-bar-track {
   height: 10px;
@@ -374,20 +383,20 @@ function avatarSrc(player) {
 .conditions-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
+  gap: var(--space-1);
 }
 .condition-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.58rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.04em;
   color: var(--admin-warning-text, var(--color-warning));
   background: var(--admin-warning-bg, var(--color-warning-soft));
   border: 1px solid var(--admin-warning-border, var(--color-warning-border));
   border-radius: 20px;
-  padding: 0.1rem 0.4rem;
+  padding: 0.1rem var(--space-2);
   white-space: nowrap;
   cursor: pointer;
   transition: border-color 0.2s, color 0.2s;
@@ -401,26 +410,26 @@ function avatarSrc(player) {
 .defense-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
+  gap: var(--space-1);
 }
 .defense-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.58rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.02em;
   color: var(--color-text-dim);
   background: var(--surface-raised);
   border: 1px solid var(--color-border);
   border-radius: 20px;
-  padding: 0.1rem 0.4rem;
+  padding: 0.1rem var(--space-2);
   white-space: nowrap;
 }
 
 .online-badge {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.55rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--admin-success-text, var(--color-success));
@@ -434,7 +443,7 @@ function avatarSrc(player) {
   border-radius: 6px;
   color: var(--color-text-dim);
   padding: 0.25rem;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.18s;

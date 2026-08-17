@@ -328,7 +328,12 @@ function spellSlotsLabel(row) {
         </div>
 
         <!-- Traits -->
-        <button class="section-toggle" type="button" @click="toggleSection(dndClass.slug, 'features')">
+        <button
+          class="section-toggle"
+          type="button"
+          :aria-expanded="isExpanded(dndClass.slug, 'features')"
+          @click="toggleSection(dndClass.slug, 'features')"
+        >
           <AppIcon :icon="isExpanded(dndClass.slug, 'features') ? 'lucide:chevron-down' : 'lucide:chevron-right'" size="0.8em" />
           Traits de classe ({{ dndClass.features.length }})
         </button>
@@ -354,7 +359,12 @@ function spellSlotsLabel(row) {
         </ul>
 
         <!-- Progression 1-20 -->
-        <button class="section-toggle" type="button" @click="toggleSection(dndClass.slug, 'levels')">
+        <button
+          class="section-toggle"
+          type="button"
+          :aria-expanded="isExpanded(dndClass.slug, 'levels')"
+          @click="toggleSection(dndClass.slug, 'levels')"
+        >
           <AppIcon :icon="isExpanded(dndClass.slug, 'levels') ? 'lucide:chevron-down' : 'lucide:chevron-right'" size="0.8em" />
           Progression (niveaux 1-20)
         </button>
@@ -369,7 +379,12 @@ function spellSlotsLabel(row) {
         <!-- Emplacements de sorts -->
         <template v-if="dndClass.spellcasting">
           <div class="section-toggle-row">
-            <button class="section-toggle" type="button" @click="toggleSection(dndClass.slug, 'spells')">
+            <button
+              class="section-toggle"
+              type="button"
+              :aria-expanded="isExpanded(dndClass.slug, 'spells')"
+              @click="toggleSection(dndClass.slug, 'spells')"
+            >
               <AppIcon :icon="isExpanded(dndClass.slug, 'spells') ? 'lucide:chevron-down' : 'lucide:chevron-right'" size="0.8em" />
               Emplacements de sorts
             </button>
@@ -392,7 +407,12 @@ function spellSlotsLabel(row) {
         <!-- Sous-classes -->
         <div v-if="dndClass.subclasses.length" class="subclass-list">
           <div v-for="subclass in dndClass.subclasses" :key="subclass.name" class="subclass-card">
-            <button class="section-toggle" type="button" @click="toggleSection(dndClass.slug, `sub:${subclass.name}`)">
+            <button
+              class="section-toggle"
+              type="button"
+              :aria-expanded="isExpanded(dndClass.slug, `sub:${subclass.name}`)"
+              @click="toggleSection(dndClass.slug, `sub:${subclass.name}`)"
+            >
               <AppIcon :icon="isExpanded(dndClass.slug, `sub:${subclass.name}`) ? 'lucide:chevron-down' : 'lucide:chevron-right'" size="0.8em" />
               {{ subclass.name }} <span class="subclass-unlock">(dès le niveau {{ subclass.unlocked_at_level }})</span>
             </button>
@@ -444,10 +464,10 @@ function spellSlotsLabel(row) {
   background: var(--gradient-panel-soft);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 1rem;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: var(--space-2);
   transition: border-color 0.2s;
 }
 .class-card:hover { border-color: var(--color-gold-dark); }
@@ -465,7 +485,7 @@ function spellSlotsLabel(row) {
 .class-content {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: var(--space-2);
   min-width: 0;
 }
 /* L'image incrustée est haute (11rem+ crédit) : l'en-tête, la description, les attributs,
@@ -482,7 +502,7 @@ function spellSlotsLabel(row) {
 .class-description {
   margin: 0;
   font-family: var(--font-body), sans-serif;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   line-height: 1.55;
   color: var(--color-text-dim);
 }
@@ -530,7 +550,7 @@ function spellSlotsLabel(row) {
   background: var(--gradient-panel-soft);
   border: 1px solid var(--color-gold-dark);
   border-radius: 10px;
-  padding: 0.5rem;
+  padding: var(--space-2);
   box-shadow: -16px 12px 32px rgba(0, 0, 0, 0.6);
 }
 .class-image {
@@ -555,8 +575,8 @@ function spellSlotsLabel(row) {
 }
 .class-image-credit {
   margin-top: 0.2rem;
-  padding-right: 0.3rem;
-  font-size: 0.55rem;
+  padding-right: var(--space-1);
+  font-size: var(--text-2xs);
   letter-spacing: 0.03em;
   color: var(--color-text-dim);
   opacity: 0.7;
@@ -565,13 +585,13 @@ function spellSlotsLabel(row) {
 .class-header {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: var(--space-3);
 }
 .class-icon { color: var(--color-gold-dark); flex-shrink: 0; }
 .class-header-main {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .class-name {
@@ -584,13 +604,13 @@ function spellSlotsLabel(row) {
 
 .stat-badge {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   color: var(--color-gold-bright);
   background: var(--surface-gold-soft-strong);
   border: 1px solid var(--color-gold-dark);
   border-radius: 20px;
-  padding: 0.15rem 0.55rem;
+  padding: 0.15rem var(--space-2);
 }
 .stat-badge-spell {
   display: inline-flex;
@@ -601,23 +621,23 @@ function spellSlotsLabel(row) {
 .class-attrs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem 1rem;
+  gap: var(--space-2) var(--space-4);
 }
 .class-attr {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
 }
 
 .starting-equipment {
   display: flex;
   align-items: flex-start;
-  gap: 0.4rem;
+  gap: var(--space-2);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   margin: 0;
   line-height: 1.5;
@@ -627,7 +647,7 @@ function spellSlotsLabel(row) {
   background: var(--surface-gold-soft);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
-  padding: 0.5rem 0.7rem;
+  padding: var(--space-2) var(--space-3);
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -635,25 +655,25 @@ function spellSlotsLabel(row) {
 .matched-trait-head {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   color: var(--color-gold-dark);
 }
 .matched-trait-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--color-gold-bright);
 }
 .matched-trait-source {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.04em;
   color: var(--color-text-dim);
   margin-left: auto;
 }
 .matched-trait-desc {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   line-height: 1.5;
 }
@@ -661,12 +681,12 @@ function spellSlotsLabel(row) {
 .section-toggle {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   background: none;
   border: none;
   padding: 0.2rem 0;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
   color: var(--color-gold-dark);
   cursor: pointer;
@@ -678,20 +698,20 @@ function spellSlotsLabel(row) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .spells-link-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   background: none;
   border: 1px solid var(--color-gold-dark);
   border-radius: 20px;
-  padding: 0.15rem 0.6rem;
+  padding: 0.15rem var(--space-2);
   color: var(--color-gold-dark);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.62rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.04em;
   cursor: pointer;
   transition: all 0.2s;
@@ -704,31 +724,31 @@ function spellSlotsLabel(row) {
   padding: 0 0 0 0.2rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 .trait-item {
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 .trait-name {
   font-family: var(--font-heading), sans-serif;
   color: var(--color-gold-dark);
   font-weight: 600;
-  margin-right: 0.4rem;
+  margin-right: var(--space-2);
 }
 .trait-level {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   color: var(--color-text-dim);
   opacity: 0.7;
-  margin-right: 0.4rem;
+  margin-right: var(--space-2);
 }
 .trait-desc { color: var(--color-text-dim); }
 
 .trait-item-link {
   display: flex;
   align-items: baseline;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 
 .level-table {
@@ -740,8 +760,8 @@ function spellSlotsLabel(row) {
 .level-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: 0.75rem;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
   padding: 0.2rem 0;
   border-bottom: 1px dashed var(--color-border);
 }
@@ -753,27 +773,27 @@ function spellSlotsLabel(row) {
 .level-prof { color: var(--color-text-dim); min-width: 6rem; }
 .level-features { color: var(--color-parchment); flex: 1; }
 
-.spell-section { display: flex; flex-direction: column; gap: 0.5rem; padding-left: 0.2rem; }
-.spell-notes { font-size: 0.78rem; color: var(--color-text-dim); margin: 0; line-height: 1.5; }
+.spell-section { display: flex; flex-direction: column; gap: var(--space-2); padding-left: 0.2rem; }
+.spell-notes { font-size: var(--text-sm); color: var(--color-text-dim); margin: 0; line-height: 1.5; }
 
 .subclass-list {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: var(--space-1);
   border-top: 1px dashed var(--color-border);
-  padding-top: 0.6rem;
+  padding-top: var(--space-2);
 }
 .subclass-card {
   background: var(--surface-ghost);
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  padding: 0.3rem 0.6rem;
+  padding: var(--space-1) var(--space-2);
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: var(--space-1);
 }
 .subclass-unlock {
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   color: var(--color-text-dim);
   font-weight: 400;
   letter-spacing: 0.02em;
@@ -784,22 +804,22 @@ function spellSlotsLabel(row) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .class-source {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   color: var(--color-text-dim);
   opacity: 0.7;
 }
 .class-link {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-gold-dark);

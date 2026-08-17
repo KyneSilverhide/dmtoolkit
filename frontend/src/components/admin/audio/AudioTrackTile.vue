@@ -111,8 +111,8 @@ function formatTime(s) {
 .track-tile {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  padding: 0.45rem 0.5rem;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2);
   background: var(--surface-track);
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -127,7 +127,7 @@ function formatTime(s) {
 .tile-header {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -150,7 +150,7 @@ function formatTime(s) {
 
 .track-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.66rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.03em;
   color: var(--color-text);
   white-space: nowrap;
@@ -171,8 +171,8 @@ function formatTime(s) {
   border-radius: 4px;
   color: var(--color-text);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.66rem;
-  padding: 0.1rem 0.3rem;
+  font-size: var(--text-xs);
+  padding: 0.1rem var(--space-1);
   outline: none;
 }
 
@@ -183,7 +183,7 @@ function formatTime(s) {
 }
 .time-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.52rem;
+  font-size: var(--text-2xs);
   color: var(--color-text-dim);
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -249,9 +249,9 @@ function formatTime(s) {
   border-radius: 5px;
   color: var(--color-text);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.03em;
-  padding: 0.2rem 0.35rem;
+  padding: 0.2rem var(--space-1);
   cursor: text;
 }
 .cat-input:focus { outline: none; border-color: var(--color-gold-dark); }

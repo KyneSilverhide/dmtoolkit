@@ -233,23 +233,23 @@ onUnmounted(() => {
 .reputation-manager {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 0.5rem 0;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
 }
 
 .rm-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .rm-title {
-  font-size: 1rem;
+  font-size: var(--text-md);
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   margin: 0;
 }
 
@@ -257,10 +257,10 @@ onUnmounted(() => {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   color: var(--color-text);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   outline: none;
   width: 100%;
   box-sizing: border-box;
@@ -272,15 +272,15 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   width: 100%;
-  padding: 0.6rem 1rem;
+  padding: var(--space-2) var(--space-4);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.08em;
   cursor: pointer;
   transition: all 0.2s;
@@ -296,14 +296,14 @@ onUnmounted(() => {
 .rm-create-form {
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.85rem 1rem 1rem;
+  padding: var(--space-3) var(--space-4) var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: var(--space-3);
 }
 
 .rm-legend {
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--color-text-muted);
   letter-spacing: 0.04em;
@@ -314,20 +314,20 @@ onUnmounted(() => {
 .rm-form-row {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: var(--space-1);
 }
 
 .rm-form-row--three {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .rm-label {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   color: var(--color-text-muted);
 }
 
@@ -346,44 +346,44 @@ onUnmounted(() => {
 .rm-empty {
   text-align: center;
   color: var(--color-text-muted);
-  font-size: 0.85rem;
-  padding: 1.5rem 0;
+  font-size: var(--text-base);
+  padding: var(--space-6) 0;
 }
 
 /* Faction cards */
 .rm-list {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: var(--space-3);
 }
 
 .faction-card {
   background: var(--admin-panel-bg, var(--gradient-panel));
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.75rem 0.85rem;
+  padding: var(--space-3) var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: var(--space-2);
 }
 
 .fc-top {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .fc-name {
   flex: 1;
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: var(--text-base);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .fc-range {
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   color: var(--color-text-muted);
   white-space: nowrap;
 }
@@ -407,7 +407,7 @@ onUnmounted(() => {
 .fc-bar-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .adj-btn {
@@ -454,7 +454,7 @@ onUnmounted(() => {
 
 .fc-value {
   text-align: center;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   font-weight: 700;
   letter-spacing: 0.05em;
 }

@@ -220,18 +220,18 @@ async function copyResult(text, index) {
 
 <style scoped>
 .generator-tool {
-  padding: 1.5rem;
+  padding: var(--space-6);
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-5);
 }
 
 /* Bannière "générateur non disponible" */
 .unavailable-banner {
   display: flex;
   align-items: flex-start;
-  gap: 0.9rem;
-  padding: 0.9rem 1rem;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-4);
   background: var(--admin-warning-bg, var(--color-warning-soft));
   border: 1px solid var(--admin-warning-border, var(--color-warning-border));
   border-radius: 10px;
@@ -244,11 +244,11 @@ async function copyResult(text, index) {
 .unavailable-body {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: var(--space-1);
 }
 .unavailable-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -257,7 +257,7 @@ async function copyResult(text, index) {
 }
 .unavailable-text {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   margin: 0;
   line-height: 1.55;
@@ -267,41 +267,41 @@ async function copyResult(text, index) {
   background: var(--surface-raised);
   border: 1px solid var(--color-border);
   border-radius: 4px;
-  padding: 0.1rem 0.35rem;
-  font-size: 0.78rem;
+  padding: 0.1rem var(--space-1);
+  font-size: var(--text-sm);
   color: var(--color-gold-bright);
 }
 
 /* Matches `.section-title` from TvControls / VoteManager */
 .tool-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin: 0;
 }
 
 .generator-form {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .form-row {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 /* Matches form labels in VoteManager / TvControls */
 .form-label {
   min-width: 4rem;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -310,13 +310,13 @@ async function copyResult(text, index) {
 /* Matches `.form-input` from TvControls */
 .form-select {
   flex: 1;
-  padding: 0.5rem 0.65rem;
+  padding: var(--space-2) var(--space-3);
   border-radius: 8px;
   border: 1px solid var(--color-border);
   background: var(--admin-control-bg, var(--surface-raised));
   color: var(--color-parchment);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   outline: none;
   transition: border-color 0.2s;
 }
@@ -328,14 +328,14 @@ async function copyResult(text, index) {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  padding: 0.6rem 1rem;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.08em;
   cursor: pointer;
   transition: background 0.15s;
@@ -345,7 +345,7 @@ async function copyResult(text, index) {
 
 .form-error {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--admin-danger-text, var(--color-danger));
   margin: 0;
 }
@@ -353,7 +353,7 @@ async function copyResult(text, index) {
 .results-section {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .results-list {
@@ -362,14 +362,14 @@ async function copyResult(text, index) {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: var(--space-1);
 }
 
 .result-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   border-radius: 8px;
   border: 1px solid var(--color-border);
   background: var(--admin-control-bg, var(--surface-raised));
@@ -380,20 +380,20 @@ async function copyResult(text, index) {
 
 .result-text {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   color: var(--color-parchment);
 }
 
 .copy-hint {
   color: var(--color-text-dim);
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   display: flex;
   align-items: center;
   flex-shrink: 0;
 }
 
 .result-block {
-  padding: 0.75rem 1rem;
+  padding: var(--space-3) var(--space-4);
   border-radius: 8px;
   border: 1px solid var(--color-border);
   background: var(--admin-control-bg, var(--surface-raised));
@@ -401,13 +401,13 @@ async function copyResult(text, index) {
   transition: border-color 0.15s;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .result-block:hover { border-color: var(--color-gold-dark); }
 
 .result-text-long {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   line-height: 1.6;
   color: var(--color-parchment);
   margin: 0;
@@ -416,17 +416,17 @@ async function copyResult(text, index) {
 .copy-hint-block {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   align-self: flex-end;
 }
 
 .results-hint {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   color: var(--color-text-dim);
   margin: 0;
@@ -435,12 +435,12 @@ async function copyResult(text, index) {
 .quota-bar {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   color: var(--color-text-dim);
-  padding: 0.4rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   border-radius: 8px;
   background: var(--admin-control-bg, var(--surface-raised));
   border: 1px solid var(--color-border);

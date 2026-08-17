@@ -227,26 +227,26 @@ onUnmounted(() => {
 
 <style scoped>
 .critical-fail-tool {
-  padding-bottom: 2rem;
+  padding-bottom: var(--space-8);
 }
 
 .type-selector {
-  padding: 0.5rem 0 1rem;
+  padding: var(--space-2) 0 var(--space-4);
 }
 
 .selector-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-text-dim);
   text-align: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-3);
 }
 
 .type-buttons {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-3);
   justify-content: center;
 }
 
@@ -256,8 +256,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.75rem 0.5rem;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-2);
   background: linear-gradient(160deg, var(--color-surface-soft) 0%, var(--color-surface) 100%);
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -299,25 +299,25 @@ onUnmounted(() => {
 }
 
 .type-name {
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .anim-settings {
-  padding: 0 0 1rem;
+  padding: 0 0 var(--space-4);
 }
 
 .anim-label {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.4rem;
+  margin-bottom: var(--space-2);
 }
 
 .anim-label-text {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -325,7 +325,7 @@ onUnmounted(() => {
 
 .anim-value {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--color-gold-bright);
   min-width: 2.5rem;
   text-align: right;
@@ -347,8 +347,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.5rem 0 1rem;
-  gap: 1.5rem;
+  padding: var(--space-6) 0 var(--space-4);
+  gap: var(--space-6);
 }
 
 .dice-container {
@@ -433,7 +433,7 @@ onUnmounted(() => {
   left: 50%;
   transform: translateX(-50%);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.3em;
   color: var(--color-text-dim);
   text-transform: uppercase;
@@ -443,14 +443,14 @@ onUnmounted(() => {
 .roll-btn {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.75rem 1.75rem;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-6);
   background: var(--gradient-danger-action);
   border: 1px solid var(--color-danger-border);
   border-radius: 10px;
   color: var(--color-parchment);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.95rem;
+  font-size: var(--text-md);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
@@ -458,7 +458,7 @@ onUnmounted(() => {
   box-shadow:
     var(--shadow-soft),
     0 1px 0 var(--surface-highlight) inset;
-  margin-top: 1.5rem;
+  margin-top: var(--space-6);
 }
 
 .roll-btn:hover:not(:disabled) {
@@ -486,14 +486,14 @@ onUnmounted(() => {
 }
 
 .result-section {
-  padding: 0.5rem 0 1rem;
+  padding: var(--space-2) 0 var(--space-4);
 }
 
 .result-card {
   background: linear-gradient(160deg, var(--color-surface) 0%, var(--color-surface) 100%);
   border: 1px solid var(--color-gold-dark);
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: var(--space-6);
   box-shadow:
     0 0 0 1px var(--surface-gold-soft),
     var(--shadow-medium);
@@ -516,34 +516,34 @@ onUnmounted(() => {
 }
 
 .result-footer {
-  margin-top: 1rem;
+  margin-top: var(--space-4);
   display: flex;
   justify-content: flex-end;
 }
 
 .result-type-badge {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
   background: var(--surface-gold-soft);
   border: 1px solid var(--color-gold-dark);
-  padding: 0.2rem 0.6rem;
+  padding: 0.2rem var(--space-2);
   border-radius: 20px;
 }
 
 .send-section {
-  margin-top: 1rem;
+  margin-top: var(--space-4);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .recipient-row {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
   width: 100%;
   align-items: center;
 }
@@ -553,10 +553,10 @@ onUnmounted(() => {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.6rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   color: var(--color-parchment);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   outline: none;
   cursor: pointer;
 }
@@ -568,13 +568,13 @@ onUnmounted(() => {
 .recipient-select:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .send-btn {
-  padding: 0.5rem 1.1rem;
+  padding: var(--space-2) var(--space-4);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -600,14 +600,14 @@ onUnmounted(() => {
 
 .send-feedback {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   color: var(--color-success);
   text-align: center;
 }
 
 .no-session-hint {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   text-align: center;
 }

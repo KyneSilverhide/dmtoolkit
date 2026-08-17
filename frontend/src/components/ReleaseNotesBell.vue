@@ -67,7 +67,7 @@ const latestUnread = computed(() => {
   border: none;
   color: var(--color-text-dim);
   cursor: pointer;
-  padding: 0.35rem;
+  padding: var(--space-1);
   border-radius: 6px;
   transition: color 0.15s, background 0.15s;
   line-height: 1;
@@ -95,16 +95,16 @@ const latestUnread = computed(() => {
 .rn-banner-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
   background: var(--surface-gold-soft);
   border: 1px solid var(--border-gold-soft);
   border-radius: 10px;
-  padding: 0.55rem 0.9rem;
+  padding: var(--space-2) var(--space-4);
   cursor: pointer;
   transition: all 0.2s;
   color: var(--color-text-dim);
   font-family: var(--font-ui), sans-serif;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   text-align: left;
   width: 100%;
 }
@@ -146,7 +146,7 @@ const latestUnread = computed(() => {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   min-width: 0;
 }
 
@@ -157,13 +157,13 @@ const latestUnread = computed(() => {
 }
 
 .rn-banner-version {
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--color-gold-bright);
   background: var(--surface-gold-soft);
   border: 1px solid var(--border-gold-soft);
   border-radius: 4px;
-  padding: 0.05rem 0.35rem;
+  padding: 0.05rem var(--space-1);
   flex-shrink: 0;
   letter-spacing: 0.04em;
 }

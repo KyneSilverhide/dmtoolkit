@@ -156,7 +156,7 @@ const contentPayload = computed(() => {
 .dice-card,
 .text-card,
 .image-card {
-  padding: 1rem 1.25rem;
+  padding: var(--space-4) var(--space-5);
 }
 
 .dice-card {
@@ -165,13 +165,13 @@ const contentPayload = computed(() => {
 }
 
 .gold-card {
-  padding: 1rem 1.25rem;
+  padding: var(--space-4) var(--space-5);
   border-left: 3px solid var(--msg-swatch-gold);
   background: var(--player-panel-highlight-bg, var(--gradient-panel-soft));
 }
 
 .content-card {
-  padding: 1rem 1.25rem;
+  padding: var(--space-4) var(--space-5);
   border-left: 3px solid var(--color-gold-dark);
   background: var(--player-panel-highlight-bg, var(--gradient-panel-soft));
 }
@@ -179,8 +179,8 @@ const contentPayload = computed(() => {
 .gold-content {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  margin-top: 0.5rem;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
 }
 
 .gold-icon {
@@ -190,7 +190,7 @@ const contentPayload = computed(() => {
 
 .gold-text {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.95rem;
+  font-size: var(--text-md);
   color: var(--msg-swatch-gold);
   letter-spacing: 0.06em;
 }
@@ -198,15 +198,15 @@ const contentPayload = computed(() => {
 .dice-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 
 .dice-icon { font-size: 1.2rem; }
 
 .dice-type {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
@@ -216,20 +216,20 @@ const contentPayload = computed(() => {
 .dice-time,
 .card-time {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   color: var(--color-text-dim);
 }
 
 .dice-roll {
   display: flex;
   align-items: baseline;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .roll-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.1em;
   color: var(--color-text-dim);
   text-transform: uppercase;
@@ -245,7 +245,7 @@ const contentPayload = computed(() => {
 
 .dice-result-text {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.95rem;
+  font-size: var(--text-md);
   color: var(--color-parchment);
   line-height: 1.5;
 }
@@ -254,20 +254,20 @@ const contentPayload = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2);
 }
 
 .card-header-right {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .reply-btn {
   background: none;
   border: none;
   color: var(--color-text-dim);
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   cursor: pointer;
   padding: 0 0.2rem;
   line-height: 1;
@@ -277,7 +277,7 @@ const contentPayload = computed(() => {
 
 .from-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
@@ -285,7 +285,7 @@ const contentPayload = computed(() => {
 
 .message-text {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.95rem;
+  font-size: var(--text-md);
   color: var(--color-parchment);
   line-height: 1.6;
   white-space: pre-wrap;

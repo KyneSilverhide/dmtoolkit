@@ -9,7 +9,17 @@ const emit = defineEmits(['dismiss', 'pause', 'resume'])
 </script>
 
 <template>
-  <TransitionGroup name="roll-toast" tag="div" class="player-roll-toasts">
+  <!-- role="status" + aria-live : les jets des joueurs arrivent par socket, sans action
+       du MJ. Le conteneur est monté en permanence (AdminView le rend sans `v-if`) — c'est
+       la condition pour qu'un lecteur d'écran annonce les toasts : une région créée en même
+       temps que son contenu reste silencieuse. -->
+  <TransitionGroup
+    name="roll-toast"
+    tag="div"
+    class="player-roll-toasts"
+    role="status"
+    aria-live="polite"
+  >
     <div
       v-for="toast in toasts"
       :key="toast.id"
@@ -46,7 +56,7 @@ const emit = defineEmits(['dismiss', 'pause', 'resume'])
   right: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   z-index: 900;
   pointer-events: none;
 }
@@ -54,8 +64,8 @@ const emit = defineEmits(['dismiss', 'pause', 'resume'])
   pointer-events: auto;
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.65rem 0.85rem;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3);
   border-radius: 10px;
   border: 1px solid var(--color-gold-dark);
   background: var(--gradient-panel-soft);
@@ -73,9 +83,9 @@ const emit = defineEmits(['dismiss', 'pause', 'resume'])
 .roll-toast-enter-from, .roll-toast-leave-to { opacity: 0; transform: translateX(30px); }
 .prt-icon { font-size: 1.4rem; flex-shrink: 0; }
 .prt-body { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
-.prt-name { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-gold-dark); }
-.prt-label { font-size: 0.72rem; color: var(--color-text-dim); }
+.prt-name { font-size: var(--text-xs); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-gold-dark); }
+.prt-label { font-size: var(--text-xs); color: var(--color-text-dim); }
 .prt-type { font-style: italic; }
 .prt-result { font-size: 1.1rem; font-weight: 700; color: var(--color-gold-bright); }
-.prt-result.hidden-result { color: var(--color-info-bright); font-size: 0.85rem; }
+.prt-result.hidden-result { color: var(--color-info-bright); font-size: var(--text-base); }
 </style>

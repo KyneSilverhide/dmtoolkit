@@ -1,6 +1,8 @@
 import { test, expect } from '../fixtures'
 import { createSession } from '../helpers/session'
 import { AdminPage } from '../page-objects/AdminPage'
+import { PlayerPage } from '../page-objects/PlayerPage'
+import { TvPage } from '../page-objects/TvPage'
 
 test('spell search returns results for known spell', async ({ browser, adminToken }) => {
   const token = adminToken
@@ -52,7 +54,8 @@ test('player sorts tab has spell search', async ({ page, adminToken }) => {
   const { joinAsPlayer } = await import('../helpers/player')
   await joinAsPlayer(page, code, { name: 'Mage', hp: 24 })
 
-  await page.getByTestId('player-tab-spells').filter({ visible: true }).click()
+  // Les Sorts s'ouvrent désormais depuis l'index Grimoire — switchTab() encapsule le saut.
+  await new PlayerPage(page).switchTab('spells')
 
   // Spell search input should be visible
   const searchInput = page.locator('input[placeholder*="sort" i], input[placeholder*="spell" i], input[placeholder*="recherche" i]').first()
@@ -214,5 +217,40 @@ test('abilities tab finds a class feature and a subclass trait by name', async (
     await expect(adminPage.page.getByRole('heading', { level: 3, name: /^\s*sort subtil\s*$/i })).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()
+  }
+})
+
+// Projection d'une fiche de contenu directement depuis la palette Ctrl+K, sans passer par
+// l'onglet (voir docs/refonte-ui.md §4.3.1). Les classes sont volontairement exclues :
+// `classPreview()` n'attache pas de `contentType`, donc pas de bouton TV — cf. CLAUDE.md.
+test('command palette can show a content sheet on TV', async ({ browser, adminToken }) => {
+  const token = adminToken
+  const code = await createSession(token)
+
+  const adminCtx = await browser.newContext()
+  const tvCtx = await browser.newContext()
+  try {
+    const adminPage = new AdminPage(await adminCtx.newPage())
+    await adminPage.login(token)
+    await adminPage.selectSession(code)
+
+    const tv = new TvPage(await tvCtx.newPage())
+    await tv.goto(code)
+
+    await adminPage.page.getByTestId('open-search-palette').click()
+    await adminPage.page.locator('.cp-input').fill('boule de feu')
+
+    // Un sort est projetable, une classe ne l'est pas.
+    const spellTvBtn = adminPage.page.getByTestId('cp-tv-spell-boule-de-feu')
+    await expect(spellTvBtn).toBeVisible({ timeout: 10_000 })
+    await expect(adminPage.page.getByTestId('cp-tv-class-clerc')).toHaveCount(0)
+
+    await spellTvBtn.click()
+
+    await expect(tv.getMode()).toHaveAttribute('data-tv-mode', 'content', { timeout: 10_000 })
+    await expect(tv.page.getByText(/boule de feu/i).first()).toBeVisible({ timeout: 10_000 })
+  } finally {
+    await adminCtx.close()
+    await tvCtx.close()
   }
 })

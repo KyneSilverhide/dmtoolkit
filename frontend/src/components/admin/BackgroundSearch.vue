@@ -175,7 +175,12 @@ const filteredBackgrounds = computed(() => {
         </div>
 
         <!-- Personnalité suggérée -->
-        <button class="section-toggle" type="button" @click="togglePersonality(background.slug)">
+        <button
+          class="section-toggle"
+          type="button"
+          :aria-expanded="!!expanded[background.slug]"
+          @click="togglePersonality(background.slug)"
+        >
           <AppIcon :icon="expanded[background.slug] ? 'lucide:chevron-down' : 'lucide:chevron-right'" size="0.8em" />
           Personnalité suggérée
         </button>
@@ -228,10 +233,10 @@ const filteredBackgrounds = computed(() => {
   background: var(--gradient-panel-soft);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 1rem;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: var(--space-2);
   transition: border-color 0.2s;
 }
 .bg-card:hover { border-color: var(--color-gold-dark); }
@@ -239,13 +244,13 @@ const filteredBackgrounds = computed(() => {
 .bg-header {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: var(--space-3);
 }
 .bg-icon { color: var(--color-gold-dark); flex-shrink: 0; }
 .bg-header-main {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .bg-name {
@@ -258,18 +263,18 @@ const filteredBackgrounds = computed(() => {
 
 .skill-badge {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   color: var(--color-gold-bright);
   background: var(--surface-gold-soft-strong);
   border: 1px solid var(--color-gold-dark);
   border-radius: 20px;
-  padding: 0.15rem 0.55rem;
+  padding: 0.15rem var(--space-2);
 }
 
 .bg-desc {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   line-height: 1.55;
   margin: 0;
@@ -278,23 +283,23 @@ const filteredBackgrounds = computed(() => {
 .bg-attrs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem 1rem;
+  gap: var(--space-2) var(--space-4);
 }
 .bg-attr {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
 }
 
 .bg-equipment {
   display: flex;
   align-items: flex-start;
-  gap: 0.4rem;
+  gap: var(--space-2);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   margin: 0;
   line-height: 1.5;
@@ -304,7 +309,7 @@ const filteredBackgrounds = computed(() => {
   background: var(--surface-gold-soft);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
-  padding: 0.5rem 0.7rem;
+  padding: var(--space-2) var(--space-3);
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -312,15 +317,15 @@ const filteredBackgrounds = computed(() => {
 .feature-name {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--color-gold-bright);
 }
 .feature-desc {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   line-height: 1.5;
 }
@@ -328,12 +333,12 @@ const filteredBackgrounds = computed(() => {
 .section-toggle {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   background: none;
   border: none;
   padding: 0.2rem 0;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
   color: var(--color-gold-dark);
   cursor: pointer;
@@ -344,29 +349,29 @@ const filteredBackgrounds = computed(() => {
 .personality-section {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.75rem;
+  gap: var(--space-3);
   padding-left: 0.2rem;
 }
 .personality-group {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: var(--space-1);
 }
 .personality-label {
   margin: 0;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.62rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
 }
 .personality-list {
   margin: 0;
-  padding-left: 1.1rem;
+  padding-left: var(--space-4);
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   line-height: 1.45;
 }
@@ -375,22 +380,22 @@ const filteredBackgrounds = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .bg-source {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   color: var(--color-text-dim);
   opacity: 0.7;
 }
 .bg-link {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-gold-dark);

@@ -197,7 +197,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.notes-tool { display: flex; flex-direction: column; gap: 0.6rem; }
+.notes-tool { display: flex; flex-direction: column; gap: var(--space-2); }
 .notes-textarea {
   width: 100%;
   resize: vertical;
@@ -206,21 +206,21 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   background: var(--player-control-bg, var(--surface-raised));
   color: var(--color-parchment);
-  padding: 0.7rem;
+  padding: var(--space-3);
   font-family: var(--font-body), sans-serif;
   line-height: 1.45;
 }
 .notes-textarea:focus { outline: none; border-color: var(--color-gold-dark); }
-.draw-toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
-.toolbar-item { font-size: 0.7rem; color: var(--color-text-dim); display: inline-flex; gap: 0.35rem; align-items: center; }
+.draw-toolbar { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.toolbar-item { font-size: var(--text-xs); color: var(--color-text-dim); display: inline-flex; gap: var(--space-1); align-items: center; }
 .color-input { width: 30px; height: 24px; padding: 0; border: 1px solid var(--color-border); background: transparent; border-radius: 6px; }
 .tool-btn {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--player-control-bg, var(--surface-raised));
   color: var(--color-parchment);
-  padding: 0.35rem 0.55rem;
-  font-size: 0.68rem;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
   cursor: pointer;
   font-family: var(--font-heading), sans-serif;
 }
@@ -235,5 +235,5 @@ onUnmounted(() => {
   touch-action: none;
   display: block;
 }
-.hint { margin: 0; font-size: 0.7rem; color: var(--color-text-dim); }
+.hint { margin: 0; font-size: var(--text-xs); color: var(--color-text-dim); }
 </style>

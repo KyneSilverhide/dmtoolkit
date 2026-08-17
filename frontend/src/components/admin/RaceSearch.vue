@@ -202,10 +202,10 @@ const filteredRaces = computed(() => {
   background: var(--gradient-panel-soft);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 1rem;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
   transition: border-color 0.2s;
 }
 .race-card:hover { border-color: var(--color-gold-dark); }
@@ -220,7 +220,7 @@ const filteredRaces = computed(() => {
 .race-content {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
   min-width: 0;
 }
 /* L'image incrustée est haute (11rem+ crédit) : l'en-tête, la description, les attributs et
@@ -235,7 +235,7 @@ const filteredRaces = computed(() => {
 .race-description {
   margin: 0;
   font-family: var(--font-body), sans-serif;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   line-height: 1.55;
   color: var(--color-text-dim);
 }
@@ -275,7 +275,7 @@ const filteredRaces = computed(() => {
   background: var(--gradient-panel-soft);
   border: 1px solid var(--color-gold-dark);
   border-radius: 10px;
-  padding: 0.5rem;
+  padding: var(--space-2);
   box-shadow: -16px 12px 32px rgba(0, 0, 0, 0.6);
 }
 .race-image {
@@ -300,8 +300,8 @@ const filteredRaces = computed(() => {
 }
 .race-image-credit {
   margin-top: 0.2rem;
-  padding-right: 0.3rem;
-  font-size: 0.55rem;
+  padding-right: var(--space-1);
+  font-size: var(--text-2xs);
   letter-spacing: 0.03em;
   color: var(--color-text-dim);
   opacity: 0.7;
@@ -310,13 +310,13 @@ const filteredRaces = computed(() => {
 .race-header {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: var(--space-3);
 }
 .race-icon { color: var(--color-gold-dark); flex-shrink: 0; }
 .race-header-main {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .race-name {
@@ -329,27 +329,27 @@ const filteredRaces = computed(() => {
 
 .ability-badge {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   color: var(--color-gold-bright);
   background: var(--surface-gold-soft-strong);
   border: 1px solid var(--color-gold-dark);
   border-radius: 20px;
-  padding: 0.15rem 0.55rem;
+  padding: 0.15rem var(--space-2);
 }
-.ability-badge-sub { font-size: 0.55rem; }
+.ability-badge-sub { font-size: var(--text-2xs); }
 
 .race-attrs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem 1rem;
+  gap: var(--space-2) var(--space-4);
 }
 .race-attr {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
 }
 
@@ -359,45 +359,45 @@ const filteredRaces = computed(() => {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 .trait-item {
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 .trait-name {
   font-family: var(--font-heading), sans-serif;
   color: var(--color-gold-dark);
   font-weight: 600;
-  margin-right: 0.4rem;
+  margin-right: var(--space-2);
 }
 .trait-desc { color: var(--color-text-dim); }
 
 .subrace-list {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: var(--space-1);
   border-top: 1px dashed var(--color-border);
-  padding-top: 0.75rem;
+  padding-top: var(--space-3);
 }
 .subrace-card {
   background: var(--surface-ghost);
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  padding: 0.35rem 0.6rem;
+  padding: var(--space-1) var(--space-2);
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: var(--space-1);
 }
 .subrace-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .subrace-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   letter-spacing: 0.04em;
   color: var(--color-parchment);
   margin: 0;
@@ -407,22 +407,22 @@ const filteredRaces = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .race-source {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   color: var(--color-text-dim);
   opacity: 0.7;
 }
 .race-link {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-gold-dark);

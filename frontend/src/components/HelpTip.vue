@@ -172,7 +172,7 @@ const bubbleStyle = computed(() => ({
   height: 1.1rem;
   border-radius: 50%;
   border: 1px solid currentColor;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   font-weight: 700;
   line-height: 1;
 }
@@ -197,8 +197,8 @@ const bubbleStyle = computed(() => ({
   color: var(--helptip-text);
   border: 1px solid var(--helptip-border);
   border-radius: 6px;
-  padding: 0.55rem 0.75rem;
-  font-size: 0.78rem;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
   line-height: 1.45;
   box-shadow: var(--helptip-shadow);
   pointer-events: none;

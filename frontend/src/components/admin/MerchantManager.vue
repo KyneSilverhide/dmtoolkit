@@ -293,7 +293,7 @@ onUnmounted(() => {
 .merchant-manager {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-5);
   position: relative;
 }
 .manager-header {
@@ -303,21 +303,21 @@ onUnmounted(() => {
 }
 .section-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
   margin: 0;
 }
-.header-actions { display: flex; gap: 0.4rem; }
+.header-actions { display: flex; gap: var(--space-2); }
 .tab-btn {
-  padding: 0.35rem 0.75rem;
+  padding: var(--space-1) var(--space-3);
   background: none;
   border: 1px solid var(--color-border);
   border-radius: 6px;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   cursor: pointer;
   transition: all 0.2s;

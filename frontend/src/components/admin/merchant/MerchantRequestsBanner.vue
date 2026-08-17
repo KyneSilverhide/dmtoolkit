@@ -32,14 +32,14 @@ const emit = defineEmits(['respond'])
   background: var(--gradient-panel-soft);
   border: 1px solid var(--color-success-border);
   border-radius: 10px;
-  padding: 0.9rem 1rem;
+  padding: var(--space-4) var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 .requests-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-success);
@@ -49,41 +49,41 @@ const emit = defineEmits(['respond'])
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
   background: var(--color-success-soft);
   border: 1px solid var(--color-success-border);
   border-radius: 6px;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
 }
 .request-info {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   color: var(--color-parchment);
   flex: 1;
 }
 .request-player { color: var(--color-success); }
 .request-items-list {
-  margin: 0.3rem 0 0.3rem 1rem;
+  margin: var(--space-1) 0 var(--space-1) var(--space-4);
   padding: 0;
   list-style: disc;
   color: var(--color-text-dim);
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
 }
 .item-line-price { color: var(--color-gold-dark); }
 .request-total {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.05em;
   color: var(--color-gold-bright);
 }
 .respond-btn {
-  padding: 0.3rem 0.7rem;
+  padding: var(--space-1) var(--space-3);
   background: var(--color-success-soft);
   border: 1px solid var(--color-success-border);
   border-radius: 6px;
   color: var(--color-success);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   cursor: pointer;
   white-space: nowrap;

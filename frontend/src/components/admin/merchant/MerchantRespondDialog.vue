@@ -92,15 +92,15 @@ function submit() {
   background: linear-gradient(160deg, var(--color-surface), var(--color-surface-alt));
   border: 1px solid var(--color-gold-dark);
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: var(--space-6);
   width: min(480px, 90vw);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 .dialog-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-gold-bright);
@@ -108,7 +108,7 @@ function submit() {
 }
 .dialog-player {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   color: var(--color-text-dim);
   margin: 0;
 }
@@ -118,40 +118,40 @@ function submit() {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: var(--space-1);
   background: var(--surface-ghost);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
 }
 .dialog-item-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
 }
 .dialog-item-name { flex: 1; color: var(--color-parchment); }
 .dialog-item-qty { color: var(--color-text-dim); min-width: 40px; }
 .dialog-item-price { color: var(--color-gold-bright); min-width: 60px; text-align: right; }
 .dialog-total {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   color: var(--color-text-dim);
   text-align: right;
 }
-.dialog-total strong { color: var(--color-gold-bright); font-size: 1rem; }
+.dialog-total strong { color: var(--color-gold-bright); font-size: var(--text-md); }
 
-.respond-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.respond-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .respond-action-btn {
   flex: 1;
-  padding: 0.5rem 0.5rem;
+  padding: var(--space-2) var(--space-2);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: all 0.2s;
@@ -166,15 +166,15 @@ function submit() {
 .custom-price-row {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
   background: var(--surface-ghost);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
 }
 .custom-price-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -185,10 +185,10 @@ function submit() {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  padding: 0.4rem 0.6rem;
+  padding: var(--space-2) var(--space-2);
   color: var(--color-gold-bright);
   font-family: var(--font-heading), sans-serif;
-  font-size: 1rem;
+  font-size: var(--text-md);
   font-weight: 700;
   text-align: center;
   outline: none;
@@ -196,16 +196,16 @@ function submit() {
 }
 .custom-price-input:focus { border-color: var(--color-gold-dark); }
 
-.dialog-footer { display: flex; gap: 0.5rem; }
+.dialog-footer { display: flex; gap: var(--space-2); }
 .action-btn {
   flex: 2;
-  padding: 0.55rem 1rem;
+  padding: var(--space-2) var(--space-4);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.1em;
   cursor: pointer;
   transition: all 0.2s;
@@ -213,13 +213,13 @@ function submit() {
 .action-btn:hover { background: var(--gradient-accent-action-hover); }
 .cancel-btn {
   flex: 1;
-  padding: 0.55rem;
+  padding: var(--space-2);
   background: none;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   cursor: pointer;
   transition: all 0.2s;
 }

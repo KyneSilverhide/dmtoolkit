@@ -1,7 +1,7 @@
 <script setup>
 import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { applyStoredTheme, applyTheme, getLastUsedTheme } from './utils/themePreferences.js'
+import { applyStoredTheme, applyTheme, getLastUsedTheme, applyStoredDensity } from './utils/themePreferences.js'
 
 const route = useRoute()
 
@@ -20,6 +20,9 @@ watch(themeScope, (scope) => {
   } else {
     applyStoredTheme(scope, 'dark')
   }
+  // La densité suit la même portée que le thème. Sur l'accueil (scope null) on garde le
+  // compact par défaut : c'est un écran de passage, sans réglage propre.
+  applyStoredDensity(scope || 'admin', 'compact')
 }, { immediate: true })
 </script>
 

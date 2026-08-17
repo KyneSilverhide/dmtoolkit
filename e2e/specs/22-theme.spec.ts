@@ -3,80 +3,103 @@ import { loginAsAdmin } from '../helpers/auth'
 import { createSession } from '../helpers/session'
 import { joinAsPlayer } from '../helpers/player'
 
-test('admin can toggle theme and preference persists', async ({ page, adminToken }) => {
-  const token = adminToken
-  await loginAsAdmin(page, token)
+// Depuis la refonte UI, le thème se choisit dans un sélecteur explicite (ThemePicker.vue) :
+// une entrée par thème, atteignable en un clic, au lieu d'un bouton de cycle. Le thème
+// 'light' a été supprimé — voir docs/refonte-ui.md §3.1.1.
 
-  const toggleBtn = page.getByTestId('theme-toggle')
-  await expect(toggleBtn).toBeVisible()
+function readPrefs(page: import('@playwright/test').Page, key: string) {
+  return page.evaluate((k) => {
+    try { return JSON.parse(localStorage.getItem('cf_theme_preferences') || '{}')[k] ?? null } catch { return null }
+  }, key)
+}
 
-  // Read initial theme
-  const initialTheme = await page.evaluate(() => {
-    try { return JSON.parse(localStorage.getItem('cf_theme_preferences') || '{}').admin || 'dark' } catch { return 'dark' }
-  })
+test('admin can pick a theme directly and the preference persists', async ({ page, adminToken }) => {
+  await loginAsAdmin(page, adminToken)
 
-  await toggleBtn.click()
+  // Un clic suffit pour atteindre un thème donné — c'est tout l'intérêt du sélecteur.
+  await page.getByTestId('theme-option-nacre').click()
+  expect(await readPrefs(page, 'admin')).toBe('nacre')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'nacre')
 
-  const newTheme = await page.evaluate(() => {
-    try { return JSON.parse(localStorage.getItem('cf_theme_preferences') || '{}').admin || 'dark' } catch { return 'dark' }
-  })
+  await page.getByTestId('theme-option-arcane').click()
+  expect(await readPrefs(page, 'admin')).toBe('arcane')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'arcane')
+})
 
-  expect(newTheme).not.toBe(initialTheme)
+test('the selected theme is marked as pressed', async ({ page, adminToken }) => {
+  await loginAsAdmin(page, adminToken)
+
+  await page.getByTestId('theme-option-sceau').click()
+  await expect(page.getByTestId('theme-option-sceau')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId('theme-option-dark')).toHaveAttribute('aria-pressed', 'false')
 })
 
 test('theme persists after page reload', async ({ page, adminToken }) => {
-  const token = adminToken
-  await loginAsAdmin(page, token)
+  await loginAsAdmin(page, adminToken)
 
-  // Toggle to light
-  const toggleBtn = page.getByTestId('theme-toggle')
-  await toggleBtn.click()
-
-  const themeAfterToggle = await page.evaluate(() => {
-    try { return JSON.parse(localStorage.getItem('cf_theme_preferences') || '{}').admin } catch { return null }
-  })
+  await page.getByTestId('theme-option-sceau').click()
+  const themeAfterPick = await readPrefs(page, 'admin')
 
   await page.reload()
   await page.waitForURL('/admin')
 
-  const themeAfterReload = await page.evaluate(() => {
-    try { return JSON.parse(localStorage.getItem('cf_theme_preferences') || '{}').admin } catch { return null }
-  })
-
-  expect(themeAfterReload).toBe(themeAfterToggle)
+  expect(await readPrefs(page, 'admin')).toBe(themeAfterPick)
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'sceau')
 })
 
 test('home page uses last used theme from any scope', async ({ page }) => {
-  // Set player theme to light
   await page.goto('/')
   await page.evaluate(() => {
     try {
-      const prefs = { player: 'light', _last: 'light' }
-      localStorage.setItem('cf_theme_preferences', JSON.stringify(prefs))
+      localStorage.setItem('cf_theme_preferences', JSON.stringify({ player: 'nacre', _last: 'nacre' }))
     } catch {}
   })
 
   await page.goto('/')
-  const htmlClass = await page.locator('html').getAttribute('data-theme')
-  // Should be light (last used)
-  expect(htmlClass).toBe('light')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'nacre')
 })
 
-test('player theme toggle works', async ({ page, adminToken }) => {
-  const token = adminToken
-  const code = await createSession(token)
+test('a stored "light" preference is remapped to sceau, not to dark', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => {
+    try {
+      localStorage.setItem('cf_theme_preferences', JSON.stringify({ player: 'light', _last: 'light' }))
+    } catch {}
+  })
+
+  await page.goto('/')
+  // 'sceau' est un autre thème CLAIR : l'utilisateur ne bascule pas brutalement en noir.
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'sceau')
+})
+
+test('admin can switch display density', async ({ page, adminToken }) => {
+  await loginAsAdmin(page, adminToken)
+
+  await page.getByTestId('density-option-confortable').click()
+  await expect(page.locator('html')).toHaveAttribute('data-density', 'confortable')
+  expect(await readPrefs(page, 'density:admin')).toBe('confortable')
+
+  // La densité ne touche pas le thème, et réciproquement.
+  await page.getByTestId('theme-option-arcane').click()
+  await expect(page.locator('html')).toHaveAttribute('data-density', 'confortable')
+  expect(await readPrefs(page, 'admin')).toBe('arcane')
+
+  await page.reload()
+  await page.waitForURL('/admin')
+  await expect(page.locator('html')).toHaveAttribute('data-density', 'confortable')
+})
+
+test('player can pick a theme and a density from the header menu', async ({ page, adminToken }) => {
+  const code = await createSession(adminToken)
   await joinAsPlayer(page, code, { name: 'Themed', hp: 20 })
 
-  // The theme toggle is inside the hamburger menu — open it first
   await page.getByTestId('header-menu-btn').click()
 
-  const toggleBtn = page.getByTestId('player-theme-toggle')
-  await expect(toggleBtn).toBeVisible()
+  await page.getByTestId('theme-option-arcane').click()
+  expect(await readPrefs(page, 'player')).toBe('arcane')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'arcane')
 
-  await toggleBtn.click()
-
-  const newTheme = await page.evaluate(() => {
-    try { return JSON.parse(localStorage.getItem('cf_theme_preferences') || '{}').player } catch { return null }
-  })
-  expect(['light', 'dark']).toContain(newTheme)
+  await page.getByTestId('density-option-confortable').click()
+  expect(await readPrefs(page, 'density:player')).toBe('confortable')
+  await expect(page.locator('html')).toHaveAttribute('data-density', 'confortable')
 })

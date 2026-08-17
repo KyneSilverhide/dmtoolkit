@@ -134,10 +134,10 @@ const filteredConditions = computed(() => {
   background: var(--gradient-panel-soft);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 1rem;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   transition: border-color 0.2s;
 }
 .condition-card:hover { border-color: var(--color-danger); }
@@ -145,12 +145,12 @@ const filteredConditions = computed(() => {
 .condition-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .condition-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 1rem;
+  font-size: var(--text-md);
   letter-spacing: 0.06em;
   color: var(--color-parchment);
   margin: 0;
@@ -158,18 +158,18 @@ const filteredConditions = computed(() => {
 
 .vo-badge {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   color: var(--color-danger);
   background: var(--color-danger-soft);
   border: 1px solid var(--color-danger-border);
   border-radius: 20px;
-  padding: 0.15rem 0.55rem;
+  padding: 0.15rem var(--space-2);
 }
 
 .condition-desc {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   line-height: 1.55;
   margin: 0;
@@ -179,12 +179,12 @@ const filteredConditions = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .condition-link {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-gold-dark);

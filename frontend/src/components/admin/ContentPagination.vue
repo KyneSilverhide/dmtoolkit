@@ -29,21 +29,21 @@ function go(p) {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  padding: 0.5rem 0 0.25rem;
+  gap: var(--space-4);
+  padding: var(--space-2) 0 0.25rem;
 }
 
 .page-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   background: none;
   border: 1px solid var(--color-gold-dark);
   border-radius: 20px;
-  padding: 0.35rem 0.85rem;
+  padding: var(--space-1) var(--space-3);
   color: var(--color-gold-dark);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
@@ -54,7 +54,7 @@ function go(p) {
 
 .page-indicator {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-text-dim);

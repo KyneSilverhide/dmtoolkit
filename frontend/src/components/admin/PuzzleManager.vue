@@ -236,8 +236,8 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 0.5rem 0;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
 }
 
 .drop-overlay {
@@ -248,13 +248,13 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
   background: var(--overlay-scrim);
   border: 2px dashed var(--color-gold-dark);
   border-radius: 10px;
   color: var(--color-gold-bright);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   pointer-events: none;
@@ -265,27 +265,27 @@ onUnmounted(() => {
 .puzzle-upload-section {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
   flex-wrap: wrap;
 }
 
 .upload-label {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 1rem;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   color: var(--color-text-on-accent);
   transition: opacity 0.15s;
 }
 .upload-label:hover { opacity: 0.85; }
 
-.upload-status { font-size: 0.8rem; color: var(--color-text-muted); }
-.upload-error { font-size: 0.8rem; color: var(--color-danger, #e55); }
+.upload-status { font-size: var(--text-sm); color: var(--color-text-muted); }
+.upload-error { font-size: var(--text-sm); color: var(--color-danger, #e55); }
 
 .active-puzzle-section {
   border: 1px solid var(--color-gold-dark);
@@ -297,15 +297,15 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   background: var(--surface-highlight);
-  font-size: 0.85rem;
+  font-size: var(--text-base);
 }
 
 .active-label {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   font-weight: 600;
   color: var(--color-gold, #d4af37);
 }
@@ -313,9 +313,9 @@ onUnmounted(() => {
 .close-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.7rem;
-  font-size: 0.8rem;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
   background: transparent;
   border: 1px solid var(--color-border, #444);
   border-radius: 4px;
@@ -334,18 +334,18 @@ onUnmounted(() => {
 .puzzle-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .puzzle-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   background: var(--surface-raised);
   border: 1px solid var(--color-border, #444);
   border-radius: 6px;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .puzzle-item.active {
   border-color: var(--color-gold-dark);
@@ -354,8 +354,8 @@ onUnmounted(() => {
 .puzzle-name {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
+  gap: var(--space-2);
+  font-size: var(--text-base);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -364,9 +364,9 @@ onUnmounted(() => {
 .show-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.7rem;
-  font-size: 0.8rem;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 4px;
@@ -383,7 +383,7 @@ onUnmounted(() => {
 .puzzle-actions {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   flex-shrink: 0;
 }
 
@@ -391,7 +391,7 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.3rem 0.5rem;
+  padding: var(--space-1) var(--space-2);
   background: transparent;
   border: 1px solid var(--color-border, #444);
   border-radius: 4px;
@@ -405,9 +405,9 @@ onUnmounted(() => {
 }
 
 .empty-hint {
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   color: var(--color-text-muted);
   text-align: center;
-  padding: 1rem 0;
+  padding: var(--space-4) 0;
 }
 </style>

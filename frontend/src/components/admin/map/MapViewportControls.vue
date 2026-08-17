@@ -26,24 +26,24 @@ const emit = defineEmits(['zoom-in', 'zoom-out', 'reset'])
 <style scoped>
 .subsection-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
-  margin: 0 0 0.4rem;
+  margin: 0 0 var(--space-2);
 }
 .control-section {
   background: var(--admin-panel-bg, var(--gradient-panel));
   border: 1px solid var(--color-border); border-radius: 10px;
-  padding: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem;
+  padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2);
 }
-.inline-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; align-items: center; }
-.viewport-info { font-family: var(--font-heading), sans-serif; font-size: 0.68rem; color: var(--color-text-dim); letter-spacing: 0.06em; margin: 0; }
+.inline-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+.viewport-info { font-family: var(--font-heading), sans-serif; font-size: var(--text-xs); color: var(--color-text-dim); letter-spacing: 0.06em; margin: 0; }
 .action-btn {
-  padding: 0.45rem 0.85rem;
+  padding: var(--space-2) var(--space-3);
   background: var(--gradient-accent-action); border: 1px solid var(--color-gold-dark);
   border-radius: 8px; color: var(--color-text-on-accent);
-  font-family: var(--font-heading), sans-serif; font-size: 0.72rem; letter-spacing: 0.08em; cursor: pointer;
+  font-family: var(--font-heading), sans-serif; font-size: var(--text-xs); letter-spacing: 0.08em; cursor: pointer;
 }
 .action-btn:hover:not(:disabled) { background: var(--gradient-accent-action-hover); }
 </style>

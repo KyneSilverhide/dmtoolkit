@@ -345,12 +345,12 @@ onUnmounted(() => {
 .journal {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .section-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
@@ -360,20 +360,20 @@ onUnmounted(() => {
   font-family: var(--font-body), sans-serif;
   color: var(--color-text-dim);
   text-align: center;
-  padding: 2rem 0;
+  padding: var(--space-8) 0;
 }
 
 .journal-actions {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .session-stats {
   display: flex;
-  gap: 1rem;
-  padding: 0.5rem 0.75rem;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-3);
   background: var(--gradient-panel-soft);
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -382,9 +382,9 @@ onUnmounted(() => {
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
   color: var(--color-text-dim);
 }
@@ -396,14 +396,14 @@ onUnmounted(() => {
 .reset-btn {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.7rem;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
   background: transparent;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
@@ -423,7 +423,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.45rem 0.55rem;
+  padding: var(--space-2) var(--space-2);
   background: transparent;
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -436,26 +436,26 @@ onUnmounted(() => {
 .clear-confirm {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex: 1;
   justify-content: flex-end;
 }
 
 .clear-confirm-text {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
   color: var(--color-danger);
 }
 
 .confirm-btn {
-  padding: 0.35rem 0.7rem;
+  padding: var(--space-1) var(--space-3);
   background: transparent;
   border: 1px solid var(--color-danger);
   border-radius: 6px;
   color: var(--color-danger);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -465,13 +465,13 @@ onUnmounted(() => {
 .confirm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .cancel-btn {
-  padding: 0.35rem 0.7rem;
+  padding: var(--space-1) var(--space-3);
   background: transparent;
   border: 1px solid var(--color-border);
   border-radius: 6px;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -483,14 +483,14 @@ onUnmounted(() => {
 .summary-btn {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.85rem;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -504,12 +504,12 @@ onUnmounted(() => {
   background: var(--gradient-panel-soft);
   border: 1px solid var(--color-gold-dark);
   border-radius: 10px;
-  padding: 1rem 1.25rem;
+  padding: var(--space-4) var(--space-5);
 }
 
 .summary-text {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   color: var(--color-parchment);
   line-height: 1.7;
   white-space: pre-wrap;
@@ -520,14 +520,14 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  padding: 2rem;
+  gap: var(--space-2);
+  padding: var(--space-8);
 }
 
 .empty-icon { font-size: 2.5rem; opacity: 0.4; }
 .empty-text {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   letter-spacing: 0.1em;
   color: var(--color-text-dim);
 }
@@ -539,14 +539,14 @@ onUnmounted(() => {
 }
 
 .timeline-day + .timeline-day {
-  margin-top: 0.4rem;
+  margin-top: var(--space-2);
 }
 
 .day-separator {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  margin: 0 0 0.6rem;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
 }
 
 .day-separator::before,
@@ -559,7 +559,7 @@ onUnmounted(() => {
 
 .day-separator-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -568,7 +568,7 @@ onUnmounted(() => {
 
 .timeline-day-group {
   position: relative;
-  padding-left: 2.2rem;
+  padding-left: var(--space-8);
 }
 
 .timeline-day-group::before {
@@ -586,8 +586,8 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   align-items: flex-start;
-  gap: 0.6rem;
-  margin-bottom: 0.7rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 
 .timeline-dot {
@@ -610,14 +610,14 @@ onUnmounted(() => {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.4rem;
+  gap: var(--space-2);
   flex: 1;
   min-width: 0;
 }
 
 .tl-desc {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   color: var(--color-parchment);
   line-height: 1.4;
   flex: 1;
@@ -626,7 +626,7 @@ onUnmounted(() => {
 
 .tl-time {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   color: var(--color-text-dim);
   white-space: nowrap;
   flex-shrink: 0;

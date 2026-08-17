@@ -5,19 +5,20 @@ import { authStore } from '../stores/auth.js'
 import AppIcon from '../components/AppIcon.vue'
 import ReleaseNotesBell from '../components/ReleaseNotesBell.vue'
 import { releaseNotesStore } from '../stores/releaseNotes.js'
-import { applyTheme, getLastUsedTheme, setThemePreference, getNextTheme, getThemeMeta } from '../utils/themePreferences.js'
+import ThemePicker from '../components/ThemePicker.vue'
+import { applyTheme, getLastUsedTheme, setThemePreference } from '../utils/themePreferences.js'
 
 const router = useRouter()
 const route = useRoute()
 import { BACKEND_URL } from '@/config.js'
 const theme = ref(getLastUsedTheme('dark'))
-const currentThemeMeta = computed(() => getThemeMeta(theme.value))
 
-function toggleTheme() {
-  theme.value = getNextTheme(theme.value)
-  setThemePreference('admin', theme.value)
-  setThemePreference('tv', theme.value)
-  applyTheme(theme.value)
+// La page d'accueil écrit les DEUX portées : c'est le seul écran commun au MJ et à la TV.
+function setTheme(next) {
+  theme.value = next
+  setThemePreference('admin', next)
+  setThemePreference('tv', next)
+  applyTheme(next)
 }
 
 const showModal = ref(false)
@@ -119,10 +120,7 @@ async function login() {
 <template>
   <div class="home-wrapper">
     <header class="home-header">
-      <button class="theme-toggle-btn" @click="toggleTheme">
-        <AppIcon :icon="currentThemeMeta.icon" size="0.9em" />
-        {{ currentThemeMeta.label }}
-      </button>
+      <ThemePicker :model-value="theme" @update:model-value="setTheme" />
       <h1 class="app-title">DM <span class="title-accent">Toolkit</span></h1>
       <p class="app-subtitle">Votre compagnon pour vos sessions de JDR !</p>
     </header>
@@ -233,8 +231,8 @@ async function login() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1.25rem 1.5rem;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-6);
   max-width: 340px;
   width: 100%;
   margin: 0 auto;
@@ -243,9 +241,9 @@ async function login() {
 .docs-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -256,8 +254,23 @@ async function login() {
 
 .home-header {
   text-align: center;
-  padding: 3rem 1.5rem 2rem;
+  padding: var(--space-12) var(--space-6) var(--space-8);
   position: relative;
+}
+
+/* Hors du flux : en position statique, le sélecteur (inline-flex) se retrouvait sur sa
+   propre ligne centrée, juste au-dessus du titre. Ancré en coin, il ne pousse plus rien. */
+.home-header .theme-picker {
+  position: absolute;
+  top: var(--space-6);
+  right: var(--space-6);
+}
+
+@media (max-width: 480px) {
+  .home-header .theme-picker {
+    top: var(--space-4);
+    right: var(--space-4);
+  }
 }
 
 .app-title {
@@ -266,7 +279,7 @@ async function login() {
   line-height: 1.15;
   color: var(--color-parchment);
   text-shadow: var(--text-shadow-emphasis);
-  margin: 0.5rem 0 0.3rem;
+  margin: var(--space-2) 0 var(--space-1);
 }
 
 .title-accent {
@@ -276,11 +289,11 @@ async function login() {
 
 .app-subtitle {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.25em;
   color: var(--color-text-dim);
   text-transform: uppercase;
-  margin: 0.5rem 0 0;
+  margin: var(--space-2) 0 0;
 }
 
 .home-main {
@@ -289,13 +302,13 @@ async function login() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1.5rem;
+  padding: var(--space-8) var(--space-6);
 }
 
 .home-buttons {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
   width: 100%;
   max-width: 340px;
 }
@@ -303,8 +316,8 @@ async function login() {
 .home-btn {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.25rem 1.5rem;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -344,7 +357,7 @@ async function login() {
 .btn-icon { font-size: 2rem; flex-shrink: 0; }
 .btn-label { font-size: 1.1rem; font-weight: 600; }
 .btn-sub {
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -361,7 +374,7 @@ async function login() {
   align-items: center;
   justify-content: center;
   z-index: 100;
-  padding: 1.5rem;
+  padding: var(--space-6);
 }
 
 .modal-card {
@@ -369,7 +382,7 @@ async function login() {
   background: var(--gradient-panel);
   border: 1px solid var(--color-gold-dark);
   border-radius: 18px;
-  padding: 2rem;
+  padding: var(--space-8);
   width: 100%;
   max-width: 380px;
   box-shadow: 0 24px 60px var(--overlay-scrim), 0 0 0 1px var(--surface-gold-soft);
@@ -383,7 +396,7 @@ async function login() {
   border: none;
   color: var(--color-text-dim);
   cursor: pointer;
-  padding: 0.3rem;
+  padding: var(--space-1);
   border-radius: 6px;
   line-height: 1;
   transition: color 0.15s;
@@ -393,11 +406,11 @@ async function login() {
 
 .modal-header {
   text-align: center;
-  margin-bottom: 1.75rem;
+  margin-bottom: var(--space-6);
 }
 .modal-icon {
   color: var(--color-gold-dark);
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2);
 }
 .modal-title {
   font-family: var(--font-title), sans-serif;
@@ -407,7 +420,7 @@ async function login() {
 }
 .modal-subtitle {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.25em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -417,14 +430,14 @@ async function login() {
 .modal-form {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: var(--space-4);
 }
 
-.form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+.form-group { display: flex; flex-direction: column; gap: var(--space-2); }
 
 .form-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-dim);
@@ -434,10 +447,10 @@ async function login() {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.75rem 1rem;
+  padding: var(--space-3) var(--space-4);
   color: var(--color-parchment);
   font-family: var(--font-body), sans-serif;
-  font-size: 1rem;
+  font-size: var(--text-md);
   outline: none;
   transition: border-color 0.2s;
   width: 100%;
@@ -449,14 +462,14 @@ async function login() {
 .form-error {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   color: var(--color-danger);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   background: var(--color-danger-soft);
   border: 1px solid var(--color-danger-border);
   border-radius: 8px;
-  padding: 0.55rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   margin: 0;
 }
 
@@ -464,14 +477,14 @@ async function login() {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.85rem;
+  gap: var(--space-2);
+  padding: var(--space-3);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
@@ -488,13 +501,13 @@ async function login() {
 .demo-hint {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: var(--space-2);
   background: var(--surface-gold-soft);
   border: 1px solid var(--border-gold-soft);
   border-radius: 8px;
-  padding: 0.55rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   line-height: 1.4;
 }
@@ -540,14 +553,14 @@ async function login() {
   right: 1rem;
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   background: none;
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  padding: 0.35rem 0.65rem;
+  padding: var(--space-1) var(--space-3);
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   cursor: pointer;
   transition: all 0.18s;
   white-space: nowrap;

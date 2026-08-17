@@ -158,17 +158,17 @@ const groupedServices = computed(() => {
 .category-groups {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-6);
 }
 
 .category-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
-  margin: 0 0 0.6rem;
-  padding-bottom: 0.35rem;
+  margin: 0 0 var(--space-2);
+  padding-bottom: var(--space-1);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -176,10 +176,10 @@ const groupedServices = computed(() => {
   background: var(--gradient-panel-soft);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 1rem;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   transition: border-color 0.2s;
 }
 .service-card:hover { border-color: var(--color-gold-dark); }
@@ -188,12 +188,12 @@ const groupedServices = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .service-name {
   font-family: var(--font-heading), sans-serif;
-  font-size: 1rem;
+  font-size: var(--text-md);
   letter-spacing: 0.06em;
   color: var(--color-parchment);
   margin: 0;
@@ -204,19 +204,19 @@ const groupedServices = computed(() => {
   align-items: center;
   gap: 0.25rem;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   color: var(--color-gold-bright);
   background: var(--surface-gold-soft-strong);
   border: 1px solid var(--color-gold-dark);
   border-radius: 20px;
-  padding: 0.15rem 0.55rem;
+  padding: 0.15rem var(--space-2);
   white-space: nowrap;
 }
 
 .service-desc {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   line-height: 1.55;
   margin: 0;
@@ -226,12 +226,12 @@ const groupedServices = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .service-link {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-gold-dark);

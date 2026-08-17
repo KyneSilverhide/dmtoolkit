@@ -99,7 +99,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
           </div>
 
           <div class="rn-footer">
-            <button class="rn-btn-history" @click="showAll = !showAll">
+            <button class="rn-btn-history" :aria-expanded="showAll" @click="showAll = !showAll">
               <AppIcon :icon="showAll ? 'lucide:eye-off' : 'lucide:history'" size="0.85rem" />
               {{ showAll ? 'Masquer l\'historique' : 'Voir tout l\'historique' }}
             </button>
@@ -121,7 +121,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   align-items: center;
   justify-content: center;
   z-index: 950;
-  padding: 1.5rem;
+  padding: var(--space-6);
 }
 
 .rn-card {
@@ -129,13 +129,13 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   background: var(--gradient-panel);
   border: 1px solid var(--color-gold-dark);
   border-radius: 18px;
-  padding: 1.75rem 2rem 1.5rem;
+  padding: var(--space-6) var(--space-8) var(--space-6);
   width: 100%;
   max-width: 480px;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
   box-shadow: 0 24px 60px var(--overlay-scrim), 0 0 0 1px var(--surface-gold-soft);
   overflow: hidden;
 }
@@ -156,7 +156,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   border: none;
   color: var(--color-text-dim);
   cursor: pointer;
-  padding: 0.3rem;
+  padding: var(--space-1);
   border-radius: 6px;
   line-height: 1;
   transition: color 0.15s;
@@ -167,7 +167,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 .rn-header {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 
 .rn-header-icon { color: var(--color-gold-bright); }
@@ -183,8 +183,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  padding-right: 0.5rem;
+  gap: var(--space-5);
+  padding-right: var(--space-2);
   scrollbar-gutter: stable;
 }
 
@@ -195,24 +195,24 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 .rn-version-header {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  margin-bottom: 0.5rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .rn-version-tag {
   font-family: var(--font-ui), sans-serif;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   font-weight: 700;
   color: var(--color-gold-bright);
   background: var(--surface-gold-soft);
   border: 1px solid var(--border-gold-soft);
   border-radius: 4px;
-  padding: 0.1rem 0.45rem;
+  padding: 0.1rem var(--space-2);
   letter-spacing: 0.04em;
 }
 
 .rn-version-date {
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
 }
 
@@ -222,14 +222,14 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 
 .rn-change {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
-  font-size: 0.88rem;
+  gap: var(--space-2);
+  font-size: var(--text-base);
   color: var(--color-parchment);
   line-height: 1.4;
 }
@@ -237,8 +237,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 .rn-empty {
   text-align: center;
   color: var(--color-text-dim);
-  font-size: 0.9rem;
-  padding: 1rem 0;
+  font-size: var(--text-base);
+  padding: var(--space-4) 0;
 }
 
 .rn-version.is-read {
@@ -249,19 +249,19 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   color: var(--color-success);
   background: var(--color-success-soft);
   border: 1px solid var(--color-success-border);
   border-radius: 4px;
-  padding: 0.05rem 0.35rem;
+  padding: 0.05rem var(--space-1);
 }
 
 .rn-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding-top: 0.25rem;
   border-top: 1px solid var(--border-gold-soft);
 }
@@ -269,14 +269,14 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 .rn-btn-history {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   background: none;
   border: 1px solid var(--border-gold-soft);
   border-radius: 8px;
   color: var(--color-text-dim);
   font-family: var(--font-ui), sans-serif;
-  font-size: 0.82rem;
-  padding: 0.45rem 0.85rem;
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 }
@@ -292,9 +292,9 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   border-radius: 8px;
   color: var(--color-text-on-accent);
   font-family: var(--font-ui), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   font-weight: 600;
-  padding: 0.5rem 1.1rem;
+  padding: var(--space-2) var(--space-4);
   cursor: pointer;
   transition: opacity 0.15s;
 }

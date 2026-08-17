@@ -208,35 +208,35 @@ const emit = defineEmits([
   background: var(--player-panel-bg);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 1rem;
+  padding: var(--space-4);
   box-shadow: var(--shadow-soft);
 }
 .panel-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-dim);
-  margin: 0 0 0.75rem;
+  margin: 0 0 var(--space-3);
 }
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.6rem;
+  margin-bottom: var(--space-2);
 }
 
 /* ── HP Panel ────────────────────────────────────────────────────────── */
-.hp-panel { display: flex; flex-direction: column; gap: 0.6rem; }
+.hp-panel { display: flex; flex-direction: column; gap: var(--space-2); }
 .hp-fraction {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   color: var(--color-parchment);
   letter-spacing: 0.05em;
 }
 .hp-temp {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   color: var(--player-info-text);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -246,7 +246,7 @@ const emit = defineEmits([
 .hp-controls {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 .hp-btn {
   flex: 1;
@@ -279,13 +279,13 @@ const emit = defineEmits([
 .hp-input:focus { border-color: var(--color-gold-dark); }
 .hp-send-btn {
   width: 100%;
-  padding: 0.6rem;
+  padding: var(--space-2);
   border-radius: 8px;
   border: 1px solid var(--color-gold-dark);
   background: var(--player-gold-bg);
   color: var(--color-gold);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -299,19 +299,19 @@ const emit = defineEmits([
 .max-hp-display-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin-bottom: 0.25rem;
 }
 .max-hp-hint {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
 }
 .max-hp-edit-btn {
   background: none;
   border: none;
   padding: 0 0.2rem;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   cursor: pointer;
   opacity: 0.6;
   transition: opacity 0.2s;
@@ -322,12 +322,12 @@ const emit = defineEmits([
 .max-hp-edit-row {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   margin-bottom: 0.25rem;
 }
 .max-hp-edit-label {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   white-space: nowrap;
 }
@@ -340,7 +340,7 @@ const emit = defineEmits([
   border-radius: 6px;
   color: var(--color-parchment);
   font-family: var(--font-heading), sans-serif;
-  font-size: 1rem;
+  font-size: var(--text-md);
   font-weight: 700;
 }
 .max-hp-confirm-btn, .max-hp-cancel-btn {
@@ -350,7 +350,7 @@ const emit = defineEmits([
   border: 1px solid var(--color-border);
   background: var(--player-control-bg);
   color: var(--color-parchment);
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -363,8 +363,8 @@ const emit = defineEmits([
 .max-hp-confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── Initiative ──────────────────────────────────────────────────────── */
-.initiative-panel { display: flex; flex-direction: column; gap: 0.5rem; }
-.initiative-controls { display: flex; align-items: center; gap: 0.5rem; }
+.initiative-panel { display: flex; flex-direction: column; gap: var(--space-2); }
+.initiative-controls { display: flex; align-items: center; gap: var(--space-2); }
 .initiative-input {
   flex: 1;
   height: 40px;
@@ -385,10 +385,10 @@ const emit = defineEmits([
   background: var(--player-info-bg);
   color: var(--player-info-text);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 0.65rem 0.75rem;
+  padding: var(--space-3) var(--space-3);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -400,8 +400,8 @@ const emit = defineEmits([
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.85rem 1rem;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border-radius: 10px;
   border: 1px solid var(--color-border);
   background: var(--player-control-bg-muted);
@@ -422,17 +422,17 @@ const emit = defineEmits([
 }
 .concentration-icon { font-size: 1.3rem; flex-shrink: 0; }
 .concentration-text { flex: 1; }
-.conc-label { display: block; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.conc-label { display: block; font-size: var(--text-sm); letter-spacing: 0.1em; text-transform: uppercase; }
 .conc-state {
   display: block;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   color: var(--color-text-dim);
   margin-top: 0.1rem;
 }
 .concentration-btn.active .conc-state { color: var(--player-info-text); }
 .conc-toggle {
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   color: var(--color-text-dim);
   flex-shrink: 0;
@@ -440,23 +440,23 @@ const emit = defineEmits([
 .concentration-btn.active .conc-toggle { color: var(--player-info-text); }
 
 /* ── Counter offers ──────────────────────────────────────────────────── */
-.counter-offers-panel { display: flex; flex-direction: column; gap: 0.6rem; }
+.counter-offers-panel { display: flex; flex-direction: column; gap: var(--space-2); }
 .counter-offer {
   background: var(--player-success-bg);
   border: 1px solid var(--player-success-border);
   border-radius: 8px;
-  padding: 0.65rem;
+  padding: var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
-.offer-text { font-family: var(--font-body), sans-serif; font-size: 0.85rem; color: var(--color-text-dim); margin: 0; }
+.offer-text { font-family: var(--font-body), sans-serif; font-size: var(--text-base); color: var(--color-text-dim); margin: 0; }
 .offer-text strong { color: var(--color-parchment); }
 .offer-price { color: var(--player-success-text) !important; }
-.offer-actions { display: flex; gap: 0.5rem; }
+.offer-actions { display: flex; gap: var(--space-2); }
 .offer-btn {
-  flex: 1; padding: 0.45rem;
-  border-radius: 6px; font-family: var(--font-heading), sans-serif; font-size: 0.7rem;
+  flex: 1; padding: var(--space-2);
+  border-radius: 6px; font-family: var(--font-heading), sans-serif; font-size: var(--text-xs);
   letter-spacing: 0.06em; cursor: pointer; transition: all 0.2s; border: 1px solid;
 }
 .offer-btn.accept { background: var(--player-success-bg); border-color: var(--player-success-border); color: var(--player-success-text); }
@@ -465,20 +465,20 @@ const emit = defineEmits([
 .offer-btn.decline:hover { filter: brightness(1.05); }
 
 /* ── Conditions ──────────────────────────────────────────────────────── */
-.conditions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
+.conditions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
 .cond-cell { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
 .condition-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.2rem;
-  padding: 0.6rem 0.4rem;
+  padding: var(--space-2) var(--space-2);
   border-radius: 10px;
   border: 1px solid var(--color-border);
   background: var(--player-control-bg-muted);
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: all 0.2s;
@@ -501,14 +501,14 @@ const emit = defineEmits([
   .combat-layout {
     display: grid;
     grid-template-columns: 3fr 2fr;
-    gap: 0.75rem;
+    gap: var(--space-3);
     align-items: start;
   }
   .combat-col-left,
   .combat-col-right {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--space-3);
   }
   .conditions-grid {
     grid-template-columns: repeat(2, 1fr);

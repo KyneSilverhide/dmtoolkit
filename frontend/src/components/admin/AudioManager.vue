@@ -649,30 +649,30 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .top-bar {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .section-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   margin: 0;
 }
 .top-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin-left: auto;
 }
 .playing-badge {
@@ -684,21 +684,21 @@ onUnmounted(() => {
   border-radius: 20px;
   color: var(--color-success);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.6rem;
-  padding: 0.1rem 0.5rem;
+  font-size: var(--text-2xs);
+  padding: 0.1rem var(--space-2);
   letter-spacing: 0.05em;
 }
 .stop-all-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.2rem 0.65rem;
+  padding: 0.2rem var(--space-3);
   background: var(--color-danger-soft);
   border: 1px solid var(--color-danger-border);
   border-radius: 6px;
   color: var(--color-danger);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.62rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: background 0.15s;
@@ -708,13 +708,13 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.2rem 0.65rem;
+  padding: 0.2rem var(--space-3);
   background: var(--color-danger-soft);
   border: 1px solid var(--color-danger-border);
   border-radius: 6px;
   color: var(--color-danger);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.62rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: background 0.15s;
@@ -724,13 +724,13 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.2rem 0.65rem;
+  padding: 0.2rem var(--space-3);
   background: var(--surface-gold-soft);
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-gold);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.62rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: background 0.15s;
@@ -741,7 +741,7 @@ onUnmounted(() => {
 @keyframes spin { to { transform: rotate(360deg); } }
 .ai-badge {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.5rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.06em;
   font-weight: 700;
   background: var(--color-gold-dark);
@@ -765,7 +765,7 @@ onUnmounted(() => {
 }
 .reclassify-error {
   font-family: var(--font-body), sans-serif;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   color: var(--color-danger);
   width: 100%;
 }
@@ -778,13 +778,13 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
   background: var(--overlay-scrim);
   border: 2px dashed var(--color-gold-dark);
   border-radius: 10px;
   color: var(--color-gold-bright);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   pointer-events: none;
@@ -795,9 +795,9 @@ onUnmounted(() => {
 .upload-card {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
-  padding: 0.55rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   background: var(--surface-gold-soft);
   border: 1px solid var(--color-gold-dark);
   border-radius: 8px;
@@ -805,14 +805,14 @@ onUnmounted(() => {
 .upload-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.8rem;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
   background: var(--gradient-accent-action);
   border: 1px solid var(--color-gold-dark);
   border-radius: 6px;
   color: var(--color-text-on-accent);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.07em;
   cursor: pointer;
   transition: background 0.2s;
@@ -823,7 +823,7 @@ onUnmounted(() => {
 .upload-error {
   width: 100%;
   color: var(--color-danger);
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   font-family: var(--font-body), sans-serif;
   margin-top: 0.15rem;
 }
@@ -831,7 +831,7 @@ onUnmounted(() => {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding-top: 0.15rem;
 }
 .progress-track {
@@ -850,7 +850,7 @@ onUnmounted(() => {
 @keyframes progress-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 .progress-pct {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.62rem;
+  font-size: var(--text-2xs);
   color: var(--color-gold-dark);
   letter-spacing: 0.05em;
   white-space: nowrap;
@@ -862,11 +862,11 @@ onUnmounted(() => {
 .search-bar {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  padding: 0.3rem 0.5rem;
+  padding: var(--space-1) var(--space-2);
 }
 .search-icon { color: var(--color-text-dim); flex-shrink: 0; }
 .search-input {
@@ -876,14 +876,14 @@ onUnmounted(() => {
   outline: none;
   color: var(--color-text);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.04em;
 }
 .search-input::placeholder { color: var(--color-border); font-style: italic; }
 .search-input::-webkit-search-cancel-button { cursor: pointer; }
 .search-count {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.58rem;
+  font-size: var(--text-2xs);
   color: var(--color-text-dim);
   white-space: nowrap;
 }
@@ -893,19 +893,19 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  padding: 2rem 1rem;
+  gap: var(--space-1);
+  padding: var(--space-8) var(--space-4);
   color: var(--color-text-dim);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   text-align: center;
 }
-.empty-hint { font-size: 0.75rem; opacity: 0.7; }
+.empty-hint { font-size: var(--text-sm); opacity: 0.7; }
 
 /* Dashboard */
 .dashboard {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: var(--space-4);
 }
 </style>

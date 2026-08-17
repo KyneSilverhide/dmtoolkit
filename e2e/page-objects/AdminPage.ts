@@ -30,7 +30,18 @@ export class AdminPage {
     await this.page.getByTestId(`tab-${key}`).click()
   }
 
+  // Depuis la refonte UI, les modes TV vivent dans le sélecteur de la barre de scène
+  // (AdminSceneBar.vue) au lieu d'une colonne latérale toujours dépliée : il faut l'ouvrir
+  // avant de cliquer. Les data-testid `tv-mode-btn-<key>` sont inchangés.
+  async openTvModePicker() {
+    const picker = this.page.getByTestId('tv-mode-btn-lobby')
+    if (await picker.isVisible().catch(() => false)) return
+    await this.page.getByTestId('scene-change-mode').click()
+    await picker.waitFor({ state: 'visible' })
+  }
+
   async setTvMode(mode: string) {
+    await this.openTvModePicker()
     await this.page.getByTestId(`tv-mode-btn-${mode}`).click()
   }
 

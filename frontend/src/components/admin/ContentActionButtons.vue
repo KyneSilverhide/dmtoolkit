@@ -76,6 +76,8 @@ onUnmounted(closePicker)
         :class="{ 'ca-btn-active': sent }"
         :disabled="!hasSession || !hasConnectedPlayers"
         :title="hasConnectedPlayers ? 'Envoyer à un joueur' : 'Aucun joueur connecté'"
+        aria-haspopup="true"
+        :aria-expanded="pickerOpen"
         @click="togglePicker"
       >
         <AppIcon :icon="sent ? 'lucide:check' : 'lucide:send'" size="0.8em" />
@@ -100,19 +102,19 @@ onUnmounted(closePicker)
 <style scoped>
 .content-actions {
   display: flex;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 .ca-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   background: var(--surface-raised);
   border: 1px solid var(--color-border);
   border-radius: 20px;
-  padding: 0.25rem 0.65rem;
+  padding: 0.25rem var(--space-3);
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.62rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
@@ -137,17 +139,17 @@ onUnmounted(closePicker)
   border: 1px solid var(--color-border);
   border-radius: 8px;
   box-shadow: var(--shadow-medium);
-  padding: 0.3rem;
+  padding: var(--space-1);
 }
 .ca-picker-item {
   background: none;
   border: none;
   text-align: left;
-  padding: 0.4rem 0.6rem;
+  padding: var(--space-2) var(--space-2);
   border-radius: 6px;
   color: var(--color-text-dim);
   font-family: var(--font-body), sans-serif;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   cursor: pointer;
 }
 .ca-picker-item:hover { background: var(--surface-raised); color: var(--color-gold-bright); }

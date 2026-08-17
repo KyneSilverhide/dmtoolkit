@@ -122,13 +122,13 @@ function nameStyle(item) {
   border-color: var(--color-border);
 }
 .merchant-item.is-magic {
-  /* !important requis : la règle globale .merchant-item (style.css) force déjà
-     background/border-color en !important pour l'animation d'entrée des cartes.
-     --tv-panel-bg est un gradient (pas une couleur unie) : color-mix() doit se baser
-     sur --color-surface-alt à la place, sous peine de déclaration invalide et ignorée. */
+  /* `!important` retiré : la règle globale .merchant-item (style.css) ne force plus
+     background/border-color. --tv-panel-bg reste un gradient (pas une couleur unie) :
+     color-mix() doit donc se baser sur --color-surface-alt, sous peine de déclaration
+     invalide et ignorée. */
   --rarity-color: var(--color-gold-bright);
-  border-color: var(--rarity-color) !important;
-  background: color-mix(in oklab, var(--rarity-color) 16%, var(--color-surface-alt)) !important;
+  border-color: var(--rarity-color);
+  background: color-mix(in oklab, var(--rarity-color) 16%, var(--color-surface-alt));
   box-shadow: 0 0 0 1px var(--rarity-color), inset 0 0 24px color-mix(in oklab, var(--rarity-color) 22%, transparent);
 }
 .item-name {

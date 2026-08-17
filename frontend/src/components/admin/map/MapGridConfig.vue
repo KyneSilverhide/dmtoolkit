@@ -145,39 +145,39 @@ const emit = defineEmits([
 <style scoped>
 .subsection-title {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-gold-dark);
-  margin: 0 0 0.4rem;
+  margin: 0 0 var(--space-2);
 }
 .control-section {
   background: var(--admin-panel-bg, var(--gradient-panel));
   border: 1px solid var(--color-border); border-radius: 10px;
-  padding: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem;
+  padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2);
 }
-.inline-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; align-items: center; }
-.hint-text { font-family: var(--font-body), sans-serif; font-size: 0.75rem; color: var(--color-text-dim); margin: 0; }
+.inline-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+.hint-text { font-family: var(--font-body), sans-serif; font-size: var(--text-sm); color: var(--color-text-dim); margin: 0; }
 
 .grid-status-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.2rem 0.5rem;
+  padding: 0.2rem var(--space-2);
   background: var(--surface-gold-soft);
   border: 1px solid var(--color-gold-dark);
   border-radius: 999px;
   color: var(--color-gold-bright);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
 }
 
 .grid-config-panel {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  padding: 0.65rem 0.75rem;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3);
   background: var(--surface-inset);
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -185,29 +185,29 @@ const emit = defineEmits([
 .grid-config-row {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .grid-config-label {
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   color: var(--color-text-dim);
   letter-spacing: 0.05em;
   min-width: 7rem;
   flex-shrink: 0;
 }
-.grid-type-selector { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.grid-type-selector { display: flex; gap: var(--space-1); flex-wrap: wrap; }
 .type-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.3rem 0.65rem;
+  padding: var(--space-1) var(--space-3);
   background: var(--surface-raised, #1e1e2e);
   border: 1.5px solid var(--color-border);
   border-radius: 6px;
   color: var(--color-text-dim);
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: all 0.18s;
@@ -216,10 +216,10 @@ const emit = defineEmits([
 .type-btn.active { border-color: var(--color-gold-bright); color: var(--color-gold-bright); background: var(--surface-gold-soft); }
 
 .action-btn {
-  padding: 0.45rem 0.85rem;
+  padding: var(--space-2) var(--space-3);
   background: var(--gradient-accent-action); border: 1px solid var(--color-gold-dark);
   border-radius: 8px; color: var(--color-text-on-accent);
-  font-family: var(--font-heading), sans-serif; font-size: 0.72rem; letter-spacing: 0.08em; cursor: pointer;
+  font-family: var(--font-heading), sans-serif; font-size: var(--text-xs); letter-spacing: 0.08em; cursor: pointer;
 }
 .action-btn:hover:not(:disabled) { background: var(--gradient-accent-action-hover); }
 .action-btn.active { background: var(--gradient-accent-action-hover); border-color: var(--color-gold-bright); }

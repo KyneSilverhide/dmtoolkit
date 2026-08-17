@@ -1,0 +1,118 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   L1 — TOKENS DÉRIVÉS
+   ══════════════════════════════════════════════════════════════════════════
+   Couche INVARIANTE par thème : échelles d'espacement, de typographie, de
+   rayon, d'élévation et de mouvement. Aucune de ces valeurs ne dépend de la
+   palette — elles vivent donc à `:root` nu, en UN SEUL exemplaire, là où les
+   couleurs sont redéfinies pour chacun des 4 thèmes dans style.css.
+
+   Règle : ajouter un token d'échelle ici coûte UNE édition, pas quatre.
+   Voir docs/refonte-ui.md §3.1.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Espacement — échelle de 4 px ────────────────────────────────────────
+     Remplace les 172 valeurs de `padding` distinctes relevées dans l'audit. */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* ── Typographie — 8 paliers au lieu de 90 valeurs ───────────────────────
+     PLANCHER : --text-sm (13 px) pour tout corps de texte et tout libellé
+     qu'on doit lire vite. --text-2xs (11 px) est réservé aux méta-données non
+     critiques (versions, horodatages, dimensions de fichier) — jamais un
+     libellé de navigation, jamais une valeur de jeu. */
+  --text-2xs: 0.6875rem;  /* 11 px */
+  --text-xs: 0.75rem;     /* 12 px */
+  --text-sm: 0.8125rem;   /* 13 px — plancher du corps de texte */
+  --text-base: 0.875rem;  /* 14 px */
+  --text-md: 1rem;        /* 16 px */
+  --text-lg: 1.125rem;    /* 18 px */
+  --text-xl: 1.375rem;    /* 22 px */
+  --text-2xl: 1.75rem;    /* 28 px */
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  /* ── Rayons — 5 paliers au lieu de 15 ───────────────────────────────────── */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 999px;
+
+  /* ── Mouvement ───────────────────────────────────────────────────────────
+     Les durées existantes vont de 0.1s à 0.28s sans logique ; ces 3 paliers
+     les couvrent toutes. */
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 280ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ── Interaction ─────────────────────────────────────────────────────────
+     --touch-min : cible tactile minimale (WCAG 2.5.5). Une seule occurrence
+     de min-height: 44px existait dans toute l'app avant cette refonte.
+
+     --focus-ring-* : la géométrie de l'anneau est invariante ; seule sa couleur
+     suit le thème (--color-gold-bright, défini 4 fois dans style.css). Il est
+     appliqué en `outline`, jamais en `box-shadow` : un box-shadow est rogné par
+     le premier ancêtre en `overflow: hidden` — c'est le cas de la quasi-totalité
+     des listes défilantes de l'app, où l'anneau deviendrait invisible. */
+  --touch-min: 44px;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: var(--color-gold-bright, #f5b450);
+
+  /* ── Empilement — remplace les z-index magiques (9999 dans AdminNavSidebar) ── */
+  --z-sticky: 10;
+  --z-dropdown: 100;
+  --z-modal: 1000;
+  --z-toast: 1100;
+  --z-tooltip: 1200;
+}
+
+/* ── Densité « Confortable » ───────────────────────────────────────────────
+   Ne touche QUE l'espacement, deux paliers de typo et la cible tactile — la
+   palette et la mise en page restent identiques. Le MJ sur un grand écran veut
+   de la densité, le joueur sur téléphone veut des cibles atteignables ; avant
+   cette bascule les deux subissaient le même réglage, calibré pour ni l'un ni
+   l'autre. Piloté par `data-density` sur <html> (cf. utils/themePreferences.js). */
+:root[data-density='confortable'] {
+  --space-1: 0.3rem;
+  --space-2: 0.625rem;
+  --space-3: 0.9rem;
+  --space-4: 1.25rem;
+  --space-5: 1.5rem;
+  --space-6: 1.85rem;
+  --space-8: 2.5rem;
+  --space-10: 3rem;
+  --space-12: 3.5rem;
+
+  --text-sm: 0.875rem;
+  --text-base: 0.9375rem;
+
+  --touch-min: 48px;
+}
+
+/* ── Mouvement réduit ──────────────────────────────────────────────────────
+   L'app anime en boucle infinie (dotPulse sur les pastilles d'activité) et au
+   montage (fadeUp, tabFadeIn). Respecter la préférence système est une
+   exigence d'accessibilité, et rend aussi les captures Playwright stables. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
