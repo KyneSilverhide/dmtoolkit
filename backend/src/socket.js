@@ -451,7 +451,11 @@ function setupSocket(io) {
   async function onPlayerDisconnect(socket) {
     if (!socket.playerId || !socket.sessionId) return
     try {
-      await pool.query('UPDATE players SET socket_id = NULL WHERE id = $1', [socket.playerId])
+      // Le AND socket_id = $2 évite qu'un disconnect retardé de CE socket (ex: fermeture TCP
+      // tardive après un refresh navigateur) n'efface le socket_id d'une reconnexion plus
+      // récente déjà enregistrée sous le même joueur — voir join-session, qui force la
+      // déconnexion de l'ancien socket sans attendre ce handler.
+      await pool.query('UPDATE players SET socket_id = NULL WHERE id = $1 AND socket_id = $2', [socket.playerId, socket.id])
       socket.playerId = null
       socket.sessionId = null
     } catch (err) { console.error(err) }
@@ -535,12 +539,15 @@ function setupSocket(io) {
         const existingPlayer = existingPlayersRes.rows.find(p => normalizePlayerName(p.player_name) === normalizedName)
         let player
         if (existingPlayer) {
+          // Un ancien socket peut rester brièvement présent dans io.sockets.sockets après un
+          // rafraîchissement de page (fermeture TCP retardée, surtout sur mobile) : rejeter la
+          // nouvelle connexion sur cette seule base bloquait le joueur qui se reconnecte
+          // lui-même (il obtenait "Ce nom est déjà pris" en boucle). On fait plutôt prendre le
+          // relais à la nouvelle connexion et on force la fermeture de l'ancienne — cohérent
+          // avec le cas où socket_id est déjà vide (reconnexion après coupure) juste en dessous.
           if (existingPlayer.socket_id && existingPlayer.socket_id !== socket.id) {
             const existingSocket = io.sockets.sockets.get(existingPlayer.socket_id)
-            if (existingSocket) {
-              socket.emit('error', { message: 'Ce nom est déjà pris dans cette session.', field: 'playerName' })
-              return
-            }
+            if (existingSocket) existingSocket.disconnect(true)
           }
           // ac/hp/maxHp ne sont volontairement pas réécrits ici : ce sont des valeurs de
           // partie en cours (dégâts subis, etc.), pas des valeurs à réinitialiser depuis le

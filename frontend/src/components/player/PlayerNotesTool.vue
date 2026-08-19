@@ -15,6 +15,7 @@ let ctx = null
 let drawing = false
 let lastPoint = null
 let saveTimer = null
+let resizeObserver = null
 
 const storageKey = computed(() => {
   const sessionId = sessionStore.activeSession?.id ?? 'none'
@@ -146,12 +147,21 @@ onMounted(() => {
   drawColor.value = resolveThemeColor('--notes-draw-color', resolveThemeColor('--color-parchment', 'currentColor'))
   resizeCanvas()
   loadSavedNotes()
-  window.addEventListener('resize', resizeCanvas)
+  // Au montage (ex: premier affichage de l'onglet Notes), le conteneur peut ne pas encore
+  // avoir sa taille finale : resizeCanvas() ci-dessus se rabat alors sur le minimum
+  // (280×180), le buffer du canvas restant figé à cette taille tant qu'aucun 'resize' de la
+  // fenêtre ne survient. Le navigateur étire ensuite ce petit buffer sur toute la largeur
+  // réelle du canvas — chaque point dessiné (en coordonnées CSS de la taille réelle) atterrit
+  // donc bien plus loin que là où le doigt/curseur se trouve. Le ResizeObserver resynchronise
+  // le buffer dès que la taille CSS réelle du canvas est connue, y compris hors resize fenêtre
+  // (changement d'onglet, orientation mobile, dvh qui bouge).
+  resizeObserver = new ResizeObserver(() => resizeCanvas())
+  resizeObserver.observe(canvasRef.value)
 })
 
 onUnmounted(() => {
   if (saveTimer) clearTimeout(saveTimer)
-  window.removeEventListener('resize', resizeCanvas)
+  resizeObserver?.disconnect()
 })
 </script>
 
