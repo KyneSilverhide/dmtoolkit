@@ -85,6 +85,7 @@ cd frontend && npm run dev
 - Quand une erreur socket émise vers un joueur concerne un champ précis d'un formulaire (ex. `join-session`), inclure `field` dans le payload `error` (`{ message, field: 'sessionCode' }`) en plus de `message`, pour que le frontend affiche l'erreur au plus près du champ fautif plutôt qu'en bas de page. Omettre `field` pour une erreur générique.
 - `middleware/auth.js` renvoie **401** pour token absent/invalide/expiré, **403** uniquement pour les erreurs métier (ex. : session pas la vôtre). Le frontend distingue les deux.
 - CORS : autoriser `app://obsidian.md` et `capacitor://obsidian.md` en plus de `FRONTEND_URL`.
+- `apiLimiter` (express-rate-limit) a été retiré des routes de contenu (`index.js`) — l'instance est privée et la recherche globale (Ctrl+K) fan-out sur toutes les routes de contenu, ce qui atteignait le plafond de 200 req/15 min en une seule frappe. `authLimiter` reste actif sur `/api/auth` (anti-bruteforce login).
 
 ### Frontend
 - **Ne jamais créer `io()` directement.** Toujours `getSocket(token)` / `resetSocket()` depuis `frontend/src/socket.js`.

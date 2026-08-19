@@ -80,28 +80,24 @@ const authLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' },
 })
 
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200,
-  message: { error: 'Too many requests, please try again later.' },
-})
-// Bypass rate limiters in test mode
+// apiLimiter désactivé : instance privée, la recherche globale (Ctrl+K) fan-out
+// sur toutes les routes de contenu et atteignait le plafond en une seule frappe.
 const isTest = process.env.NODE_ENV === 'test'
 app.use('/api/auth', isTest ? authRoutes : [authLimiter, authRoutes])
-app.use('/api/sessions', isTest ? sessionRoutes : [apiLimiter, sessionRoutes])
-app.use('/api/uploads', isTest ? uploadRoutes : [apiLimiter, uploadRoutes])
-app.use('/api/spells', isTest ? spellRoutes : [apiLimiter, spellRoutes])
-app.use('/api/magic-items', isTest ? magicItemRoutes : [apiLimiter, magicItemRoutes])
-app.use('/api/equipment', isTest ? equipmentRoutes : [apiLimiter, equipmentRoutes])
-app.use('/api/generate', isTest ? generateRoutes : [apiLimiter, generateRoutes])
+app.use('/api/sessions', sessionRoutes)
+app.use('/api/uploads', uploadRoutes)
+app.use('/api/spells', spellRoutes)
+app.use('/api/magic-items', magicItemRoutes)
+app.use('/api/equipment', equipmentRoutes)
+app.use('/api/generate', generateRoutes)
 app.use('/api/release-notes', releaseNotesRoutes)
-app.use('/api/puzzles', isTest ? puzzleRoutes : [apiLimiter, puzzleRoutes])
-app.use('/api/races', isTest ? raceRoutes : [apiLimiter, raceRoutes])
-app.use('/api/classes', isTest ? classRoutes : [apiLimiter, classRoutes])
-app.use('/api/backgrounds', isTest ? backgroundRoutes : [apiLimiter, backgroundRoutes])
-app.use('/api/services', isTest ? serviceRoutes : [apiLimiter, serviceRoutes])
-app.use('/api/conditions', isTest ? conditionRoutes : [apiLimiter, conditionRoutes])
-app.use('/api/defensive-traits', isTest ? defensiveTraitsRoutes : [apiLimiter, defensiveTraitsRoutes])
+app.use('/api/puzzles', puzzleRoutes)
+app.use('/api/races', raceRoutes)
+app.use('/api/classes', classRoutes)
+app.use('/api/backgrounds', backgroundRoutes)
+app.use('/api/services', serviceRoutes)
+app.use('/api/conditions', conditionRoutes)
+app.use('/api/defensive-traits', defensiveTraitsRoutes)
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
 app.get('/api/config', (req, res) => {
   const demoEnabled = process.env.DEMO_ENABLED !== 'false'
