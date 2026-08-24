@@ -1,6 +1,14 @@
 {
   "notes": [
     {
+      "version": "2.0.13",
+      "date": "2026-08-24",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Plusieurs comptes admin sont désormais possibles : le compte principal peut en créer d'autres depuis l'onglet Admins (rail Outils), avec changement de mot de passe obligatoire à la première connexion du nouveau compte." },
+        { "type": "feature", "role": "admin", "text": "Sessions — possibilité de rendre une session publique (visible et modifiable par tous les admins) ou de la partager à un admin précis via un code d'invitation ; celui-ci peut alors agir sur le contenu de jeu, sans pouvoir republier ni repartager la session à son tour." }
+      ]
+    },
+    {
       "version": "2.0.7",
       "date": "2026-07-29",
       "changes": [

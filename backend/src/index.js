@@ -121,7 +121,7 @@ async function seedAdmin() {
     if (parseInt(result.rows[0].count) === 0) {
       const hash = await bcrypt.hash(adminPassword, 10)
       await pool.query(
-          'INSERT INTO admins (username, password_hash) VALUES ($1, $2)',
+          'INSERT INTO admins (username, password_hash, is_owner) VALUES ($1, $2, TRUE)',
           [adminUsername, hash]
       )
       console.log('Default admin account created')

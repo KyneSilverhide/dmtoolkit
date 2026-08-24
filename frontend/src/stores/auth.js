@@ -18,6 +18,13 @@ export const authStore = reactive({
     localStorage.setItem('auth', JSON.stringify({ token, admin }))
   },
 
+  // Met à jour l'objet admin en place (ex: must_change_password passé à false après un
+  // changement de mot de passe) sans toucher au token.
+  updateAdmin(admin) {
+    this.admin = { ...this.admin, ...admin }
+    localStorage.setItem('auth', JSON.stringify({ token: this.token, admin: this.admin }))
+  },
+
   logout() {
     this.token = null
     this.admin = null

@@ -14,4 +14,12 @@ function authenticateToken(req, res, next) {
   }
 }
 
-module.exports = { authenticateToken }
+// Réservé à l'administrateur principal (is_owner) — gestion des comptes admin.
+// Lit le claim JWT, même pattern de confiance que is_demo (voir uploads.js/socket.js) :
+// une rétrogradation d'un owner reste valide jusqu'à expiration de son token (7j).
+function requireOwner(req, res, next) {
+  if (!req.admin?.is_owner) return res.status(403).json({ error: 'Réservé à l\'administrateur principal.' })
+  next()
+}
+
+module.exports = { authenticateToken, requireOwner }

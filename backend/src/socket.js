@@ -298,16 +298,19 @@ function serializeTimer(session) {
 }
 
 /**
- * Vérifie qu'une session appartient bien à cet admin, sans en récupérer le contenu.
+ * Vérifie que cet admin peut agir sur le contenu de jeu de cette session — propriétaire,
+ * collaborateur (session_shares), ou session publique — sans en récupérer le contenu.
  * Couvre le cas — répété une douzaine de fois dans les handlers ci-dessous — où seule
- * l'existence de l'appartenance importe (les handlers qui ont besoin de colonnes
- * précises de la session continuent leur propre SELECT).
+ * l'existence de l'accès importe (les handlers qui ont besoin de colonnes précises de la
+ * session continuent leur propre SELECT). Ne couvre PAS les actions de cycle de vie de la
+ * session (renommer/fermer/supprimer/republier/partager) : celles-ci restent un test
+ * direct de `created_by`, jamais de session_editable().
  * @param {number} sessionId
  * @param {number} adminId
  * @returns {Promise<boolean>}
  */
-async function assertSessionOwnership(sessionId, adminId) {
-  const result = await pool.query('SELECT id FROM sessions WHERE id = $1 AND created_by = $2', [sessionId, adminId])
+async function assertSessionAccess(sessionId, adminId) {
+  const result = await pool.query('SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)', [sessionId, adminId])
   return !!result.rows[0]
 }
 
@@ -693,7 +696,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         const sessionResult = await pool.query(
-          'SELECT * FROM sessions WHERE id = $1 AND created_by = $2', [sessionId, socket.admin.id])
+          'SELECT * FROM sessions WHERE id = $1 AND session_editable(id, $2)', [sessionId, socket.admin.id])
         const session = sessionResult.rows[0]
         if (!session) return
         socket.join(`admin:${sessionId}`)
@@ -746,7 +749,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       if (theme !== 'light' && theme !== 'dark') return
       try {
-        await pool.query('UPDATE sessions SET tv_theme = $1 WHERE id = $2 AND created_by = $3', [theme, sessionId, socket.admin.id])
+        await pool.query('UPDATE sessions SET tv_theme = $1 WHERE id = $2 AND session_editable(id, $3)', [theme, sessionId, socket.admin.id])
         io.to(`tv:${sessionId}`).emit('tv-theme-updated', { theme })
       } catch (err) { console.error(err) }
     })
@@ -755,7 +758,7 @@ function setupSocket(io) {
     socket.on('set-tv-mode', async ({ sessionId, mode }) => {
       if (!socket.admin) return
       try {
-        await pool.query('UPDATE sessions SET tv_mode = $1 WHERE id = $2 AND created_by = $3', [mode, sessionId, socket.admin.id])
+        await pool.query('UPDATE sessions SET tv_mode = $1 WHERE id = $2 AND session_editable(id, $3)', [mode, sessionId, socket.admin.id])
         broadcastToSession(sessionId, 'tv-mode-changed', { mode })
       } catch (err) { console.error(err) }
     })
@@ -771,7 +774,7 @@ function setupSocket(io) {
         const dataStr = JSON.stringify(contentData)
         if (dataStr.length > MAX_CONTENT_JSON_LENGTH) return
         const result = await pool.query(
-          'UPDATE sessions SET tv_mode = $1, current_content_type = $2, current_content_data = $3 WHERE id = $4 AND created_by = $5',
+          'UPDATE sessions SET tv_mode = $1, current_content_type = $2, current_content_data = $3 WHERE id = $4 AND session_editable(id, $5)',
           ['content', contentType, dataStr, sessionId, socket.admin.id]
         )
         if (result.rowCount === 0) return
@@ -794,7 +797,7 @@ function setupSocket(io) {
         const updateRes = await pool.query(
           `UPDATE sessions
            SET doom_clock_title = $1, doom_clock_end_at = $2, tv_mode = 'doom'
-           WHERE id = $3 AND created_by = $4`,
+           WHERE id = $3 AND session_editable(id, $4)`,
           [safeTitle, endAt, sessionId, socket.admin.id]
         )
         if (updateRes.rowCount === 0) return
@@ -812,7 +815,7 @@ function setupSocket(io) {
         const stopRes = await pool.query(
           `UPDATE sessions
            SET doom_clock_title = NULL, doom_clock_end_at = NULL, tv_mode = 'lobby'
-           WHERE id = $1 AND created_by = $2`,
+           WHERE id = $1 AND session_editable(id, $2)`,
           [sessionId, socket.admin.id]
         )
         if (stopRes.rowCount === 0) return
@@ -838,7 +841,7 @@ function setupSocket(io) {
         const result = await pool.query(
           `UPDATE sessions
            SET tension_title = $1, tension_steps = $2, tension_level = $3, tension_direction = $4, tension_vibration = $5, tv_mode = 'tension'
-           WHERE id = $6 AND created_by = $7
+           WHERE id = $6 AND session_editable(id, $7)
            RETURNING tension_title, tension_steps, tension_level, tension_direction, tension_vibration`,
           [safeTitle, safeSteps, startLevel, safeDirection, !!vibrationEnabled, sessionId, socket.admin.id]
         )
@@ -865,7 +868,7 @@ function setupSocket(io) {
         const result = await pool.query(
           `UPDATE sessions
            SET tension_level = GREATEST(0, LEAST(COALESCE(tension_steps, 0), COALESCE(tension_level, 0) + $3))
-           WHERE id = $1 AND created_by = $2 AND tension_title IS NOT NULL AND tension_steps IS NOT NULL
+           WHERE id = $1 AND session_editable(id, $2) AND tension_title IS NOT NULL AND tension_steps IS NOT NULL
            RETURNING tension_title, tension_steps, tension_level, tension_direction, tension_vibration`,
           [sessionId, socket.admin.id, safeDelta]
         )
@@ -889,7 +892,7 @@ function setupSocket(io) {
       try {
         // Fetch the current title before clearing it (RETURNING would give NULL after the update)
         const current = await pool.query(
-          'SELECT tension_title FROM sessions WHERE id = $1 AND created_by = $2',
+          'SELECT tension_title FROM sessions WHERE id = $1 AND session_editable(id, $2)',
           [sessionId, socket.admin.id]
         )
         if (!current.rows[0]) return
@@ -897,7 +900,7 @@ function setupSocket(io) {
         await pool.query(
           `UPDATE sessions
            SET tension_title = NULL, tension_steps = NULL, tension_level = 0, tension_direction = 'ascending', tension_vibration = FALSE, tv_mode = 'lobby'
-           WHERE id = $1 AND created_by = $2`,
+           WHERE id = $1 AND session_editable(id, $2)`,
           [sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'tension-scale-ended')
@@ -929,7 +932,7 @@ function setupSocket(io) {
           `UPDATE sessions
            SET timescale_title = $1, timescale_total_hours = $2, timescale_slot_count = $3,
                timescale_rest_slots = $4, timescale_elapsed_slots = 0, timescale_rest_taken = FALSE, tv_mode = 'timescale'
-           WHERE id = $5 AND created_by = $6
+           WHERE id = $5 AND session_editable(id, $6)
            RETURNING timescale_title, timescale_total_hours, timescale_slot_count, timescale_rest_slots, timescale_elapsed_slots, timescale_rest_taken`,
           [safeTitle, safeHours, safeSlots, safeRest, sessionId, socket.admin.id]
         )
@@ -951,7 +954,7 @@ function setupSocket(io) {
         const result = await pool.query(
           `UPDATE sessions
            SET timescale_elapsed_slots = LEAST(timescale_slot_count, GREATEST(0, COALESCE(timescale_elapsed_slots, 0) + $3))
-           WHERE id = $1 AND created_by = $2 AND timescale_title IS NOT NULL
+           WHERE id = $1 AND session_editable(id, $2) AND timescale_title IS NOT NULL
            RETURNING timescale_title, timescale_total_hours, timescale_slot_count, timescale_rest_slots, timescale_elapsed_slots, timescale_rest_taken`,
           [sessionId, socket.admin.id, safeDelta]
         )
@@ -972,7 +975,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         const current = await pool.query(
-          'SELECT timescale_title, timescale_total_hours, timescale_slot_count, timescale_rest_slots, timescale_elapsed_slots, timescale_rest_taken FROM sessions WHERE id = $1 AND created_by = $2 AND timescale_title IS NOT NULL',
+          'SELECT timescale_title, timescale_total_hours, timescale_slot_count, timescale_rest_slots, timescale_elapsed_slots, timescale_rest_taken FROM sessions WHERE id = $1 AND session_editable(id, $2) AND timescale_title IS NOT NULL',
           [sessionId, socket.admin.id]
         )
         const row = current.rows[0]
@@ -990,7 +993,7 @@ function setupSocket(io) {
         }
         const newElapsed = elapsed + restSlots
         await pool.query(
-          'UPDATE sessions SET timescale_elapsed_slots = $1, timescale_rest_taken = TRUE WHERE id = $2 AND created_by = $3',
+          'UPDATE sessions SET timescale_elapsed_slots = $1, timescale_rest_taken = TRUE WHERE id = $2 AND session_editable(id, $3)',
           [newElapsed, sessionId, socket.admin.id]
         )
         const payload = serializeTimeScale({ ...row, timescale_elapsed_slots: newElapsed, timescale_rest_taken: true })
@@ -1005,7 +1008,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         const current = await pool.query(
-          'SELECT timescale_title FROM sessions WHERE id = $1 AND created_by = $2',
+          'SELECT timescale_title FROM sessions WHERE id = $1 AND session_editable(id, $2)',
           [sessionId, socket.admin.id]
         )
         if (!current.rows[0]) return
@@ -1014,7 +1017,7 @@ function setupSocket(io) {
           `UPDATE sessions
            SET timescale_title = NULL, timescale_total_hours = NULL, timescale_slot_count = NULL,
                timescale_rest_slots = NULL, timescale_elapsed_slots = 0, tv_mode = 'lobby'
-           WHERE id = $1 AND created_by = $2`,
+           WHERE id = $1 AND session_editable(id, $2)`,
           [sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'time-scale-ended')
@@ -1027,7 +1030,7 @@ function setupSocket(io) {
     socket.on('create-vote', async ({ sessionId, question, options, isAnonymous }) => {
       if (!socket.admin) return
       try {
-        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
         const voteRes = await pool.query(
           'INSERT INTO votes (session_id, question, options, is_anonymous) VALUES ($1, $2, $3, $4) RETURNING *',
           [sessionId, question, JSON.stringify(options), isAnonymous || false]
@@ -1082,7 +1085,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         const sessionRes = await pool.query(
-          'SELECT current_vote_id FROM sessions WHERE id = $1 AND created_by = $2',
+          'SELECT current_vote_id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
           [sessionId, socket.admin.id]
         )
         const voteId = sessionRes.rows[0]?.current_vote_id
@@ -1107,7 +1110,7 @@ function setupSocket(io) {
         )
         const imageLabel = imgRow.rows[0]?.tv_label || null
         await pool.query(
-          'UPDATE sessions SET tv_mode = $1, current_image_url = $2, current_image_label = $3 WHERE id = $4 AND created_by = $5',
+          'UPDATE sessions SET tv_mode = $1, current_image_url = $2, current_image_label = $3 WHERE id = $4 AND session_editable(id, $5)',
           ['image', imageUrl, imageLabel, sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
@@ -1120,7 +1123,7 @@ function setupSocket(io) {
       try {
         if (!videoUrl || typeof videoUrl !== 'string') return
         await pool.query(
-          'UPDATE sessions SET tv_mode = $1, current_video_url = $2 WHERE id = $3 AND created_by = $4',
+          'UPDATE sessions SET tv_mode = $1, current_video_url = $2 WHERE id = $3 AND session_editable(id, $4)',
           ['video', videoUrl, sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'video', videoUrl })
@@ -1133,7 +1136,7 @@ function setupSocket(io) {
       try {
         if (!['play', 'pause', 'seek'].includes(action)) return
         const { rows } = await pool.query(
-          'SELECT tv_mode, current_video_url FROM sessions WHERE id = $1 AND created_by = $2',
+          'SELECT tv_mode, current_video_url FROM sessions WHERE id = $1 AND session_editable(id, $2)',
           [sessionId, socket.admin.id]
         )
         const s = rows[0]
@@ -1151,7 +1154,7 @@ function setupSocket(io) {
         const sid = parseInt(sessionId, 10)
         const iid = parseInt(imageId, 10)
         if (!Number.isInteger(sid) || !Number.isInteger(iid)) return
-        if (!await assertSessionOwnership(sid, socket.admin.id)) return
+        if (!await assertSessionAccess(sid, socket.admin.id)) return
         const imageCheck = await pool.query(
           "SELECT id, url, original_name FROM session_images WHERE id = $1 AND session_id = $2 AND type = 'puzzle'",
           [iid, sid]
@@ -1175,7 +1178,7 @@ function setupSocket(io) {
       try {
         const sid = parseInt(sessionId, 10)
         if (!Number.isInteger(sid)) return
-        if (!await assertSessionOwnership(sid, socket.admin.id)) return
+        if (!await assertSessionAccess(sid, socket.admin.id)) return
         await pool.query(
           "UPDATE sessions SET tv_mode = 'lobby', current_puzzle_image_id = NULL, current_puzzle_url = NULL, current_puzzle_seed = NULL WHERE id = $1",
           [sid]
@@ -1203,7 +1206,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         const url = (imageUrl && typeof imageUrl === 'string') ? imageUrl : null
-        await pool.query('UPDATE sessions SET lobby_bg_url = $1 WHERE id = $2 AND created_by = $3', [url, sessionId, socket.admin.id])
+        await pool.query('UPDATE sessions SET lobby_bg_url = $1 WHERE id = $2 AND session_editable(id, $3)', [url, sessionId, socket.admin.id])
         broadcastToSession(sessionId, 'lobby-bg-updated', { url })
       } catch (err) { console.error(err) }
     })
@@ -1218,7 +1221,7 @@ function setupSocket(io) {
           `UPDATE sessions
            SET tv_mode = 'map', current_map_url = $1, map_fog_enabled = FALSE,
                map_viewport = $2, map_fog_strokes = '[]', map_tokens = '{}', map_fog_cells = '[]'
-           WHERE id = $3 AND created_by = $4`,
+           WHERE id = $3 AND session_editable(id, $4)`,
           [imageUrl, defaultViewport, sessionId, socket.admin.id]
         )
         const gridConfig = await getMapGridConfig(sessionId, imageUrl)
@@ -1245,7 +1248,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         await pool.query(
-          'UPDATE sessions SET map_fog_enabled = $1 WHERE id = $2 AND created_by = $3',
+          'UPDATE sessions SET map_fog_enabled = $1 WHERE id = $2 AND session_editable(id, $3)',
           [!!enabled, sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'map-fog-updated', { enabled: !!enabled })
@@ -1261,7 +1264,7 @@ function setupSocket(io) {
         const safeYn = Number(yn) || 0
         const viewport = JSON.stringify({ xn: safeXn, yn: safeYn, scale: safeScale })
         await pool.query(
-            'UPDATE sessions SET map_viewport = $1 WHERE id = $2 AND created_by = $3',
+            'UPDATE sessions SET map_viewport = $1 WHERE id = $2 AND session_editable(id, $3)',
             [viewport, sessionId, socket.admin.id]
         )
         io.to(`tv:${sessionId}`).emit('map-viewport-changed', { xn: safeXn, yn: safeYn, scale: safeScale })
@@ -1274,7 +1277,7 @@ function setupSocket(io) {
       try {
         if (!Array.isArray(strokes) || strokes.length === 0) return
         const sessionRes = await pool.query(
-          'SELECT map_fog_strokes FROM sessions WHERE id = $1 AND created_by = $2',
+          'SELECT map_fog_strokes FROM sessions WHERE id = $1 AND session_editable(id, $2)',
           [sessionId, socket.admin.id]
         )
         if (!sessionRes.rows[0]) return
@@ -1286,7 +1289,7 @@ function setupSocket(io) {
         } catch { existing = [] }
         const combined = [...existing, ...strokes].slice(-MAP_FOG_STROKES_MAX)
         await pool.query(
-          'UPDATE sessions SET map_fog_strokes = $1 WHERE id = $2 AND created_by = $3',
+          'UPDATE sessions SET map_fog_strokes = $1 WHERE id = $2 AND session_editable(id, $3)',
           [JSON.stringify(combined), sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'map-fog-patch', { strokes })
@@ -1298,7 +1301,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         await pool.query(
-          "UPDATE sessions SET map_fog_strokes = '[]', map_fog_cells = '[]' WHERE id = $1 AND created_by = $2",
+          "UPDATE sessions SET map_fog_strokes = '[]', map_fog_cells = '[]' WHERE id = $1 AND session_editable(id, $2)",
           [sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'map-fog-reset')
@@ -1311,7 +1314,7 @@ function setupSocket(io) {
       try {
         if (!Array.isArray(cells) || cells.length === 0) return
         const sessionRes = await pool.query(
-          'SELECT map_fog_cells FROM sessions WHERE id = $1 AND created_by = $2',
+          'SELECT map_fog_cells FROM sessions WHERE id = $1 AND session_editable(id, $2)',
           [sessionId, socket.admin.id]
         )
         if (!sessionRes.rows[0]) return
@@ -1324,7 +1327,7 @@ function setupSocket(io) {
         const validCells = cells.filter(c => Number.isInteger(c) && c >= 0)
         const merged = [...new Set([...existing, ...validCells])]
         await pool.query(
-          'UPDATE sessions SET map_fog_cells = $1 WHERE id = $2 AND created_by = $3',
+          'UPDATE sessions SET map_fog_cells = $1 WHERE id = $2 AND session_editable(id, $3)',
           [JSON.stringify(merged), sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'map-fog-cells-patch', { cells: validCells })
@@ -1352,7 +1355,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         await pool.query(
-          "UPDATE sessions SET map_fog_cells = '[]' WHERE id = $1 AND created_by = $2",
+          "UPDATE sessions SET map_fog_cells = '[]' WHERE id = $1 AND session_editable(id, $2)",
           [sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'map-fog-cells-reset')
@@ -1364,7 +1367,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         const sessionRes = await pool.query(
-          'SELECT map_tokens FROM sessions WHERE id = $1 AND created_by = $2',
+          'SELECT map_tokens FROM sessions WHERE id = $1 AND session_editable(id, $2)',
           [sessionId, socket.admin.id]
         )
         if (!sessionRes.rows[0]) return
@@ -1373,7 +1376,7 @@ function setupSocket(io) {
         const existing = tokens[String(playerId)] || {}
         tokens[String(playerId)] = { ...existing, nx: Number(nx) || 0, ny: Number(ny) || 0, ...(name !== undefined ? { name } : {}) }
         await pool.query(
-          'UPDATE sessions SET map_tokens = $1 WHERE id = $2 AND created_by = $3',
+          'UPDATE sessions SET map_tokens = $1 WHERE id = $2 AND session_editable(id, $3)',
           [JSON.stringify(tokens), sessionId, socket.admin.id]
         )
         const saved = tokens[String(playerId)]
@@ -1386,7 +1389,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         const sessionRes = await pool.query(
-          'SELECT map_tokens FROM sessions WHERE id = $1 AND created_by = $2',
+          'SELECT map_tokens FROM sessions WHERE id = $1 AND session_editable(id, $2)',
           [sessionId, socket.admin.id]
         )
         if (!sessionRes.rows[0]) return
@@ -1394,7 +1397,7 @@ function setupSocket(io) {
         try { tokens = JSON.parse(sessionRes.rows[0].map_tokens || '{}') } catch {}
         delete tokens[String(playerId)]
         await pool.query(
-          'UPDATE sessions SET map_tokens = $1 WHERE id = $2 AND created_by = $3',
+          'UPDATE sessions SET map_tokens = $1 WHERE id = $2 AND session_editable(id, $3)',
           [JSON.stringify(tokens), sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'map-token-removed', { playerId })
@@ -1405,7 +1408,7 @@ function setupSocket(io) {
     socket.on('send-message', async ({ sessionId, toPlayerId, type, content, voiceStyle, textEffect, authorName, authorColor }) => {
       if (!socket.admin) return
       try {
-        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
         if (!toPlayerId) {
           const cnt = await pool.query('SELECT COUNT(*)::int AS total FROM players WHERE session_id = $1', [sessionId])
           if ((cnt.rows[0]?.total || 0) === 0) { socket.emit('send-error', { message: 'Aucun joueur connecté.' }); return }
@@ -1430,7 +1433,7 @@ function setupSocket(io) {
     socket.on('send-dice-result', async ({ sessionId, combatType, rollValue, resultText, toPlayerId }) => {
       if (!socket.admin) return
       try {
-        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
         if (!toPlayerId) {
           const cnt = await pool.query('SELECT COUNT(*)::int AS total FROM players WHERE session_id = $1', [sessionId])
           if ((cnt.rows[0]?.total || 0) === 0) { socket.emit('send-error', { message: 'Aucun joueur connecté.' }); return }
@@ -1535,7 +1538,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         if (!Array.isArray(shares) || shares.length === 0) return
-        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
 
         for (const share of shares) {
           const { playerId, pp = 0, po = 0, pe = 0, pa = 0, pc = 0 } = share
@@ -1568,7 +1571,7 @@ function setupSocket(io) {
     socket.on('create-merchant', async ({ sessionId, name, description, items }) => {
       if (!socket.admin) return
       try {
-        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
         const mr = await pool.query(
           'INSERT INTO merchants (session_id, name, description) VALUES ($1, $2, $3) RETURNING *',
           [sessionId, name, description || '']
@@ -1592,7 +1595,7 @@ function setupSocket(io) {
     socket.on('update-merchant', async ({ sessionId, merchantId, name, description, items }) => {
       if (!socket.admin) return
       try {
-        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
         const mr = await pool.query(
           'UPDATE merchants SET name = $1, description = $2 WHERE id = $3 AND session_id = $4 RETURNING *',
           [name, description || '', merchantId, sessionId]
@@ -1645,7 +1648,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         await pool.query(
-          'UPDATE sessions SET tv_mode = $1, current_merchant_id = $2 WHERE id = $3 AND created_by = $4',
+          'UPDATE sessions SET tv_mode = $1, current_merchant_id = $2 WHERE id = $3 AND session_editable(id, $4)',
           ['merchant', merchantId, sessionId, socket.admin.id]
         )
         const merchantData = await getMerchantData(merchantId)
@@ -1740,7 +1743,7 @@ function setupSocket(io) {
           `SELECT pr.*, mi.stock AS item_stock, mi.name AS item_name
            FROM purchase_requests pr JOIN merchant_items mi ON pr.item_id = mi.id
            JOIN sessions s ON s.id = pr.session_id
-           WHERE pr.id = $1 AND s.created_by = $2`,
+           WHERE pr.id = $1 AND session_editable(s.id, $2)`,
           [requestId, socket.admin.id]
         )
         const req = reqRes.rows[0]
@@ -1786,7 +1789,7 @@ function setupSocket(io) {
           `SELECT pr.*, mi.stock AS item_stock, mi.name AS item_name
            FROM purchase_requests pr JOIN merchant_items mi ON pr.item_id = mi.id
            JOIN sessions s ON s.id = pr.session_id
-           WHERE pr.batch_id = $1 AND pr.status = 'pending' AND s.created_by = $2`,
+           WHERE pr.batch_id = $1 AND pr.status = 'pending' AND session_editable(s.id, $2)`,
           [batchId, socket.admin.id]
         )
         const reqs = reqsRes.rows
@@ -1844,7 +1847,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         await pool.query(
-          "UPDATE sessions SET tv_mode = 'lobby', current_merchant_id = NULL WHERE id = $1 AND created_by = $2",
+          "UPDATE sessions SET tv_mode = 'lobby', current_merchant_id = NULL WHERE id = $1 AND session_editable(id, $2)",
           [sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'lobby' })
@@ -1858,7 +1861,7 @@ function setupSocket(io) {
       try {
         // If this merchant is currently shown on TV, reset TV to lobby first
         const sessionRes = await pool.query(
-          'SELECT current_merchant_id FROM sessions WHERE id = $1 AND created_by = $2',
+          'SELECT current_merchant_id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
           [sessionId, socket.admin.id]
         )
         if (!sessionRes.rows[0]) return
@@ -1919,7 +1922,7 @@ function setupSocket(io) {
       try {
         const safeRound = Math.max(0, Math.min(MAX_COMBAT_ROUND, parseInt(round) || 0))
         const roundUpdateRes = await pool.query(
-          'UPDATE sessions SET combat_round = $1 WHERE id = $2 AND created_by = $3',
+          'UPDATE sessions SET combat_round = $1 WHERE id = $2 AND session_editable(id, $3)',
           [safeRound, sessionId, socket.admin.id]
         )
         if (roundUpdateRes.rowCount === 0) return
@@ -1939,7 +1942,7 @@ function setupSocket(io) {
         const endAt = new Date(Date.now() + safeDuration * 1000)
         const safeLabel = (label || 'Minuteur').trim().slice(0, MAX_TITLE_LENGTH) || 'Minuteur'
         await pool.query(
-          'UPDATE sessions SET timer_label = $1, timer_end_at = $2 WHERE id = $3 AND created_by = $4',
+          'UPDATE sessions SET timer_label = $1, timer_end_at = $2 WHERE id = $3 AND session_editable(id, $4)',
           [safeLabel, endAt, sessionId, socket.admin.id]
         )
         const payload = { label: safeLabel, endAt: endAt.toISOString() }
@@ -1952,7 +1955,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         await pool.query(
-          'UPDATE sessions SET timer_label = NULL, timer_end_at = NULL WHERE id = $1 AND created_by = $2',
+          'UPDATE sessions SET timer_label = NULL, timer_end_at = NULL WHERE id = $1 AND session_editable(id, $2)',
           [sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'timer-stopped')
@@ -1964,7 +1967,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       if (!Array.isArray(updates) || updates.length === 0) return
       try {
-        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
 
         const client = await pool.connect()
         const updatedPlayers = []
@@ -2003,7 +2006,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       if (typeof playerName !== 'string' || playerName.trim() === '') return
       try {
-        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
 
         const parsed = parseInt(currentHp, 10)
         if (!Number.isFinite(parsed)) return
@@ -2094,7 +2097,7 @@ function setupSocket(io) {
         const imageUrl = rows[0].url
         const imageLabel = rows[0].tv_label || null
         await pool.query(
-          'UPDATE sessions SET tv_mode = $1, current_image_url = $2, current_image_label = $3 WHERE id = $4 AND created_by = $5',
+          'UPDATE sessions SET tv_mode = $1, current_image_url = $2, current_image_label = $3 WHERE id = $4 AND session_editable(id, $5)',
           ['image', imageUrl, imageLabel, sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
@@ -2110,7 +2113,7 @@ function setupSocket(io) {
           `SELECT p.socket_id, p.player_name, p.session_id
            FROM players p
            JOIN sessions s ON s.id = p.session_id
-           WHERE p.id = $1 AND s.created_by = $2`,
+           WHERE p.id = $1 AND session_editable(s.id, $2)`,
           [playerId, socket.admin.id]
         )
         const player = pr.rows[0]
@@ -2154,7 +2157,7 @@ function setupSocket(io) {
     socket.on('create-faction', async ({ sessionId, name, minValue, maxValue, initialValue }) => {
       if (!socket.admin) return
       try {
-        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
         const safeName = String(name || '').trim().slice(0, MAX_TITLE_LENGTH)
         if (!safeName) return
         const safeMin = Math.max(MIN_FACTION_VALUE, Math.min(-1, parseInt(minValue) || -5))
@@ -2172,7 +2175,7 @@ function setupSocket(io) {
     socket.on('update-faction-value', async ({ sessionId, factionId, delta }) => {
       if (!socket.admin) return
       try {
-        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
         const safeDelta = Math.max(-100, Math.min(100, parseInt(delta) || 0))
         if (safeDelta === 0) return
         const r = await pool.query(
@@ -2208,7 +2211,7 @@ function setupSocket(io) {
     socket.on('delete-faction', async ({ sessionId, factionId }) => {
       if (!socket.admin) return
       try {
-        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
         await pool.query('DELETE FROM factions WHERE id = $1 AND session_id = $2', [factionId, sessionId])
         io.to(`admin:${sessionId}`).emit('faction-deleted', { factionId })
       } catch (err) { console.error(err) }
@@ -2218,7 +2221,7 @@ function setupSocket(io) {
     socket.on('show-reputation', async ({ sessionId }) => {
       if (!socket.admin) return
       try {
-        if (!await assertSessionOwnership(sessionId, socket.admin.id)) return
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
         await pool.query('UPDATE sessions SET tv_mode = $1 WHERE id = $2', ['reputation', sessionId])
         const factions = await getFactionsBySession(sessionId)
         broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'reputation' })

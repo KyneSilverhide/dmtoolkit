@@ -19,6 +19,10 @@ const otherSessions = computed(() =>
   sessionStore.sessions.filter(s => s.id !== sessionStore.activeSession?.id)
 )
 
+// Une session fraîchement créée (POST /) n'a pas de champ `ownership` — seul GET / le
+// calcule. Une session tout juste créée est toujours la mienne.
+const activeOwnership = computed(() => sessionStore.activeSession?.ownership ?? 'mine')
+
 const renamingId = ref(null)
 const renameValue = ref('')
 const renameLoading = ref(false)
@@ -164,6 +168,102 @@ async function reopenSession(id) {
   }
 }
 
+const visibilityLoading = ref(false)
+const shareCodeLoading = ref(false)
+const shareCodeCopied = ref(false)
+
+async function setVisibility(next) {
+  if (!sessionStore.activeSession || visibilityLoading.value) return
+  visibilityLoading.value = true
+  try {
+    const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/visibility`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authStore.token}` },
+      body: JSON.stringify({ visibility: next }),
+    })
+    const data = await res.json()
+    if (!res.ok) { error.value = data.error || 'Erreur lors du changement de visibilité.'; return }
+    sessionStore.setActiveSession({ ...sessionStore.activeSession, ...data })
+  } catch {
+    error.value = 'Erreur réseau.'
+  } finally {
+    visibilityLoading.value = false
+  }
+}
+
+async function generateShareCode() {
+  if (!sessionStore.activeSession || shareCodeLoading.value) return
+  shareCodeLoading.value = true
+  try {
+    const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/share-code`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    const data = await res.json()
+    if (!res.ok) { error.value = data.error || 'Erreur lors de la génération du code.'; return }
+    sessionStore.setActiveSession({ ...sessionStore.activeSession, ...data })
+  } catch {
+    error.value = 'Erreur réseau.'
+  } finally {
+    shareCodeLoading.value = false
+  }
+}
+
+async function revokeShareCode() {
+  if (!sessionStore.activeSession || shareCodeLoading.value) return
+  shareCodeLoading.value = true
+  try {
+    const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/share-code`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    const data = await res.json()
+    if (!res.ok) { error.value = data.error || 'Erreur lors de la révocation.'; return }
+    sessionStore.setActiveSession({ ...sessionStore.activeSession, ...data })
+  } catch {
+    error.value = 'Erreur réseau.'
+  } finally {
+    shareCodeLoading.value = false
+  }
+}
+
+async function copyShareCode() {
+  if (!sessionStore.activeSession?.share_code) return
+  try {
+    await navigator.clipboard.writeText(sessionStore.activeSession.share_code)
+    shareCodeCopied.value = true
+    setTimeout(() => { shareCodeCopied.value = false }, 2000)
+  } catch {}
+}
+
+const joinCode = ref('')
+const joinSharedLoading = ref(false)
+const joinSharedError = ref('')
+const joinSharedSuccess = ref('')
+
+async function joinShared() {
+  if (!joinCode.value.trim() || joinSharedLoading.value) return
+  joinSharedLoading.value = true
+  joinSharedError.value = ''
+  joinSharedSuccess.value = ''
+  try {
+    const res = await apiFetch('/api/sessions/join-shared', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authStore.token}` },
+      body: JSON.stringify({ code: joinCode.value.trim() }),
+    })
+    const data = await res.json()
+    if (!res.ok) { joinSharedError.value = data.error || 'Erreur lors de l\'import.'; return }
+    joinSharedSuccess.value = `Session « ${data.name} » importée — retrouvez-la dans la liste ci-dessous.`
+    joinCode.value = ''
+    await loadSessions()
+  } catch {
+    joinSharedError.value = 'Erreur réseau.'
+  } finally {
+    joinSharedLoading.value = false
+  }
+}
+
 async function closeSession(id) {
   try {
     await apiFetch(`/api/sessions/${id}/close`, {
@@ -239,6 +339,24 @@ onMounted(loadSessions)
       <p v-if="error" class="form-error">{{ error }}</p>
     </section>
 
+    <section v-if="!authStore.admin?.is_demo" class="create-section">
+      <h2 class="section-title">✦ Rejoindre une session partagée</h2>
+      <div class="create-form">
+        <input
+          v-model="joinCode"
+          type="text"
+          class="form-input"
+          placeholder="Code de partage…"
+          @keyup.enter="joinShared"
+        />
+        <button class="create-btn" @click="joinShared" :disabled="joinSharedLoading">
+          {{ joinSharedLoading ? '…' : 'Importer' }}
+        </button>
+      </div>
+      <p v-if="joinSharedError" class="form-error">{{ joinSharedError }}</p>
+      <p v-if="joinSharedSuccess" class="form-success">{{ joinSharedSuccess }}</p>
+    </section>
+
     <section v-if="sessionStore.activeSession" class="active-session">
       <h2 class="section-title">✦ Session Active</h2>
       <div class="session-card active">
@@ -262,12 +380,17 @@ onMounted(loadSessions)
             </template>
             <template v-else>
               <p class="session-name">{{ sessionStore.activeSession.name }}</p>
-              <button class="rename-icon-btn" @click="startRename(sessionStore.activeSession)" title="Renommer">
+              <button v-if="activeOwnership === 'mine'" class="rename-icon-btn" @click="startRename(sessionStore.activeSession)" title="Renommer">
                 <AppIcon icon="lucide:pencil" size="0.8em" />
               </button>
             </template>
           </div>
-          <div class="code-badge">{{ sessionStore.activeSession.code }}</div>
+          <div class="header-badges">
+            <span v-if="activeOwnership !== 'mine'" class="ownership-badge" :class="activeOwnership">
+              {{ activeOwnership === 'public' ? 'Publique' : 'Partagée' }}
+            </span>
+            <div class="code-badge">{{ sessionStore.activeSession.code }}</div>
+          </div>
         </div>
 
         <!-- Corps à deux colonnes -->
@@ -306,8 +429,43 @@ onMounted(loadSessions)
           </div>
         </div>
 
-        <!-- Pied : actions destructives -->
-        <div class="session-danger-footer">
+        <!-- Partage : propriétaire uniquement, jamais sur le compte démo -->
+        <div v-if="activeOwnership === 'mine' && !authStore.admin?.is_demo" class="sharing-section">
+          <p class="col-label"><AppIcon icon="lucide:share-2" size="0.8em" /> Partage</p>
+          <div class="visibility-row">
+            <button
+              class="visibility-btn"
+              :class="{ active: sessionStore.activeSession.visibility !== 'public' }"
+              :disabled="visibilityLoading"
+              @click="setVisibility('private')"
+            >Privée</button>
+            <button
+              class="visibility-btn"
+              :class="{ active: sessionStore.activeSession.visibility === 'public' }"
+              :disabled="visibilityLoading"
+              @click="setVisibility('public')"
+            >Publique</button>
+          </div>
+          <p class="col-hint">Publique : visible et modifiable par tous les admins de l'instance, y compris les futurs comptes.</p>
+
+          <div class="share-code-row">
+            <template v-if="sessionStore.activeSession.share_code">
+              <code class="share-code-value">{{ sessionStore.activeSession.share_code }}</code>
+              <button class="col-copy-btn" @click="copyShareCode">
+                <AppIcon v-if="!shareCodeCopied" icon="lucide:clipboard" size="0.8em" />
+                {{ shareCodeCopied ? '✓ Copié' : 'Copier' }}
+              </button>
+              <button class="revoke-btn" :disabled="shareCodeLoading" @click="revokeShareCode">Révoquer</button>
+            </template>
+            <button v-else class="col-copy-btn" :disabled="shareCodeLoading" @click="generateShareCode">
+              <AppIcon icon="lucide:key" size="0.8em" /> Générer un code de partage
+            </button>
+          </div>
+          <p class="col-hint">Un admin muni de ce code peut importer cette session et agir sur son contenu de jeu, sans pouvoir la republier ni la repartager à son tour.</p>
+        </div>
+
+        <!-- Pied : actions destructives — propriétaire uniquement -->
+        <div v-if="activeOwnership === 'mine'" class="session-danger-footer">
           <button class="close-btn" @click="closeSession(sessionStore.activeSession.id)">
             Fermer la session
           </button>
@@ -315,6 +473,10 @@ onMounted(loadSessions)
             <AppIcon icon="lucide:trash-2" size="0.85em" /> Supprimer
           </button>
         </div>
+        <p v-else class="collab-hint">
+          <AppIcon icon="lucide:info" size="0.85em" />
+          Session {{ activeOwnership === 'public' ? 'publique' : 'partagée avec vous' }} — seul son propriétaire peut la renommer, la fermer, la supprimer ou changer son partage.
+        </p>
       </div>
     </section>
 
@@ -349,9 +511,14 @@ onMounted(loadSessions)
             </template>
             <template v-else>
               <span class="session-status" :class="s.status">{{ s.status }}</span>
-              <button class="rename-icon-btn" @click.stop="startRename(s)" title="Renommer"><AppIcon icon="lucide:pencil" size="0.8em" /></button>
-              <button v-if="s.status === 'closed'" class="reopen-mini-btn" @click.stop="reopenSession(s.id)" title="Réouvrir"><AppIcon icon="lucide:undo-2" size="0.85em" /></button>
-              <button class="delete-mini-btn" @click.stop="deleteSession(s.id)"><AppIcon icon="lucide:trash-2" size="0.85em" /></button>
+              <span v-if="s.ownership && s.ownership !== 'mine'" class="ownership-badge" :class="s.ownership">
+                {{ s.ownership === 'public' ? 'Publique' : 'Partagée' }}
+              </span>
+              <template v-if="!s.ownership || s.ownership === 'mine'">
+                <button class="rename-icon-btn" @click.stop="startRename(s)" title="Renommer"><AppIcon icon="lucide:pencil" size="0.8em" /></button>
+                <button v-if="s.status === 'closed'" class="reopen-mini-btn" @click.stop="reopenSession(s.id)" title="Réouvrir"><AppIcon icon="lucide:undo-2" size="0.85em" /></button>
+                <button class="delete-mini-btn" @click.stop="deleteSession(s.id)"><AppIcon icon="lucide:trash-2" size="0.85em" /></button>
+              </template>
             </template>
           </div>
         </div>
@@ -422,6 +589,115 @@ onMounted(loadSessions)
   margin-top: 0.25rem;
 }
 
+.form-success {
+  color: var(--color-success);
+  font-size: var(--text-base);
+  margin-top: 0.25rem;
+}
+
+.ownership-badge {
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--text-2xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.15rem var(--space-2);
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dim);
+}
+.ownership-badge.public {
+  color: var(--color-success);
+  background: var(--color-success-soft);
+  border-color: var(--color-success-border);
+}
+.ownership-badge.shared {
+  color: var(--color-gold-bright);
+  background: var(--surface-gold-soft);
+  border-color: var(--color-gold-dark);
+}
+
+.sharing-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.visibility-row {
+  display: flex;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.visibility-btn {
+  padding: var(--space-1) var(--space-3);
+  border: none;
+  background: none;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.visibility-btn + .visibility-btn { border-left: 1px solid var(--color-border); }
+.visibility-btn.active { background: var(--color-gold-dark); color: var(--color-parchment); }
+.visibility-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.share-code-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.share-code-value {
+  font-family: monospace;
+  font-size: var(--text-sm);
+  color: var(--color-gold-bright);
+  background: var(--admin-gold-bg, var(--surface-gold-soft));
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 6px;
+  padding: 0.2rem var(--space-2);
+}
+
+.revoke-btn {
+  padding: var(--space-1) var(--space-3);
+  background: none;
+  border: 1px solid var(--admin-danger-border, var(--color-danger-border));
+  border-radius: 6px;
+  color: var(--admin-danger-text, var(--color-danger));
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--text-xs);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.revoke-btn:hover:not(:disabled) { background: var(--admin-danger-bg, var(--color-danger-soft)); }
+.revoke-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.collab-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-family: var(--font-body), sans-serif;
+  font-size: var(--text-sm);
+  color: var(--color-text-dim);
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
 .session-card {
   background: linear-gradient(160deg, var(--color-surface), var(--color-surface));
   border: 1px solid var(--color-border);
@@ -461,6 +737,13 @@ onMounted(loadSessions)
   gap: var(--space-2);
   flex: 1;
   min-width: 0;
+}
+
+.header-badges {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
 }
 
 .code-badge {

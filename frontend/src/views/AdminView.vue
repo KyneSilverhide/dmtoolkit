@@ -34,6 +34,8 @@ import AdminHeader from '../components/admin/AdminHeader.vue'
 import AdminNavSidebar from '../components/admin/AdminNavSidebar.vue'
 import AdminSceneBar from '../components/admin/AdminSceneBar.vue'
 import PlayerRollToasts from '../components/admin/PlayerRollToasts.vue'
+import AdminAccountsManager from '../components/admin/AdminAccountsManager.vue'
+import AdminForcePasswordModal from '../components/admin/AdminForcePasswordModal.vue'
 import {
   applyTheme, getThemePreference, setThemePreference,
   applyDensity, getDensityPreference, setDensityPreference,
@@ -91,6 +93,7 @@ const tabComponents = {
   services: ServiceSearch,
   conditions: ConditionSearch,
   generator: GeneratorTool,
+  admins: AdminAccountsManager,
 }
 // Onglet actif piloté par l'URL (/admin/:tab). Un segment inconnu retombe
 // silencieusement sur 'players' plutôt que de rediriger.
@@ -232,24 +235,37 @@ const tabs = [
   { key: 'services',  label: 'Services',      icon: 'lucide:hand-coins' },
   { key: 'conditions', label: 'États',        icon: 'lucide:skull' },
   { key: 'generator', label: 'Générateur',    icon: 'lucide:wand-2' },
+  { key: 'admins',    label: 'Admins',        icon: 'lucide:user-cog' },
 ]
 
 // Onglets « Contenu » : fiches de référence D&D 5e statiques, indépendantes de toute
 // session (ne lisent ni n'écrivent aucun état de session) — accessibles même sans
 // session active, contrairement aux autres groupes.
 const CONTENT_TABS = ['spells', 'equipment', 'magic', 'races', 'classes', 'backgrounds', 'abilities', 'services', 'conditions']
-const isContentTab = computed(() => CONTENT_TABS.includes(activeTab.value))
+
+// Onglet de gestion des comptes admin — indépendant de toute session, comme les onglets
+// de contenu, mais lui-même réservé au propriétaire (is_owner) : absent du menu pour
+// tout autre admin plutôt que grisé, il n'y a rien à découvrir derrière.
+const ACCOUNT_TABS = authStore.admin?.is_owner ? ['admins'] : []
+
+// Onglets utilisables sans session active — contenu ET gestion des admins. Piloté le
+// rendu du panneau principal (sinon "Sélectionnez ou créez une session…" s'affiche même
+// pour ces onglets) et le nettoyage de l'URL en quittant une session (voir plus bas).
+const SESSIONLESS_TABS = [...CONTENT_TABS, ...ACCOUNT_TABS]
+const isSessionlessTab = computed(() => SESSIONLESS_TABS.includes(activeTab.value))
 
 const NAV_GROUPS_FULL = [
   { label: 'En jeu',  items: ['players', 'message', 'dice', 'journal'] },
   { label: 'Scène',   items: ['tension', 'vote', 'images', 'videos', 'audio', 'map', 'merchants', 'puzzle', 'reputation'] },
   { label: 'Contenu', items: CONTENT_TABS },
+  { label: 'Compte',  items: ACCOUNT_TABS },
   { label: 'Outils',  items: ['tresor', 'generator'] },
 ]
-// Sans session active, seuls les onglets de contenu ont un sens : le reste du menu
-// dépend d'une session (joueurs, scène TV, trésor de la session, etc.).
+// Sans session active, les onglets de contenu et de compte restent pertinents (ils ne
+// lisent ni n'écrivent aucun état de session) ; le reste du menu dépend d'une session
+// (joueurs, scène TV, trésor de la session, etc.).
 const navGroups = computed(() => (
-  sessionStore.activeSession ? NAV_GROUPS_FULL : NAV_GROUPS_FULL.filter(g => g.label === 'Contenu')
+  sessionStore.activeSession ? NAV_GROUPS_FULL : NAV_GROUPS_FULL.filter(g => g.label === 'Contenu' || g.label === 'Compte')
 ))
 // Transmis à CommandPalette pour que ses résultats de section (Ctrl+K) restent alignés
 // sur le menu affiché : pas de raccourci vers un onglet caché (ex: « Joueurs » sans
@@ -566,7 +582,7 @@ watch(
         router.replace({ name: 'admin-session', params: { code, tab: activeTab.value } })
       }
     } else if (route.name === 'admin-session') {
-      router.replace({ name: 'admin', params: { tab: isContentTab.value ? activeTab.value : undefined } })
+      router.replace({ name: 'admin', params: { tab: isSessionlessTab.value ? activeTab.value : undefined } })
     }
   }
 )
@@ -607,6 +623,7 @@ onUnmounted(() => {
 
 <template>
   <div class="admin-wrapper">
+    <AdminForcePasswordModal v-if="authStore.admin?.must_change_password" />
     <DemoBanner v-if="authStore.admin?.is_demo" />
 
     <AdminHeader
@@ -657,7 +674,7 @@ onUnmounted(() => {
               <!-- eslint-disable-next-line vue/no-v-html — contenu défini en dur, pas d'entrée utilisateur -->
               <p class="locked-tab-text" v-html="lockedTabs[activeTab].text"></p>
             </div>
-            <template v-else-if="sessionStore.activeSession || isContentTab">
+            <template v-else-if="sessionStore.activeSession || isSessionlessTab">
               <Transition name="tab-fade" mode="out-in">
                 <KeepAlive>
                   <component

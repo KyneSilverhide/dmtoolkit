@@ -18,6 +18,15 @@ async function generateUniqueCode(pool) {
   throw new Error('Could not generate unique code')
 }
 
+async function generateUniqueShareCode(pool) {
+  for (let i = 0; i < 20; i++) {
+    const code = crypto.randomBytes(4).toString('hex')
+    const exists = await pool.query('SELECT id FROM sessions WHERE share_code = $1', [code])
+    if (!exists.rows[0]) return code
+  }
+  throw new Error('Could not generate unique share code')
+}
+
 router.post('/', authenticateToken, async (req, res) => {
   const { name } = req.body
   if (!name) return res.status(400).json({ error: 'Session name required.' })
@@ -41,11 +50,29 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 })
 
+// Mes sessions + sessions publiques (jamais pour un compte démo, isolé du reste de
+// l'instance) + sessions partagées avec moi. `ownership` indique au frontend la
+// provenance de chaque ligne (masquer les actions destructrices si != 'mine').
+// `share_code` est un secret d'invitation : le masquer en second, après `s.*`, écrase la
+// valeur dans l'objet JS retourné par `pg` (mêmes noms de colonnes = la dernière gagne) —
+// un collaborateur ou un viewer public ne doit jamais pouvoir le relire ni le retransmettre.
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM sessions WHERE created_by = $1 ORDER BY created_at DESC',
-      [req.admin.id]
+      `SELECT s.*,
+         CASE
+           WHEN s.created_by = $1 THEN 'mine'
+           WHEN ss.admin_id IS NOT NULL THEN 'shared'
+           ELSE 'public'
+         END AS ownership,
+         CASE WHEN s.created_by = $1 THEN s.share_code ELSE NULL END AS share_code
+       FROM sessions s
+       LEFT JOIN session_shares ss ON ss.session_id = s.id AND ss.admin_id = $1
+       WHERE s.created_by = $1
+          OR ss.admin_id = $1
+          OR (s.visibility = 'public' AND $2 = FALSE)
+       ORDER BY s.created_at DESC`,
+      [req.admin.id, !!req.admin.is_demo]
     )
     res.json(result.rows)
   } catch (err) {
@@ -57,7 +84,7 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/:id/qrcode', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, code, status FROM sessions WHERE id = $1 AND created_by = $2',
+      'SELECT id, code, status FROM sessions WHERE id = $1 AND session_editable(id, $2)',
       [req.params.id, req.admin.id]
     )
     const session = result.rows[0]
@@ -69,6 +96,102 @@ router.get('/:id/qrcode', authenticateToken, async (req, res) => {
     const qrCodeDataUrl = await QRCode.toDataURL(joinUrl)
 
     res.json({ qrCodeDataUrl, joinUrl })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
+// Bascule la visibilité d'une session — réservée au propriétaire (created_by direct,
+// jamais session_editable), et jamais pour un compte démo : une session démo ne doit
+// jamais devenir visible par le reste de l'instance.
+router.patch('/:id/visibility', authenticateToken, async (req, res) => {
+  const { visibility } = req.body
+  if (!['private', 'public'].includes(visibility)) {
+    return res.status(400).json({ error: 'Visibilité invalide.' })
+  }
+  if (req.admin.is_demo) {
+    return res.status(403).json({ error: 'Indisponible sur le compte de démonstration.' })
+  }
+  try {
+    const result = await pool.query(
+      'UPDATE sessions SET visibility = $1 WHERE id = $2 AND created_by = $3 RETURNING *',
+      [visibility, req.params.id, req.admin.id]
+    )
+    if (!result.rows[0]) return res.status(404).json({ error: 'Session not found.' })
+    res.json(result.rows[0])
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
+// Génère (ou renouvelle) le code d'invitation d'une session — réservé au propriétaire.
+// Renouveler le code n'affecte pas les collaborateurs déjà enregistrés dans session_shares,
+// seulement les futures adhésions.
+router.post('/:id/share-code', authenticateToken, async (req, res) => {
+  if (req.admin.is_demo) {
+    return res.status(403).json({ error: 'Indisponible sur le compte de démonstration.' })
+  }
+  try {
+    const owns = await pool.query(
+      'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+      [req.params.id, req.admin.id]
+    )
+    if (!owns.rows[0]) return res.status(404).json({ error: 'Session not found.' })
+
+    const shareCode = await generateUniqueShareCode(pool)
+    const result = await pool.query(
+      'UPDATE sessions SET share_code = $1 WHERE id = $2 RETURNING *',
+      [shareCode, req.params.id]
+    )
+    res.json(result.rows[0])
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
+// Révoque le code d'invitation — les collaborateurs déjà importés gardent leur accès
+// (session_shares n'est pas touchée), seules les futures adhésions via ce code sont bloquées.
+router.delete('/:id/share-code', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'UPDATE sessions SET share_code = NULL WHERE id = $1 AND created_by = $2 RETURNING *',
+      [req.params.id, req.admin.id]
+    )
+    if (!result.rows[0]) return res.status(404).json({ error: 'Session not found.' })
+    res.json(result.rows[0])
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
+// Importe une session partagée via son code — n'importe quel admin non-démo. Le
+// collaborateur agit ensuite sur le contenu de jeu via session_editable(), mais ne pourra
+// jamais republier ni repartager cette session à son tour : ces deux actions testent
+// created_by directement, jamais l'appartenance à session_shares.
+router.post('/join-shared', authenticateToken, async (req, res) => {
+  const { code } = req.body
+  if (!code || typeof code !== 'string') {
+    return res.status(400).json({ error: 'Code requis.' })
+  }
+  if (req.admin.is_demo) {
+    return res.status(403).json({ error: 'Indisponible sur le compte de démonstration.' })
+  }
+  try {
+    const sessionResult = await pool.query('SELECT * FROM sessions WHERE share_code = $1', [code.trim()])
+    const session = sessionResult.rows[0]
+    if (!session) return res.status(404).json({ error: 'Code invalide.', field: 'code' })
+    if (session.created_by === req.admin.id) {
+      return res.status(400).json({ error: 'Vous êtes déjà propriétaire de cette session.', field: 'code' })
+    }
+    await pool.query(
+      'INSERT INTO session_shares (session_id, admin_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+      [session.id, req.admin.id]
+    )
+    res.json(session)
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Server error.' })
@@ -255,7 +378,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 router.get('/:id/journal', authenticateToken, async (req, res) => {
   try {
     const sessionCheck = await pool.query(
-      'SELECT id, created_at FROM sessions WHERE id = $1 AND created_by = $2',
+      'SELECT id, created_at FROM sessions WHERE id = $1 AND session_editable(id, $2)',
       [req.params.id, req.admin.id]
     )
     if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
@@ -305,7 +428,7 @@ router.get('/:id/journal', authenticateToken, async (req, res) => {
 router.delete('/:id/journal', authenticateToken, async (req, res) => {
   try {
     const sessionCheck = await pool.query(
-      'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+      'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
       [req.params.id, req.admin.id]
     )
     if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
@@ -321,7 +444,7 @@ router.delete('/:id/journal', authenticateToken, async (req, res) => {
 router.get('/:id/images', authenticateToken, async (req, res) => {
   try {
     const sessionCheck = await pool.query(
-      'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+      'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
       [req.params.id, req.admin.id]
     )
     if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
@@ -342,7 +465,7 @@ router.get('/:id/images', authenticateToken, async (req, res) => {
 router.patch('/:id/images/:imageId', authenticateToken, async (req, res) => {
   try {
     const sessionCheck = await pool.query(
-      'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+      'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
       [req.params.id, req.admin.id]
     )
     if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
@@ -392,7 +515,7 @@ router.patch('/:id/images/:imageId', authenticateToken, async (req, res) => {
 router.post('/:id/images/:imageId/detect-grid', authenticateToken, async (req, res) => {
   try {
     const sessionCheck = await pool.query(
-      'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+      'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
       [req.params.id, req.admin.id]
     )
     if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
@@ -438,7 +561,7 @@ router.delete('/:id/images/:imageId', authenticateToken, async (req, res) => {
   try {
     // Vérifier que la session appartient à cet admin
     const sessionCheck = await pool.query(
-        'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+        'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
         [req.params.id, req.admin.id]
     )
     if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
@@ -472,7 +595,7 @@ router.delete('/:id/images/:imageId', authenticateToken, async (req, res) => {
 router.get('/:id/players', authenticateToken, async (req, res) => {
   try {
     const sessionCheck = await pool.query(
-      'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+      'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
       [req.params.id, req.admin.id]
     )
     if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
@@ -492,7 +615,7 @@ router.get('/:id/players', authenticateToken, async (req, res) => {
 router.get('/:id/merchants', authenticateToken, async (req, res) => {
   try {
     const sessionCheck = await pool.query(
-      'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+      'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
       [req.params.id, req.admin.id]
     )
     if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
@@ -518,7 +641,7 @@ router.get('/:id/merchants', authenticateToken, async (req, res) => {
 router.get('/:id/purchase-requests', authenticateToken, async (req, res) => {
   try {
     const sessionCheck = await pool.query(
-      'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+      'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
       [req.params.id, req.admin.id]
     )
     if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
@@ -541,7 +664,7 @@ router.get('/:id/purchase-requests', authenticateToken, async (req, res) => {
 router.get('/:id/factions', authenticateToken, async (req, res) => {
   try {
     const sessionCheck = await pool.query(
-      'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+      'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
       [req.params.id, req.admin.id]
     )
     if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })

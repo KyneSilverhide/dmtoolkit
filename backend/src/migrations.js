@@ -288,6 +288,65 @@ ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_content_data TEXT;
 -- Objets magiques en vente chez un marchand : mis en évidence dans l'interface de vente.
 ALTER TABLE merchant_items ADD COLUMN IF NOT EXISTS is_magic BOOLEAN DEFAULT FALSE;
 ALTER TABLE merchant_items ADD COLUMN IF NOT EXISTS rarity VARCHAR(30);
+
+-- Multi-admin : is_owner distingue l'administrateur principal (seul à pouvoir créer
+-- d'autres comptes admin) des comptes réguliers. must_change_password force le nouvel
+-- admin à choisir son propre mot de passe à la première connexion (celui saisi à la
+-- création est choisi par le propriétaire, donc temporaire).
+ALTER TABLE admins ADD COLUMN IF NOT EXISTS is_owner BOOLEAN DEFAULT FALSE;
+ALTER TABLE admins ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT FALSE;
+
+-- Installs existantes : aucun admin n'a is_owner=TRUE avant cette migration. On promeut
+-- le plus ancien compte non-démo pour ne jamais se retrouver sans propriétaire capable de
+-- créer d'autres admins. seedAdmin() (index.js) couvre le cas d'une installation neuve.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM admins WHERE is_owner = TRUE) THEN
+    UPDATE admins SET is_owner = TRUE
+    WHERE id = (SELECT id FROM admins WHERE is_demo IS NOT TRUE ORDER BY id ASC LIMIT 1);
+  END IF;
+END $$;
+
+-- Visibilité de session : 'private' (par défaut, uniquement created_by) ou 'public'
+-- (tout admin non-démo de l'instance, y compris les futurs admins — vérifié à la volée
+-- via session_editable(), jamais matérialisé). share_code est un code à usage
+-- d'invitation : sa révocation (mise à NULL) empêche de nouvelles adhésions mais ne
+-- retire jamais les collaborateurs déjà enregistrés dans session_shares.
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS visibility VARCHAR(20) NOT NULL DEFAULT 'private';
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS share_code VARCHAR(20) UNIQUE;
+
+-- Partage nominatif : un admin qui a importé une session via son share_code peut agir
+-- dessus (contenu de jeu) mais ne peut pas la republier ni la repartager à son tour —
+-- ces deux actions restent réservées à sessions.created_by, jamais dérivées de cette table.
+CREATE TABLE IF NOT EXISTS session_shares (
+  session_id INTEGER REFERENCES sessions(id) ON DELETE CASCADE,
+  admin_id INTEGER REFERENCES admins(id) ON DELETE CASCADE,
+  added_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (session_id, admin_id)
+);
+
+-- Prédicat central d'accès « contenu de jeu » (PJ, TV, carte, marchand, votes...) à une
+-- session : propriétaire, OU présent dans session_shares, OU session publique — sauf pour
+-- un compte démo, qui ne voit jamais le contenu d'un autre admin (isolation du bac à
+-- sable, reset nocturne). N'autorise JAMAIS les actions de cycle de vie de la session
+-- (renommer/fermer/rouvrir/supprimer/republier/partager), qui restent un test direct de
+-- created_by dans les routes/handlers concernés.
+CREATE OR REPLACE FUNCTION session_editable(p_session_id INTEGER, p_admin_id INTEGER)
+RETURNS BOOLEAN AS $func$
+  SELECT EXISTS (
+    SELECT 1
+    FROM sessions s
+    WHERE s.id = p_session_id
+      AND (
+        s.created_by = p_admin_id
+        OR EXISTS (SELECT 1 FROM session_shares ss WHERE ss.session_id = s.id AND ss.admin_id = p_admin_id)
+        OR (
+          s.visibility = 'public'
+          AND NOT EXISTS (SELECT 1 FROM admins a WHERE a.id = p_admin_id AND a.is_demo)
+        )
+      )
+  );
+$func$ LANGUAGE sql STABLE;
 `
 
 async function runMigrations() {

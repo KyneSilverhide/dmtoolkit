@@ -27,7 +27,7 @@ const DOMAINS = [
   { key: 'interactions', label: 'Interactions', icon: 'lucide:message-square',   items: ['message', 'vote', 'puzzle'] },
   { key: 'economie',     label: 'Économie',     icon: 'game-icons:coins',        items: ['merchants', 'tresor', 'reputation'] },
   { key: 'grimoire',     label: 'Grimoire',     icon: 'lucide:book-open',        items: ['spells', 'equipment', 'magic', 'races', 'classes', 'backgrounds', 'abilities', 'services', 'conditions'] },
-  { key: 'outils',       label: 'Outils',       icon: 'lucide:wrench',           items: ['dice', 'generator'] },
+  { key: 'outils',       label: 'Outils',       icon: 'lucide:wrench',           items: ['dice', 'generator', 'admins'] },
 ]
 
 const tabByKey = computed(() => Object.fromEntries(props.tabs.map(t => [t.key, t])))
