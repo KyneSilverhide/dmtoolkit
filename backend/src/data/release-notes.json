@@ -1,11 +1,66 @@
 {
   "notes": [
     {
-      "version": "2.0.13",
+      "version": "2.0.14",
       "date": "2026-08-24",
       "changes": [
         { "type": "feature", "role": "admin", "text": "Plusieurs comptes admin sont désormais possibles : le compte principal peut en créer d'autres depuis l'onglet Admins (rail Outils), avec changement de mot de passe obligatoire à la première connexion du nouveau compte." },
         { "type": "feature", "role": "admin", "text": "Sessions — possibilité de rendre une session publique (visible et modifiable par tous les admins) ou de la partager à un admin précis via un code d'invitation ; celui-ci peut alors agir sur le contenu de jeu, sans pouvoir republier ni repartager la session à son tour." }
+      ]
+    },
+    {
+      "version": "2.0.13",
+      "date": "2026-08-19",
+      "changes": [
+        { "type": "fix", "role": "player", "text": "Outil de dessin (Notes) — le tracé pouvait être décalé par rapport à la position réelle du doigt ou du curseur au premier affichage de l'onglet." },
+        { "type": "fix", "role": "player", "text": "Connexion — un rafraîchissement de page (F5) pouvait faire échouer la reconnexion et bloquer sur le message « Ce nom est déjà pris », y compris pour son propre personnage." },
+        { "type": "fix", "role": "all", "text": "Recherche globale (Ctrl+K) — plusieurs frappes rapprochées pouvaient interrompre temporairement la recherche de contenu." }
+      ]
+    },
+    {
+      "version": "2.0.12",
+      "date": "2026-08-17",
+      "changes": [
+        { "type": "improvement", "role": "admin", "text": "Navigation MJ réorganisée en 7 domaines (Table, Scène, Rythme, Interactions, Économie, Grimoire, Outils) au lieu d'une longue liste d'onglets à plat." },
+        { "type": "improvement", "role": "player", "text": "Navigation joueur — les familles de contenu (Sorts, Objets, Races…) sont désormais regroupées derrière un nouvel écran d'index « Grimoire »." },
+        { "type": "feature", "role": "all", "text": "Un réglage de densité d'affichage (Confortable / Compact) est désormais disponible aux côtés du choix de thème." },
+        { "type": "improvement", "role": "all", "text": "Accessibilité — anneau de focus clavier plus visible et cohérent dans toute l'application ; les notifications (messages, votes, boutique) sont désormais correctement annoncées par les lecteurs d'écran." },
+        { "type": "improvement", "role": "player", "text": "Objets magiques — la recherche de ce contenu n'est plus accessible côté joueur, pour ne pas dévoiler la rareté ni l'effet d'un objet avant de l'obtenir ; ils restent découvrables via la boutique d'un marchand ou une projection du MJ sur l'écran TV." },
+        { "type": "fix", "role": "admin", "text": "Écran TV — le marchand pouvait rester signalé comme actif dans la navigation après sa fermeture, ce qui menait parfois à un écran TV vide." },
+        { "type": "improvement", "role": "admin", "text": "Écran des joueurs connectés — présentation sur 3 colonnes avec le nom complet, plus lisible qu'auparavant." }
+      ]
+    },
+    {
+      "version": "2.0.11",
+      "date": "2026-08-16",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Marchands — un marchand existant peut désormais être modifié (ajout ou retrait d'articles) sans avoir à le recréer." },
+        { "type": "feature", "role": "admin", "text": "Marchands — un tirage aléatoire d'objets magiques, filtré par rareté maximum, permet de garnir rapidement une boutique." },
+        { "type": "fix", "role": "all", "text": "Objets — les raretés « peu commun » et « très rare » étaient parfois affichées avec la couleur de « commun » et « rare »." },
+        { "type": "fix", "role": "admin", "text": "Écran TV — la mise en valeur des objets selon leur rareté n'avait plus d'effet visuel, et les noms d'objets longs étaient coupés au lieu de rétrécir pour rester lisibles en entier." }
+      ]
+    },
+    {
+      "version": "2.0.10",
+      "date": "2026-08-15",
+      "changes": [
+        { "type": "fix", "role": "admin", "text": "Marchands — créer un marchand juste après un autre pouvait rendre le bouton « Créer » inopérant sans aucun message d'erreur." },
+        { "type": "feature", "role": "all", "text": "Marchands — les objets magiques peuvent désormais être proposés en boutique, mis en valeur visuellement selon leur rareté (vitrine joueur, écran TV et liste MJ)." }
+      ]
+    },
+    {
+      "version": "2.0.9",
+      "date": "2026-08-02",
+      "changes": [
+        { "type": "feature", "role": "all", "text": "Nouveau thème « Nacre » : fond blanc perle teinté lavande, accents rose profond et indigo. Accessible via le bouton de bascule de thème." },
+        { "type": "fix", "role": "player", "text": "Écran de connexion joueur — le formulaire n'est plus centré avec un espace vide au-dessus sur les écrans courts, et le titre ne chevauche plus le bouton de changement de thème." }
+      ]
+    },
+    {
+      "version": "2.0.8",
+      "date": "2026-07-30",
+      "changes": [
+        { "type": "improvement", "role": "admin", "text": "Écran TV — mise en page retravaillée pour le combat (les cartes des joueurs gardent une taille stable jusqu'à 6 joueurs, plus compactes au-delà pour que tout le monde tienne à l'écran), ainsi que pour l'échelle de tension, l'échelle de temps, le marchand, la réputation et les votes : meilleure lisibilité sur grand écran." }
       ]
     },
     {
