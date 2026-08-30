@@ -16,24 +16,52 @@ export class PlayerPage {
     return this.page.getByTestId('hp-fraction')
   }
 
+  async getHp(): Promise<number> {
+    const text = await this.getHpFraction().textContent()
+    const match = text?.match(/-?\d+/)
+    return match ? parseInt(match[0], 10) : 0
+  }
+
+  // Panneau « Dégâts et Soins » : un delta signé (positif = soin, négatif = dégâts) —
+  // remplace l'ancien éditeur de PV absolu.
+  async adjustHp(delta: number) {
+    await this.page.getByTestId('damage-input').fill(String(delta))
+    await this.page.getByTestId('damage-apply').click()
+  }
+
   async setHp(value: number) {
-    await this.page.getByTestId('hp-input').fill(String(value))
-    await this.page.getByTestId('hp-submit').click()
+    const current = await this.getHp()
+    if (value !== current) await this.adjustHp(value - current)
   }
 
   async incrementHp(by: 1 | 5) {
     await this.page.getByTestId(`hp-plus-${by}`).click()
-    await this.page.getByTestId('hp-submit').click()
+    await this.page.getByTestId('damage-apply').click()
   }
 
   async decrementHp(by: 1 | 5) {
     await this.page.getByTestId(`hp-minus-${by}`).click()
-    await this.page.getByTestId('hp-submit').click()
+    await this.page.getByTestId('damage-apply').click()
   }
 
   async setInitiative(value: number) {
     await this.page.getByTestId('initiative-input').fill(String(value))
     await this.page.getByTestId('initiative-submit').click()
+  }
+
+  async setAc(value: number) {
+    await this.page.getByTestId('ac-edit-input').fill(String(value))
+    await this.page.getByTestId('ac-submit').click()
+  }
+
+  async setTempHp(value: number) {
+    await this.page.getByTestId('temp-hp-edit-btn').click()
+    await this.page.getByTestId('temp-hp-edit-input').fill(String(value))
+    await this.page.getByTestId('temp-hp-submit').click()
+  }
+
+  async applyDamage(amount: number) {
+    await this.adjustHp(-amount)
   }
 
   async toggleCondition(conditionId: string) {

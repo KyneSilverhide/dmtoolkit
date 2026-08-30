@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getSocket, resetSocket } from '../socket.js'
 import { sessionStore } from '../stores/session.js'
@@ -41,10 +41,10 @@ import ReleaseNotesBell from '../components/ReleaseNotesBell.vue'
 import { releaseNotesStore } from '../stores/releaseNotes.js'
 import {
   JOIN_SESSION, LEAVE_SESSION, SESSION_JOINED, ERROR,
-  UPDATE_HP, UPDATE_MAX_HP, UPDATE_CONDITIONS, UPDATE_CONCENTRATION, UPDATE_INITIATIVE,
-  HP_UPDATE_CONFIRMED, MAX_HP_UPDATE_CONFIRMED,
+  ADJUST_HP, UPDATE_TEMP_HP, UPDATE_MAX_HP, UPDATE_CONDITIONS, UPDATE_CONCENTRATION, UPDATE_INITIATIVE, UPDATE_AC,
+  HP_ADJUSTED, MAX_HP_UPDATE_CONFIRMED, TEMP_HP_CONFIRMED,
   CONCENTRATION_CONFIRMED, CONCENTRATION_WARNING,
-  INITIATIVE_CONFIRMED,
+  INITIATIVE_CONFIRMED, AC_CONFIRMED,
   SUBMIT_VOTE, VOTE_STARTED, VOTE_CLOSED, VOTE_SUBMITTED,
   REQUEST_BATCH_PURCHASE, RESPOND_COUNTER_OFFER,
   NEW_MESSAGE, DICE_RESULT,
@@ -52,13 +52,16 @@ import {
   PURCHASE_REQUESTED, BATCH_ACCEPTED, BATCH_REJECTED,
   PURCHASE_COUNTER_OFFER, COUNTER_OFFER_RESULT, PURCHASE_ERROR,
   KICKED, DEMO_RESET,
-  PUZZLE_STARTED, PUZZLE_CLOSED, PUZZLE_CELL_CLICKED, PUZZLE_CLICK,
+  PUZZLE_STARTED, PUZZLE_CLOSED, PUZZLE_CELL_CLICKED, PUZZLE_CLICK, PUZZLE_RESYNC,
 } from '../socket-events.js'
 import { BACKEND_URL } from '@/config.js'
 
 const router = useRouter()
 const route = useRoute()
-const messages = ref([])
+// Amorcé depuis le store (déjà rempli par PlayerJoinView.vue au join) plutôt que vide : sinon un
+// message envoyé par le MJ juste après le join, avant que ce composant n'existe, restait invisible
+// jusqu'au prochain event live — voir CLAUDE.md (join-session / recentMessages).
+const messages = ref((sessionStore.recentMessages || []).map(m => ({ ...m, kind: 'message' })))
 const unreadMessages = ref(0)
 const playerMessageText = ref('')
 const playerMessageSending = ref(false)
@@ -69,8 +72,9 @@ const sessionName = ref(sessionStore.activeSession?.name || 'Session')
 
 const INITIATIVE_MIN = -10
 const INITIATIVE_MAX = 99
+const AC_MIN = 1
+const AC_MAX = 30
 const TEMP_HP_COLOR = 'var(--player-info-text)'
-const MAX_HP_LIMIT = 9999
 
 // ── Active tab (pilotée par l'URL : /view/:code/:tab ou /player/:tab) ─────
 const activeTab = computed(() => route.params.tab || 'combat')
@@ -79,6 +83,11 @@ const activeTab = computed(() => route.params.tab || 'combat')
 const activePuzzle = ref(null)
 const puzzleIframeRef = ref(null)
 const pendingPuzzleClicks = ref([])
+// Bumped on each applied resync to force the iframe `src` to change (cache-bust) and reload —
+// see handlePuzzleResync. lastPuzzleClickCount tracks the click count already applied locally,
+// so a resync tick with no new clicks skips the reload instead of flickering the iframe for nothing.
+const puzzleResyncNonce = ref(0)
+const lastPuzzleClickCount = ref(0)
 const tabAnimKey = ref(0)
 let hasRequestedNotificationPermission = false
 const rejoinError = ref('')
@@ -184,6 +193,7 @@ function rememberCurrentPlayer(sessionCode = currentSessionCode()) {
     ac: playerInfo.value.ac,
     hp: currentHp.value,
     maxHp: maxHp.value,
+    tempHp: tempHp.value,
     dndClass: playerInfo.value.dndClass,
     subclass: playerInfo.value.subclass,
     race: playerInfo.value.race,
@@ -199,6 +209,7 @@ function applyJoinedState(data) {
     ac: data.player.ac,
     hp: data.player.current_hp,
     maxHp: data.player.max_hp,
+    tempHp: data.player.temp_hp,
     initiative: data.player.initiative,
     dndClass: data.player.dnd_class,
     subclass: data.player.subclass,
@@ -206,19 +217,49 @@ function applyJoinedState(data) {
     avatarUrl: data.player.avatar_url,
   }
   sessionStore.activeMerchant = data.activeMerchant || null
+  sessionStore.activeVote = data.activeVote || null
+  sessionStore.recentMessages = Array.isArray(data.recentMessages) ? data.recentMessages : []
+  // Écrit aussi les refs locales (pas seulement le store) : sans ça, un joueur qui rejoint,
+  // recharge ou se reconnecte pendant qu'un marchand/vote est déjà actif ne le voyait jamais,
+  // car activeMerchant/activeVote ne sont sinon mis à jour que par les events "live"
+  // (merchant-shown, vote-started…), jamais rehydratés depuis une reprise de session.
+  activeMerchant.value = data.activeMerchant || null
+  if (data.activeVote) {
+    activeVote.value = { ...data.activeVote, isClosed: false }
+    const mine = data.activeVote.voterNames?.find(v => v.name === data.player.player_name)
+    myVote.value = mine ? mine.optionIndex : null
+  } else {
+    activeVote.value = null
+    myVote.value = null
+  }
   if (data.activePuzzle) {
     pendingPuzzleClicks.value = Array.isArray(data.activePuzzle.puzzleClicks) ? data.activePuzzle.puzzleClicks.slice() : []
+    lastPuzzleClickCount.value = pendingPuzzleClicks.value.length
     activePuzzle.value = { puzzleImageId: data.activePuzzle.puzzleImageId, puzzleSeed: data.activePuzzle.puzzleSeed }
   } else {
     activePuzzle.value = null
     pendingPuzzleClicks.value = []
   }
+  // Rattrape un message envoyé par le MJ juste après le join, avant que handleNewMessage ne soit
+  // enregistré (rejoinFromKnownPlayer/handleSocketReconnect font un aller-retour réseau avant
+  // d'arriver là) — fusionné par id, jamais remplacé, pour ne rien perdre de ce que le joueur a
+  // déjà accumulé en direct pendant une session longue (voir CLAUDE.md).
+  const recent = Array.isArray(data.recentMessages) ? data.recentMessages : []
+  if (recent.length) {
+    const known = new Set(messages.value.filter(m => m.id != null).map(m => m.id))
+    const missing = recent.filter(m => !known.has(m.id)).map(m => ({ ...m, kind: 'message' }))
+    if (missing.length) {
+      messages.value = [...messages.value, ...missing].sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt))
+    }
+  }
   playerInfo.value = { ...sessionStore.playerInfo }
   sessionName.value = data.session.name
   currentHp.value = data.player.current_hp
   maxHp.value = data.player.max_hp
-  pendingHp.value = data.player.current_hp
+  tempHp.value = data.player.temp_hp ?? 0
+  pendingTempHp.value = tempHp.value
   initiativeValue.value = data.player.initiative
+  acValue.value = data.player.ac
   isConcentrating.value = !!data.player.is_concentrating
   isDemo.value = !!data.isDemo
   // `grimoire` inclus : en démo son entrée de navigation est masquée, mais l'URL reste
@@ -401,10 +442,18 @@ function onNavSelect(item) {
 // ── HP tracking ──────────────────────────────────────────────────────────
 const currentHp = ref(playerInfo.value?.hp ?? 20)
 const maxHp = ref(playerInfo.value?.maxHp ?? 20)
-const pendingHp = ref(currentHp.value)
-const hpSending = ref(false)
-const hpSent = ref(false)
-let hpDebounceTimer = null
+
+// ── PV temporaires (champ séparé — voir CLAUDE.md) ─────────────────────────
+const tempHp = ref(playerInfo.value?.tempHp ?? 0)
+const editingTempHp = ref(false)
+const pendingTempHp = ref(tempHp.value)
+const tempHpSending = ref(false)
+const tempHpSent = ref(false)
+
+// ── Dégâts et Soins (delta signé : positif = soin, négatif = dégâts — les
+// dégâts ponctionnent d'abord les PV temp, puis le PV de base) ─────────────
+const pendingDelta = ref(null)
+const hpAdjustSending = ref(false)
 
 // ── Max HP editing ────────────────────────────────────────────────────────
 const editingMaxHp = ref(false)
@@ -428,12 +477,67 @@ function sendMaxHpUpdate() {
 const handleMaxHpConfirmed = (data) => {
   maxHp.value = data.newMaxHp
   if (sessionStore.playerInfo) sessionStore.playerInfo.maxHp = data.newMaxHp
-  if (pendingHp.value > data.newMaxHp) pendingHp.value = data.newMaxHp
+  if (currentHp.value > data.newMaxHp) currentHp.value = data.newMaxHp
   editingMaxHp.value = false
   maxHpSending.value = false
   maxHpSent.value = true
   setTimeout(() => { maxHpSent.value = false }, 2000)
   rememberCurrentPlayer()
+}
+
+function openTempHpEdit() {
+  pendingTempHp.value = tempHp.value
+  editingTempHp.value = true
+}
+function cancelTempHpEdit() {
+  editingTempHp.value = false
+}
+function sendTempHpUpdate() {
+  const socket = getSocket()
+  const val = Math.max(0, Math.min(9999, parseInt(pendingTempHp.value) || 0))
+  tempHpSending.value = true
+  socket.emit(UPDATE_TEMP_HP, { tempHp: val })
+}
+const handleTempHpConfirmed = (data) => {
+  tempHp.value = data.tempHp
+  pendingTempHp.value = data.tempHp
+  if (sessionStore.playerInfo) sessionStore.playerInfo.tempHp = data.tempHp
+  editingTempHp.value = false
+  tempHpSending.value = false
+  tempHpSent.value = true
+  setTimeout(() => { tempHpSent.value = false }, 2000)
+}
+
+function adjustDelta(step) {
+  pendingDelta.value = (pendingDelta.value || 0) + step
+}
+function applyHpDelta() {
+  const socket = getSocket()
+  const parsed = parseInt(pendingDelta.value, 10)
+  if (!Number.isFinite(parsed) || parsed === 0) return
+  hpAdjustSending.value = true
+  socket.emit(ADJUST_HP, { delta: parsed })
+}
+const handleHpAdjusted = (data) => {
+  currentHp.value = data.newHp
+  tempHp.value = data.tempHp
+  pendingTempHp.value = data.tempHp
+  if (sessionStore.playerInfo) {
+    sessionStore.playerInfo.hp = data.newHp
+    sessionStore.playerInfo.tempHp = data.tempHp
+  }
+  rememberCurrentPlayer()
+  hpAdjustSending.value = false
+  pendingDelta.value = null
+  const isHeal = data.delta > 0
+  const detail = isHeal
+    ? `+${data.delta} PV (${data.newHp} / ${maxHp.value}).`
+    : (data.absorbed > 0
+      ? (data.remaining > 0
+        ? `${data.absorbed} absorbés par vos PV temporaires, ${data.remaining} sur vos PV.`
+        : `Entièrement absorbés par vos PV temporaires.`)
+      : `${data.remaining} PV perdus.`)
+  pushAttentionToast(isHeal ? 'Soin appliqué' : 'Dégâts appliqués', detail, !isHeal && data.newHp === 0 ? 'danger' : 'info')
 }
 
 // ── Initiative ─────────────────────────────────────────────────────────────
@@ -446,22 +550,30 @@ const initiativeValue = ref(
 const initiativeSending = ref(false)
 const initiativeSent = ref(false)
 
-const pendingBaseHp = computed(() => Math.max(0, pendingHp.value))
+// ── AC (classe d'armure) ──────────────────────────────────────────────────
+const initialAc = parseInt(playerInfo.value?.ac, 10)
+const acValue = ref(
+  Number.isFinite(initialAc)
+    ? Math.max(AC_MIN, Math.min(AC_MAX, initialAc))
+    : null
+)
+const acSending = ref(false)
+const acSent = ref(false)
+
+// current_hp est désormais toujours borné à max_hp côté serveur (les PV temp vivent dans
+// leur propre colonne — voir CLAUDE.md) : plus besoin de dériver un excédent ni de staging
+// local, l'affichage suit directement current_hp confirmé par le serveur.
 const hpPercent = computed(() => {
   if (!maxHp.value) return 100
-  const displayedBaseHp = Math.min(maxHp.value, pendingBaseHp.value)
-  return Math.min(100, Math.max(0, (displayedBaseHp / maxHp.value) * 100))
+  return Math.min(100, Math.max(0, (currentHp.value / maxHp.value) * 100))
 })
-const temporaryHp = computed(() => Math.max(0, pendingHp.value - maxHp.value))
-const confirmedTemporaryHp = computed(() => Math.max(0, currentHp.value - maxHp.value))
-const confirmedDisplayedHp = computed(() => Math.min(currentHp.value, maxHp.value))
 const HP_TIER_COLORS = {
   healthy: 'var(--player-success-text)',
   warning: 'var(--player-warning-text)',
   critical: 'var(--player-danger-text)',
 }
 const hpBarColor = computed(() => {
-  if (temporaryHp.value > 0) return TEMP_HP_COLOR
+  if (tempHp.value > 0) return TEMP_HP_COLOR
   return HP_TIER_COLORS[hpTier(hpPercent.value)]
 })
 
@@ -490,37 +602,6 @@ function toggleCondition(conditionId) {
   socket.emit(UPDATE_CONDITIONS, { conditions: activeConditions.value })
 }
 
-function adjustHp(delta) {
-  pendingHp.value = Math.max(0, Math.min(MAX_HP_LIMIT, pendingHp.value + delta))
-}
-
-function setPendingHp(val) {
-  pendingHp.value = Math.max(0, Math.min(MAX_HP_LIMIT, val || 0))
-}
-
-// Auto-send HP after 800ms of inactivity
-watch(pendingHp, (newVal) => {
-  if (newVal === currentHp.value) {
-    if (hpDebounceTimer) { clearTimeout(hpDebounceTimer); hpDebounceTimer = null }
-    return
-  }
-  if (hpSending.value) return
-  if (hpDebounceTimer) clearTimeout(hpDebounceTimer)
-  hpDebounceTimer = setTimeout(() => {
-    hpDebounceTimer = null
-    if (pendingHp.value !== currentHp.value && !hpSending.value) {
-      sendHpUpdate()
-    }
-  }, 800)
-})
-
-function sendHpUpdate() {
-  const socket = getSocket()
-  hpSending.value = true
-  if (hpDebounceTimer) { clearTimeout(hpDebounceTimer); hpDebounceTimer = null }
-  socket.emit(UPDATE_HP, { newHp: pendingHp.value })
-}
-
 function sendInitiativeUpdate() {
   const socket = getSocket()
   initiativeSending.value = true
@@ -529,6 +610,15 @@ function sendInitiativeUpdate() {
     ? Math.max(INITIATIVE_MIN, Math.min(INITIATIVE_MAX, parsed))
     : null
   socket.emit(UPDATE_INITIATIVE, { initiative })
+}
+
+function sendAcUpdate() {
+  const socket = getSocket()
+  const parsed = parseInt(acValue.value, 10)
+  if (!Number.isFinite(parsed)) return
+  acSending.value = true
+  const ac = Math.max(AC_MIN, Math.min(AC_MAX, parsed))
+  socket.emit(UPDATE_AC, { ac })
 }
 
 function leaveSession() {
@@ -542,8 +632,11 @@ function leaveSession() {
 }
 
 // ── Vote ─────────────────────────────────────────────────────────────────
-const activeVote = ref(null)
-const myVote = ref(null)
+// Amorcés depuis le store (déjà rempli par PlayerJoinView.vue au join) — sinon un joueur qui
+// rejoint pendant un vote en cours ne le voyait jamais avant son premier event live (voir
+// CLAUDE.md, join-session / activeVote).
+const activeVote = ref(sessionStore.activeVote ? { ...sessionStore.activeVote, isClosed: false } : null)
+const myVote = ref(sessionStore.activeVote?.voterNames?.find(v => v.name === sessionStore.playerInfo?.name)?.optionIndex ?? null)
 const hasNewVote = ref(false)
 
 function submitVote(optionIndex) {
@@ -651,6 +744,10 @@ function notifyAttention(message) {
 
 // ── Socket handlers ──────────────────────────────────────────────────────
 const handleNewMessage = (msg) => {
+  // Un message déjà livré par le backfill de session-joined (voir applyJoinedState) peut
+  // aussi arriver ici en direct si l'écart entre l'INSERT et la requête de backfill était nul —
+  // dédoublonné par id plutôt que d'empêcher la course (voir CLAUDE.md).
+  if (msg?.id != null && messages.value.some(m => m.id === msg.id)) return
   messages.value.push({ ...msg, kind: 'message' })
   if (activeTab.value !== 'messages') unreadMessages.value++
   notifyAttention(msg?.fromName ? `Nouveau message de ${msg.fromName}.` : 'Nouveau message du MJ.')
@@ -660,21 +757,26 @@ const handleDiceResult = (data) => {
   if (activeTab.value !== 'messages') unreadMessages.value++
   notifyAttention(`Résultat Critical Fail (${data?.combatType || 'attaque'}).`)
 }
+
+// Abonnés tout de suite (le corps de <script setup> tourne en synchrone à la création du
+// composant, bien avant onMounted) plutôt que dans le bloc socket.on(...) d'onMounted plus bas :
+// sur un rejoin/reconnexion, onMounted attend un aller-retour réseau (rejoinFromKnownPlayer /
+// handleSocketReconnect) avant d'enregistrer ses listeners — un message du MJ envoyé pile dans
+// cette fenêtre était perdu à jamais. Même pour un tout nouveau joueur (déjà rejoint via
+// PlayerJoinView.vue avant la navigation vers cette vue), le socket singleton reste connecté et
+// déjà dans la room `session:<id>` pendant toute la transition de route ; ne restait que le délai
+// d'instanciation de CE composant avant que le listener n'existe. S'abonner ici réduit cette
+// fenêtre au strict minimum. `recentMessages` (voir applyJoinedState) reste un filet de sécurité
+// pour le cas résiduel (message arrivé avant même l'instanciation du composant).
+getSocket().on(NEW_MESSAGE, handleNewMessage)
+getSocket().on(DICE_RESULT, handleDiceResult)
+
 const handlePlayerMessageSent = () => {
   playerMessageSending.value = false
   playerMessageSent.value = true
   playerMessageText.value = ''
   replyContext.value = null
   setTimeout(() => { playerMessageSent.value = false }, 2500)
-}
-const handleHpConfirmed = (data) => {
-  currentHp.value = data.newHp
-  pendingHp.value = data.newHp
-  if (sessionStore.playerInfo) sessionStore.playerInfo.hp = data.newHp
-  rememberCurrentPlayer()
-  hpSending.value = false
-  hpSent.value = true
-  setTimeout(() => { hpSent.value = false }, 2000)
 }
 const handleConcentrationConfirmed = (data) => {
   isConcentrating.value = data.isConcentrating
@@ -686,6 +788,15 @@ const handleInitiativeConfirmed = (data) => {
   initiativeSending.value = false
   initiativeSent.value = true
   setTimeout(() => { initiativeSent.value = false }, 2000)
+}
+const handleAcConfirmed = (data) => {
+  acValue.value = data.ac
+  playerInfo.value.ac = data.ac
+  if (sessionStore.playerInfo) sessionStore.playerInfo.ac = data.ac
+  rememberCurrentPlayer()
+  acSending.value = false
+  acSent.value = true
+  setTimeout(() => { acSent.value = false }, 2000)
 }
 const handleConcentrationWarning = (data) => {
   concentrationModal.value = data
@@ -724,6 +835,7 @@ const handleMerchantClosed = () => {
 
 const handlePuzzleStarted = (data) => {
   pendingPuzzleClicks.value = Array.isArray(data.puzzleClicks) ? data.puzzleClicks.slice() : []
+  lastPuzzleClickCount.value = pendingPuzzleClicks.value.length
   activePuzzle.value = { puzzleImageId: data.puzzleImageId, puzzleSeed: data.puzzleSeed }
   switchTab('puzzle')
   notifyAttention('Un puzzle est disponible !')
@@ -736,6 +848,19 @@ const handlePuzzleClosed = () => {
 
 const handlePuzzleCellClicked = ({ path }) => {
   puzzleIframeRef.value?.contentWindow?.postMessage({ type: 'puzzle-remote-click', path }, '*')
+}
+
+// Périodique (~20s), pas de lock sur puzzle-click : si le compte de clics a grandi depuis le
+// dernier resync, on recharge l'iframe depuis zéro (nonce dans l'URL) et on rejoue tout
+// l'historique canonique dans l'ordre serveur — corrige un éventuel désync d'ordre local sans
+// bloquer les clics. Si rien de nouveau n'est arrivé, on ne recharge pas (évite le flicker).
+const handlePuzzleResync = (data) => {
+  if (!activePuzzle.value) return
+  const clicks = Array.isArray(data.puzzleClicks) ? data.puzzleClicks.slice() : []
+  if (clicks.length === lastPuzzleClickCount.value) return
+  lastPuzzleClickCount.value = clicks.length
+  pendingPuzzleClicks.value = clicks
+  puzzleResyncNonce.value++
 }
 
 function handlePuzzleIframeMessage(event) {
@@ -751,7 +876,7 @@ function onPuzzleIframeReady(iframe) {
 
 function computedPuzzleServeUrl() {
   if (!activePuzzle.value?.puzzleImageId || !activePuzzle.value?.puzzleSeed) return ''
-  return `${BACKEND_URL}/api/puzzles/serve/${activePuzzle.value.puzzleImageId}?seed=${activePuzzle.value.puzzleSeed}`
+  return `${BACKEND_URL}/api/puzzles/serve/${activePuzzle.value.puzzleImageId}?seed=${activePuzzle.value.puzzleSeed}&r=${puzzleResyncNonce.value}`
 }
 
 const handleMerchantItemsUpdated = (data) => {
@@ -872,13 +997,14 @@ onMounted(async () => {
   notificationPermission.value = readNotificationPermission()
   const socket = getSocket()
   socket.on('connect', handleSocketReconnect)
-  socket.on(NEW_MESSAGE, handleNewMessage)
-  socket.on(DICE_RESULT, handleDiceResult)
+  // NEW_MESSAGE/DICE_RESULT sont déjà abonnés plus haut, en synchrone à la création du composant.
   socket.on('player-message-sent', handlePlayerMessageSent)
-  socket.on(HP_UPDATE_CONFIRMED, handleHpConfirmed)
+  socket.on(HP_ADJUSTED, handleHpAdjusted)
   socket.on(MAX_HP_UPDATE_CONFIRMED, handleMaxHpConfirmed)
+  socket.on(TEMP_HP_CONFIRMED, handleTempHpConfirmed)
   socket.on(CONCENTRATION_CONFIRMED, handleConcentrationConfirmed)
   socket.on(INITIATIVE_CONFIRMED, handleInitiativeConfirmed)
+  socket.on(AC_CONFIRMED, handleAcConfirmed)
   socket.on(CONCENTRATION_WARNING, handleConcentrationWarning)
   socket.on(VOTE_STARTED, handleVoteStarted)
   socket.on(VOTE_CLOSED, handleVoteClosed)
@@ -897,6 +1023,7 @@ onMounted(async () => {
   socket.on(PUZZLE_STARTED, handlePuzzleStarted)
   socket.on(PUZZLE_CLOSED, handlePuzzleClosed)
   socket.on(PUZZLE_CELL_CLICKED, handlePuzzleCellClicked)
+  socket.on(PUZZLE_RESYNC, handlePuzzleResync)
   window.addEventListener('beforeunload', handleBeforeUnload)
   window.addEventListener('message', handlePuzzleIframeMessage)
 })
@@ -910,10 +1037,12 @@ onUnmounted(() => {
     socket.off(NEW_MESSAGE, handleNewMessage)
     socket.off(DICE_RESULT, handleDiceResult)
     socket.off('player-message-sent', handlePlayerMessageSent)
-    socket.off(HP_UPDATE_CONFIRMED, handleHpConfirmed)
+    socket.off(HP_ADJUSTED, handleHpAdjusted)
     socket.off(MAX_HP_UPDATE_CONFIRMED, handleMaxHpConfirmed)
+    socket.off(TEMP_HP_CONFIRMED, handleTempHpConfirmed)
     socket.off(CONCENTRATION_CONFIRMED, handleConcentrationConfirmed)
     socket.off(INITIATIVE_CONFIRMED, handleInitiativeConfirmed)
+    socket.off(AC_CONFIRMED, handleAcConfirmed)
     socket.off(CONCENTRATION_WARNING, handleConcentrationWarning)
     socket.off(VOTE_STARTED, handleVoteStarted)
     socket.off(VOTE_CLOSED, handleVoteClosed)
@@ -932,10 +1061,10 @@ onUnmounted(() => {
     socket.off(PUZZLE_STARTED, handlePuzzleStarted)
     socket.off(PUZZLE_CLOSED, handlePuzzleClosed)
     socket.off(PUZZLE_CELL_CLICKED, handlePuzzleCellClicked)
+    socket.off(PUZZLE_RESYNC, handlePuzzleResync)
   }
   window.removeEventListener('beforeunload', handleBeforeUnload)
   window.removeEventListener('message', handlePuzzleIframeMessage)
-  if (hpDebounceTimer) { clearTimeout(hpDebounceTimer); hpDebounceTimer = null }
   if (attentionAudioContext) {
     attentionAudioContext.close().catch(() => {})
     attentionAudioContext = null
@@ -1130,9 +1259,6 @@ onUnmounted(() => {
               <PlayerCombatTab
                 :current-hp="currentHp"
                 :max-hp="maxHp"
-                :pending-hp="pendingHp"
-                :hp-sending="hpSending"
-                :hp-sent="hpSent"
                 :editing-max-hp="editingMaxHp"
                 :pending-max-hp="pendingMaxHp"
                 :max-hp-sending="maxHpSending"
@@ -1140,23 +1266,36 @@ onUnmounted(() => {
                 :initiative-value="initiativeValue"
                 :initiative-sending="initiativeSending"
                 :initiative-sent="initiativeSent"
+                :ac-value="acValue"
+                :ac-sending="acSending"
+                :ac-sent="acSent"
+                :temp-hp="tempHp"
+                :editing-temp-hp="editingTempHp"
+                :pending-temp-hp="pendingTempHp"
+                :temp-hp-sending="tempHpSending"
+                :temp-hp-sent="tempHpSent"
+                :pending-delta="pendingDelta"
+                :hp-adjust-sending="hpAdjustSending"
                 :is-concentrating="isConcentrating"
                 :active-conditions="activeConditions"
                 :counter-offers="counterOffers"
-                :confirmed-displayed-hp="confirmedDisplayedHp"
-                :confirmed-temporary-hp="confirmedTemporaryHp"
-                :temporary-hp="temporaryHp"
                 :hp-percent="hpPercent"
                 :hp-bar-color="hpBarColor"
-                @adjust-hp="adjustHp"
-                @set-pending-hp="setPendingHp"
-                @send-hp="sendHpUpdate"
                 @open-max-hp-edit="openMaxHpEdit"
                 @cancel-max-hp-edit="cancelMaxHpEdit"
                 @update:pending-max-hp="pendingMaxHp = $event"
                 @send-max-hp="sendMaxHpUpdate"
+                @open-temp-hp-edit="openTempHpEdit"
+                @cancel-temp-hp-edit="cancelTempHpEdit"
+                @update:pending-temp-hp="pendingTempHp = $event"
+                @send-temp-hp="sendTempHpUpdate"
+                @adjust-delta="adjustDelta"
+                @update:pending-delta="pendingDelta = $event"
+                @apply-hp-delta="applyHpDelta"
                 @update:initiative-value="initiativeValue = $event"
                 @send-initiative="sendInitiativeUpdate"
+                @update:ac-value="acValue = $event"
+                @send-ac="sendAcUpdate"
                 @toggle-concentration="toggleConcentration"
                 @toggle-condition="toggleCondition"
                 @respond-counter-offer="respondCounterOffer"

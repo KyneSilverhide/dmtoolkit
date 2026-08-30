@@ -91,13 +91,17 @@ export const helpContent = {
 
   // ── Player — Combat ───────────────────────────────────────────────────────
   'player.hp-update':
-    'Entrez les dégâts subis (négatif) ou les soins reçus (positif). La mise à jour est envoyée au MJ automatiquement 800 ms après votre dernière frappe.',
+    'Vos PV actuels sur PV maximum. Utilisez « Dégâts et Soins » ci-dessous pour les faire varier.',
   'player.temp-hp':
-    'Points de vie temporaires accordés par un sort ou une capacité (ex : Faux-semblant). Ils absorbent les dégâts en priorité avant vos PV normaux, mais ne se cumulent pas.',
+    'Points de vie temporaires accordés par un sort ou une capacité (ex : Armure d\'Agathys, Faux-semblant). Ils absorbent les dégâts en priorité avant vos PV normaux et ne s\'additionnent pas à votre total : entrez la valeur donnée par le sort, elle remplace l\'ancienne.',
+  'player.damage':
+    'Un chiffre positif soigne, un chiffre négatif inflige des dégâts (ou utilisez les raccourcis −5/−1/+1/+5). Vos PV temporaires, s\'il y en a, absorbent les dégâts en premier ; les soins ne les concernent jamais et ne peuvent pas dépasser vos PV maximum.',
   'player.max-hp':
     'Modifiez vos PV maximum si un effet permanent (maladie, malédiction, niveau d\'épuisement) les réduit durablement.',
   'player.initiative':
     'Votre valeur d\'initiative pour déterminer l\'ordre de jeu en combat. Entrez le résultat de votre jet (d20 + modificateur de DEX).',
+  'player.ac':
+    'Votre classe d\'armure totale (armure + bouclier + bonus de Dextérité, et le bonus passif de votre classe si vous n\'êtes pas armuré — ex : Défense sans armure). Mettez-la à jour si elle change en cours de partie.',
   'player.concentration':
     'Certains sorts (Bénédiction, Suggestion…) nécessitent de maintenir la concentration. Subir des dégâts impose un jet de Sauvegarde Constitution (DD 10 ou la moitié des dégâts reçus, le plus élevé).',
   'player.counter-offer':

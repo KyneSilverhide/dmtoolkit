@@ -34,6 +34,7 @@ import AdminHeader from '../components/admin/AdminHeader.vue'
 import AdminNavSidebar from '../components/admin/AdminNavSidebar.vue'
 import AdminSceneBar from '../components/admin/AdminSceneBar.vue'
 import PlayerRollToasts from '../components/admin/PlayerRollToasts.vue'
+import PlayerMessageToasts from '../components/admin/PlayerMessageToasts.vue'
 import AdminAccountsManager from '../components/admin/AdminAccountsManager.vue'
 import AdminForcePasswordModal from '../components/admin/AdminForcePasswordModal.vue'
 import {
@@ -44,8 +45,8 @@ import { adminTabRoute } from '../utils/adminRoute.js'
 import DemoBanner from '../components/DemoBanner.vue'
 import { releaseNotesStore } from '../stores/releaseNotes.js'
 import {
-  PLAYER_JOINED, PLAYER_LEFT, PLAYERS_SNAPSHOT, HP_UPDATED,
-  CONDITIONS_UPDATED, CONCENTRATION_UPDATED, INITIATIVE_UPDATED,
+  PLAYER_JOINED, PLAYER_LEFT, PLAYERS_SNAPSHOT, HP_UPDATED, TEMP_HP_UPDATED,
+  CONDITIONS_UPDATED, CONCENTRATION_UPDATED, INITIATIVE_UPDATED, AC_UPDATED,
   ADMIN_STATE, TV_MODE_CHANGED, VOTE_STARTED, VOTE_CLOSED,
   MAP_STATE, MERCHANT_ITEMS_UPDATED, DOOM_CLOCK_STARTED, DOOM_CLOCK_STOPPED,
   TENSION_SCALE_UPDATED, TENSION_SCALE_ENDED, TIME_SCALE_UPDATED, TIME_SCALE_ENDED,
@@ -164,6 +165,7 @@ const tabActivity = computed(() => ({
   map: tvMode.value === 'map',
   puzzle: !!activePuzzle.value,
   reputation: tvMode.value === 'reputation',
+  message: hasUnseenPlayerMessage.value,
 }))
 
 // Keeps the socket instance used in onMounted so onUnmounted can clean up
@@ -207,6 +209,57 @@ function pauseToast(id) {
 function resumeToast(id) {
   if (!playerRollToasts.value.find(t => t.id === id)) return
   scheduleToastDismiss(id, 3000)
+}
+
+// ── Player message toasts ────────────────────────────────────────────────
+// Un message joueur→MJ n'était visible que sur l'onglet Messages (MessageTool.vue garde sa
+// propre boîte de réception locale, inchangée) — invisible depuis tout autre onglet, y compris
+// pendant un combat. Ce toast (+ pastille de nav via tabActivity.message ci-dessus) le rend
+// visible immédiatement quel que soit l'onglet actif, sans toucher à MessageTool.vue — deux
+// listeners indépendants sur le même event 'player-message', pas un seul état partagé (voir
+// CLAUDE.md).
+const playerMessageToasts = ref([])
+let playerMessageToastId = 0
+const messageToastTimers = new Map()
+const hasUnseenPlayerMessage = ref(false)
+
+function scheduleMessageToastDismiss(id, delay) {
+  const timerId = setTimeout(() => {
+    dismissPlayerMessageToast(id)
+    messageToastTimers.delete(id)
+  }, delay)
+  messageToastTimers.set(id, timerId)
+}
+
+function pushPlayerMessageToast(payload) {
+  const id = ++playerMessageToastId
+  playerMessageToasts.value = [...playerMessageToasts.value, { id, ...payload }]
+  scheduleMessageToastDismiss(id, 8000)
+}
+
+function dismissPlayerMessageToast(id) {
+  const timerId = messageToastTimers.get(id)
+  if (timerId) clearTimeout(timerId)
+  playerMessageToasts.value = playerMessageToasts.value.filter(t => t.id !== id)
+  messageToastTimers.delete(id)
+}
+
+function pauseMessageToast(id) {
+  const timerId = messageToastTimers.get(id)
+  if (timerId) {
+    clearTimeout(timerId)
+    messageToastTimers.delete(id)
+  }
+}
+
+function resumeMessageToast(id) {
+  if (!playerMessageToasts.value.find(t => t.id === id)) return
+  scheduleMessageToastDismiss(id, 3000)
+}
+
+function openPlayerMessageToast(toast) {
+  dismissPlayerMessageToast(toast.id)
+  goToTab('message')
 }
 
 // ── Tab / nav definitions ────────────────────────────────────────────────
@@ -501,8 +554,11 @@ onMounted(() => {
     if (sessionStore.activeSession?.id !== sessionId) return
     sessionStore.setPlayers(players)
   })
-  _socket.on(HP_UPDATED, ({ playerId, newHp, newMaxHp }) => {
-    sessionStore.updatePlayerHp(playerId, newHp, newMaxHp)
+  _socket.on(HP_UPDATED, ({ playerId, newHp, newMaxHp, tempHp }) => {
+    sessionStore.updatePlayerHp(playerId, newHp, newMaxHp, tempHp)
+  })
+  _socket.on(TEMP_HP_UPDATED, ({ playerId, tempHp }) => {
+    sessionStore.updatePlayerTempHp(playerId, tempHp)
   })
   _socket.on(CONDITIONS_UPDATED, ({ playerId, conditions }) => {
     sessionStore.updatePlayerConditions(playerId, conditions)
@@ -512,6 +568,9 @@ onMounted(() => {
   })
   _socket.on(INITIATIVE_UPDATED, ({ playerId, initiative }) => {
     sessionStore.updatePlayerInitiative(playerId, initiative)
+  })
+  _socket.on(AC_UPDATED, ({ playerId, ac }) => {
+    sessionStore.updatePlayerAc(playerId, ac)
   })
   _socket.on(ADMIN_STATE, handleAdminState)
   _socket.on(TV_MODE_CHANGED, handleTvModeChanged)
@@ -543,10 +602,23 @@ onMounted(() => {
   })
   _socket.on(PLAYER_ROLL_RESULT, (payload) => {
     try {
-      if (payload && typeof payload === 'object') pushPlayerRollToast(payload)
+      if (!payload || typeof payload !== 'object') return
+      pushPlayerRollToast(payload)
+      // Seuls les jets cachés vont dans « Reçus des joueurs » (MessageTool.vue) — un jet public
+      // est déjà visible ailleurs (TV/journal), inutile de le dupliquer dans cette boîte.
+      if (payload.hidden) sessionStore.addPlayerInboxEntry({ kind: 'player-roll', ...payload })
     } catch (err) {
       console.error('player-roll-result handler error:', err)
     }
+  })
+  _socket.on('player-message', (payload) => {
+    if (!payload || typeof payload !== 'object') return
+    sessionStore.addPlayerInboxEntry({ kind: 'player-msg', ...payload })
+    // Pas de toast redondant si le MJ regarde déjà l'onglet Messages — MessageTool.vue affiche
+    // le message en direct dans sa propre boîte de réception à cet endroit.
+    if (activeTab.value === 'message') return
+    hasUnseenPlayerMessage.value = true
+    pushPlayerMessageToast(payload)
   })
   _socket.on(DEMO_RESET, () => { window.location.reload() })
   _socket.on(FACTIONS_UPDATED, (factions) => {
@@ -557,6 +629,8 @@ onMounted(() => {
     combatRound.value = round
   })
 })
+
+watch(activeTab, (tab) => { if (tab === 'message') hasUnseenPlayerMessage.value = false })
 
 watch(
   () => sessionStore.activeSession?.id,
@@ -596,9 +670,11 @@ onUnmounted(() => {
     _socket.off(PLAYER_LEFT)
     _socket.off(PLAYERS_SNAPSHOT)
     _socket.off(HP_UPDATED)
+    _socket.off(TEMP_HP_UPDATED)
     _socket.off(CONDITIONS_UPDATED)
     _socket.off(CONCENTRATION_UPDATED)
     _socket.off(INITIATIVE_UPDATED)
+    _socket.off(AC_UPDATED)
     _socket.off(ADMIN_STATE, handleAdminState)
     _socket.off(TV_MODE_CHANGED, handleTvModeChanged)
     _socket.off(VOTE_STARTED)
@@ -613,6 +689,7 @@ onUnmounted(() => {
     _socket.off(TIME_SCALE_ENDED)
     _socket.off(MAP_STATE)
     _socket.off(PLAYER_ROLL_RESULT)
+    _socket.off('player-message')
     _socket.off(DEMO_RESET)
     _socket.off(FACTIONS_UPDATED)
     _socket.off(ROUND_UPDATED)
@@ -699,6 +776,14 @@ onUnmounted(() => {
       @dismiss="dismissPlayerRollToast"
       @pause="pauseToast"
       @resume="resumeToast"
+    />
+
+    <PlayerMessageToasts
+      :toasts="playerMessageToasts"
+      @open="openPlayerMessageToast"
+      @dismiss="dismissPlayerMessageToast"
+      @pause="pauseMessageToast"
+      @resume="resumeMessageToast"
     />
 
     <CommandPalette

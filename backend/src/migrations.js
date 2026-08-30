@@ -347,6 +347,13 @@ RETURNS BOOLEAN AS $func$
       )
   );
 $func$ LANGUAGE sql STABLE;
+
+-- PV temporaires : champ séparé de current_hp (auparavant simulés par un dépassement
+-- current_hp > max_hp, recalculé indépendamment côté frontend — voir socket.js, handler
+-- 'adjust-hp'). Ils absorbent les dégâts en premier, ne s'additionnent jamais à
+-- current_hp, et ne sont donc plus effacés par un clamp à max_hp (ex. admin-update-hp
+-- déclenché par une resynchro Obsidian).
+ALTER TABLE players ADD COLUMN IF NOT EXISTS temp_hp INTEGER DEFAULT 0;
 `
 
 async function runMigrations() {

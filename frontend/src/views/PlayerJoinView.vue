@@ -289,6 +289,12 @@ async function joinSession() {
           avatarUrl: data.player.avatar_url,
         }
       sessionStore.activeMerchant = data.activeMerchant || null
+      // Un nouveau joueur qui rejoint pendant qu'un vote est en cours, ou avec des messages MJ
+      // déjà en attente, doit les voir dès son premier écran — PlayerInboxView.vue lit ces
+      // deux champs au montage (ref(sessionStore.xxx)) pour amorcer ses refs locales, exactement
+      // comme activeMerchant ci-dessus (voir CLAUDE.md, join-session).
+      sessionStore.activeVote = data.activeVote || null
+      sessionStore.recentMessages = Array.isArray(data.recentMessages) ? data.recentMessages : []
       saveLastKnownPlayer(data.session.code, {
         name: data.player.player_name,
         ac: data.player.ac,

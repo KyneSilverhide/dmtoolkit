@@ -22,8 +22,12 @@ const JOIN_SESSION = 'join-session'
 /** Player leaves the session voluntarily */
 const LEAVE_SESSION = 'leave-session'
 
-/** Player updates their current HP: { newHp } */
-const UPDATE_HP = 'update-hp'
+/** Player heals (delta > 0) or takes damage (delta < 0): { delta } — damage deducts from
+ * temp HP first, then base HP; healing never touches temp HP and is capped at max HP. */
+const ADJUST_HP = 'adjust-hp'
+
+/** Player sets their temporary HP (absolute value, not additive): { tempHp } */
+const UPDATE_TEMP_HP = 'update-temp-hp'
 
 /** Player updates their conditions: { conditions } */
 const UPDATE_CONDITIONS = 'update-conditions'
@@ -33,6 +37,9 @@ const UPDATE_CONCENTRATION = 'update-concentration'
 
 /** Player updates their initiative: { initiative } */
 const UPDATE_INITIATIVE = 'update-initiative'
+
+/** Player updates their AC: { ac } */
+const UPDATE_AC = 'update-ac'
 
 /** Player submits a vote: { voteId, optionIndex } */
 const SUBMIT_VOTE = 'submit-vote'
@@ -45,6 +52,9 @@ const REQUEST_BATCH_PURCHASE = 'request-batch-purchase'
 
 /** Player responds to a counter-offer: { requestId, accept } */
 const RESPOND_COUNTER_OFFER = 'respond-counter-offer'
+
+/** Player relays a puzzle click: { path } */
+const PUZZLE_CLICK = 'puzzle-click'
 
 // ── Incoming events: Admin → Server ─────────────────────────────────────────
 
@@ -132,6 +142,12 @@ const RESPOND_BATCH_PURCHASE = 'respond-batch-purchase'
 /** Admin kicks a player from the session: { playerId } */
 const KICK_PLAYER = 'kick-player'
 
+/** Admin shows a puzzle: { sessionId, imageId } */
+const SHOW_PUZZLE = 'show-puzzle'
+
+/** Admin closes the active puzzle: { sessionId } */
+const CLOSE_PUZZLE = 'close-puzzle'
+
 // ── Outgoing events: Server → Client ────────────────────────────────────────
 
 /** Sent to player on successful join: { session, player, activeMerchant? } */
@@ -152,11 +168,17 @@ const PLAYER_JOINED = 'player-joined'
 /** Sent to admin + TV when a player leaves or is kicked: { playerId } */
 const PLAYER_LEFT = 'player-left'
 
-/** Sent to admin + TV when player HP changes: { playerId, newHp } */
+/** Sent to admin + TV when player HP changes: { playerId, newHp, newMaxHp?, tempHp } */
 const HP_UPDATED = 'hp-updated'
 
-/** Sent to player confirming HP update: { newHp } */
-const HP_UPDATE_CONFIRMED = 'hp-update-confirmed'
+/** Sent to player confirming a heal/damage adjustment: { newHp, tempHp, delta, absorbed, remaining } */
+const HP_ADJUSTED = 'hp-adjusted'
+
+/** Sent to admin + TV when temp HP changes: { playerId, tempHp } */
+const TEMP_HP_UPDATED = 'temp-hp-updated'
+
+/** Sent to player confirming temp HP update: { tempHp } */
+const TEMP_HP_CONFIRMED = 'temp-hp-confirmed'
 
 /** Sent to player when taking damage while concentrating: { damage, dc } */
 const CONCENTRATION_WARNING = 'concentration-warning'
@@ -172,6 +194,12 @@ const INITIATIVE_UPDATED = 'initiative-updated'
 
 /** Sent to player confirming initiative update: { initiative } */
 const INITIATIVE_CONFIRMED = 'initiative-confirmed'
+
+/** Sent to admin + TV when AC changes: { playerId, ac } */
+const AC_UPDATED = 'ac-updated'
+
+/** Sent to player confirming AC update: { ac } */
+const AC_CONFIRMED = 'ac-confirmed'
 
 /** Sent to admin + TV when conditions change: { playerId, conditions } */
 const CONDITIONS_UPDATED = 'conditions-updated'
@@ -281,6 +309,19 @@ const COUNTER_OFFER_RESPONSE = 'counter-offer-response'
 /** Sent to a player when they are kicked from the session */
 const KICKED = 'kicked'
 
+/** Sent to players when a puzzle starts: { puzzleImageId, puzzleSeed, puzzleClicks } */
+const PUZZLE_STARTED = 'puzzle-started'
+
+/** Sent to players when the puzzle is closed */
+const PUZZLE_CLOSED = 'puzzle-closed'
+
+/** Sent to TV + admin + other players when a puzzle cell is clicked: { path } */
+const PUZZLE_CELL_CLICKED = 'puzzle-cell-clicked'
+
+/** Sent periodically to all roles while a puzzle is active, with the full canonical click
+ * history: { puzzleClicks }. See socket.js PUZZLE_RESYNC_INTERVAL_MS. */
+const PUZZLE_RESYNC = 'puzzle-resync'
+
 /** Obsidian requests playback of an audio track: { sessionId, trackId } */
 const OBSIDIAN_PLAY_AUDIO = 'obsidian-play-audio'
 
@@ -330,14 +371,17 @@ module.exports = {
   // Incoming — Player
   JOIN_SESSION,
   LEAVE_SESSION,
-  UPDATE_HP,
+  ADJUST_HP,
+  UPDATE_TEMP_HP,
   UPDATE_CONDITIONS,
   UPDATE_CONCENTRATION,
   UPDATE_INITIATIVE,
+  UPDATE_AC,
   SUBMIT_VOTE,
   REQUEST_PURCHASE,
   REQUEST_BATCH_PURCHASE,
   RESPOND_COUNTER_OFFER,
+  PUZZLE_CLICK,
   // Incoming — Admin
   ADMIN_JOIN,
   TV_JOIN,
@@ -367,6 +411,8 @@ module.exports = {
   RESPOND_PURCHASE,
   RESPOND_BATCH_PURCHASE,
   KICK_PLAYER,
+  SHOW_PUZZLE,
+  CLOSE_PUZZLE,
   // Outgoing
   SESSION_JOINED,
   PLAYERS_SNAPSHOT,
@@ -375,12 +421,16 @@ module.exports = {
   PLAYER_JOINED,
   PLAYER_LEFT,
   HP_UPDATED,
-  HP_UPDATE_CONFIRMED,
+  HP_ADJUSTED,
+  TEMP_HP_UPDATED,
+  TEMP_HP_CONFIRMED,
   CONCENTRATION_WARNING,
   CONCENTRATION_UPDATED,
   CONCENTRATION_CONFIRMED,
   INITIATIVE_UPDATED,
   INITIATIVE_CONFIRMED,
+  AC_UPDATED,
+  AC_CONFIRMED,
   CONDITIONS_UPDATED,
   TV_MODE_CHANGED,
   DOOM_CLOCK_STARTED,
@@ -417,6 +467,10 @@ module.exports = {
   COUNTER_OFFER_RESULT,
   COUNTER_OFFER_RESPONSE,
   KICKED,
+  PUZZLE_STARTED,
+  PUZZLE_CLOSED,
+  PUZZLE_CELL_CLICKED,
+  PUZZLE_RESYNC,
   OBSIDIAN_PLAY_AUDIO,
   OBSIDIAN_STOP_AUDIO,
   OBSIDIAN_LOOP_AUDIO,

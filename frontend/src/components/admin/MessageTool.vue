@@ -33,8 +33,10 @@ const textEffect = ref('none')
 const sending = ref(false)
 const feedback = ref('')
 
-const inbox = ref([]) // player messages + hidden dice rolls received
-const unreadInbox = ref(0)
+// Boîte de réception (messages + jets cachés) : vit dans sessionStore, pas ici — ce composant
+// n'est instancié qu'à la première visite de cet onglet (KeepAlive ne pré-monte rien), un event
+// reçu avant serait sinon perdu pour de bon. AdminView.vue (toujours monté) écrit dans le store,
+// on ne fait que lire ici. Voir CLAUDE.md.
 const inboxOpen = ref(false)
 
 const imageSource = ref('gallery')   // 'gallery' | 'pc'
@@ -58,17 +60,6 @@ function handleSendError(data) {
   feedback.value = data?.message || "Erreur lors de l'envoi."
 }
 
-function handlePlayerMessage(data) {
-  inbox.value.push({ kind: 'player-msg', ...data })
-  if (!inboxOpen.value) unreadInbox.value++
-}
-
-function handlePlayerRollResult(data) {
-  if (!data?.hidden) return // only hidden rolls go to the inbox
-  inbox.value.push({ kind: 'player-roll', ...data })
-  if (!inboxOpen.value) unreadInbox.value++
-}
-
 function replyToPlayer(entry) {
   if (entry.playerId) {
     const found = sessionStore.players.find(p => p.id === entry.playerId)
@@ -79,7 +70,7 @@ function replyToPlayer(entry) {
 
 function toggleInbox() {
   inboxOpen.value = !inboxOpen.value
-  if (inboxOpen.value) unreadInbox.value = 0
+  if (inboxOpen.value) sessionStore.markPlayerInboxRead()
 }
 
 function formatInboxTime(dateStr) {
@@ -120,15 +111,11 @@ watch(hasConnectedPlayers, (isConnected) => {
 onMounted(() => {
   const socket = getSocket(authStore.token)
   socket.on('send-error', handleSendError)
-  socket.on('player-message', handlePlayerMessage)
-  socket.on('player-roll-result', handlePlayerRollResult)
 })
 
 onUnmounted(() => {
   const socket = getSocket()
   socket.off('send-error', handleSendError)
-  socket.off('player-message', handlePlayerMessage)
-  socket.off('player-roll-result', handlePlayerRollResult)
 })
 
 function onFileChange(e) {
@@ -204,13 +191,13 @@ async function sendMessage() {
         <span class="inbox-toggle-label">
           <AppIcon icon="lucide:inbox" size="0.85em" /> Reçus des joueurs
         </span>
-        <span v-if="unreadInbox > 0" class="inbox-badge">{{ unreadInbox }}</span>
+        <span v-if="sessionStore.unreadPlayerInbox > 0" class="inbox-badge">{{ sessionStore.unreadPlayerInbox }}</span>
         <AppIcon :icon="inboxOpen ? 'lucide:chevron-up' : 'lucide:chevron-down'" size="0.85em" />
       </button>
       <div v-if="inboxOpen" class="inbox-list">
-        <div v-if="inbox.length === 0" class="inbox-empty">Aucun message reçu.</div>
+        <div v-if="sessionStore.playerInbox.length === 0" class="inbox-empty">Aucun message reçu.</div>
         <div
-          v-for="(entry, idx) in [...inbox].reverse()"
+          v-for="(entry, idx) in [...sessionStore.playerInbox].reverse()"
           :key="idx"
           class="inbox-entry"
           :class="entry.kind"

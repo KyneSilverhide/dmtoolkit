@@ -65,6 +65,7 @@ interface CFPlayer {
 	player_name: string;
 	current_hp: number;
 	max_hp: number;
+	temp_hp: number;
 	ac: number;
 	initiative: number | null;
 	conditions: string[];
@@ -85,6 +86,11 @@ export default class DmToolkitSync extends Plugin {
 	private readonly playerIdToName = new Map<number, string>();
 	/** id → max_hp, tracked locally to avoid IT's additive max bug */
 	private readonly playerIdToMaxHp = new Map<number, number>();
+	/** id → current_hp / temp_hp, tracked locally so a fast-path event touching only one of
+	 * the two (ex. temp-hp-updated) can still push the correct combined total to IT — DM
+	 * Toolkit stores them as separate columns, but IT only has a single `hp` field. */
+	private readonly playerIdToCurrentHp = new Map<number, number>();
+	private readonly playerIdToTempHp = new Map<number, number>();
 	/** Last IT round value seen — used to detect changes */
 	private lastKnownRound = 0;
 	private itRoundUnsubscribe: (() => void) | null = null;
@@ -331,13 +337,29 @@ export default class DmToolkitSync extends Plugin {
 		this.socket.on('player-left', ({ playerId }: { playerId: number }) => {
 			this.playerIdToName.delete(playerId);
 			this.playerIdToMaxHp.delete(playerId);
+			this.playerIdToCurrentHp.delete(playerId);
+			this.playerIdToTempHp.delete(playerId);
 			// removeCreature is not exposed in the current IT API — no-op.
 		});
 
-		// DM Toolkit → IT: HP updated — fast path
-		this.socket.on('hp-updated', ({ playerId, newHp }: { playerId: number; newHp: number }) => {
+		// DM Toolkit → IT: HP updated — fast path. `tempHp` accompagne toujours l'event
+		// (voir socket.js) : IT n'a qu'un seul champ `hp`, on lui pousse donc la somme
+		// PV de base + PV temporaires — jamais current_hp seul, sous peine d'amputer les
+		// PV temp affichés côté joueur/TV/admin.
+		this.socket.on('hp-updated', ({ playerId, newHp, tempHp }: { playerId: number; newHp: number; tempHp?: number }) => {
 			const name = this.playerIdToName.get(playerId);
-			if (name) this.applyITUpdate(name, { hp: newHp });
+			this.playerIdToCurrentHp.set(playerId, newHp);
+			if (tempHp !== undefined) this.playerIdToTempHp.set(playerId, tempHp);
+			if (name) this.applyITUpdate(name, { hp: newHp + (this.playerIdToTempHp.get(playerId) ?? 0) });
+		});
+
+		// DM Toolkit → IT: temp HP updated — fast path (current_hp inchangé, on recombine
+		// avec la dernière valeur connue).
+		this.socket.on('temp-hp-updated', ({ playerId, tempHp }: { playerId: number; tempHp: number }) => {
+			const name = this.playerIdToName.get(playerId);
+			this.playerIdToTempHp.set(playerId, tempHp);
+			const currentHp = this.playerIdToCurrentHp.get(playerId) ?? 0;
+			if (name) this.applyITUpdate(name, { hp: currentHp + tempHp });
 		});
 
 		// DM Toolkit → IT: initiative updated — fast path
@@ -346,6 +368,12 @@ export default class DmToolkitSync extends Plugin {
 			if (name && initiative !== null) {
 				this.applyITUpdate(name, { initiative });
 			}
+		});
+
+		// DM Toolkit → IT: AC updated — fast path
+		this.socket.on('ac-updated', ({ playerId, ac }: { playerId: number; ac: number }) => {
+			const name = this.playerIdToName.get(playerId);
+			if (name) this.applyITUpdate(name, { ac });
 		});
 
 		this.socket.on('obsidian-audio-error', ({ message }: { message: string }) => {
@@ -442,6 +470,8 @@ export default class DmToolkitSync extends Plugin {
 		}
 		this.playerIdToName.clear();
 		this.playerIdToMaxHp.clear();
+		this.playerIdToCurrentHp.clear();
+		this.playerIdToTempHp.clear();
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const existingNames = new Set<string>(
@@ -453,16 +483,19 @@ export default class DmToolkitSync extends Plugin {
 		for (const p of players) {
 			this.playerIdToName.set(p.id, p.player_name);
 			this.playerIdToMaxHp.set(p.id, p.max_hp);
+			this.playerIdToCurrentHp.set(p.id, p.current_hp);
+			this.playerIdToTempHp.set(p.id, p.temp_hp ?? 0);
+			const totalHp = p.current_hp + (p.temp_hp ?? 0);
 			if (existingNames.has(p.player_name)) {
 				this.applyITUpdate(p.player_name, {
-					hp: p.current_hp,
+					hp: totalHp,
 					ac: p.ac,
 					initiative: p.initiative ?? undefined,
 				});
 			} else {
 				toAdd.push({
 					name: p.player_name,
-					hp: p.current_hp,
+					hp: totalHp,
 					max: p.max_hp,
 					ac: p.ac,
 					initiative: p.initiative ?? undefined,
@@ -487,6 +520,9 @@ export default class DmToolkitSync extends Plugin {
 
 		const alreadyTracked = this.playerIdToName.has(player.id);
 		this.playerIdToName.set(player.id, player.player_name);
+		this.playerIdToCurrentHp.set(player.id, player.current_hp);
+		this.playerIdToTempHp.set(player.id, player.temp_hp ?? 0);
+		const totalHp = player.current_hp + (player.temp_hp ?? 0);
 
 		if (alreadyTracked) {
 			// Player reconnected — update HP/AC/initiative in place.
@@ -494,7 +530,7 @@ export default class DmToolkitSync extends Plugin {
 			// Max HP is only sent via addCreatures (initial join / manual sync).
 			this.playerIdToMaxHp.set(player.id, player.max_hp);
 			this.applyITUpdate(player.player_name, {
-				hp: player.current_hp,
+				hp: totalHp,
 				ac: player.ac,
 				initiative: player.initiative ?? undefined,
 			});
@@ -507,7 +543,7 @@ export default class DmToolkitSync extends Plugin {
 			if (typeof it.api?.addCreatures === 'function') {
 				it.api.addCreatures([{
 					name: player.player_name,
-					hp: player.current_hp,
+					hp: totalHp,
 					max: player.max_hp,
 					ac: player.ac,
 					initiative: player.initiative ?? undefined,
@@ -544,6 +580,12 @@ export default class DmToolkitSync extends Plugin {
 		});
 	}
 
+	// Limite connue : IT n'a qu'un seul champ `hp`, qui représente ici PV de base + PV
+	// temporaires combinés (voir applyITUpdate). Une édition manuelle de ce champ dans IT
+	// est donc poussée telle quelle dans current_hp côté serveur (admin-update-hp), sans
+	// distinguer quelle part relevait des PV temp — temp_hp reste inchangé en base, ce qui
+	// peut désynchroniser la somme jusqu'à la prochaine mise à jour explicite d'un des deux
+	// champs depuis DM Toolkit.
 	private pushHpToCF(playerName: string, hp: number) {
 		if (!this.socket?.connected || !this.settings.sessionId) return;
 		this.socket.emit('admin-update-hp', {

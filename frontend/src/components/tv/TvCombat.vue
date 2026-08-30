@@ -63,7 +63,7 @@ function hpBarColor(player) {
 }
 
 function temporaryHp(player) {
-  return Math.max(0, (player.current_hp ?? 0) - (player.max_hp ?? 0))
+  return player.temp_hp ?? 0
 }
 
 function displayedCurrentHp(player) {

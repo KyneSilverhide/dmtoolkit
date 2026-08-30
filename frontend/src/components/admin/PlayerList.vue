@@ -135,7 +135,7 @@ function avatarSrc(player) {
               <AppIcon icon="game-icons:dice-six-faces-five" size="0.8rem" />
               {{ player.initiative ?? '—' }}
             </span>
-            <span class="badge badge-ac">
+            <span class="badge badge-ac" :data-testid="`player-ac-${player.id}`">
               <AppIcon icon="game-icons:shield" size="0.8rem" color="var(--color-gold-bright)" />
               {{ player.ac ?? '?' }}
             </span>
@@ -159,6 +159,7 @@ function avatarSrc(player) {
               {{ player.current_hp ?? '?' }}
             </span>
             <span class="hp-max">/ {{ player.max_hp }}</span>
+            <span v-if="player.temp_hp > 0" class="hp-temp" :data-testid="`player-temp-hp-${player.id}`">+{{ player.temp_hp }} TEMP</span>
             <span class="hp-pct">{{ Math.round(hpPercent(player)) }}%</span>
           </div>
           <div class="hp-bar-track">
@@ -365,6 +366,7 @@ function avatarSrc(player) {
 .hp-icon { display: flex; }
 .hp-value { font-size: var(--text-md); font-weight: 700; transition: color 0.35s; }
 .hp-max { font-size: var(--text-xs); color: var(--color-text-dim); }
+.hp-temp { font-size: var(--text-2xs); color: var(--color-info-bright); letter-spacing: 0.04em; }
 .hp-pct { margin-left: auto; font-size: var(--text-2xs); color: var(--color-text-dim); }
 
 .hp-bar-track {

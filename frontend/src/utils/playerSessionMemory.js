@@ -36,6 +36,7 @@ export function saveLastKnownPlayer(sessionCode, player) {
     ac: Math.max(1, safeNumber(player?.ac, 10)),
     hp: Math.max(1, safeNumber(player?.hp, 20)),
     maxHp: Math.max(1, safeNumber(player?.maxHp, player?.hp || 20)),
+    tempHp: Math.max(0, safeNumber(player?.tempHp, 0)),
     dndClass: player?.dndClass || '',
     subclass: player?.subclass || '',
     race: player?.race || '',

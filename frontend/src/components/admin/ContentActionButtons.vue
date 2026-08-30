@@ -6,6 +6,13 @@ import { getSocket } from '@/socket.js'
 import AppIcon from '../AppIcon.vue'
 import { SHOW_CONTENT, SEND_MESSAGE } from '@/socket-events.js'
 
+// Hauteur maximale du picker, doit rester alignée avec `.ca-picker { max-height }` plus bas —
+// utilisée pour décider s'il faut le retourner au-dessus du bouton (surestimation volontaire :
+// le picker peut être plus court, jamais plus haut, donc jamais un retournement inutile qui le
+// ferait sortir de l'écran par le haut).
+const PICKER_MAX_HEIGHT = 220
+const PICKER_WIDTH = 180
+
 // Boutons "Afficher sur la TV" / "Envoyer à un joueur" pour une fiche de contenu (sort,
 // objet, race, origine, aptitude, service, état — jamais une classe, voir CLAUDE.md).
 // `item` est l'objet brut tel que chargé par le composant de recherche appelant (déjà en
@@ -34,9 +41,43 @@ function showOnTv() {
 
 const pickerOpen = ref(false)
 const sent = ref(false)
+const triggerRef = ref(null)
+const pickerStyle = ref({})
+
+// Le picker est téléporté vers <body> (voir template) et positionné en `fixed` à partir du
+// rect du bouton déclencheur — un `position: absolute` ancré à un wrapper en flux normal se
+// faisait couper par l'`overflow-y: auto` de `.admin-content-area` (AdminView.vue) dès que la
+// carte de contenu était proche du bas de la liste de résultats, rendant le menu invisible/
+// inaccessible (voir CLAUDE.md). Repris du calcul déjà utilisé par RefLink.vue/HtmlSpanTooltip.vue
+// pour le même problème géométrique, en plus simple (un menu sous un bouton, pas une bulle
+// latérale) : à droite du bouton par défaut, retourné au-dessus s'il n'y a pas la place en dessous.
+function computePickerPosition() {
+  const rect = triggerRef.value?.getBoundingClientRect()
+  if (!rect) return
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const left = Math.max(8, Math.min(vw - PICKER_WIDTH - 8, rect.right - PICKER_WIDTH))
+  const fitsBelow = rect.bottom + 6 + PICKER_MAX_HEIGHT <= vh
+  const top = fitsBelow ? rect.bottom + 6 : Math.max(8, rect.top - 6 - PICKER_MAX_HEIGHT)
+  pickerStyle.value = { top: `${top}px`, left: `${left}px` }
+}
+
+function closePicker() {
+  pickerOpen.value = false
+  window.removeEventListener('scroll', closePicker, true)
+  window.removeEventListener('resize', closePicker)
+}
+
 function togglePicker() {
   if (!hasSession.value || !hasConnectedPlayers.value) return
-  pickerOpen.value = !pickerOpen.value
+  if (pickerOpen.value) { closePicker(); return }
+  computePickerPosition()
+  pickerOpen.value = true
+  // Le picker est en position fixed calculée une fois à l'ouverture — si la liste de résultats
+  // (ou la fenêtre) scrolle pendant qu'il est ouvert, il se détacherait visuellement du bouton ;
+  // plus simple et plus sûr de le refermer que de recalculer sa position en continu.
+  window.addEventListener('scroll', closePicker, true)
+  window.addEventListener('resize', closePicker)
 }
 function sendTo(playerId) {
   const socket = getSocket(authStore.token)
@@ -46,12 +87,11 @@ function sendTo(playerId) {
     type: 'content',
     content: JSON.stringify({ contentType: props.contentType, item: props.item }),
   })
-  pickerOpen.value = false
+  closePicker()
   sent.value = true
   setTimeout(() => { sent.value = false }, 1600)
 }
 
-function closePicker() { pickerOpen.value = false }
 onUnmounted(closePicker)
 </script>
 
@@ -71,6 +111,7 @@ onUnmounted(closePicker)
 
     <div class="ca-picker-wrap">
       <button
+        ref="triggerRef"
         type="button"
         class="ca-btn"
         :class="{ 'ca-btn-active': sent }"
@@ -84,17 +125,22 @@ onUnmounted(closePicker)
         {{ sent ? 'Envoyé' : 'Envoyer' }}
       </button>
 
-      <div v-if="pickerOpen" class="ca-picker">
-        <button type="button" class="ca-picker-item" @click="sendTo('all')">Tous les joueurs</button>
-        <button
-          v-for="player in sessionStore.players"
-          :key="player.id"
-          type="button"
-          class="ca-picker-item"
-          @click="sendTo(player.id)"
-        >{{ player.player_name }}</button>
-      </div>
-      <div v-if="pickerOpen" class="ca-picker-backdrop" @click="closePicker"></div>
+      <!-- Téléporté vers <body> : un menu en `position: fixed` ancré au bouton (voir
+           computePickerPosition) plutôt qu'en flux normal, pour échapper à l'overflow-y: auto
+           de la liste de résultats qui le coupait — voir CLAUDE.md. -->
+      <Teleport to="body">
+        <div v-if="pickerOpen" class="ca-picker" :style="pickerStyle">
+          <button type="button" class="ca-picker-item" @click="sendTo('all')">Tous les joueurs</button>
+          <button
+            v-for="player in sessionStore.players"
+            :key="player.id"
+            type="button"
+            class="ca-picker-item"
+            @click="sendTo(player.id)"
+          >{{ player.player_name }}</button>
+        </div>
+        <div v-if="pickerOpen" class="ca-picker-backdrop" @click="closePicker"></div>
+      </Teleport>
     </div>
   </div>
 </template>
@@ -125,14 +171,15 @@ onUnmounted(closePicker)
 .ca-btn-active { border-color: var(--color-success-border); color: var(--color-success); }
 
 .ca-picker-wrap { position: relative; }
+/* Téléporté vers <body> (voir template) : position: fixed calculée en JS (computePickerPosition),
+   pas relative à .ca-picker-wrap — width fixe pour que le calcul JS (PICKER_WIDTH) reste exact,
+   max-height doit rester alignée avec la constante JS (PICKER_MAX_HEIGHT). */
 .ca-picker {
-  position: absolute;
-  top: calc(100% + 0.3rem);
-  right: 0;
+  position: fixed;
   z-index: 20;
   display: flex;
   flex-direction: column;
-  min-width: 160px;
+  width: 180px;
   max-height: 220px;
   overflow-y: auto;
   background: var(--color-surface-soft);

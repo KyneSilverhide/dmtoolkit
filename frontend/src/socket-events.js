@@ -22,8 +22,12 @@ export const JOIN_SESSION = 'join-session'
 /** Player leaves the session voluntarily */
 export const LEAVE_SESSION = 'leave-session'
 
-/** Player updates their current HP: { newHp } */
-export const UPDATE_HP = 'update-hp'
+/** Player heals (delta > 0) or takes damage (delta < 0): { delta } — damage deducts from
+ * temp HP first, then base HP; healing never touches temp HP and is capped at max HP. */
+export const ADJUST_HP = 'adjust-hp'
+
+/** Player sets their temporary HP (absolute value, not additive): { tempHp } */
+export const UPDATE_TEMP_HP = 'update-temp-hp'
 
 /** Player updates their max HP: { newMaxHp } */
 export const UPDATE_MAX_HP = 'update-max-hp'
@@ -39,6 +43,9 @@ export const PLAYER_ROLL = 'player-roll'
 
 /** Player updates their initiative: { initiative } */
 export const UPDATE_INITIATIVE = 'update-initiative'
+
+/** Player updates their AC: { ac } */
+export const UPDATE_AC = 'update-ac'
 
 /** Player requests purchase of a single item (legacy): { itemId, quantity } */
 export const REQUEST_PURCHASE = 'request-purchase'
@@ -182,14 +189,20 @@ export const PLAYER_JOINED = 'player-joined'
 /** Sent to admin + TV when a player leaves or is kicked: { playerId } */
 export const PLAYER_LEFT = 'player-left'
 
-/** Sent to admin + TV when player HP changes: { playerId, newHp } */
+/** Sent to admin + TV when player HP changes: { playerId, newHp, newMaxHp?, tempHp } */
 export const HP_UPDATED = 'hp-updated'
 
-/** Sent to player confirming HP update: { newHp } */
-export const HP_UPDATE_CONFIRMED = 'hp-update-confirmed'
+/** Sent to player confirming a heal/damage adjustment: { newHp, tempHp, delta, absorbed, remaining } */
+export const HP_ADJUSTED = 'hp-adjusted'
 
 /** Sent to player confirming max HP update: { newMaxHp } */
 export const MAX_HP_UPDATE_CONFIRMED = 'max-hp-update-confirmed'
+
+/** Sent to admin + TV when temp HP changes: { playerId, tempHp } */
+export const TEMP_HP_UPDATED = 'temp-hp-updated'
+
+/** Sent to player confirming temp HP update: { tempHp } */
+export const TEMP_HP_CONFIRMED = 'temp-hp-confirmed'
 
 /** Sent to player when taking damage while concentrating: { damage, dc } */
 export const CONCENTRATION_WARNING = 'concentration-warning'
@@ -205,6 +218,12 @@ export const INITIATIVE_UPDATED = 'initiative-updated'
 
 /** Sent to player confirming initiative update: { initiative } */
 export const INITIATIVE_CONFIRMED = 'initiative-confirmed'
+
+/** Sent to admin + TV when AC changes: { playerId, ac } */
+export const AC_UPDATED = 'ac-updated'
+
+/** Sent to player confirming AC update: { ac } */
+export const AC_CONFIRMED = 'ac-confirmed'
 
 /** Sent to admin + TV when conditions change: { playerId, conditions } */
 export const CONDITIONS_UPDATED = 'conditions-updated'
@@ -379,6 +398,13 @@ export const PUZZLE_CLOSED = 'puzzle-closed'
 /** Sent to TV + admin + other players when a puzzle cell is clicked: { path } */
 export const PUZZLE_CELL_CLICKED = 'puzzle-cell-clicked'
 
+/** Sent periodically (every ~20s) to all roles while a puzzle is active, with the full
+ * canonical click history: { puzzleClicks }. No locking on 'puzzle-click' — this is how
+ * clients self-correct after two players click the same cell near-simultaneously and end up
+ * applying the replay in different local order. Clients should reload their puzzle iframe from
+ * scratch and replay `puzzleClicks` in order, only if it's grown since the last resync. */
+export const PUZZLE_RESYNC = 'puzzle-resync'
+
 // ── Faction reputation events ────────────────────────────────────────────────
 
 /** Sent to admin when a faction is created: { faction } */
@@ -406,12 +432,14 @@ export default {
   // Incoming — Player
   JOIN_SESSION,
   LEAVE_SESSION,
-  UPDATE_HP,
+  ADJUST_HP,
+  UPDATE_TEMP_HP,
   UPDATE_MAX_HP,
   UPDATE_CONDITIONS,
   UPDATE_CONCENTRATION,
   PLAYER_ROLL,
   UPDATE_INITIATIVE,
+  UPDATE_AC,
   SUBMIT_VOTE,
   REQUEST_PURCHASE,
   REQUEST_BATCH_PURCHASE,
@@ -454,13 +482,17 @@ export default {
   PLAYER_JOINED,
   PLAYER_LEFT,
   HP_UPDATED,
-  HP_UPDATE_CONFIRMED,
+  HP_ADJUSTED,
   MAX_HP_UPDATE_CONFIRMED,
+  TEMP_HP_UPDATED,
+  TEMP_HP_CONFIRMED,
   CONCENTRATION_WARNING,
   CONCENTRATION_UPDATED,
   CONCENTRATION_CONFIRMED,
   INITIATIVE_UPDATED,
   INITIATIVE_CONFIRMED,
+  AC_UPDATED,
+  AC_CONFIRMED,
   CONDITIONS_UPDATED,
   TV_MODE_CHANGED,
   DOOM_CLOCK_STARTED,

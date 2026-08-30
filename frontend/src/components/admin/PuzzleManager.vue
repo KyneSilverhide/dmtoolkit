@@ -5,7 +5,7 @@ import HelpTip from '../HelpTip.vue'
 import { authStore } from '@/stores/auth.js'
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
-import { SHOW_PUZZLE, CLOSE_PUZZLE, PUZZLE_CELL_CLICKED } from '@/socket-events.js'
+import { SHOW_PUZZLE, CLOSE_PUZZLE, PUZZLE_CELL_CLICKED, PUZZLE_RESYNC } from '@/socket-events.js'
 import { BACKEND_URL } from '@/config.js'
 import { apiFetch } from '@/utils/apiFetch.js'
 
@@ -21,11 +21,16 @@ const uploadError = ref('')
 const previewIframeRef = ref(null)
 const pendingPuzzleClicks = ref([])
 const dragOver = ref(false)
+// Bumped on each applied resync to cache-bust the preview iframe src and force a reload — see
+// handlePuzzleResync. lastPuzzleClickCount tracks the click count already applied locally.
+const puzzleResyncNonce = ref(0)
+const lastPuzzleClickCount = ref(0)
 
 const sessionId = computed(() => sessionStore.activeSession?.id)
 
 watch(() => props.activePuzzle, (puzzle) => {
   pendingPuzzleClicks.value = puzzle?.puzzleClicks ? [...puzzle.puzzleClicks] : []
+  lastPuzzleClickCount.value = pendingPuzzleClicks.value.length
 }, { immediate: true })
 
 async function loadPuzzles() {
@@ -115,7 +120,7 @@ async function deletePuzzle(puzzle) {
 
 function puzzleServeUrl(puzzle, seed) {
   if (!puzzle || !seed) return ''
-  return `${BACKEND_URL}/api/puzzles/serve/${puzzle.id}?seed=${seed}`
+  return `${BACKEND_URL}/api/puzzles/serve/${puzzle.id}?seed=${seed}&r=${puzzleResyncNonce.value}`
 }
 
 function onPreviewLoad() {
@@ -132,15 +137,31 @@ function handleRemoteClick({ path }) {
   previewIframeRef.value?.contentWindow?.postMessage({ type: 'puzzle-remote-click', path }, '*')
 }
 
+// Périodique (~20s), pas de lock sur puzzle-click : si le compte de clics a grandi depuis le
+// dernier resync, on recharge l'aperçu depuis zéro (nonce dans puzzleServeUrl) et on rejoue tout
+// l'historique canonique dans l'ordre serveur.
+function handlePuzzleResync({ puzzleClicks: clicks }) {
+  if (!props.activePuzzle) return
+  const list = Array.isArray(clicks) ? clicks : []
+  if (list.length === lastPuzzleClickCount.value) return
+  lastPuzzleClickCount.value = list.length
+  pendingPuzzleClicks.value = [...list]
+  puzzleResyncNonce.value++
+}
+
 onMounted(() => {
   loadPuzzles()
   const socket = getSocket()
   socket.on(PUZZLE_CELL_CLICKED, handleRemoteClick)
+  socket.on(PUZZLE_RESYNC, handlePuzzleResync)
 })
 
 onUnmounted(() => {
   const socket = getSocket()
-  if (socket) socket.off(PUZZLE_CELL_CLICKED, handleRemoteClick)
+  if (socket) {
+    socket.off(PUZZLE_CELL_CLICKED, handleRemoteClick)
+    socket.off(PUZZLE_RESYNC, handlePuzzleResync)
+  }
 })
 </script>
 

@@ -75,10 +75,15 @@ const puzzleImageId = ref(null)
 const puzzleSeed = ref(null)
 const puzzleIframeRef = ref(null)
 const pendingPuzzleClicks = ref([])
+// Bumped on each applied resync to cache-bust puzzleServeUrl and force an iframe reload —
+// see the 'puzzle-resync' listener below. lastPuzzleClickCount tracks the click count already
+// applied, so a resync tick with no new clicks skips the reload.
+const puzzleResyncNonce = ref(0)
+const lastPuzzleClickCount = ref(0)
 
 const puzzleServeUrl = computed(() => {
   if (!puzzleImageId.value || !puzzleSeed.value) return ''
-  return `${BACKEND_URL}/api/puzzles/serve/${puzzleImageId.value}?seed=${puzzleSeed.value}`
+  return `${BACKEND_URL}/api/puzzles/serve/${puzzleImageId.value}?seed=${puzzleSeed.value}&r=${puzzleResyncNonce.value}`
 })
 
 function onIframeReady(iframe) {
@@ -229,6 +234,7 @@ onMounted(() => {
     if (data.mapState) applyMapState(data.mapState)
     if (data.activePuzzle) {
       pendingPuzzleClicks.value = Array.isArray(data.activePuzzle.puzzleClicks) ? data.activePuzzle.puzzleClicks.slice() : []
+      lastPuzzleClickCount.value = pendingPuzzleClicks.value.length
       puzzleImageId.value = data.activePuzzle.puzzleImageId
       puzzleSeed.value = data.activePuzzle.puzzleSeed
     } else {
@@ -248,17 +254,31 @@ onMounted(() => {
     if (mode === 'content' && contentData) activeContent.value = { contentType, contentData }
     if (mode === 'puzzle' && pid) {
       pendingPuzzleClicks.value = []
+      lastPuzzleClickCount.value = 0
       puzzleImageId.value = pid
       puzzleSeed.value = ps
     } else if (mode !== 'puzzle') {
       puzzleImageId.value = null
       puzzleSeed.value = null
       pendingPuzzleClicks.value = []
+      lastPuzzleClickCount.value = 0
     }
   })
 
   socket.on('puzzle-cell-clicked', ({ path }) => {
     puzzleIframeRef.value?.contentWindow?.postMessage({ type: 'puzzle-remote-click', path: Array.from(path) }, '*')
+  })
+
+  // Périodique (~20s), pas de lock sur puzzle-click : si le compte de clics a grandi depuis le
+  // dernier resync, on recharge l'iframe depuis zéro (nonce dans puzzleServeUrl) et on rejoue
+  // tout l'historique canonique dans l'ordre serveur.
+  socket.on('puzzle-resync', ({ puzzleClicks: clicks }) => {
+    if (!puzzleImageId.value) return
+    const list = Array.isArray(clicks) ? clicks : []
+    if (list.length === lastPuzzleClickCount.value) return
+    lastPuzzleClickCount.value = list.length
+    pendingPuzzleClicks.value = list.slice()
+    puzzleResyncNonce.value++
   })
 
   socket.on('vote-started', (v) => { activeVote.value = { ...v, isClosed: false } })
@@ -278,13 +298,14 @@ onMounted(() => {
     delete hpAnimations.value[playerId]
   })
 
-  socket.on('hp-updated', ({ playerId, newHp, newMaxHp }) => {
+  socket.on('hp-updated', ({ playerId, newHp, newMaxHp, tempHp }) => {
     const idx = players.value.findIndex(p => String(p.id) === String(playerId))
     if (idx !== -1) {
       const oldHp = previousHp.value[players.value[idx].id] ?? players.value[idx].current_hp
       const delta = newHp - oldHp
       const update = { current_hp: newHp }
       if (newMaxHp !== undefined) update.max_hp = newMaxHp
+      if (tempHp !== undefined) update.temp_hp = tempHp
       players.value[idx] = { ...players.value[idx], ...update }
       previousHp.value[players.value[idx].id] = newHp
       const id = players.value[idx].id
@@ -295,6 +316,11 @@ onMounted(() => {
         hpAnimations.value = next
       }, 2000)
     }
+  })
+
+  socket.on('temp-hp-updated', ({ playerId, tempHp }) => {
+    const idx = players.value.findIndex(p => String(p.id) === String(playerId))
+    if (idx !== -1) players.value[idx] = { ...players.value[idx], temp_hp: tempHp }
   })
 
   socket.on('conditions-updated', ({ playerId, conditions }) => {
@@ -310,6 +336,11 @@ onMounted(() => {
   socket.on('initiative-updated', ({ playerId, initiative }) => {
     const idx = players.value.findIndex(p => String(p.id) === String(playerId))
     if (idx !== -1) players.value[idx] = { ...players.value[idx], initiative }
+  })
+
+  socket.on('ac-updated', ({ playerId, ac }) => {
+    const idx = players.value.findIndex(p => String(p.id) === String(playerId))
+    if (idx !== -1) players.value[idx] = { ...players.value[idx], ac }
   })
 
   socket.on('error', ({ message }) => { connectionError.value = message })

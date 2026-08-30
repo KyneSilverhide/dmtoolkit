@@ -8,12 +8,36 @@ export const sessionStore = reactive({
   qrCodes: {},
   playerInfo: null,
   activeMerchant: null,
+  activeVote: null,
+  // Backfill du join-session (voir CLAUDE.md) : derniers messages MJ→ce joueur, distinct de
+  // `messages` ci-dessus (état admin, non lié à ce mécanisme).
+  recentMessages: [],
+  // Boîte de réception joueur→MJ (messages + jets cachés) — vit ici plutôt que dans
+  // MessageTool.vue : ce composant n'est instancié qu'à la première visite de l'onglet
+  // Messages (KeepAlive ne pré-monte rien), donc un event reçu avant ce premier montage était
+  // perdu pour de bon. AdminView.vue (toujours monté) écrit ici, MessageTool.vue ne fait que
+  // lire — voir CLAUDE.md.
+  playerInbox: [],
+  unreadPlayerInbox: 0,
 
   setActiveSession(session) {
     this.activeSession = session
     this.players = []
     this.messages = []
     this.activeMerchant = null
+    this.activeVote = null
+    this.recentMessages = []
+    this.playerInbox = []
+    this.unreadPlayerInbox = 0
+  },
+
+  addPlayerInboxEntry(entry) {
+    this.playerInbox.push(entry)
+    this.unreadPlayerInbox++
+  },
+
+  markPlayerInboxRead() {
+    this.unreadPlayerInbox = 0
   },
 
   addPlayer(player) {
@@ -30,13 +54,19 @@ export const sessionStore = reactive({
     this.players = this.players.filter(p => String(p.id) !== String(playerId))
   },
 
-  updatePlayerHp(playerId, newHp, newMaxHp) {
+  updatePlayerHp(playerId, newHp, newMaxHp, tempHp) {
     const idx = this.players.findIndex(p => String(p.id) === String(playerId))
     if (idx !== -1) {
       const update = { current_hp: newHp }
       if (newMaxHp !== undefined) update.max_hp = newMaxHp
+      if (tempHp !== undefined) update.temp_hp = tempHp
       this.players[idx] = { ...this.players[idx], ...update }
     }
+  },
+
+  updatePlayerTempHp(playerId, tempHp) {
+    const idx = this.players.findIndex(p => String(p.id) === String(playerId))
+    if (idx !== -1) this.players[idx] = { ...this.players[idx], temp_hp: tempHp }
   },
 
   updatePlayerConditions(playerId, conditions) {
@@ -52,6 +82,11 @@ export const sessionStore = reactive({
   updatePlayerInitiative(playerId, initiative) {
     const idx = this.players.findIndex(p => String(p.id) === String(playerId))
     if (idx !== -1) this.players[idx] = { ...this.players[idx], initiative }
+  },
+
+  updatePlayerAc(playerId, ac) {
+    const idx = this.players.findIndex(p => String(p.id) === String(playerId))
+    if (idx !== -1) this.players[idx] = { ...this.players[idx], ac }
   },
 
   addMessage(msg) {

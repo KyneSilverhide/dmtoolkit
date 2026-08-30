@@ -4,6 +4,9 @@ const crypto = require('crypto')
 const pool = require('./db')
 const INITIATIVE_MIN = -10
 const INITIATIVE_MAX = 99
+const AC_MIN = 1
+const AC_MAX = 30
+const TEMP_HP_MAX = 9999
 
 // In-memory click history per session for the active puzzle.
 // Cleared when a new puzzle is shown or puzzle is closed.
@@ -282,6 +285,38 @@ async function getActiveVote(sessionId, voteId) {
 }
 
 /**
+ * Derniers messages du MJ adressés à ce joueur (diffusion à tous OU ciblés sur son id),
+ * pour rattraper au join/reconnexion un message envoyé pendant la fenêtre où le client n'a
+ * pas encore de listener 'new-message' actif (voir CLAUDE.md). Exclut volontairement les
+ * messages joueur→MJ (`from_player_id` non nul, table `messages` partagée dans les deux sens) :
+ * ce ne sont pas des messages que CE joueur doit recevoir. Les messages "partage d'or"
+ * (`send-gold-split`) ne sont jamais persistés dans `messages` — ils restent live-only, hors
+ * périmètre de ce rattrapage.
+ * @param {number} sessionId
+ * @param {number} playerId
+ * @param {number} [limit=50]
+ */
+async function getRecentMessagesForPlayer(sessionId, playerId, limit = 50) {
+  const { rows } = await pool.query(
+    `SELECT id, from_name, type, content, voice_style, text_effect, author_color, sent_at
+     FROM messages
+     WHERE session_id = $1 AND from_player_id IS NULL AND (to_player_id = $2 OR to_player_id IS NULL)
+     ORDER BY sent_at DESC LIMIT $3`,
+    [sessionId, playerId, limit]
+  )
+  return rows.reverse().map(r => ({
+    id: r.id,
+    fromName: r.from_name,
+    type: r.type,
+    content: r.content,
+    voiceStyle: r.voice_style,
+    textEffect: r.text_effect,
+    authorColor: r.author_color,
+    sentAt: r.sent_at,
+  }))
+}
+
+/**
  * Serializes the free timer state from a session row.
  * Returns null if there is no active timer or if it has already expired.
  * @param {object} session - A row from the sessions table
@@ -336,9 +371,14 @@ async function getActiveMerchantAndPuzzle(session) {
  * Snapshot complet de l'état d'une session, partagé à l'identique par admin-join
  * (event 'admin-state') et tv-join (event 'tv-snapshot') — seuls les champs propres à
  * chaque audience (sessionId côté admin ; session/players/qrCodeDataUrl/currentImage*
- * côté tv) restent construits par l'appelant. join-session n'utilise volontairement
- * QUE getActiveMerchantAndPuzzle() : reconstruire le snapshot complet à chaque connexion
- * joueur déclencherait des requêtes (factions, vote, grille de carte) inutiles pour lui.
+ * côté tv) restent construits par l'appelant. join-session n'utilise volontairement PAS
+ * ce snapshot complet : reconstruire factions/grille de carte à chaque connexion joueur
+ * déclencherait des requêtes inutiles pour lui (aucune UI joueur ne les affiche). Il
+ * compose son propre payload avec getActiveMerchantAndPuzzle() + getActiveVote() —
+ * activeVote DOIT y figurer explicitement (voir l'appel dans 'join-session' plus bas) :
+ * un joueur qui rejoint/recharge/se reconnecte pendant un vote en cours doit le voir, et
+ * PlayerInboxView.vue expose bien un onglet Vote — contrairement à factions/carte, ce
+ * n'est pas un champ à omettre.
  * @param {object} session - A row from the sessions table
  * @param {boolean} isDemo - Précalculé par l'appelant : la source diffère selon le
  *   contexte (JWT admin pour admin-join, colonne jointe `admin_is_demo` pour tv-join).
@@ -402,6 +442,43 @@ function setupSocket(io) {
       else io.to(`${room}:${sessionId}`).emit(event, payload)
     }
   }
+
+  // ── Puzzle resync: re-broadcast the canonical click history instead of an atomic lock on
+  // 'puzzle-click'. Two players clicking near-simultaneously can apply the resulting replay in
+  // different local order on each client (each applies its own click immediately, then receives
+  // the other's later) — a real desync, not just a display lag. Rather than serializing clicks
+  // with a lock, a resync re-pushes the full `puzzleClicks` log so clients reload their puzzle
+  // iframe from scratch and replay it in server order, self-correcting — but only when actually
+  // at risk: fired off a short debounce after a *burst* of clicks on the same session (the
+  // concurrent-click window), not on a blind timer, so a session with no concurrent activity never
+  // reloads anyone's iframe. A low-frequency interval remains as a safety net for a dropped socket
+  // message the debounce wouldn't catch (no second click to trigger it). A player's own action can
+  // still be overwritten by a resync if it hasn't reached the server yet — accepted trade-off.
+  const PUZZLE_BURST_WINDOW_MS = 800 // two clicks closer together than this = concurrency risk
+  const PUZZLE_RESYNC_DEBOUNCE_MS = 1500
+  const PUZZLE_RESYNC_SAFETY_INTERVAL_MS = 90_000
+  const puzzleResyncTimers = new Map() // sessionId → Timeout
+  const puzzleLastClickAt = new Map() // sessionId → ms epoch of the previous click
+  function resyncPuzzleNow(sid) {
+    const clicks = puzzleClicks.get(sid)
+    if (clicks) broadcastToSession(sid, 'puzzle-resync', { puzzleClicks: clicks }, ['session', 'tv', 'admin'])
+  }
+  // Only arms the debounce when this click landed within PUZZLE_BURST_WINDOW_MS of the previous
+  // one for the same session — an isolated click at a normal solving pace never triggers a resync.
+  function maybeSchedulePuzzleResync(sid) {
+    const now = Date.now()
+    const wasBurst = (now - (puzzleLastClickAt.get(sid) || 0)) < PUZZLE_BURST_WINDOW_MS
+    puzzleLastClickAt.set(sid, now)
+    if (!wasBurst) return
+    clearTimeout(puzzleResyncTimers.get(sid))
+    puzzleResyncTimers.set(sid, setTimeout(() => {
+      puzzleResyncTimers.delete(sid)
+      resyncPuzzleNow(sid)
+    }, PUZZLE_RESYNC_DEBOUNCE_MS))
+  }
+  setInterval(() => {
+    for (const sid of puzzleClicks.keys()) resyncPuzzleNow(sid)
+  }, PUZZLE_RESYNC_SAFETY_INTERVAL_MS)
 
   /**
    * Enregistre un événement dans le journal de session (table session_events) et le
@@ -579,8 +656,10 @@ function setupSocket(io) {
 
         socket.emit('session-joined', {
           session: { id: session.id, name: session.name, code: session.code },
-          player: { id: player.id, player_name: player.player_name, ac: player.ac, max_hp: player.max_hp, current_hp: player.current_hp, dnd_class: player.dnd_class, race: player.race, subclass: player.subclass, avatar_url: player.avatar_url, initiative: player.initiative, conditions: player.conditions, is_concentrating: player.is_concentrating },
+          player: { id: player.id, player_name: player.player_name, ac: player.ac, max_hp: player.max_hp, current_hp: player.current_hp, temp_hp: player.temp_hp, dnd_class: player.dnd_class, race: player.race, subclass: player.subclass, avatar_url: player.avatar_url, initiative: player.initiative, conditions: player.conditions, is_concentrating: player.is_concentrating },
           ...(await getActiveMerchantAndPuzzle(session)),
+          activeVote: await getActiveVote(session.id, session.current_vote_id),
+          recentMessages: await getRecentMessagesForPlayer(session.id, player.id),
           isDemo: !!session.admin_is_demo,
         })
         broadcastToSession(session.id, 'player-joined', player)
@@ -594,45 +673,94 @@ function setupSocket(io) {
 
     socket.on('leave-session', async () => { await removePlayer(socket) })
 
-    // ── Player: update HP ───────────────────────────────────────────────────
-    socket.on('update-hp', async ({ newHp }) => {
+    // ── Player: adjust HP (soin si delta > 0, dégâts si delta < 0) ──────────
+    // Unifie l'ancien update-hp (édition absolue) et apply-damage (dégâts positifs
+    // uniquement) : un seul champ « Dégâts et Soins » côté joueur, delta signé. Les soins
+    // ne touchent jamais temp_hp ; les dégâts (delta < 0) ponctionnent temp_hp en premier —
+    // voir CLAUDE.md. Comme toute réduction de current_hp passe obligatoirement par ce
+    // handler (il n'existe plus de chemin d'édition absolue côté joueur), l'absorption par
+    // les PV temp est garantie par construction, sans besoin de bloquer un autre event.
+    socket.on('adjust-hp', async ({ delta }) => {
       if (!socket.playerId || !socket.sessionId) return
       try {
-        const hp = Math.max(0, parseInt(newHp) || 0)
-        const prev = await pool.query('SELECT current_hp, player_name, is_concentrating FROM players WHERE id = $1', [socket.playerId])
-        const oldHp = prev.rows[0]?.current_hp ?? 0
-        const playerName = prev.rows[0]?.player_name ?? 'Inconnu'
-        const wasConcentrating = prev.rows[0]?.is_concentrating ?? false
-        await pool.query('UPDATE players SET current_hp = $1 WHERE id = $2', [hp, socket.playerId])
-        const event = { playerId: socket.playerId, newHp: hp }
-        broadcastToSession(socket.sessionId, 'hp-updated', event)
-        socket.emit('hp-update-confirmed', { newHp: hp })
+        const parsedDelta = parseInt(delta, 10)
+        const d = Number.isFinite(parsedDelta) ? parsedDelta : 0
+        if (d === 0) return
+        const prev = await pool.query('SELECT current_hp, max_hp, temp_hp, player_name, is_concentrating FROM players WHERE id = $1', [socket.playerId])
+        const row = prev.rows[0]
+        if (!row) return
+        const oldHp = row.current_hp ?? 0
+        const maxHpVal = row.max_hp ?? 0
+        const oldTempHp = row.temp_hp ?? 0
+        const playerName = row.player_name ?? 'Inconnu'
+        const wasConcentrating = row.is_concentrating ?? false
 
-        // Log session event
-        const delta = hp - oldHp
-        if (delta !== 0) {
-          let eventType, description
-          if (hp === 0) {
-            eventType = 'death'
-            description = `${playerName} est tombé à 0 PV !`
-            if (wasConcentrating) {
-              await pool.query('UPDATE players SET is_concentrating = FALSE WHERE id = $1', [socket.playerId])
-              const concEvent = { playerId: socket.playerId, isConcentrating: false }
-              broadcastToSession(socket.sessionId, 'concentration-updated', concEvent)
-            }
-          } else if (delta < 0) {
-            eventType = 'damage'
-            description = `${playerName} subit ${Math.abs(delta)} dégâts (${oldHp} → ${hp} PV)`
-            if (wasConcentrating) {
-              const dc = Math.max(10, Math.ceil(Math.abs(delta) / 2))
-              socket.emit('concentration-warning', { damage: Math.abs(delta), dc })
-            }
-          } else {
-            eventType = 'heal'
-            description = `${playerName} récupère ${delta} PV (${oldHp} → ${hp} PV)`
+        if (d > 0) {
+          // Soin : plafonné à max_hp, ne touche jamais les PV temp.
+          const newHp = Math.min(maxHpVal, oldHp + d)
+          await pool.query('UPDATE players SET current_hp = $1 WHERE id = $2', [newHp, socket.playerId])
+          const event = { playerId: socket.playerId, newHp, tempHp: oldTempHp }
+          broadcastToSession(socket.sessionId, 'hp-updated', event)
+          socket.emit('hp-adjusted', { newHp, tempHp: oldTempHp, delta: newHp - oldHp, absorbed: 0, remaining: 0 })
+          const healed = newHp - oldHp
+          if (healed > 0) {
+            await logSessionEvent(socket.sessionId, 'heal', `${playerName} récupère ${healed} PV (${oldHp} → ${newHp} PV)`, { playerName, value: healed })
           }
-          await logSessionEvent(socket.sessionId, eventType, description, { playerName, value: delta })
+          return
         }
+
+        // Dégâts : règle 5e, les PV temporaires absorbent en premier.
+        const dmg = -d
+        const absorbed = Math.min(dmg, oldTempHp)
+        const remaining = dmg - absorbed
+        const newTempHp = oldTempHp - absorbed
+        const newHp = Math.max(0, oldHp - remaining)
+        await pool.query('UPDATE players SET current_hp = $1, temp_hp = $2 WHERE id = $3', [newHp, newTempHp, socket.playerId])
+        const event = { playerId: socket.playerId, newHp, tempHp: newTempHp }
+        broadcastToSession(socket.sessionId, 'hp-updated', event)
+        socket.emit('hp-adjusted', { newHp, tempHp: newTempHp, delta: newHp - oldHp, absorbed, remaining })
+
+        // La DC de concentration se base sur les dégâts totaux subis, PV temp inclus
+        // (règle officielle, cf. Sage Advice) — pas seulement sur ce qui a atteint les PV de base.
+        if (wasConcentrating) {
+          const dc = Math.max(10, Math.ceil(dmg / 2))
+          socket.emit('concentration-warning', { damage: dmg, dc })
+        }
+
+        let eventType, description
+        if (remaining > 0 && newHp === 0) {
+          eventType = 'death'
+          description = `${playerName} est tombé à 0 PV !`
+          if (wasConcentrating) {
+            await pool.query('UPDATE players SET is_concentrating = FALSE WHERE id = $1', [socket.playerId])
+            broadcastToSession(socket.sessionId, 'concentration-updated', { playerId: socket.playerId, isConcentrating: false })
+          }
+        } else if (absorbed > 0 && remaining === 0) {
+          eventType = 'damage'
+          description = `${playerName} subit ${dmg} dégâts, entièrement absorbés par ses PV temporaires.`
+        } else if (absorbed > 0) {
+          eventType = 'damage'
+          description = `${playerName} subit ${dmg} dégâts (${absorbed} absorbés par ses PV temporaires, ${remaining} sur ses PV : ${oldHp} → ${newHp})`
+        } else {
+          eventType = 'damage'
+          description = `${playerName} subit ${dmg} dégâts (${oldHp} → ${newHp} PV)`
+        }
+        await logSessionEvent(socket.sessionId, eventType, description, { playerName, value: d })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Player: update temp HP ──────────────────────────────────────────────
+    socket.on('update-temp-hp', async ({ tempHp }) => {
+      if (!socket.playerId || !socket.sessionId) return
+      try {
+        const parsed = parseInt(tempHp, 10)
+        const value = Math.max(0, Math.min(TEMP_HP_MAX, Number.isFinite(parsed) ? parsed : 0))
+        const updated = await pool.query('UPDATE players SET temp_hp = $1 WHERE id = $2 RETURNING temp_hp', [value, socket.playerId])
+        const row = updated.rows[0]
+        if (!row) return
+        const event = { playerId: socket.playerId, tempHp: row.temp_hp }
+        broadcastToSession(socket.sessionId, 'temp-hp-updated', event)
+        socket.emit('temp-hp-confirmed', { tempHp: row.temp_hp })
       } catch (err) { console.error(err) }
     })
 
@@ -648,7 +776,7 @@ function setupSocket(io) {
         const player = updated.rows[0]
         if (!player) return
         socket.emit('max-hp-update-confirmed', { newMaxHp: player.max_hp })
-        const event = { playerId: socket.playerId, newHp: player.current_hp, newMaxHp: player.max_hp }
+        const event = { playerId: socket.playerId, newHp: player.current_hp, newMaxHp: player.max_hp, tempHp: player.temp_hp }
         broadcastToSession(socket.sessionId, 'hp-updated', event)
       } catch (err) { console.error(err) }
     })
@@ -691,6 +819,20 @@ function setupSocket(io) {
       } catch (err) { console.error(err) }
     })
 
+    // ── Player: update AC ────────────────────────────────────────────────────
+    socket.on('update-ac', async ({ ac }) => {
+      if (!socket.playerId || !socket.sessionId) return
+      try {
+        const parsed = parseInt(ac, 10)
+        const value = Number.isFinite(parsed) ? Math.max(AC_MIN, Math.min(AC_MAX, parsed)) : null
+        if (value === null) return
+        await pool.query('UPDATE players SET ac = $1 WHERE id = $2', [value, socket.playerId])
+        const event = { playerId: socket.playerId, ac: value }
+        broadcastToSession(socket.sessionId, 'ac-updated', event)
+        socket.emit('ac-confirmed', { ac: value })
+      } catch (err) { console.error(err) }
+    })
+
     // ── Admin: join room + snapshot ─────────────────────────────────────────
     socket.on('admin-join', async (sessionId) => {
       if (!socket.admin) return
@@ -701,7 +843,7 @@ function setupSocket(io) {
         if (!session) return
         socket.join(`admin:${sessionId}`)
         const playersResult = await pool.query(
-          `SELECT id, session_id, player_name, socket_id, joined_at, ac, max_hp, current_hp, conditions, is_concentrating, initiative, dnd_class, race, subclass, avatar_url
+          `SELECT id, session_id, player_name, socket_id, joined_at, ac, max_hp, current_hp, temp_hp, conditions, is_concentrating, initiative, dnd_class, race, subclass, avatar_url
            FROM players WHERE session_id = $1 ORDER BY joined_at ASC`, [sessionId])
         socket.emit('players-snapshot', { sessionId, players: playersResult.rows })
         socket.adminSessionId = sessionId
@@ -725,7 +867,7 @@ function setupSocket(io) {
         socket.join(`tv:${session.id}`)
         socket.tvSessionId = session.id
         const playersResult = await pool.query(
-          `SELECT id, player_name, joined_at, ac, max_hp, current_hp, dnd_class, avatar_url, conditions, is_concentrating, initiative
+          `SELECT id, player_name, joined_at, ac, max_hp, current_hp, temp_hp, dnd_class, avatar_url, conditions, is_concentrating, initiative
            FROM players WHERE session_id = $1 ORDER BY joined_at ASC`, [session.id])
 
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
@@ -1166,6 +1308,9 @@ function setupSocket(io) {
           ['puzzle', iid, imageCheck.rows[0].url, String(seed), sid]
         )
         puzzleClicks.set(sid, [])
+        clearTimeout(puzzleResyncTimers.get(sid))
+        puzzleResyncTimers.delete(sid)
+        puzzleLastClickAt.delete(sid)
         const payload = { mode: 'puzzle', puzzleImageId: iid, puzzleSeed: seed }
         broadcastToSession(sid, 'tv-mode-changed', payload)
         io.to(`session:${sid}`).emit('puzzle-started', { puzzleImageId: iid, puzzleSeed: seed, puzzleClicks: [] })
@@ -1184,6 +1329,9 @@ function setupSocket(io) {
           [sid]
         )
         puzzleClicks.delete(sid)
+        clearTimeout(puzzleResyncTimers.get(sid))
+        puzzleResyncTimers.delete(sid)
+        puzzleLastClickAt.delete(sid)
         broadcastToSession(sid, 'tv-mode-changed', { mode: 'lobby' })
         broadcastToSession(sid, 'puzzle-closed', undefined, ['session', 'admin'])
       } catch (err) { console.error(err) }
@@ -1199,6 +1347,7 @@ function setupSocket(io) {
       socket.to(`session:${sid}`).emit('puzzle-cell-clicked', { path })
       socket.to(`tv:${sid}`).emit('puzzle-cell-clicked', { path })
       socket.to(`admin:${sid}`).emit('puzzle-cell-clicked', { path })
+      maybeSchedulePuzzleResync(sid)
     })
 
     // ── Admin: set lobby background image ─────────────────────────────────
@@ -1417,9 +1566,9 @@ function setupSocket(io) {
         const vStyle = voiceStyle || 'normal'
         const tEffect = textEffect || 'none'
         const aColor = authorColor || '#d4af37'
-        await pool.query('INSERT INTO messages (session_id, from_name, to_player_id, type, content, voice_style, text_effect, author_color) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        const inserted = await pool.query('INSERT INTO messages (session_id, from_name, to_player_id, type, content, voice_style, text_effect, author_color) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
           [sessionId, fromName, toPlayerId || null, type, content, vStyle, tEffect, aColor])
-        const msg = { fromName, type, content, voiceStyle: vStyle, textEffect: tEffect, authorColor: aColor, sentAt: new Date() }
+        const msg = { id: inserted.rows[0].id, fromName, type, content, voiceStyle: vStyle, textEffect: tEffect, authorColor: aColor, sentAt: new Date() }
         if (toPlayerId) {
           const pr = await pool.query('SELECT socket_id FROM players WHERE id = $1', [toPlayerId])
           if (pr.rows[0]?.socket_id) io.to(pr.rows[0].socket_id).emit('new-message', msg)
@@ -2014,13 +2163,13 @@ function setupSocket(io) {
         const res = await pool.query(
           `UPDATE players SET current_hp = GREATEST(0, LEAST($1, max_hp))
            WHERE session_id = $2 AND LOWER(player_name) = LOWER($3)
-           RETURNING id, current_hp, max_hp, player_name`,
+           RETURNING id, current_hp, max_hp, temp_hp, player_name`,
           [parsed, sessionId, playerName.trim()]
         )
         const player = res.rows[0]
         if (!player) return
 
-        const event = { playerId: player.id, newHp: player.current_hp }
+        const event = { playerId: player.id, newHp: player.current_hp, tempHp: player.temp_hp }
         broadcastToSession(sessionId, 'hp-updated', event)
 
         if (player.current_hp === 0) {

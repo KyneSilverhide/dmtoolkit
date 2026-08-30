@@ -9,14 +9,12 @@ onMounted(loadConditions)
 
 const INITIATIVE_MIN = -10
 const INITIATIVE_MAX = 99
-const MAX_HP_LIMIT = 9999
+const AC_MIN = 1
+const AC_MAX = 30
 
 const props = defineProps({
   currentHp:            { type: Number, required: true },
   maxHp:                { type: Number, required: true },
-  pendingHp:            { type: Number, required: true },
-  hpSending:            { type: Boolean, default: false },
-  hpSent:               { type: Boolean, default: false },
   editingMaxHp:         { type: Boolean, default: false },
   pendingMaxHp:         { type: Number, required: true },
   maxHpSending:         { type: Boolean, default: false },
@@ -24,26 +22,39 @@ const props = defineProps({
   initiativeValue:      { default: null },
   initiativeSending:    { type: Boolean, default: false },
   initiativeSent:       { type: Boolean, default: false },
+  acValue:              { default: null },
+  acSending:            { type: Boolean, default: false },
+  acSent:               { type: Boolean, default: false },
+  tempHp:               { type: Number, default: 0 },
+  editingTempHp:        { type: Boolean, default: false },
+  pendingTempHp:        { type: Number, required: true },
+  tempHpSending:        { type: Boolean, default: false },
+  tempHpSent:           { type: Boolean, default: false },
+  pendingDelta:         { default: null },
+  hpAdjustSending:      { type: Boolean, default: false },
   isConcentrating:      { type: Boolean, default: false },
   activeConditions:     { type: Array, default: () => [] },
   counterOffers:        { type: Array, default: () => [] },
-  confirmedDisplayedHp: { type: Number, required: true },
-  confirmedTemporaryHp: { type: Number, default: 0 },
-  temporaryHp:          { type: Number, default: 0 },
   hpPercent:            { type: Number, required: true },
   hpBarColor:           { type: String, required: true },
 })
 
 const emit = defineEmits([
-  'adjust-hp',
-  'set-pending-hp',
-  'send-hp',
   'open-max-hp-edit',
   'cancel-max-hp-edit',
   'update:pendingMaxHp',
   'send-max-hp',
+  'open-temp-hp-edit',
+  'cancel-temp-hp-edit',
+  'update:pendingTempHp',
+  'send-temp-hp',
+  'adjust-delta',
+  'update:pendingDelta',
+  'apply-hp-delta',
   'update:initiativeValue',
   'send-initiative',
+  'update:acValue',
+  'send-ac',
   'toggle-concentration',
   'toggle-condition',
   'respond-counter-offer',
@@ -57,8 +68,36 @@ const emit = defineEmits([
       <div class="panel hp-panel">
         <div class="panel-header">
           <span class="panel-label"><AppIcon icon="game-icons:hearts" size="0.85rem" color="var(--color-danger)" /> Points de Vie <HelpTip id="player.hp-update" /></span>
-          <span class="hp-fraction" data-testid="hp-fraction">{{ confirmedDisplayedHp }} / {{ maxHp }}</span>
-          <span v-if="confirmedTemporaryHp > 0" class="hp-temp">+{{ confirmedTemporaryHp }} TEMP <HelpTip id="player.temp-hp" /></span>
+        </div>
+        <!-- PV totaux (primaire) + PV temp (secondaire, à côté) -->
+        <div class="hp-display-row">
+          <span class="hp-fraction" data-testid="hp-fraction">{{ currentHp }} / {{ maxHp }}</span>
+          <span v-if="!editingTempHp && tempHp > 0" class="hp-temp-inline" data-testid="temp-hp-display">
+            +{{ tempHp }}<span class="hp-temp-unit">TEMP</span>
+          </span>
+          <button v-if="!editingTempHp" class="temp-hp-edit-btn" :class="{ sent: tempHpSent }" @click="emit('open-temp-hp-edit')" data-testid="temp-hp-edit-btn">
+            {{ tempHpSent ? '✓' : '' }}<AppIcon v-if="!tempHpSent" icon="lucide:pencil" size="0.8rem" />
+          </button>
+        </div>
+        <!-- Temp HP edit inline -->
+        <div v-if="editingTempHp" class="temp-hp-edit-row">
+          <label class="temp-hp-edit-label">PV temp :</label>
+          <input
+            :value="pendingTempHp"
+            type="number"
+            class="temp-hp-edit-input"
+            min="0"
+            max="9999"
+            data-testid="temp-hp-edit-input"
+            @input="emit('update:pendingTempHp', Number($event.target.value))"
+            @keyup.enter="emit('send-temp-hp')"
+            @keyup.esc="emit('cancel-temp-hp-edit')"
+          />
+          <button class="temp-hp-confirm-btn" :disabled="tempHpSending" @click="emit('send-temp-hp')" data-testid="temp-hp-submit">
+            {{ tempHpSending ? '…' : '✓' }}
+          </button>
+          <button class="temp-hp-cancel-btn" @click="emit('cancel-temp-hp-edit')">✕</button>
+          <HelpTip id="player.temp-hp" />
         </div>
         <!-- Max HP edit inline -->
         <div v-if="editingMaxHp" class="max-hp-edit-row">
@@ -88,31 +127,38 @@ const emit = defineEmits([
         <div class="hp-bar-track">
           <div class="hp-bar-fill" :style="{ width: hpPercent + '%', background: hpBarColor }" />
         </div>
-        <div class="hp-controls">
-          <button class="hp-btn minus" @click="emit('adjust-hp', -5)" data-testid="hp-minus-5">−5</button>
-          <button class="hp-btn minus" @click="emit('adjust-hp', -1)" data-testid="hp-minus-1">−1</button>
+      </div>
+
+      <!-- Dégâts et Soins -->
+      <div class="panel damage-panel">
+        <div class="panel-header">
+          <span class="panel-label"><AppIcon icon="game-icons:sword-wound" size="0.85rem" color="var(--color-danger)" /> Dégâts et Soins <HelpTip id="player.damage" /></span>
+        </div>
+        <div class="damage-controls">
+          <button class="hp-btn minus" @click="emit('adjust-delta', -5)" data-testid="hp-minus-5">−5</button>
+          <button class="hp-btn minus" @click="emit('adjust-delta', -1)" data-testid="hp-minus-1">−1</button>
           <input
-            :value="pendingHp"
+            :value="pendingDelta"
             type="number"
-            class="hp-input"
-            :min="0"
-            :max="MAX_HP_LIMIT"
-            data-testid="hp-input"
-            @input="emit('set-pending-hp', Number($event.target.value))"
+            class="damage-input"
+            placeholder="± PV"
+            data-testid="damage-input"
+            @input="emit('update:pendingDelta', $event.target.value === '' ? null : Number($event.target.value))"
           />
-          <button class="hp-btn plus" @click="emit('adjust-hp', 1)" data-testid="hp-plus-1">+1</button>
-          <button class="hp-btn plus" @click="emit('adjust-hp', 5)" data-testid="hp-plus-5">+5</button>
+          <button class="hp-btn plus" @click="emit('adjust-delta', 1)" data-testid="hp-plus-1">+1</button>
+          <button class="hp-btn plus" @click="emit('adjust-delta', 5)" data-testid="hp-plus-5">+5</button>
         </div>
         <button
-          class="hp-send-btn"
-          :class="{ sent: hpSent }"
-          :disabled="hpSending || pendingHp === currentHp"
-          @click="emit('send-hp')"
-          data-testid="hp-submit"
+          class="damage-apply-btn"
+          :class="{ heal: pendingDelta > 0 }"
+          :disabled="hpAdjustSending || !pendingDelta"
+          @click="emit('apply-hp-delta')"
+          data-testid="damage-apply"
         >
-          <AppIcon v-if="!hpSent && !hpSending" icon="lucide:send" size="0.85em" />
-          {{ hpSent ? '✓ Mis à jour' : hpSending ? '…' : 'Mettre à jour' }}
+          <AppIcon v-if="!hpAdjustSending" :icon="pendingDelta > 0 ? 'lucide:heart-plus' : 'lucide:sword'" size="0.85em" />
+          {{ hpAdjustSending ? '…' : (pendingDelta > 0 ? 'Soigner' : 'Appliquer les dégâts') }}
         </button>
+        <p v-if="tempHp > 0 && pendingDelta < 0" class="damage-hint">Vos PV temporaires absorberont ces dégâts en premier.</p>
       </div>
 
       <!-- Initiative -->
@@ -140,6 +186,35 @@ const emit = defineEmits([
           >
             <AppIcon v-if="!initiativeSent && !initiativeSending" icon="lucide:send" size="0.85em" />
             {{ initiativeSent ? '✓ Envoyée' : initiativeSending ? '…' : 'Envoyer' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- AC (classe d'armure) -->
+      <div class="panel ac-panel">
+        <div class="panel-header">
+          <span class="panel-label"><AppIcon icon="game-icons:shield" size="0.85rem" /> Classe d'Armure <HelpTip id="player.ac" /></span>
+        </div>
+        <div class="ac-controls">
+          <input
+            :value="acValue"
+            type="number"
+            class="ac-input"
+            :min="AC_MIN"
+            :max="AC_MAX"
+            placeholder="Ex: 15"
+            data-testid="ac-edit-input"
+            @input="emit('update:acValue', $event.target.value === '' ? null : Number($event.target.value))"
+          />
+          <button
+            class="ac-send-btn"
+            :class="{ sent: acSent }"
+            :disabled="acSending"
+            @click="emit('send-ac')"
+            data-testid="ac-submit"
+          >
+            <AppIcon v-if="!acSent && !acSending" icon="lucide:send" size="0.85em" />
+            {{ acSent ? '✓ Envoyée' : acSending ? '…' : 'Envoyer' }}
           </button>
         </div>
       </div>
@@ -228,26 +303,35 @@ const emit = defineEmits([
 
 /* ── HP Panel ────────────────────────────────────────────────────────── */
 .hp-panel { display: flex; flex-direction: column; gap: var(--space-2); }
+.hp-display-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
 .hp-fraction {
   font-family: var(--font-heading), sans-serif;
-  font-size: var(--text-base);
+  font-size: 1.7rem;
+  font-weight: 700;
   color: var(--color-parchment);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
 }
-.hp-temp {
+.hp-temp-inline {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2rem;
   font-family: var(--font-heading), sans-serif;
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
+  font-weight: 700;
   color: var(--player-info-text);
+}
+.hp-temp-unit {
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  opacity: 0.85;
 }
 .hp-bar-track { height: 8px; background: var(--player-track-bg); border-radius: 4px; overflow: hidden; }
 .hp-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease, background 0.4s ease; }
-.hp-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
 .hp-btn {
   flex: 1;
   height: 52px;
@@ -263,37 +347,8 @@ const emit = defineEmits([
 }
 .hp-btn.minus:hover, .hp-btn.minus:active { border-color: var(--player-danger-border); color: var(--player-danger-text); background: var(--player-danger-bg); }
 .hp-btn.plus:hover, .hp-btn.plus:active { border-color: var(--player-success-border); color: var(--player-success-text); background: var(--player-success-bg); }
-.hp-input {
-  flex: 2;
-  height: 52px;
-  text-align: center;
-  background: var(--player-control-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  color: var(--color-parchment);
-  font-family: var(--font-heading), sans-serif;
-  font-size: 1.6rem;
-  font-weight: 700;
-  outline: none;
-}
-.hp-input:focus { border-color: var(--color-gold-dark); }
-.hp-send-btn {
-  width: 100%;
-  padding: var(--space-2);
-  border-radius: 8px;
-  border: 1px solid var(--color-gold-dark);
-  background: var(--player-gold-bg);
-  color: var(--color-gold);
-  font-family: var(--font-heading), sans-serif;
-  font-size: var(--text-sm);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.hp-send-btn:hover:not(:disabled) { background: var(--player-gold-bg-strong); }
-.hp-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.hp-send-btn.sent { border-color: var(--player-success-border); background: var(--player-success-bg); color: var(--player-success-text); }
+.hp-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.hp-btn:disabled:hover { border-color: var(--color-border); color: var(--color-parchment); background: var(--player-control-bg); }
 
 /* ── Max HP Edit ─────────────────────────────────────────────────────── */
 .max-hp-display-row {
@@ -362,6 +417,103 @@ const emit = defineEmits([
 .max-hp-cancel-btn:hover { border-color: var(--color-danger); color: var(--color-danger); }
 .max-hp-confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* ── Temp HP Edit (même pattern que Max HP) ─────────────────────────── */
+.temp-hp-edit-btn {
+  background: none;
+  border: none;
+  padding: 0 0.2rem;
+  font-size: var(--text-base);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  line-height: 1;
+}
+.temp-hp-edit-btn:hover { opacity: 1; }
+.temp-hp-edit-btn.sent { opacity: 1; color: var(--player-success-text); }
+.temp-hp-edit-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: 0.25rem;
+}
+.temp-hp-edit-label {
+  font-family: var(--font-body), sans-serif;
+  font-size: var(--text-sm);
+  color: var(--color-text-dim);
+  white-space: nowrap;
+}
+.temp-hp-edit-input {
+  width: 70px;
+  height: 32px;
+  text-align: center;
+  background: var(--player-control-bg);
+  border: 1px solid var(--player-info-border);
+  border-radius: 6px;
+  color: var(--color-parchment);
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+.temp-hp-confirm-btn, .temp-hp-cancel-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: var(--player-control-bg);
+  color: var(--color-parchment);
+  font-size: var(--text-base);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.temp-hp-confirm-btn { border-color: var(--player-success-border); color: var(--player-success-text); }
+.temp-hp-confirm-btn:hover:not(:disabled) { background: var(--player-success-bg); }
+.temp-hp-cancel-btn:hover { border-color: var(--color-danger); color: var(--color-danger); }
+.temp-hp-confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Dégâts et Soins ─────────────────────────────────────────────────── */
+.damage-panel { display: flex; flex-direction: column; gap: var(--space-2); }
+.damage-controls { display: flex; align-items: center; gap: var(--space-2); }
+.damage-input {
+  flex: 2;
+  height: 52px;
+  text-align: center;
+  background: var(--player-control-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  color: var(--color-parchment);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  outline: none;
+}
+.damage-input:focus { border-color: var(--color-gold-dark); }
+.damage-apply-btn {
+  width: 100%;
+  padding: var(--space-2);
+  border-radius: 8px;
+  border: 1px solid var(--player-danger-border);
+  background: var(--player-danger-bg);
+  color: var(--player-danger-text);
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.damage-apply-btn:hover:not(:disabled) { filter: brightness(1.08); }
+.damage-apply-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.damage-apply-btn.heal { border-color: var(--player-success-border); background: var(--player-success-bg); color: var(--player-success-text); }
+.damage-hint {
+  font-family: var(--font-body), sans-serif;
+  font-size: var(--text-xs);
+  color: var(--player-info-text);
+  margin: 0;
+}
+
 /* ── Initiative ──────────────────────────────────────────────────────── */
 .initiative-panel { display: flex; flex-direction: column; gap: var(--space-2); }
 .initiative-controls { display: flex; align-items: center; gap: var(--space-2); }
@@ -394,6 +546,39 @@ const emit = defineEmits([
 }
 .initiative-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .initiative-send-btn.sent { border-color: var(--player-success-border); color: var(--player-success-text); background: var(--player-success-bg); }
+
+/* ── AC (classe d'armure) ────────────────────────────────────────────── */
+.ac-panel { display: flex; flex-direction: column; gap: var(--space-2); }
+.ac-controls { display: flex; align-items: center; gap: var(--space-2); }
+.ac-input {
+  flex: 1;
+  height: 40px;
+  text-align: center;
+  background: var(--player-control-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-parchment);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  outline: none;
+}
+.ac-input:focus { border-color: var(--player-info-border); }
+.ac-send-btn {
+  border: 1px solid var(--player-info-border);
+  border-radius: 8px;
+  background: var(--player-info-bg);
+  color: var(--player-info-text);
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: var(--space-3) var(--space-3);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ac-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.ac-send-btn.sent { border-color: var(--player-success-border); color: var(--player-success-text); background: var(--player-success-bg); }
 
 /* ── Concentration ───────────────────────────────────────────────────── */
 .concentration-btn {

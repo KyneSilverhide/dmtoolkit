@@ -601,7 +601,7 @@ router.get('/:id/players', authenticateToken, async (req, res) => {
     if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
 
     const result = await pool.query(
-      `SELECT id, player_name, ac, max_hp, current_hp, initiative, conditions, is_concentrating, dnd_class, avatar_url
+      `SELECT id, player_name, ac, max_hp, current_hp, temp_hp, initiative, conditions, is_concentrating, dnd_class, avatar_url
        FROM players WHERE session_id = $1 ORDER BY joined_at ASC`,
       [req.params.id]
     )

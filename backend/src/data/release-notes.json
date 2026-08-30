@@ -1,6 +1,18 @@
 {
   "notes": [
     {
+      "version": "2.0.15",
+      "date": "2026-08-30",
+      "changes": [
+        { "type": "improvement", "role": "player", "text": "Classe d'armure (CA) désormais modifiable en direct depuis la vue joueur, comme l'initiative — synchronisée avec le plugin Obsidian." },
+        { "type": "feature", "role": "player", "text": "PV temporaires (ex. Armure d'Agathys) séparés des PV normaux : nouvelle section « Dégâts et Soins » avec raccourcis −5/−1/+1/+5 et saisie libre ; les PV temporaires absorbent les dégâts en premier, automatiquement." },
+        { "type": "fix", "role": "all", "text": "Puzzle — correction d'un désync possible quand deux joueurs cliquaient au même endroit presque simultanément ; le puzzle se resynchronise désormais tout seul." },
+        { "type": "fix", "role": "player", "text": "Correction de plusieurs pertes de synchronisation après une reconnexion ou un rechargement : marchand ou vote parfois invisibles, premiers messages ou images parfois non reçus juste après avoir rejoint une session." },
+        { "type": "fix", "role": "admin", "text": "Le menu « Envoyer à un joueur » (sorts, objets…) pouvait être coupé et inaccessible en bas de la liste de résultats — corrigé." },
+        { "type": "improvement", "role": "admin", "text": "Les messages envoyés par les joueurs sont désormais signalés immédiatement (notification + pastille), quel que soit l'onglet actif, et n'apparaissaient parfois jamais dans « Reçus des joueurs » — corrigé." }
+      ]
+    },
+    {
       "version": "2.0.14",
       "date": "2026-08-24",
       "changes": [
