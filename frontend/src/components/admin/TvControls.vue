@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
+import { TV_WIDGETS, DASHBOARD_LAYOUTS, DASHBOARD_SLOT_LABELS, gaugeWidgetType } from '@/utils/tvWidgets.js'
 import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
 
@@ -12,11 +13,11 @@ const doomMinutes = ref(2)
 const doomSeconds = ref(0)
 const controlError = ref('')
 const now = ref(Date.now())
-const activeTensionScale = ref(null)
-const tensionTitle = ref('Échelle de tension')
-const tensionSteps = ref(6)
-const tensionDirection = ref('ascending')
-const tensionVibration = ref(false)
+// Jauge (dashboard_gauges) actuellement montrée en plein écran (tv_mode = 'tension'),
+// s'il y en a une — remplace l'ancienne échelle de tension singleton. null si aucune
+// jauge n'est en plein écran (peu importe si des jauges existent par ailleurs, voir
+// section « Jauges » plus bas).
+const fullscreenGauge = ref(null)
 let clockTickInterval = null
 
 // ── Time scale ────────────────────────────────────────────────────────────
@@ -34,6 +35,97 @@ const timerLabel = ref('Minuteur')
 const timerMinutes = ref(5)
 const timerSeconds = ref(0)
 const activeTimer = ref(null)
+
+// ── Vue dynamique (dashboard) ──────────────────────────────────────────────
+// activeDashboard reflète l'état enregistré côté serveur ({ layout, slots }) ; les refs
+// dashboardLayoutChoice/dashboardSlotChoices sont l'état d'édition local du formulaire,
+// resynchronisé depuis activeDashboard à chaque snapshot/mise à jour (voir
+// syncDashboardEditorFromActive) pour ne jamais diverger silencieusement de ce qui est
+// réellement affiché sur la TV.
+const activeDashboard = ref(null)
+const dashboardLayoutChoice = ref(DASHBOARD_LAYOUTS[0].key)
+const dashboardSlotChoices = ref({})
+
+const dashboardLayoutSlots = computed(() => (
+  DASHBOARD_LAYOUTS.find(l => l.key === dashboardLayoutChoice.value)?.slots || []
+))
+
+function syncDashboardEditorFromActive() {
+  if (activeDashboard.value?.layout) dashboardLayoutChoice.value = activeDashboard.value.layout
+  const map = {}
+  ;(activeDashboard.value?.slots || []).forEach(s => { map[s.slot] = s.widgetType || '' })
+  dashboardSlotChoices.value = map
+}
+
+function applyDashboard() {
+  const socket = getSocket()
+  const slots = dashboardLayoutSlots.value.map(slotKey => ({
+    slot: slotKey,
+    widgetType: dashboardSlotChoices.value[slotKey] || null,
+  }))
+  socket.emit('set-dashboard-layout', {
+    sessionId: sessionStore.activeSession.id,
+    layout: dashboardLayoutChoice.value,
+    slots,
+  })
+}
+
+function endDashboard() {
+  const socket = getSocket()
+  socket.emit('end-dashboard', { sessionId: sessionStore.activeSession.id })
+}
+
+// ── Jauges (dashboard_gauges) ─────────────────────────────────────────────
+// Une session peut avoir plusieurs jauges nommées indépendantes — ex. « Peur »
+// croissante ET « Vagues du siège » décroissante en même temps, chacune assignable à
+// une cellule du dashboard via `gauge:<id>` (voir tvWidgets.js) ET/OU affichable seule
+// en plein écran (showGaugeFullscreen/fullscreenGauge, un seul écran plein à la fois).
+// C'est la même ressource dans les deux cas : un seul chemin d'ajustement
+// (incrementGauge/increment-dashboard-gauge) quel que soit où elle est montrée.
+const dashboardGauges = ref([])
+const gaugeTitle = ref('Jauge')
+const gaugeSteps = ref(6)
+const gaugeDirection = ref('ascending')
+const gaugeVibration = ref(false)
+
+function createGauge() {
+  const socket = getSocket()
+  socket.emit('create-dashboard-gauge', {
+    sessionId: sessionStore.activeSession.id,
+    title: gaugeTitle.value,
+    steps: gaugeSteps.value,
+    direction: gaugeDirection.value,
+    vibrationEnabled: gaugeVibration.value,
+  })
+}
+
+function incrementGauge(gaugeId, delta) {
+  const socket = getSocket()
+  socket.emit('increment-dashboard-gauge', { sessionId: sessionStore.activeSession.id, gaugeId, delta })
+}
+
+function deleteGauge(gaugeId) {
+  const socket = getSocket()
+  socket.emit('delete-dashboard-gauge', { sessionId: sessionStore.activeSession.id, gaugeId })
+}
+
+function showGaugeFullscreen(gaugeId) {
+  const socket = getSocket()
+  socket.emit('show-gauge-fullscreen', { sessionId: sessionStore.activeSession.id, gaugeId })
+}
+
+function hideGaugeFullscreen() {
+  const socket = getSocket()
+  socket.emit('hide-gauge-fullscreen', { sessionId: sessionStore.activeSession.id })
+}
+
+function gaugeRatio(gauge) {
+  if (!gauge?.steps) return 0
+  const progress = gauge.direction === 'descending'
+    ? (gauge.steps - gauge.level) / gauge.steps
+    : gauge.level / gauge.steps
+  return Math.round(Math.max(0, Math.min(1, progress)) * 100)
+}
 
 function setMode(mode) {
   const socket = getSocket()
@@ -54,27 +146,6 @@ function startDoomClock() {
 function stopDoomClock() {
   const socket = getSocket()
   socket.emit('stop-doom-clock', { sessionId: sessionStore.activeSession.id })
-}
-
-function createTensionScale() {
-  const socket = getSocket()
-  socket.emit('create-tension-scale', {
-    sessionId: sessionStore.activeSession.id,
-    title: tensionTitle.value,
-    steps: tensionSteps.value,
-    direction: tensionDirection.value,
-    vibrationEnabled: tensionVibration.value,
-  })
-}
-
-function incrementTensionScale(delta) {
-  const socket = getSocket()
-  socket.emit('increment-tension-scale', { sessionId: sessionStore.activeSession.id, delta })
-}
-
-function endTensionScale() {
-  const socket = getSocket()
-  socket.emit('end-tension-scale', { sessionId: sessionStore.activeSession.id })
 }
 
 // ── Time scale functions ──────────────────────────────────────────────────
@@ -155,16 +226,6 @@ const timerRemainingLabel = computed(() => {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
 })
 
-const tensionRatio = computed(() => {
-  if (!activeTensionScale.value?.steps) return 0
-  const direction = activeTensionScale.value.direction || 'ascending'
-  const progress = direction === 'descending'
-    ? (activeTensionScale.value.steps - activeTensionScale.value.level) / activeTensionScale.value.steps
-    : activeTensionScale.value.level / activeTensionScale.value.steps
-  return Math.round(Math.max(0, Math.min(1, progress)) * 100)
-})
-
-
 const timescaleSlotHours = computed(() => {
   const ts = activeTimeScale.value
   if (ts) return ts.slotHours
@@ -195,14 +256,13 @@ function handleAdminState(data) {
   if (sessionStore.activeSession?.id !== data.sessionId) return
   tvMode.value = data.tvMode || 'lobby'
   activeDoomClock.value = data.doomClock || null
-  activeTensionScale.value = data.tensionScale || null
+  fullscreenGauge.value = data.tensionScale || null
   activeTimeScale.value = data.timeScale || null
   combatRound.value = data.combatRound || 0
   activeTimer.value = data.timer || null
-  if (data.tensionScale) {
-    tensionDirection.value = data.tensionScale.direction || 'ascending'
-    tensionVibration.value = !!data.tensionScale.vibrationEnabled
-  }
+  activeDashboard.value = data.dashboard || null
+  dashboardGauges.value = Array.isArray(data.dashboardGauges) ? data.dashboardGauges : []
+  syncDashboardEditorFromActive()
 }
 
 function handleDoomClockStarted(data) {
@@ -213,14 +273,12 @@ function handleDoomClockStopped() {
   activeDoomClock.value = null
 }
 
-function handleTensionScaleUpdated(data) {
-  activeTensionScale.value = data
-  tensionDirection.value = data.direction || 'ascending'
-  tensionVibration.value = !!data.vibrationEnabled
+function handleTensionScaleUpdated(gauge) {
+  fullscreenGauge.value = gauge
 }
 
 function handleTensionScaleEnded() {
-  activeTensionScale.value = null
+  fullscreenGauge.value = null
 }
 
 function handleTvControlError({ message }) {
@@ -248,6 +306,32 @@ function handleTimeScaleEnded() {
   activeTimeScale.value = null
 }
 
+function handleDashboardUpdated(data) {
+  activeDashboard.value = data
+  syncDashboardEditorFromActive()
+}
+
+function handleDashboardEnded() {
+  activeDashboard.value = null
+}
+
+function handleDashboardGaugeCreated(gauge) {
+  dashboardGauges.value = [...dashboardGauges.value, gauge]
+}
+
+function handleDashboardGaugeUpdated(gauge) {
+  const idx = dashboardGauges.value.findIndex(g => g.id === gauge.id)
+  if (idx !== -1) dashboardGauges.value = dashboardGauges.value.map((g, i) => (i === idx ? gauge : g))
+  // La jauge ajustée peut être celle actuellement en plein écran — même ressource, un
+  // seul chemin d'ajustement (increment-dashboard-gauge) quel que soit son mode d'affichage.
+  if (fullscreenGauge.value?.id === gauge.id) fullscreenGauge.value = gauge
+}
+
+function handleDashboardGaugeDeleted({ gaugeId }) {
+  dashboardGauges.value = dashboardGauges.value.filter(g => g.id !== gaugeId)
+  if (fullscreenGauge.value?.id === gaugeId) fullscreenGauge.value = null
+}
+
 onMounted(() => {
   clockTickInterval = window.setInterval(() => { now.value = Date.now() }, 1000)
   const socket = getSocket()
@@ -262,6 +346,11 @@ onMounted(() => {
   socket.on('timer-stopped', handleTimerStopped)
   socket.on('time-scale-updated', handleTimeScaleUpdated)
   socket.on('time-scale-ended', handleTimeScaleEnded)
+  socket.on('dashboard-updated', handleDashboardUpdated)
+  socket.on('dashboard-ended', handleDashboardEnded)
+  socket.on('dashboard-gauge-created', handleDashboardGaugeCreated)
+  socket.on('dashboard-gauge-updated', handleDashboardGaugeUpdated)
+  socket.on('dashboard-gauge-deleted', handleDashboardGaugeDeleted)
   // TvControls mounts lazily (KeepAlive tab) — admin-state was already sent before mount.
   // Re-emit admin-join to get a fresh snapshot of doom/tension/timescale state.
   if (sessionStore.activeSession?.id) {
@@ -283,11 +372,17 @@ onUnmounted(() => {
   socket.off('timer-stopped', handleTimerStopped)
   socket.off('time-scale-updated', handleTimeScaleUpdated)
   socket.off('time-scale-ended', handleTimeScaleEnded)
+  socket.off('dashboard-updated', handleDashboardUpdated)
+  socket.off('dashboard-ended', handleDashboardEnded)
+  socket.off('dashboard-gauge-created', handleDashboardGaugeCreated)
+  socket.off('dashboard-gauge-updated', handleDashboardGaugeUpdated)
+  socket.off('dashboard-gauge-deleted', handleDashboardGaugeDeleted)
 })
 </script>
 
 <template>
   <div class="tv-controls">
+    <p v-if="controlError" class="error-line">{{ controlError }}</p>
     <section class="control-section">
       <h2 class="section-title"><AppIcon icon="game-icons:crossed-swords" size="0.9em" /> Rounds de combat <HelpTip id="tv.combat-round" /></h2>
       <div class="round-display">Round <strong>{{ combatRound }}</strong></div>
@@ -347,37 +442,6 @@ onUnmounted(() => {
     </section>
 
     <section class="control-section">
-      <h2 class="section-title"><AppIcon icon="lucide:trending-up" size="0.9em" /> Échelle de tension <HelpTip id="tv.tension-scale" /></h2>
-      <div class="form-row">
-        <input v-model="tensionTitle" class="form-input" type="text" placeholder="Titre de l'échelle" />
-      </div>
-      <div class="form-row split">
-        <input v-model.number="tensionSteps" class="form-input" type="number" min="2" max="20" placeholder="Étapes" />
-        <select v-model="tensionDirection" class="form-input">
-          <option value="ascending">Croissant</option>
-          <option value="descending">Décroissant</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <label class="checkbox-label"><input v-model="tensionVibration" type="checkbox" /> Vibration</label>
-      </div>
-      <div class="inline-actions">
-        <button class="action-btn" data-testid="tension-create-btn" @click="createTensionScale">{{ activeTensionScale ? 'Recréer' : 'Créer' }}</button>
-        <button class="action-btn danger-btn" data-testid="tension-end-btn" :disabled="!activeTensionScale" @click="endTensionScale">Terminer</button>
-      </div>
-      <div v-if="activeTensionScale" class="tension-adjust-row">
-        <button class="action-btn tension-delta-btn" @click="incrementTensionScale(-5)">−5</button>
-        <button class="action-btn tension-delta-btn" @click="incrementTensionScale(-1)">−1</button>
-        <button class="action-btn tension-delta-btn" @click="incrementTensionScale(1)">+1</button>
-        <button class="action-btn tension-delta-btn" @click="incrementTensionScale(5)">+5</button>
-      </div>
-      <p v-if="activeTensionScale" class="status-line">
-        {{ activeTensionScale.title }} — {{ activeTensionScale.level }} / {{ activeTensionScale.steps }} ({{ tensionRatio }}%)
-      </p>
-      <p v-if="controlError" class="error-line">{{ controlError }}</p>
-    </section>
-
-    <section class="control-section">
       <h2 class="section-title"><AppIcon icon="lucide:clock" size="0.9em" /> Échelle de temps <HelpTip id="tv.time-scale" /></h2>
       <div class="form-row">
         <input v-model="timescaleTitle" class="form-input" type="text" placeholder="Titre (ex: Journée)" />
@@ -411,6 +475,88 @@ onUnmounted(() => {
       <p v-if="activeTimeScale" class="status-line">{{ timescaleStatusLabel }}</p>
       <p v-if="activeTimeScale && activeTimeScale.restTaken" class="hint-line warn-hint">Repos long déjà pris.</p>
       <p v-else-if="activeTimeScale && !timescaleCanRest" class="hint-line warn-hint">Repos impossible — pas assez de temps.</p>
+    </section>
+
+    <section class="control-section">
+      <h2 class="section-title"><AppIcon icon="lucide:gauge" size="0.9em" /> Jauges (vue dynamique) <HelpTip id="tv.dashboard-gauges" /></h2>
+      <p class="hint-line">
+        Plusieurs jauges nommées peuvent coexister — ex. « Peur » croissante et « Vagues du siège »
+        décroissante en même temps — chacune assignable à une cellule de la vue dynamique ci-dessous, ou
+        affichable seule en plein écran (une seule jauge en plein écran à la fois).
+      </p>
+      <div
+        v-for="gauge in dashboardGauges"
+        :key="gauge.id"
+        class="gauge-row"
+        :class="{ 'gauge-row-fullscreen': fullscreenGauge?.id === gauge.id }"
+        :data-testid="`gauge-row-${gauge.id}`"
+      >
+        <div class="gauge-row-header">
+          <span class="gauge-row-title">{{ gauge.title }}</span>
+          <span class="gauge-row-level">{{ gauge.level }} / {{ gauge.steps }} ({{ gaugeRatio(gauge) }}%)</span>
+          <button class="action-btn danger-btn gauge-row-delete" title="Supprimer" data-testid="gauge-delete-btn" @click="deleteGauge(gauge.id)">
+            <AppIcon icon="lucide:trash-2" size="0.85em" />
+          </button>
+        </div>
+        <div class="tension-adjust-row">
+          <button class="action-btn tension-delta-btn" @click="incrementGauge(gauge.id, -5)">−5</button>
+          <button class="action-btn tension-delta-btn" @click="incrementGauge(gauge.id, -1)">−1</button>
+          <button class="action-btn tension-delta-btn" @click="incrementGauge(gauge.id, 1)">+1</button>
+          <button class="action-btn tension-delta-btn" @click="incrementGauge(gauge.id, 5)">+5</button>
+          <button
+            v-if="fullscreenGauge?.id === gauge.id"
+            class="action-btn danger-btn gauge-fullscreen-btn"
+            data-testid="gauge-hide-fullscreen-btn"
+            @click="hideGaugeFullscreen"
+          >Quitter le plein écran</button>
+          <button v-else class="action-btn gauge-fullscreen-btn" data-testid="gauge-fullscreen-btn" @click="showGaugeFullscreen(gauge.id)">Plein écran</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <input v-model="gaugeTitle" class="form-input" type="text" placeholder="Titre de la jauge (ex: Peur)" />
+      </div>
+      <div class="form-row split">
+        <input v-model.number="gaugeSteps" class="form-input" type="number" min="2" max="20" placeholder="Étapes" />
+        <select v-model="gaugeDirection" class="form-input">
+          <option value="ascending">Croissant</option>
+          <option value="descending">Décroissant</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="checkbox-label"><input v-model="gaugeVibration" type="checkbox" /> Vibration</label>
+      </div>
+      <div class="inline-actions">
+        <button class="action-btn" data-testid="gauge-create-btn" @click="createGauge">+ Nouvelle jauge</button>
+      </div>
+    </section>
+
+    <section class="control-section">
+      <h2 class="section-title"><AppIcon icon="lucide:layout-grid" size="0.9em" /> Vue dynamique <HelpTip id="tv.dashboard" /></h2>
+      <p class="hint-line">
+        Compose plusieurs widgets Rythme déjà actifs (jauges, minuteur…) sur la TV en une
+        seule vue — remplace entièrement l'écran, ce n'est pas superposé aux autres modes.
+      </p>
+      <div class="form-row">
+        <label class="input-label">Disposition</label>
+        <select v-model="dashboardLayoutChoice" class="form-input" data-testid="dashboard-layout-select">
+          <option v-for="l in DASHBOARD_LAYOUTS" :key="l.key" :value="l.key">{{ l.label }}</option>
+        </select>
+      </div>
+      <div v-for="slotKey in dashboardLayoutSlots" :key="slotKey" class="form-row">
+        <label class="input-label">{{ DASHBOARD_SLOT_LABELS[slotKey] }}</label>
+        <select v-model="dashboardSlotChoices[slotKey]" class="form-input" :data-testid="`dashboard-slot-${slotKey}`">
+          <option value="">— Aucun —</option>
+          <option v-for="w in TV_WIDGETS" :key="w.key" :value="w.key">{{ w.label }}</option>
+          <option v-for="g in dashboardGauges" :key="g.id" :value="gaugeWidgetType(g.id)">{{ g.title }}</option>
+        </select>
+      </div>
+      <div class="inline-actions">
+        <button class="action-btn" data-testid="dashboard-apply-btn" @click="applyDashboard">Afficher la vue dynamique</button>
+        <button class="action-btn danger-btn" :disabled="!activeDashboard" @click="endDashboard">Fermer</button>
+      </div>
+      <p v-if="activeDashboard" class="status-line">
+        Vue dynamique active — {{ DASHBOARD_LAYOUTS.find(l => l.key === activeDashboard.layout)?.label }}
+      </p>
     </section>
   </div>
 </template>
@@ -495,6 +641,22 @@ onUnmounted(() => {
   font-size: var(--text-sm);
   color: var(--admin-danger-text, var(--color-danger));
 }
+.gauge-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+}
+.gauge-row-header { display: flex; align-items: center; gap: var(--space-2); }
+.gauge-row-title { flex: 1; font-weight: 600; }
+.gauge-row-level { font-variant-numeric: tabular-nums; color: var(--color-text-dim); }
+.gauge-row-delete { padding: 0.2rem 0.5rem; }
+.gauge-row-fullscreen { border-color: var(--color-gold-bright); background: var(--surface-gold-soft); }
+.gauge-fullscreen-btn { margin-left: auto; }
+
 .labeled-input { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; }
 .input-label {
   font-family: var(--font-heading), sans-serif;

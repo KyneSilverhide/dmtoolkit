@@ -121,21 +121,24 @@ function serializeDoomClock(session) {
 }
 
 /**
- * Serializes the tension scale state from a session row.
- * Returns null if no tension scale is active (no title or invalid steps).
+ * Resolves the gauge (dashboard_gauges row) currently shown full-screen (tv_mode =
+ * 'tension'), if any. Replaces the old singleton tension_* columns entirely — a gauge
+ * is the same resource whether it's shown full-screen or composed in the TV dashboard,
+ * see dashboard_gauges / fullscreen_gauge_id.
  * @param {object} session - A row from the sessions table
- * @returns {{title, steps, level, direction, vibrationEnabled}|null}
+ * @returns {Promise<{id, title, steps, level, direction, vibrationEnabled}|null>}
  */
-function serializeTensionScale(session) {
-  const steps = parseInt(session?.tension_steps) || 0
-  if (!session?.tension_title || steps <= 0) return null
-  const direction = TENSION_DIRECTIONS.has(session.tension_direction) ? session.tension_direction : 'ascending'
+async function serializeFullscreenGauge(session) {
+  if (!session?.fullscreen_gauge_id) return null
+  const r = await pool.query(
+    'SELECT id, title, steps, level, direction, vibration FROM dashboard_gauges WHERE id = $1 AND session_id = $2',
+    [session.fullscreen_gauge_id, session.id]
+  )
+  const row = r.rows[0]
+  if (!row) return null
   return {
-    title: session.tension_title,
-    steps,
-    level: Math.max(0, Math.min(steps, parseInt(session.tension_level) || 0)),
-    direction,
-    vibrationEnabled: !!session.tension_vibration,
+    id: row.id, title: row.title, steps: row.steps, level: row.level,
+    direction: row.direction, vibrationEnabled: row.vibration,
   }
 }
 
@@ -154,6 +157,69 @@ function serializeTimeScale(session) {
     restTaken: !!session.timescale_rest_taken,
     slotHours: totalHours / slotCount,
   }
+}
+
+/**
+ * Valid layouts for the composed TV dashboard (tv_mode = 'dashboard') and the slot
+ * keys each one defines — mirrors frontend/src/utils/tvWidgets.js's DASHBOARD_LAYOUTS,
+ * duplicated here because the backend must validate independently of client input.
+ */
+const DASHBOARD_LAYOUT_SLOTS = {
+  '2-col': ['col-1', 'col-2'],
+  '3-col': ['col-1', 'col-2', 'col-3'],
+  '2-row': ['row-1', 'row-2'],
+  '4-corners': ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
+}
+const GAUGE_WIDGET_RE = /^gauge:(\d+)$/
+// Static (singleton) widget types pluggable into a dashboard slot — mirrors TV_WIDGETS
+// client-side. A slot can also reference 'gauge:<id>' (see dashboard_gauges — multi-
+// instance, unlike a static type, so validated by GAUGE_WIDGET_RE instead of this Set).
+// Extending the dashboard to a new *static* widget = add its key here and to TV_WIDGETS
+// (client), plus a render branch in TvDashboard.vue.
+const DASHBOARD_WIDGET_TYPES = new Set(['timer'])
+const MAX_DASHBOARD_GAUGES_PER_SESSION = 20
+
+function isValidDashboardWidgetType(widgetType) {
+  if (DASHBOARD_WIDGET_TYPES.has(widgetType)) return true
+  return typeof widgetType === 'string' && GAUGE_WIDGET_RE.test(widgetType)
+}
+
+/**
+ * Serializes the composed dashboard state (layout + per-slot widget assignment).
+ * Returns null if no layout has been configured for this session.
+ * @param {object} session - A row from the sessions table
+ * @returns {{layout: string, slots: Array<{slot: string, widgetType: string|null}>}|null}
+ */
+function serializeDashboard(session) {
+  if (!session?.dashboard_layout) return null
+  let slots = []
+  try {
+    slots = JSON.parse(session.dashboard_slots || '[]')
+  } catch {
+    slots = []
+  }
+  return { layout: session.dashboard_layout, slots: Array.isArray(slots) ? slots : [] }
+}
+
+/**
+ * Fetches every dashboard gauge for a session, serialized for the client
+ * (camelCase, matching the shape TvTensionScale.vue already expects).
+ * @param {number} sessionId
+ * @returns {Promise<Array<{id, title, steps, level, direction, vibrationEnabled}>>}
+ */
+async function getDashboardGauges(sessionId) {
+  const r = await pool.query(
+    'SELECT id, title, steps, level, direction, vibration FROM dashboard_gauges WHERE session_id = $1 ORDER BY created_at ASC',
+    [sessionId]
+  )
+  return r.rows.map(row => ({
+    id: row.id,
+    title: row.title,
+    steps: row.steps,
+    level: row.level,
+    direction: row.direction,
+    vibrationEnabled: row.vibration,
+  }))
 }
 
 /**
@@ -388,7 +454,7 @@ async function buildSessionSnapshot(session, isDemo) {
   return {
     tvMode: session.tv_mode || 'lobby',
     doomClock: serializeDoomClock(session),
-    tensionScale: serializeTensionScale(session),
+    tensionScale: await serializeFullscreenGauge(session),
     timeScale: serializeTimeScale(session),
     activeVote: await getActiveVote(session.id, session.current_vote_id),
     activeMerchant,
@@ -402,6 +468,8 @@ async function buildSessionSnapshot(session, isDemo) {
     factions: await getFactionsBySession(session.id),
     tvTheme: session.tv_theme || 'dark',
     activeContent: serializeCurrentContent(session),
+    dashboard: serializeDashboard(session),
+    dashboardGauges: await getDashboardGauges(session.id),
   }
 }
 
@@ -936,15 +1004,21 @@ function setupSocket(io) {
         const safeDuration = Math.max(MIN_DOOM_DURATION_SECONDS, Math.min(MAX_DOOM_DURATION_SECONDS, parsedDuration))
         const endAt = new Date(Date.now() + safeDuration * 1000)
         const safeTitle = (title || 'DOOM CLOCK').trim().slice(0, MAX_TITLE_LENGTH) || 'DOOM CLOCK'
+        // tv_mode ne bascule vers 'doom' que si la TV n'est pas sur la vue dynamique
+        // (tv_mode = 'dashboard') : un Doom Clock lancé/arrêté pendant que le dashboard
+        // est affiché ne doit pas l'éjecter vers le plein écran (voir set-dashboard-layout).
         const updateRes = await pool.query(
           `UPDATE sessions
-           SET doom_clock_title = $1, doom_clock_end_at = $2, tv_mode = 'doom'
-           WHERE id = $3 AND session_editable(id, $4)`,
+           SET doom_clock_title = $1, doom_clock_end_at = $2,
+               tv_mode = CASE WHEN tv_mode = 'dashboard' THEN tv_mode ELSE 'doom' END
+           WHERE id = $3 AND session_editable(id, $4)
+           RETURNING tv_mode`,
           [safeTitle, endAt, sessionId, socket.admin.id]
         )
-        if (updateRes.rowCount === 0) return
+        const updatedRow = updateRes.rows[0]
+        if (!updatedRow) return
         const payload = { title: safeTitle, endAt: endAt.toISOString() }
-        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'doom' })
+        if (updatedRow.tv_mode === 'doom') broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'doom' })
         broadcastToSession(sessionId, 'doom-clock-started', payload)
         await logSessionEvent(sessionId, 'doom_clock_started', `Doom Clock lancée : "${safeTitle}"`)
       } catch (err) { console.error(err) }
@@ -954,100 +1028,73 @@ function setupSocket(io) {
     socket.on('stop-doom-clock', async ({ sessionId }) => {
       if (!socket.admin) return
       try {
+        const current = await pool.query(
+          'SELECT tv_mode FROM sessions WHERE id = $1 AND session_editable(id, $2)',
+          [sessionId, socket.admin.id]
+        )
+        if (!current.rows[0]) return
+        const wasDashboard = current.rows[0].tv_mode === 'dashboard'
         const stopRes = await pool.query(
           `UPDATE sessions
-           SET doom_clock_title = NULL, doom_clock_end_at = NULL, tv_mode = 'lobby'
+           SET doom_clock_title = NULL, doom_clock_end_at = NULL,
+               tv_mode = CASE WHEN tv_mode = 'dashboard' THEN tv_mode ELSE 'lobby' END
            WHERE id = $1 AND session_editable(id, $2)`,
           [sessionId, socket.admin.id]
         )
         if (stopRes.rowCount === 0) return
         broadcastToSession(sessionId, 'doom-clock-stopped')
-        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'lobby' })
+        if (!wasDashboard) broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'lobby' })
         await logSessionEvent(sessionId, 'doom_clock_stopped', 'Doom Clock arrêtée')
       } catch (err) { console.error(err) }
     })
 
-    // ── Admin: create tension scale ──────────────────────────────────────────
-    socket.on('create-tension-scale', async ({ sessionId, title, steps, direction, vibrationEnabled }) => {
+    // ── Admin: show a gauge full-screen (tv_mode = 'tension') ────────────────
+    // Remplace l'ancienne échelle de tension singleton : une jauge (dashboard_gauges)
+    // est la même ressource qu'elle soit composée dans le dashboard ou montrée seule en
+    // plein écran — créer/ajuster une jauge passe toujours par create-dashboard-gauge /
+    // increment-dashboard-gauge, jamais par ici. Contrairement aux autres widgets
+    // Rythme (doom/timescale, dont create/end conflue création de donnée ET
+    // changement d'écran), cette action est une demande explicite et délibérée de
+    // changer d'écran — elle bascule donc tv_mode sans garde, même si la vue dynamique
+    // est affichée (c'est exactement son but).
+    socket.on('show-gauge-fullscreen', async ({ sessionId, gaugeId }) => {
       if (!socket.admin) return
       try {
-        const parsedSteps = parseInt(steps, 10)
-        if (Number.isNaN(parsedSteps)) {
-          socket.emit('tv-control-error', { message: "Nombre d'étapes invalide (entre 2 et 20).", field: 'steps' })
-          return
-        }
-        const safeSteps = Math.max(MIN_TENSION_STEPS, Math.min(MAX_TENSION_STEPS, parsedSteps))
-        const safeTitle = (title || 'Échelle de tension').trim().slice(0, MAX_TITLE_LENGTH) || 'Échelle de tension'
-        const safeDirection = TENSION_DIRECTIONS.has(direction) ? direction : 'ascending'
-        const startLevel = safeDirection === 'descending' ? safeSteps : 0
-        const result = await pool.query(
-          `UPDATE sessions
-           SET tension_title = $1, tension_steps = $2, tension_level = $3, tension_direction = $4, tension_vibration = $5, tv_mode = 'tension'
-           WHERE id = $6 AND session_editable(id, $7)
-           RETURNING tension_title, tension_steps, tension_level, tension_direction, tension_vibration`,
-          [safeTitle, safeSteps, startLevel, safeDirection, !!vibrationEnabled, sessionId, socket.admin.id]
+        const gaugeRes = await pool.query(
+          'SELECT id, title, steps, level, direction, vibration FROM dashboard_gauges WHERE id = $1 AND session_id = $2',
+          [gaugeId, sessionId]
         )
-        const row = result.rows[0]
-        if (!row) return
+        const gauge = gaugeRes.rows[0]
+        if (!gauge) return
+        const result = await pool.query(
+          `UPDATE sessions SET fullscreen_gauge_id = $1, tv_mode = 'tension'
+           WHERE id = $2 AND session_editable(id, $3)`,
+          [gaugeId, sessionId, socket.admin.id]
+        )
+        if (result.rowCount === 0) return
         const payload = {
-          title: row.tension_title,
-          steps: row.tension_steps,
-          level: row.tension_level,
-          direction: row.tension_direction,
-          vibrationEnabled: row.tension_vibration,
+          id: gauge.id, title: gauge.title, steps: gauge.steps, level: gauge.level,
+          direction: gauge.direction, vibrationEnabled: gauge.vibration,
         }
         broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'tension' })
         broadcastToSession(sessionId, 'tension-scale-updated', payload)
-        await logSessionEvent(sessionId, 'tension_started', `Tension lancée : "${safeTitle}" (${safeSteps} étapes)`)
+        await logSessionEvent(sessionId, 'gauge_fullscreen', `Jauge affichée en plein écran : "${gauge.title}"`)
       } catch (err) { console.error(err) }
     })
 
-    // ── Admin: advance tension scale (up/down, arbitrary delta) ────────────
-    socket.on('increment-tension-scale', async ({ sessionId, delta }) => {
+    // ── Admin: hide the full-screen gauge (back to lobby) ────────────────────
+    socket.on('hide-gauge-fullscreen', async ({ sessionId }) => {
       if (!socket.admin) return
       try {
-        const safeDelta = Math.max(-MAX_TENSION_STEPS, Math.min(MAX_TENSION_STEPS, parseInt(delta, 10) || 1))
         const result = await pool.query(
-          `UPDATE sessions
-           SET tension_level = GREATEST(0, LEAST(COALESCE(tension_steps, 0), COALESCE(tension_level, 0) + $3))
-           WHERE id = $1 AND session_editable(id, $2) AND tension_title IS NOT NULL AND tension_steps IS NOT NULL
-           RETURNING tension_title, tension_steps, tension_level, tension_direction, tension_vibration`,
-          [sessionId, socket.admin.id, safeDelta]
-        )
-        const row = result.rows[0]
-        if (!row) return
-        const payload = {
-          title: row.tension_title,
-          steps: row.tension_steps,
-          level: row.tension_level,
-          direction: row.tension_direction,
-          vibrationEnabled: row.tension_vibration,
-        }
-        broadcastToSession(sessionId, 'tension-scale-updated', payload)
-        await logSessionEvent(sessionId, 'tension_updated', `Tension : niveau ${row.tension_level}/${row.tension_steps} — "${row.tension_title}"`)
-      } catch (err) { console.error(err) }
-    })
-
-    // ── Admin: end tension scale ─────────────────────────────────────────────
-    socket.on('end-tension-scale', async ({ sessionId }) => {
-      if (!socket.admin) return
-      try {
-        // Fetch the current title before clearing it (RETURNING would give NULL after the update)
-        const current = await pool.query(
-          'SELECT tension_title FROM sessions WHERE id = $1 AND session_editable(id, $2)',
-          [sessionId, socket.admin.id]
-        )
-        if (!current.rows[0]) return
-        const tensionTitle = current.rows[0].tension_title || 'Échelle de tension'
-        await pool.query(
-          `UPDATE sessions
-           SET tension_title = NULL, tension_steps = NULL, tension_level = 0, tension_direction = 'ascending', tension_vibration = FALSE, tv_mode = 'lobby'
+          `UPDATE sessions SET tv_mode = 'lobby'
            WHERE id = $1 AND session_editable(id, $2)`,
           [sessionId, socket.admin.id]
         )
+        if (result.rowCount === 0) return
         broadcastToSession(sessionId, 'tension-scale-ended')
         broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'lobby' })
-        await logSessionEvent(sessionId, 'tension_ended', `Tension terminée : "${tensionTitle}"`)
+        await logSessionEvent(sessionId, 'gauge_fullscreen_hidden', 'Jauge plein écran masquée')
       } catch (err) { console.error(err) }
     })
 
@@ -1070,18 +1117,21 @@ function setupSocket(io) {
         const safeHours = Math.max(MIN_TIMESCALE_HOURS, Math.min(MAX_TIMESCALE_HOURS, parsedHours))
         const safeSlots = Math.max(MIN_TIMESCALE_SLOTS, Math.min(MAX_TIMESCALE_SLOTS, parsedSlots))
         const safeRest = Math.max(1, Math.min(safeSlots, parsedRest))
+        // Voir le commentaire équivalent sur start-doom-clock : ne pas éjecter la vue
+        // dynamique si elle est affichée.
         const result = await pool.query(
           `UPDATE sessions
            SET timescale_title = $1, timescale_total_hours = $2, timescale_slot_count = $3,
-               timescale_rest_slots = $4, timescale_elapsed_slots = 0, timescale_rest_taken = FALSE, tv_mode = 'timescale'
+               timescale_rest_slots = $4, timescale_elapsed_slots = 0, timescale_rest_taken = FALSE,
+               tv_mode = CASE WHEN tv_mode = 'dashboard' THEN tv_mode ELSE 'timescale' END
            WHERE id = $5 AND session_editable(id, $6)
-           RETURNING timescale_title, timescale_total_hours, timescale_slot_count, timescale_rest_slots, timescale_elapsed_slots, timescale_rest_taken`,
+           RETURNING timescale_title, timescale_total_hours, timescale_slot_count, timescale_rest_slots, timescale_elapsed_slots, timescale_rest_taken, tv_mode`,
           [safeTitle, safeHours, safeSlots, safeRest, sessionId, socket.admin.id]
         )
         const row = result.rows[0]
         if (!row) return
         const payload = serializeTimeScale(row)
-        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'timescale' })
+        if (row.tv_mode === 'timescale') broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'timescale' })
         broadcastToSession(sessionId, 'time-scale-updated', payload)
         const slotHours = safeHours / safeSlots
         await logSessionEvent(sessionId, 'timescale_started', `Échelle de temps : "${safeTitle}" (${safeSlots} paliers de ${slotHours}h)`)
@@ -1150,21 +1200,151 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         const current = await pool.query(
-          'SELECT timescale_title FROM sessions WHERE id = $1 AND session_editable(id, $2)',
+          'SELECT timescale_title, tv_mode FROM sessions WHERE id = $1 AND session_editable(id, $2)',
           [sessionId, socket.admin.id]
         )
         if (!current.rows[0]) return
         const scaleTitle = current.rows[0].timescale_title || 'Échelle de temps'
+        const wasDashboard = current.rows[0].tv_mode === 'dashboard'
         await pool.query(
           `UPDATE sessions
            SET timescale_title = NULL, timescale_total_hours = NULL, timescale_slot_count = NULL,
-               timescale_rest_slots = NULL, timescale_elapsed_slots = 0, tv_mode = 'lobby'
+               timescale_rest_slots = NULL, timescale_elapsed_slots = 0,
+               tv_mode = CASE WHEN tv_mode = 'dashboard' THEN tv_mode ELSE 'lobby' END
            WHERE id = $1 AND session_editable(id, $2)`,
           [sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'time-scale-ended')
-        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'lobby' })
+        if (!wasDashboard) broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'lobby' })
         await logSessionEvent(sessionId, 'timescale_ended', `Échelle de temps terminée : "${scaleTitle}"`)
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: configure/show the composed TV dashboard (tv_mode = 'dashboard') ──
+    // Contrairement à create-dashboard-gauge/start-doom-clock (qui créent l'ÉTAT d'un
+    // widget), cet event ne fait que choisir QUELLE cellule affiche quel widget déjà
+    // actif — créer/arrêter un widget (jauge, timer...) ne passe jamais par ici, voir
+    // les gardes CASE WHEN tv_mode = 'dashboard' sur start/stop-doom-clock et
+    // create/end-time-scale.
+    socket.on('set-dashboard-layout', async ({ sessionId, layout, slots }) => {
+      if (!socket.admin) return
+      try {
+        const validSlotKeys = DASHBOARD_LAYOUT_SLOTS[layout]
+        if (!validSlotKeys) return
+        const safeSlots = validSlotKeys.map(slotKey => {
+          const found = Array.isArray(slots) ? slots.find(s => s?.slot === slotKey) : null
+          const widgetType = found && isValidDashboardWidgetType(found.widgetType) ? found.widgetType : null
+          return { slot: slotKey, widgetType }
+        })
+        const result = await pool.query(
+          `UPDATE sessions SET dashboard_layout = $1, dashboard_slots = $2, tv_mode = 'dashboard'
+           WHERE id = $3 AND session_editable(id, $4)`,
+          [layout, JSON.stringify(safeSlots), sessionId, socket.admin.id]
+        )
+        if (result.rowCount === 0) return
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'dashboard' })
+        broadcastToSession(sessionId, 'dashboard-updated', { layout, slots: safeSlots })
+        await logSessionEvent(sessionId, 'dashboard_updated', `Vue dynamique configurée (${layout})`)
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: close the composed TV dashboard ───────────────────────────────
+    socket.on('end-dashboard', async ({ sessionId }) => {
+      if (!socket.admin) return
+      try {
+        const result = await pool.query(
+          `UPDATE sessions SET dashboard_layout = NULL, dashboard_slots = NULL, tv_mode = 'lobby'
+           WHERE id = $1 AND session_editable(id, $2)`,
+          [sessionId, socket.admin.id]
+        )
+        if (result.rowCount === 0) return
+        broadcastToSession(sessionId, 'dashboard-ended')
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'lobby' })
+        await logSessionEvent(sessionId, 'dashboard_ended', 'Vue dynamique fermée')
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: create a dashboard gauge ──────────────────────────────────────
+    // Remplace l'ancienne échelle de tension singleton (sessions.tension_*, colonnes
+    // conservées mais plus utilisées) : une jauge est une ligne de dashboard_gauges,
+    // plusieurs peuvent coexister par session (ex. « Peur » croissante + « Vagues du
+    // siège » décroissante), chacune assignable indépendamment à une cellule du
+    // dashboard via 'gauge:<id>' ET/OU affichable seule en plein écran via
+    // show-gauge-fullscreen (sessions.fullscreen_gauge_id). La créer ne touche jamais
+    // tv_mode — c'est show-gauge-fullscreen qui décide de l'affichage, pas la création.
+    socket.on('create-dashboard-gauge', async ({ sessionId, title, steps, direction, vibrationEnabled }) => {
+      if (!socket.admin) return
+      try {
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
+        const countRes = await pool.query('SELECT COUNT(*) FROM dashboard_gauges WHERE session_id = $1', [sessionId])
+        if (parseInt(countRes.rows[0].count, 10) >= MAX_DASHBOARD_GAUGES_PER_SESSION) {
+          socket.emit('tv-control-error', { message: 'Nombre maximum de jauges atteint pour cette session.' })
+          return
+        }
+        const parsedSteps = parseInt(steps, 10)
+        if (Number.isNaN(parsedSteps)) {
+          socket.emit('tv-control-error', { message: "Nombre d'étapes invalide (entre 2 et 20).", field: 'steps' })
+          return
+        }
+        const safeSteps = Math.max(MIN_TENSION_STEPS, Math.min(MAX_TENSION_STEPS, parsedSteps))
+        const safeTitle = (title || 'Jauge').trim().slice(0, MAX_TITLE_LENGTH) || 'Jauge'
+        const safeDirection = TENSION_DIRECTIONS.has(direction) ? direction : 'ascending'
+        const startLevel = safeDirection === 'descending' ? safeSteps : 0
+        const result = await pool.query(
+          `INSERT INTO dashboard_gauges (session_id, title, steps, level, direction, vibration)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           RETURNING id, title, steps, level, direction, vibration`,
+          [sessionId, safeTitle, safeSteps, startLevel, safeDirection, !!vibrationEnabled]
+        )
+        const row = result.rows[0]
+        const payload = {
+          id: row.id, title: row.title, steps: row.steps, level: row.level,
+          direction: row.direction, vibrationEnabled: row.vibration,
+        }
+        broadcastToSession(sessionId, 'dashboard-gauge-created', payload)
+        await logSessionEvent(sessionId, 'dashboard_gauge_created', `Jauge créée : "${safeTitle}" (${safeSteps} étapes)`)
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: advance a dashboard gauge (up/down, arbitrary delta) ──────────
+    socket.on('increment-dashboard-gauge', async ({ sessionId, gaugeId, delta }) => {
+      if (!socket.admin) return
+      try {
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
+        const safeDelta = Math.max(-MAX_TENSION_STEPS, Math.min(MAX_TENSION_STEPS, parseInt(delta, 10) || 1))
+        const result = await pool.query(
+          `UPDATE dashboard_gauges
+           SET level = GREATEST(0, LEAST(steps, level + $3))
+           WHERE id = $1 AND session_id = $2
+           RETURNING id, title, steps, level, direction, vibration`,
+          [gaugeId, sessionId, safeDelta]
+        )
+        const row = result.rows[0]
+        if (!row) return
+        const payload = {
+          id: row.id, title: row.title, steps: row.steps, level: row.level,
+          direction: row.direction, vibrationEnabled: row.vibration,
+        }
+        broadcastToSession(sessionId, 'dashboard-gauge-updated', payload)
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: delete a dashboard gauge ───────────────────────────────────────
+    // Ne nettoie pas dashboard_slots : une cellule qui référençait cette jauge retombe
+    // simplement sur « En attente… ». fullscreen_gauge_id se vide tout seul (ON DELETE
+    // SET NULL) si la jauge supprimée était celle affichée en plein écran — le client
+    // détecte ce cas via l'id dans 'dashboard-gauge-deleted' pour vider sa propre ref.
+    socket.on('delete-dashboard-gauge', async ({ sessionId, gaugeId }) => {
+      if (!socket.admin) return
+      try {
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
+        const result = await pool.query(
+          'DELETE FROM dashboard_gauges WHERE id = $1 AND session_id = $2 RETURNING title',
+          [gaugeId, sessionId]
+        )
+        if (!result.rows[0]) return
+        broadcastToSession(sessionId, 'dashboard-gauge-deleted', { gaugeId })
+        await logSessionEvent(sessionId, 'dashboard_gauge_deleted', `Jauge supprimée : "${result.rows[0].title}"`)
       } catch (err) { console.error(err) }
     })
 

@@ -5,6 +5,9 @@ const props = defineProps({
   activeTensionScale: { type: Object, default: null },
   tensionColor: { type: String, default: 'var(--tv-success-text)' },
   tensionShakeClass: { type: String, default: '' },
+  // Rendu réduit pour une cellule de la vue dynamique (TvDashboard.vue) — le rendu
+  // plein écran par défaut (compact=false) n'est pas affecté par les règles .compact.
+  compact: { type: Boolean, default: false },
 })
 
 const stepsColumns = computed(() => {
@@ -17,6 +20,7 @@ const stepsColumns = computed(() => {
 <template>
   <div
     class="tension-display"
+    :class="{ compact }"
     data-testid="tv-mode-tension"
     :style="{ '--tension-color': tensionColor }"
   >
@@ -141,5 +145,38 @@ const stepsColumns = computed(() => {
   15% { transform: translateX(-7px) rotate(-2deg); }
   45% { transform: translateX(7px) rotate(2deg); }
   75% { transform: translateX(-5px) rotate(-1deg); }
+}
+
+/* ── Variante compacte (cellule de la vue dynamique, TvDashboard.vue) ────────
+   N'affecte jamais le rendu plein écran par défaut (compact=false). Dimensionnée en
+   unités cq* (container queries — TvDashboard.vue pose `container-type: size` sur
+   `.dashboard-cell`, le parent direct) plutôt qu'en vw/vh : la taille suit celle de LA
+   CELLULE, pas du viewport entier, donc reste lisible à distance quel que soit le
+   layout (colonne étroite et haute, ligne large et basse, coin carré...). cqmin = le
+   plus petit des deux (cqw, cqh), pour ne jamais déborder dans la dimension la plus
+   contrainte de la cellule. */
+.tension-display.compact {
+  gap: 3cqmin;
+  padding: 4cqmin;
+}
+.tension-display.compact .tension-title {
+  font-size: clamp(0.9rem, 9cqmin, 4rem);
+}
+.tension-display.compact .tension-steps {
+  gap: 1.5cqmin;
+  max-width: 100%;
+}
+.tension-display.compact .tension-step {
+  width: clamp(1rem, 9cqmin, 3.5rem);
+  height: clamp(1rem, 9cqmin, 3.5rem);
+  font-size: clamp(0.55rem, 4.5cqmin, 1.6rem);
+  border-width: clamp(1px, 0.5cqmin, 3px);
+}
+.tension-display.compact .tension-core {
+  width: min(55cqw, 50cqh);
+  height: min(55cqw, 50cqh);
+}
+.tension-display.compact .tension-level {
+  font-size: clamp(1.5rem, 28cqmin, 9rem);
 }
 </style>

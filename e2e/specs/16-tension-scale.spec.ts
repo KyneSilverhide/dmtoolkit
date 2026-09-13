@@ -3,21 +3,29 @@ import { createSession } from '../helpers/session'
 import { AdminPage } from '../page-objects/AdminPage'
 import { TvPage } from '../page-objects/TvPage'
 
-async function createTensionScale(adminPage: AdminPage, title = 'Tension', steps = 6) {
+// L'échelle de tension classique (singleton) a été remplacée par une jauge nommée
+// (dashboard_gauges) affichable en plein écran — la même jauge peut aussi être composée
+// dans la vue dynamique (voir 27-dashboard.spec.ts pour ce cas). Créer une jauge et créer/adjuster
+// l'échelle de tension sont désormais deux actions distinctes.
+async function createGaugeAndShowFullscreen(adminPage: AdminPage, title = 'Tension', steps = 6) {
   await adminPage.switchTab('tension')
   const pg = adminPage.page
 
-  // Scope to the tension section to avoid matching inputs from other tabs (v-show keeps all mounted)
-  const tensionSection = pg.locator('.control-section').filter({ hasText: /échelle de tension/i })
+  // Scope à la section Jauges pour éviter de matcher les inputs des autres sections
+  // (v-show garde tout monté).
+  const gaugeSection = pg.locator('.control-section').filter({ hasText: /jauges \(vue dynamique\)/i })
 
-  const titleInput = tensionSection.locator('input[placeholder*="échelle" i]')
+  const titleInput = gaugeSection.locator('input[placeholder*="titre de la jauge" i]')
   await titleInput.click({ clickCount: 3 }) // sélectionne le texte par défaut du v-model Vue avant d'écrire
   await titleInput.fill(title)
-  await tensionSection.locator('input[type="number"]').fill(String(steps))
-  await tensionSection.locator('button.action-btn').filter({ hasText: 'Créer' }).click()
+  await gaugeSection.locator('input[type="number"]').fill(String(steps))
+  await gaugeSection.getByTestId('gauge-create-btn').click()
+
+  const gaugeRow = pg.locator('.gauge-row').filter({ hasText: title })
+  await gaugeRow.getByTestId('gauge-fullscreen-btn').click()
 }
 
-test('admin creates a tension scale and TV shows it', async ({ browser, adminToken }) => {
+test('admin creates a gauge, shows it fullscreen and TV shows it', async ({ browser, adminToken }) => {
   const token = adminToken
   const code = await createSession(token)
 
@@ -29,7 +37,7 @@ test('admin creates a tension scale and TV shows it', async ({ browser, adminTok
     await adminPage.login(token)
     await adminPage.selectSession(code)
 
-    await createTensionScale(adminPage, 'Combat épique', 5)
+    await createGaugeAndShowFullscreen(adminPage, 'Combat épique', 5)
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
@@ -42,7 +50,7 @@ test('admin creates a tension scale and TV shows it', async ({ browser, adminTok
   }
 })
 
-test('admin can increment tension and TV updates', async ({ browser, adminToken }) => {
+test('admin can increment the fullscreen gauge and TV updates', async ({ browser, adminToken }) => {
   const token = adminToken
   const code = await createSession(token)
 
@@ -54,7 +62,7 @@ test('admin can increment tension and TV updates', async ({ browser, adminToken 
     await adminPage.login(token)
     await adminPage.selectSession(code)
 
-    await createTensionScale(adminPage, 'Alarme', 4)
+    await createGaugeAndShowFullscreen(adminPage, 'Alarme', 4)
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
@@ -62,10 +70,10 @@ test('admin can increment tension and TV updates', async ({ browser, adminToken 
     await expect(tvPage.page.locator('[data-testid="tv-container"]')).toHaveAttribute('data-tv-mode', 'tension', { timeout: 8_000 })
     await expect(tvPage.getTensionDisplay()).toBeVisible({ timeout: 8_000 })
 
-    // Increment tension — scope to the tension section, button text is '+1' (ascending) or '-1' (descending)
-    await adminPage.switchTab('tension')
-    const tensionSection = adminPage.page.locator('.control-section').filter({ hasText: /échelle de tension/i })
-    await tensionSection.locator('button.action-btn').filter({ hasText: /^\+1$|^-1$/ }).click()
+    // Increment — bouton '+1' de la ligne de la jauge (partagé avec le composé dashboard :
+    // un seul chemin d'ajustement quel que soit où la jauge est affichée).
+    const gaugeRow = adminPage.page.locator('.gauge-row').filter({ hasText: 'Alarme' })
+    await gaugeRow.locator('button.tension-delta-btn').filter({ hasText: '+1' }).click()
 
     // Tension level 1 should be shown on TV
     await expect(tvPage.page.locator('.tension-level')).toContainText('1', { timeout: 8_000 })
@@ -75,7 +83,7 @@ test('admin can increment tension and TV updates', async ({ browser, adminToken 
   }
 })
 
-test('tension title visible on TV', async ({ browser, adminToken }) => {
+test('gauge title visible on TV in fullscreen', async ({ browser, adminToken }) => {
   const token = adminToken
   const code = await createSession(token)
 
@@ -87,7 +95,7 @@ test('tension title visible on TV', async ({ browser, adminToken }) => {
     await adminPage.login(token)
     await adminPage.selectSession(code)
 
-    await createTensionScale(adminPage, 'Invasion Imminente', 3)
+    await createGaugeAndShowFullscreen(adminPage, 'Invasion Imminente', 3)
     await adminPage.setTvMode('tension')
 
     const tvPage = new TvPage(await tvCtx.newPage())
@@ -99,7 +107,7 @@ test('tension title visible on TV', async ({ browser, adminToken }) => {
   }
 })
 
-test('admin can end tension scale', async ({ browser, adminToken }) => {
+test('admin can hide the fullscreen gauge', async ({ browser, adminToken }) => {
   const token = adminToken
   const code = await createSession(token)
 
@@ -111,16 +119,16 @@ test('admin can end tension scale', async ({ browser, adminToken }) => {
     await adminPage.login(token)
     await adminPage.selectSession(code)
 
-    await createTensionScale(adminPage, 'Tension Finale', 3)
+    await createGaugeAndShowFullscreen(adminPage, 'Tension Finale', 3)
     await adminPage.setTvMode('tension')
 
     const tvPage = new TvPage(await tvCtx.newPage())
     await tvPage.goto(code)
     await expect(tvPage.getTensionDisplay()).toBeVisible({ timeout: 8_000 })
 
-    // End tension
+    // Quitter le plein écran (la jauge elle-même n'est pas supprimée, voir 27-dashboard.spec.ts)
     await adminPage.switchTab('tension')
-    await adminPage.page.locator('button[data-testid="tension-end-btn"]').click()
+    await adminPage.page.getByTestId('gauge-hide-fullscreen-btn').click()
 
     // TV should revert to lobby
     await expect(tvPage.getLobbyDisplay()).toBeVisible({ timeout: 8_000 })
@@ -130,7 +138,7 @@ test('admin can end tension scale', async ({ browser, adminToken }) => {
   }
 })
 
-test('tension steps are displayed on TV', async ({ browser, adminToken }) => {
+test('gauge steps are displayed on TV in fullscreen', async ({ browser, adminToken }) => {
   const token = adminToken
   const code = await createSession(token)
 
@@ -142,7 +150,7 @@ test('tension steps are displayed on TV', async ({ browser, adminToken }) => {
     await adminPage.login(token)
     await adminPage.selectSession(code)
 
-    await createTensionScale(adminPage, 'Échelle', 5)
+    await createGaugeAndShowFullscreen(adminPage, 'Échelle', 5)
     await adminPage.setTvMode('tension')
 
     const tvPage = new TvPage(await tvCtx.newPage())

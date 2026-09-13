@@ -354,6 +354,38 @@ $func$ LANGUAGE sql STABLE;
 -- current_hp, et ne sont donc plus effacés par un clamp à max_hp (ex. admin-update-hp
 -- déclenché par une resynchro Obsidian).
 ALTER TABLE players ADD COLUMN IF NOT EXISTS temp_hp INTEGER DEFAULT 0;
+
+-- Vue dynamique (« dashboard ») : composition de plusieurs widgets Rythme (échelle de
+-- tension, minuteur libre...) dans un layout (2 colonnes / 3 colonnes / 4 coins),
+-- affichée en mode TV exclusif tv_mode = 'dashboard' — au même titre que 'tension' ou
+-- 'doom', pas un overlay superposé aux autres modes. dashboard_slots est un JSON
+-- (array de { slot, widgetType }) stocké en TEXT, comme current_content_data.
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS dashboard_layout VARCHAR(20);
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS dashboard_slots TEXT;
+
+-- Jauges de la vue dynamique : contrairement à l'échelle de tension classique
+-- (sessions.tension_*, singleton — un seul écran plein de tension à la fois), une
+-- session peut avoir plusieurs jauges nommées indépendantes composées côte à côte dans
+-- le dashboard (ex. « Peur » croissante ET « Vagues du siège » décroissante en même
+-- temps). Un dashboard_slots.widgetType référence une jauge via 'gauge:<id>'.
+CREATE TABLE IF NOT EXISTS dashboard_gauges (
+  id SERIAL PRIMARY KEY,
+  session_id INTEGER REFERENCES sessions(id) ON DELETE CASCADE,
+  title VARCHAR(200) NOT NULL,
+  steps INTEGER NOT NULL,
+  level INTEGER NOT NULL DEFAULT 0,
+  direction VARCHAR(20) NOT NULL DEFAULT 'ascending',
+  vibration BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- L'échelle de tension classique (sessions.tension_*, singleton) est remplacée par une
+-- jauge (dashboard_gauges) affichée en plein écran : fullscreen_gauge_id pointe vers la
+-- jauge actuellement montrée quand tv_mode = 'tension'. ON DELETE SET NULL — supprimer
+-- la jauge affichée ne doit pas faire échouer la requête, juste vider le pointeur (la
+-- TV affichera alors un écran 'tension' sans donnée, cas limite accepté). Les colonnes
+-- tension_* restent en base (jamais supprimées) mais ne sont plus lues ni écrites.
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS fullscreen_gauge_id INTEGER REFERENCES dashboard_gauges(id) ON DELETE SET NULL;
 `
 
 async function runMigrations() {

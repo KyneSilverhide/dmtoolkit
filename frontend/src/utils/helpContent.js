@@ -14,6 +14,10 @@ export const helpContent = {
     'Jauge de tension narrative affichée sur la TV. Avancez-la pour intensifier l\'ambiance dramatique. Peut monter ou descendre selon la direction choisie.',
   'tv.time-scale':
     'Représentation visuelle du temps qui passe dans l\'aventure (ex : une journée en 6 paliers). Le repos long avance automatiquement du nombre de paliers défini.',
+  'tv.dashboard':
+    'Compose plusieurs widgets Rythme déjà actifs (jauges, minuteur…) dans une disposition (colonnes, lignes ou coins) affichée en une seule fois sur la TV. Créer/terminer un widget pendant que cette vue est active ne change pas d\'écran : seule la cellule concernée se met à jour.',
+  'tv.dashboard-gauges':
+    'Jauges nommées, indépendantes de l\'échelle de tension classique : plusieurs peuvent exister en même temps (ex. "Peur" et "Vagues du siège"), chacune assignable à sa propre cellule de la vue dynamique.',
 
   // ── Admin — VoteManager ───────────────────────────────────────────────────
   'vote.anonymous':

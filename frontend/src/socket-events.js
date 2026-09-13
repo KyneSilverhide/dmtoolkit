@@ -76,14 +76,11 @@ export const START_DOOM_CLOCK = 'start-doom-clock'
 /** Admin stops the doom clock: { sessionId } */
 export const STOP_DOOM_CLOCK = 'stop-doom-clock'
 
-/** Admin creates a tension scale: { sessionId, title, steps, direction, vibrationEnabled } */
-export const CREATE_TENSION_SCALE = 'create-tension-scale'
+/** Admin shows a gauge full-screen (tv_mode = 'tension'): { sessionId, gaugeId } */
+export const SHOW_GAUGE_FULLSCREEN = 'show-gauge-fullscreen'
 
-/** Admin advances the tension scale by one step: { sessionId } */
-export const INCREMENT_TENSION_SCALE = 'increment-tension-scale'
-
-/** Admin ends the tension scale: { sessionId } */
-export const END_TENSION_SCALE = 'end-tension-scale'
+/** Admin hides the full-screen gauge (back to lobby): { sessionId } */
+export const HIDE_GAUGE_FULLSCREEN = 'hide-gauge-fullscreen'
 
 /** Admin creates a vote: { sessionId, question, options, isAnonymous } */
 export const CREATE_VOTE = 'create-vote'
@@ -248,6 +245,12 @@ export const TIME_SCALE_UPDATED = 'time-scale-updated'
 
 /** Sent to TV + admin when the time scale ends */
 export const TIME_SCALE_ENDED = 'time-scale-ended'
+
+/** Sent to TV + admin when the composed TV dashboard layout/slots change: { layout, slots } */
+export const DASHBOARD_UPDATED = 'dashboard-updated'
+
+/** Sent to TV + admin when the composed TV dashboard is closed */
+export const DASHBOARD_ENDED = 'dashboard-ended'
 
 /** Sent to TV + session + admin when a vote is created: (voteState) */
 export const VOTE_STARTED = 'vote-started'
@@ -450,9 +453,8 @@ export default {
   SET_TV_MODE,
   START_DOOM_CLOCK,
   STOP_DOOM_CLOCK,
-  CREATE_TENSION_SCALE,
-  INCREMENT_TENSION_SCALE,
-  END_TENSION_SCALE,
+  SHOW_GAUGE_FULLSCREEN,
+  HIDE_GAUGE_FULLSCREEN,
   CREATE_VOTE,
   CLOSE_VOTE,
   SHOW_IMAGE,

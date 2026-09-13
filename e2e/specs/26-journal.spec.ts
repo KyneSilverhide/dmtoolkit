@@ -232,7 +232,7 @@ test('journal loads past events from API via summary button', async ({ browser, 
   }
 })
 
-test('tension_started event appears in journal', async ({ browser, adminToken }) => {
+test('dashboard_gauge_created event appears in journal', async ({ browser, adminToken }) => {
   const token = adminToken
   const code = await createSession(token)
 
@@ -248,18 +248,19 @@ test('tension_started event appears in journal', async ({ browser, adminToken })
     // Wait for journal to be fully mounted before leaving (see note in vote test)
     await expect(pg.locator('.journal')).toBeVisible({ timeout: 5_000 })
 
-    // Create a tension scale (form is in the tension/TvControls tab)
+    // Create a gauge (form is in the Jauges section of the tension/TvControls tab —
+    // l'échelle de tension classique a été remplacée par les jauges, voir 16-tension-scale.spec.ts)
     await adminPage.switchTab('tension')
-    const titleInput = pg.locator('input[placeholder*="Titre de l\'échelle"]').first()
+    const gaugeSection = pg.locator('.control-section').filter({ hasText: /jauges \(vue dynamique\)/i })
+    const titleInput = gaugeSection.locator('input[placeholder*="titre de la jauge" i]')
     await expect(titleInput).toBeVisible({ timeout: 5_000 })
     await titleInput.fill('Tension des négociations')
-    const stepsInput = pg.locator('input[placeholder*="Étapes"]').first()
-    await stepsInput.fill('5')
-    await pg.locator('button[data-testid="tension-create-btn"]').click()
+    await gaugeSection.locator('input[type="number"]').fill('5')
+    await gaugeSection.getByTestId('gauge-create-btn').click()
 
-    // Switch to journal and verify tension_started event
+    // Switch to journal and verify dashboard_gauge_created event
     await adminPage.switchTab('journal')
-    await expect(pg.locator('.tl-desc').filter({ hasText: /tension.*lancée|lancée.*tension/i })).toBeVisible({ timeout: 8_000 })
+    await expect(pg.locator('.tl-desc').filter({ hasText: /jauge.*créée|créée.*jauge/i })).toBeVisible({ timeout: 8_000 })
     await expect(pg.locator('.tl-desc').filter({ hasText: /Tension des négociations/i })).toBeVisible({ timeout: 8_000 })
   } finally {
     await adminCtx.close()

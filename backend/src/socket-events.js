@@ -73,14 +73,11 @@ const START_DOOM_CLOCK = 'start-doom-clock'
 /** Admin stops the doom clock: { sessionId } */
 const STOP_DOOM_CLOCK = 'stop-doom-clock'
 
-/** Admin creates a tension scale: { sessionId, title, steps, direction, vibrationEnabled } */
-const CREATE_TENSION_SCALE = 'create-tension-scale'
+/** Admin shows a gauge full-screen (tv_mode = 'tension'): { sessionId, gaugeId } */
+const SHOW_GAUGE_FULLSCREEN = 'show-gauge-fullscreen'
 
-/** Admin advances the tension scale by one step: { sessionId } */
-const INCREMENT_TENSION_SCALE = 'increment-tension-scale'
-
-/** Admin ends the tension scale: { sessionId } */
-const END_TENSION_SCALE = 'end-tension-scale'
+/** Admin hides the full-screen gauge (back to lobby): { sessionId } */
+const HIDE_GAUGE_FULLSCREEN = 'hide-gauge-fullscreen'
 
 /** Admin creates a vote: { sessionId, question, options, isAnonymous } */
 const CREATE_VOTE = 'create-vote'
@@ -388,9 +385,8 @@ module.exports = {
   SET_TV_MODE,
   START_DOOM_CLOCK,
   STOP_DOOM_CLOCK,
-  CREATE_TENSION_SCALE,
-  INCREMENT_TENSION_SCALE,
-  END_TENSION_SCALE,
+  SHOW_GAUGE_FULLSCREEN,
+  HIDE_GAUGE_FULLSCREEN,
   CREATE_VOTE,
   CLOSE_VOTE,
   SHOW_IMAGE,

@@ -50,9 +50,11 @@ import {
   ADMIN_STATE, TV_MODE_CHANGED, VOTE_STARTED, VOTE_CLOSED,
   MAP_STATE, MERCHANT_ITEMS_UPDATED, DOOM_CLOCK_STARTED, DOOM_CLOCK_STOPPED,
   TENSION_SCALE_UPDATED, TENSION_SCALE_ENDED, TIME_SCALE_UPDATED, TIME_SCALE_ENDED,
+  DASHBOARD_UPDATED, DASHBOARD_ENDED,
   PLAYER_ROLL_RESULT, DEMO_RESET, ROUND_UPDATED,
   ADMIN_JOIN, SET_TV_MODE, FACTIONS_UPDATED, PUZZLE_CLOSED,
 } from '../socket-events.js'
+import { DASHBOARD_LAYOUTS } from '../utils/tvWidgets.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -122,6 +124,8 @@ const hasActiveReputation = ref(false)
 // quand n'importe quel sort/objet/race peut être à l'écran.
 const activeContent = ref(null)
 const hasActiveContent = computed(() => !!activeContent.value)
+const hasActiveDashboard = ref(false)
+const dashboardLayout = ref(null)
 const combatRound = ref(0)
 
 // Onglets verrouillés (grisés + tooltip). Map { [tabKey]: { title, text } }.
@@ -340,6 +344,7 @@ const tvModes = computed(() => ([
   { key: 'timescale',  label: 'Echelle de temps', hint: 'Depuis l onglet Rythme',        ready: hasActiveTimeScale.value },
   { key: 'reputation', label: 'Réputations',      hint: 'Depuis l onglet Réputations',   ready: hasActiveReputation.value },
   { key: 'content',    label: 'Contenu',          hint: 'Depuis un onglet Contenu',      ready: hasActiveContent.value },
+  { key: 'dashboard',  label: 'Vue dynamique',    hint: 'Depuis l onglet Rythme',        ready: hasActiveDashboard.value },
 ]))
 
 // Libellés des 7 `CONTENT_TYPES` acceptés par `show-content` (backend/src/socket.js).
@@ -373,9 +378,14 @@ const activeTvModeLabel = computed(() => {
   return mode?.label || tvMode.value
 })
 
-// Précision affichée entre parenthèses à côté du libellé : le type de fiche projetée.
+const dashboardLayoutLabel = computed(() => DASHBOARD_LAYOUTS.find(l => l.key === dashboardLayout.value)?.label || '')
+
+// Précision affichée entre parenthèses à côté du libellé : le type de fiche projetée
+// (ou la disposition choisie, en mode vue dynamique).
 const activeTvModeDetail = computed(() => (
-  tvMode.value === 'content' ? contentTypeLabel(activeContent.value) : ''
+  tvMode.value === 'content' ? contentTypeLabel(activeContent.value)
+  : tvMode.value === 'dashboard' ? dashboardLayoutLabel.value
+  : ''
 ))
 
 const activeSessionLabel = computed(() => {
@@ -457,6 +467,8 @@ function handleAdminState(data) {
   activePuzzle.value = data.activePuzzle || null
   hasActiveReputation.value = Array.isArray(data.factions) && data.factions.length > 0
   activeContent.value = data.activeContent || null
+  hasActiveDashboard.value = !!data.dashboard
+  dashboardLayout.value = data.dashboard?.layout || null
   if (data.isDemo !== undefined && authStore.admin) {
     authStore.admin = { ...authStore.admin, is_demo: data.isDemo }
   }
@@ -600,6 +612,15 @@ onMounted(() => {
     hasActiveTimeScale.value = false
     if (tvMode.value === 'timescale') tvMode.value = 'lobby'
   })
+  _socket.on(DASHBOARD_UPDATED, (d) => {
+    hasActiveDashboard.value = true
+    dashboardLayout.value = d?.layout || null
+  })
+  _socket.on(DASHBOARD_ENDED, () => {
+    hasActiveDashboard.value = false
+    dashboardLayout.value = null
+    if (tvMode.value === 'dashboard') tvMode.value = 'lobby'
+  })
   _socket.on(PLAYER_ROLL_RESULT, (payload) => {
     try {
       if (!payload || typeof payload !== 'object') return
@@ -687,6 +708,8 @@ onUnmounted(() => {
     _socket.off(TENSION_SCALE_ENDED)
     _socket.off(TIME_SCALE_UPDATED)
     _socket.off(TIME_SCALE_ENDED)
+    _socket.off(DASHBOARD_UPDATED)
+    _socket.off(DASHBOARD_ENDED)
     _socket.off(MAP_STATE)
     _socket.off(PLAYER_ROLL_RESULT)
     _socket.off('player-message')

@@ -1,6 +1,14 @@
 {
   "notes": [
     {
+      "version": "2.0.17",
+      "date": "2026-09-13",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Nouvelle « Vue dynamique » sur l'écran TV (onglet Rythme) : compose plusieurs Jauges et le minuteur libre côte à côte selon une disposition au choix (2 colonnes, 3 colonnes, 2 lignes, 4 coins) — par exemple une jauge de Peur et une jauge de Vagues de siège affichées simultanément." },
+        { "type": "improvement", "role": "admin", "text": "L'échelle de tension est remplacée par des Jauges nommées : plusieurs peuvent désormais coexister (au lieu d'une seule à la fois), chacune affichable seule en plein écran ou composée dans la Vue dynamique, avec les mêmes raccourcis −5/−1/+1/+5." }
+      ]
+    },
+    {
       "version": "2.0.15",
       "date": "2026-08-30",
       "changes": [

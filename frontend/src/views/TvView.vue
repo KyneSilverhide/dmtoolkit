@@ -17,6 +17,7 @@ import TvMerchant from '../components/tv/TvMerchant.vue'
 import TvPuzzle from '../components/tv/TvPuzzle.vue'
 import TvReputation from '../components/tv/TvReputation.vue'
 import TvContent from '../components/tv/TvContent.vue'
+import TvDashboard from '../components/tv/TvDashboard.vue'
 import { BACKEND_URL } from '@/config.js'
 
 const DOOM_DANGER_THRESHOLD_SECONDS = 10
@@ -46,6 +47,8 @@ const activeTensionScale = ref(null)
 const activeTimeScale = ref(null)
 const activeTimer = ref(null)
 const activeContent = ref(null) // { contentType, contentData } — voir TvContent.vue
+const activeDashboard = ref(null) // { layout, slots } — voir TvDashboard.vue
+const dashboardGauges = ref([]) // [{ id, title, steps, level, direction, vibrationEnabled }]
 const combatRound = ref(0)
 const factions = ref([])
 const now = ref(Date.now())
@@ -226,6 +229,8 @@ onMounted(() => {
     activeTensionScale.value = data.tensionScale || null
     activeTimeScale.value = data.timeScale || null
     activeContent.value = data.activeContent || null
+    activeDashboard.value = data.dashboard || null
+    dashboardGauges.value = Array.isArray(data.dashboardGauges) ? data.dashboardGauges : []
     combatRound.value = data.combatRound || 0
     activeTimer.value = data.timer || null
     applyTheme(data.tvTheme || 'dark')
@@ -354,6 +359,20 @@ onMounted(() => {
   socket.on('round-updated', ({ round }) => { combatRound.value = round })
   socket.on('timer-updated', (t) => { activeTimer.value = t })
   socket.on('timer-stopped', () => { activeTimer.value = null })
+  socket.on('dashboard-updated', (d) => { activeDashboard.value = d })
+  socket.on('dashboard-ended', () => { activeDashboard.value = null })
+  socket.on('dashboard-gauge-created', (g) => { dashboardGauges.value = [...dashboardGauges.value, g] })
+  socket.on('dashboard-gauge-updated', (g) => {
+    const idx = dashboardGauges.value.findIndex(x => x.id === g.id)
+    if (idx !== -1) dashboardGauges.value = dashboardGauges.value.map((x, i) => (i === idx ? g : x))
+    // La jauge ajustée peut être celle actuellement en plein écran (même ressource, un
+    // seul chemin d'ajustement quel que soit son mode d'affichage).
+    if (activeTensionScale.value?.id === g.id) activeTensionScale.value = g
+  })
+  socket.on('dashboard-gauge-deleted', ({ gaugeId }) => {
+    dashboardGauges.value = dashboardGauges.value.filter(g => g.id !== gaugeId)
+    if (activeTensionScale.value?.id === gaugeId) activeTensionScale.value = null
+  })
   socket.on('lobby-bg-updated', ({ url }) => { lobbyBgUrl.value = url || null })
   socket.on('factions-updated', (data) => { factions.value = Array.isArray(data) ? data : [] })
 
@@ -453,11 +472,13 @@ onUnmounted(() => {
     <template v-else>
       <!-- Fixed overlays: doom clock + free timer -->
       <div class="overlays-container">
-        <div v-if="activeDoomClock && tvMode !== 'doom'" class="doom-overlay" :class="{ danger: doomRemaining <= DOOM_DANGER_THRESHOLD_SECONDS }">
+        <div v-if="activeDoomClock && tvMode !== 'doom' && tvMode !== 'dashboard'" class="doom-overlay" :class="{ danger: doomRemaining <= DOOM_DANGER_THRESHOLD_SECONDS }">
           <span class="doom-overlay-title">{{ activeDoomClock.title }}</span>
           <span class="doom-overlay-timer">{{ doomRemainingLabel }}</span>
         </div>
-        <div v-if="activeTimer && timerRemaining > 0" class="timer-overlay" :class="{ danger: timerRemaining <= TIMER_DANGER_THRESHOLD_SECONDS }">
+        <!-- Masqué en mode dashboard : le minuteur y est un widget de cellule (TvDashboard),
+             jamais superposé en plus de lui-même dans ce mode. -->
+        <div v-if="activeTimer && timerRemaining > 0 && tvMode !== 'dashboard'" class="timer-overlay" :class="{ danger: timerRemaining <= TIMER_DANGER_THRESHOLD_SECONDS }">
           <span class="timer-overlay-label">{{ activeTimer.label }}</span>
           <span class="timer-overlay-time">{{ timerRemainingLabel }}</span>
         </div>
@@ -555,6 +576,17 @@ onUnmounted(() => {
           <TvContent
             v-else-if="tvMode === 'content' && activeContent"
             :active-content="activeContent"
+          />
+
+          <TvDashboard
+            v-else-if="tvMode === 'dashboard' && activeDashboard"
+            :layout="activeDashboard.layout"
+            :slots="activeDashboard.slots"
+            :gauges="dashboardGauges"
+            :active-timer="activeTimer"
+            :timer-remaining="timerRemaining"
+            :timer-remaining-label="timerRemainingLabel"
+            :timer-danger="timerRemaining <= TIMER_DANGER_THRESHOLD_SECONDS"
           />
         </div>
       </Transition>
