@@ -3,7 +3,6 @@ import { Page } from '@playwright/test'
 export interface PlayerOptions {
   name?: string
   hp?: number
-  maxHp?: number
   ac?: number
   dndClass?: string
 }
@@ -12,14 +11,15 @@ export async function joinAsPlayer(page: Page, code: string, opts: PlayerOptions
   const {
     name = 'Thorin',
     hp = 40,
-    maxHp,
     ac = 15,
     dndClass = 'Guerrier',
   } = opts
 
   await page.goto(`/join/${code}`)
   await page.getByTestId('player-name-input').fill(name)
-  await page.getByTestId('hp-input').fill(String(maxHp ?? hp))
+  // Le formulaire de connexion n'a qu'un seul champ HP : un joueur rejoint toujours à pleins
+  // PV (current_hp = max_hp). Pour tester un état déjà endommagé, utiliser adjustHp() après join.
+  await page.getByTestId('hp-input').fill(String(hp))
   await page.getByTestId('ac-input').fill(String(ac))
   const classSelect = page.getByTestId('class-select')
   if (await classSelect.count()) {

@@ -17,11 +17,17 @@ test('player sets temp HP and admin sees it, base HP unaffected', async ({ brows
     await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
-    await joinAsPlayer(playerPg, code, { name: 'Warlock', hp: 15, maxHp: 30 })
+    // Le join n'a qu'un seul champ HP (le joueur rejoint toujours à pleins PV) — on inflige
+    // des dégâts après coup pour amener la base à 15/30 avant de tester les PV temporaires.
+    await joinAsPlayer(playerPg, code, { name: 'Warlock', hp: 30 })
 
     const playerId = await adminPage.getFirstPlayerId()
 
     const playerPage = new PlayerPage(playerPg)
+    await expect(playerPage.getHpFraction()).toContainText('30', { timeout: 8_000 })
+    await playerPage.adjustHp(-15)
+    await expect(adminPage.page.getByTestId(`player-hp-${playerId}`)).toContainText('15', { timeout: 8_000 })
+
     await playerPage.setTempHp(5)
 
     await expect(adminPage.page.getByTestId(`player-temp-hp-${playerId}`)).toContainText('5', { timeout: 8_000 })
@@ -47,7 +53,7 @@ test('damage (negative delta) is absorbed by temp HP first', async ({ browser, a
     await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
-    await joinAsPlayer(playerPg, code, { name: 'Cleric', hp: 20, maxHp: 20 })
+    await joinAsPlayer(playerPg, code, { name: 'Cleric', hp: 20 })
 
     const playerId = await adminPage.getFirstPlayerId()
 
@@ -82,11 +88,17 @@ test('healing (positive delta) never touches temp HP and is capped at max HP', a
     await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
-    await joinAsPlayer(playerPg, code, { name: 'Ranger', hp: 15, maxHp: 20 })
+    // Le join n'a qu'un seul champ HP (le joueur rejoint toujours à pleins PV) — on inflige
+    // des dégâts après coup pour amener la base à 15/20 avant de tester le plafonnement du soin.
+    await joinAsPlayer(playerPg, code, { name: 'Ranger', hp: 20 })
 
     const playerId = await adminPage.getFirstPlayerId()
 
     const playerPage = new PlayerPage(playerPg)
+    await expect(playerPage.getHpFraction()).toContainText('20', { timeout: 8_000 })
+    await playerPage.adjustHp(-5)
+    await expect(adminPage.page.getByTestId(`player-hp-${playerId}`)).toContainText('15', { timeout: 8_000 })
+
     await playerPage.setTempHp(4)
     await expect(adminPage.page.getByTestId(`player-temp-hp-${playerId}`)).toContainText('4', { timeout: 8_000 })
 
