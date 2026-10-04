@@ -9,19 +9,23 @@ const router = express.Router()
 // Limite commune anti-DoS bcrypt (CPU-intensif sur de grandes entrées) — appliquée à
 // tout champ mot de passe comparé/hashé, comme dans /login.
 const MAX_PASSWORD_LENGTH = 128
+const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing', 10)
 
 router.post('/login', async (req, res) => {
   const { username, password } = req.body
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password required.' })
   }
-  if (typeof password !== 'string' || password.length > MAX_PASSWORD_LENGTH) {
+  if (typeof username !== 'string' || typeof password !== 'string' || password.length > MAX_PASSWORD_LENGTH) {
     return res.status(400).json({ error: 'Invalid credentials.' })
   }
   try {
     const result = await pool.query('SELECT * FROM admins WHERE username = $1', [username])
     const admin = result.rows[0]
     if (!admin) {
+      // Compare factice : même coût CPU qu'un utilisateur existant, pour ne pas révéler
+      // par le temps de réponse quels comptes existent.
+      await bcrypt.compare(password, DUMMY_HASH)
       return res.status(401).json({ error: 'Invalid credentials.' })
     }
     const valid = await bcrypt.compare(password, admin.password_hash)

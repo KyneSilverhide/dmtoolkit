@@ -75,6 +75,9 @@ router.get('/serve/:imageId', async (req, res) => {
     if (injected === html) injected = script + '\n' + html
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    // Origine opaque : le script du puzzle tourne sans accès à l'origine de l'API.
+    res.setHeader('Content-Security-Policy', 'sandbox allow-scripts')
+    res.setHeader('X-Content-Type-Options', 'nosniff')
     res.send(injected)
   } catch (err) {
     console.error('[puzzles] serve error:', err)

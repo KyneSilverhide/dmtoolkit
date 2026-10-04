@@ -72,7 +72,13 @@ app.use(cors({
   credentials: true,
 }))
 app.use(express.json())
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
+// Les fichiers uploadés ne doivent jamais s'exécuter avec l'origine de l'API : un .html
+// uploadé (puzzle) est servi dans un sandbox CSP (origine opaque) et sans sniffing de type.
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('Content-Security-Policy', 'sandbox allow-scripts')
+  next()
+}, express.static(path.join(__dirname, '../uploads')))
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

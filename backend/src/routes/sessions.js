@@ -8,6 +8,16 @@ const { authenticateToken } = require('../middleware/auth')
 
 const router = express.Router()
 
+const UPLOADS_DIR = path.join(__dirname, '../../uploads')
+
+// Chemin disque d'une URL `/uploads/...` stockée en base, ou null si le résultat sortirait
+// de UPLOADS_DIR (ex. avatar_url forgé avec `../`) — ne jamais joindre/supprimer sans passer par ici.
+function uploadUrlToPath(url) {
+  if (typeof url !== 'string') return null
+  const resolved = path.resolve(UPLOADS_DIR, url.replace(/^\/uploads\//, ''))
+  return resolved.startsWith(UPLOADS_DIR + path.sep) ? resolved : null
+}
+
 
 async function generateUniqueCode(pool) {
   for (let i = 0; i < 20; i++) {
@@ -241,8 +251,8 @@ router.patch('/:id/close', authenticateToken, async (req, res) => {
       const imagesRes = await pool.query('SELECT url, thumbnail_url FROM session_images WHERE session_id = $1', [req.params.id])
       const unlinkAll = []
       for (const img of imagesRes.rows) {
-        if (img.url) unlinkAll.push(path.join(__dirname, '../../uploads', img.url.replace(/^\/uploads\//, '')))
-        if (img.thumbnail_url) unlinkAll.push(path.join(__dirname, '../../uploads', img.thumbnail_url.replace(/^\/uploads\//, '')))
+        { const p = uploadUrlToPath(img.url); if (p) unlinkAll.push(p) }
+        { const p = uploadUrlToPath(img.thumbnail_url); if (p) unlinkAll.push(p) }
       }
       await Promise.allSettled(unlinkAll.map(p => fs.unlink(p)))
       await pool.query('DELETE FROM session_images WHERE session_id = $1', [req.params.id])
@@ -305,8 +315,8 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         [sessionId]
     )
     for (const row of imgRows.rows) {
-      if (row.url) filesToDelete.push(path.join(__dirname, '../../uploads', row.url.replace(/^\/uploads\//, '')))
-      if (row.thumbnail_url) filesToDelete.push(path.join(__dirname, '../../uploads', row.thumbnail_url.replace(/^\/uploads\//, '')))
+      { const p = uploadUrlToPath(row.url); if (p) filesToDelete.push(p) }
+      { const p = uploadUrlToPath(row.thumbnail_url); if (p) filesToDelete.push(p) }
     }
 
     // Collecter les avatars joueurs
@@ -315,7 +325,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         [sessionId]
     )
     for (const row of avatarRows.rows) {
-      if (row.avatar_url) filesToDelete.push(path.join(__dirname, '../../uploads', row.avatar_url.replace(/^\/uploads\//, '')))
+      { const p = uploadUrlToPath(row.avatar_url); if (p) filesToDelete.push(p) }
     }
 
     // 1) Nullifier current_vote_id (FK vers votes)
@@ -566,8 +576,8 @@ router.post('/:id/images/:imageId/detect-grid', authenticateToken, async (req, r
       return res.status(400).json({ error: 'La détection de grille ne s\'applique qu\'aux images.' })
     }
 
-    const path = require('path')
-    const filePath = path.join(__dirname, '../../uploads', imgRes.rows[0].url.replace('/uploads/', ''))
+    const filePath = uploadUrlToPath(imgRes.rows[0].url)
+    if (!filePath) return res.status(400).json({ error: 'Invalid image path.' })
 
     const { detectGridConfig } = require('../gridDetection')
     let grid
@@ -614,13 +624,11 @@ router.delete('/:id/images/:imageId', authenticateToken, async (req, res) => {
     await pool.query('DELETE FROM session_images WHERE id = $1', [req.params.imageId])
 
     // Supprimer le fichier et sa thumbnail sur le disque
-    const fs = require('fs').promises
-    const path = require('path')
     const { url, thumbnail_url } = imgRes.rows[0]
-    await fs.unlink(path.join(__dirname, '../../uploads', url.replace('/uploads/', ''))).catch(() => {})
-    if (thumbnail_url) {
-      await fs.unlink(path.join(__dirname, '../../uploads', thumbnail_url.replace('/uploads/', ''))).catch(() => {})
-    }
+    const urlPath = uploadUrlToPath(url)
+    if (urlPath) await fs.unlink(urlPath).catch(() => {})
+    const thumbPath = thumbnail_url ? uploadUrlToPath(thumbnail_url) : null
+    if (thumbPath) await fs.unlink(thumbPath).catch(() => {})
 
     res.json({ success: true })
   } catch (err) {

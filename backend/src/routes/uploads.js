@@ -4,6 +4,7 @@ const path = require('path')
 const fs = require('fs')
 const { OpenAI } = require('openai')
 const sharp = require('sharp')
+const { rateLimit } = require('express-rate-limit')
 const { authenticateToken } = require('../middleware/auth')
 const pool = require('../db')
 const { detectGridConfig } = require('../gridDetection')
@@ -101,20 +102,18 @@ const adminStorage = multer.diskStorage({
 const avatarStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const sessionCode = req.body.sessionCode
-    if (!sessionCode) {
-      const dir = path.join(UPLOADS_DIR, 'public')
-      return fs.mkdir(dir, { recursive: true }, err => cb(err, dir))
+    if (!sessionCode || typeof sessionCode !== 'string') {
+      return cb(new Error('Code de session requis.'))
     }
-    pool.query('SELECT created_by FROM sessions WHERE code = $1', [sessionCode])
+    // Endpoint public : seule une session active existante peut recevoir un fichier.
+    pool.query("SELECT created_by FROM sessions WHERE code = $1 AND status = 'active'", [sessionCode])
       .then(result => {
         const adminId = result.rows[0]?.created_by
-        const dir = path.join(UPLOADS_DIR, adminId ? String(adminId) : 'public')
+        if (!adminId) return cb(new Error('Session introuvable ou fermée.'))
+        const dir = path.join(UPLOADS_DIR, String(adminId))
         fs.mkdir(dir, { recursive: true }, err => cb(err, dir))
       })
-      .catch(() => {
-        const dir = path.join(UPLOADS_DIR, 'public')
-        fs.mkdir(dir, { recursive: true }, err => cb(err, dir))
-      })
+      .catch(err => cb(err))
   },
   filename: makeFilename,
 })
@@ -281,7 +280,7 @@ router.post('/',
     if (sessionId) {
       try {
         const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
           [sessionId, req.admin.id]
         )
         if (sessionCheck.rows[0]) {
@@ -317,6 +316,10 @@ router.post('/',
                grid.gridType, grid.gridCols, grid.gridRows, grid.gridHexOrientation, grid.gridOffsetX, grid.gridOffsetY, grid.gridCellW, grid.gridCellH]
             )
           }
+        } else {
+          // Session inexistante ou non accessible : ne pas laisser de fichier orphelin ni répondre 200.
+          removeFiles(uploadedFiles)
+          return res.status(403).json({ error: 'Session introuvable.' })
         }
       } catch (err) { console.error(err) }
     }
@@ -342,7 +345,7 @@ router.post('/audio',
     if (sessionId) {
       try {
         const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
           [sessionId, req.admin.id]
         )
         if (sessionCheck.rows[0]) {
@@ -365,6 +368,10 @@ router.post('/audio',
               [sessionId, urls[i], uploadedFiles[i].originalname, 'audio', category, uploadedFiles[i].size]
             )
           }
+        } else {
+          // Session inexistante ou non accessible : ne pas laisser de fichier orphelin ni répondre 200.
+          removeFiles(uploadedFiles)
+          return res.status(403).json({ error: 'Session introuvable.' })
         }
       } catch (err) { console.error(err) }
     }
@@ -390,7 +397,7 @@ router.post('/video',
     if (sessionId) {
       try {
         const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
           [sessionId, req.admin.id]
         )
         if (sessionCheck.rows[0]) {
@@ -411,6 +418,10 @@ router.post('/video',
               [sessionId, urls[i], uploadedFiles[i].originalname, uploadedFiles[i].size]
             )
           }
+        } else {
+          // Session inexistante ou non accessible : ne pas laisser de fichier orphelin ni répondre 200.
+          removeFiles(uploadedFiles)
+          return res.status(403).json({ error: 'Session introuvable.' })
         }
       } catch (err) { console.error(err) }
     }
@@ -436,7 +447,7 @@ router.post('/audio/reclassify', authenticateToken, async (req, res) => {
 
   try {
     const sessionCheck = await pool.query(
-      'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+      'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
       [sessionId, req.admin.id]
     )
     if (!sessionCheck.rows[0]) return res.status(403).json({ error: 'Session introuvable.' })
@@ -469,7 +480,20 @@ router.post('/audio/reclassify', authenticateToken, async (req, res) => {
 })
 
 // Public endpoint for player avatar uploads (no admin auth required)
-router.post('/avatar', avatarUpload.single('file'), (req, res) => {
+// Anti-abus de l'endpoint public (disque) : plafond par IP.
+const avatarLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: { error: 'Too many uploads, please try again later.' },
+})
+
+router.post('/avatar', process.env.NODE_ENV === 'test' ? (req, res, next) => next() : avatarLimiter, (req, res, next) => {
+  avatarUpload.single('file')(req, res, err => {
+    if (!err) return next()
+    if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'Fichier trop volumineux (2 Mo max).' })
+    return res.status(400).json({ error: err.message || 'Upload invalide.' })
+  })
+}, (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded.' })
   res.json({ url: fileToUrl(req.file) })
 })
@@ -493,7 +517,7 @@ router.post('/puzzle',
     if (sessionId) {
       try {
         const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND created_by = $2',
+          'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
           [sessionId, req.admin.id]
         )
         if (sessionCheck.rows[0]) {
@@ -502,6 +526,10 @@ router.post('/puzzle',
             [sessionId, url, req.file.originalname, req.file.size]
           )
           return res.json({ url, id: rows[0].id })
+        } else {
+          // Session inexistante ou non accessible : ne pas laisser de fichier orphelin ni répondre 200.
+          removeFiles([req.file])
+          return res.status(403).json({ error: 'Session introuvable.' })
         }
       } catch (err) { console.error(err) }
     }

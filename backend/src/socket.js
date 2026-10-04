@@ -423,6 +423,54 @@ async function assertSessionAccess(sessionId, adminId) {
 }
 
 /**
+ * Décrémente atomiquement le stock d'un objet de marchand (-1 = illimité). Renvoie `false`
+ * si le stock restant est insuffisant — le check-puis-update séparé permettait de vendre
+ * deux fois le dernier exemplaire (le GREATEST(0, …) masquait le dépassement).
+ * @param {number} itemId
+ * @param {number} quantity
+ * @returns {Promise<boolean>}
+ */
+async function takeStock(itemId, quantity) {
+  const r = await pool.query(
+    'UPDATE merchant_items SET stock = CASE WHEN stock = -1 THEN -1 ELSE stock - $1 END WHERE id = $2 AND (stock = -1 OR stock >= $1) RETURNING id',
+    [quantity, itemId]
+  )
+  return r.rowCount > 0
+}
+
+/**
+ * Variante tolérante pour les handlers socket admin : `false` si le socket n'est pas un
+ * admin, si l'id est invalide ou si la requête échoue — jamais d'exception. À appeler AVANT
+ * tout broadcast : un `UPDATE ... session_editable()` qui ne touche aucune ligne n'empêche
+ * pas, seul, l'émission vers les rooms d'une session qui n'est pas la sienne.
+ * @param {import('socket.io').Socket} socket
+ * @param {number|string} sessionId
+ * @returns {Promise<boolean>}
+ */
+async function adminCanAccess(socket, sessionId) {
+  if (!socket.admin) return false
+  const id = Number(sessionId)
+  if (!Number.isInteger(id) || id <= 0) return false
+  try {
+    return await assertSessionAccess(id, socket.admin.id)
+  } catch (err) {
+    console.error(err)
+    return false
+  }
+}
+
+// Modes TV valides — mirrors les v-if de TvView.vue.
+const TV_MODES = new Set([
+  'lobby', 'combat', 'vote', 'doom', 'tension', 'timescale', 'image', 'video', 'map',
+  'merchant', 'puzzle', 'reputation', 'content', 'dashboard',
+])
+
+// Longueurs maximales des champs texte libres fournis par un joueur à la connexion.
+const MAX_PLAYER_NAME_LENGTH = 100
+const MAX_PLAYER_FIELD_LENGTH = 100
+const AVATAR_URL_RE = /^\/uploads\/[\w-]+\/[\w.-]+$/
+
+/**
  * Marchand actif (si le mode TV est 'merchant') et puzzle actif (si le mode TV est
  * 'puzzle') pour une session — calculé à l'identique par join-session/admin-join/tv-join.
  * @param {object} session - A row from the sessions table
@@ -661,7 +709,7 @@ function setupSocket(io) {
     // ── Player: join ────────────────────────────────────────────────────────
     socket.on('join-session', async ({ code, playerName, ac, hp, maxHp, dndClass, race, subclass, avatarUrl }) => {
       try {
-        const cleanName = sanitizePlayerName(playerName)
+        const cleanName = sanitizePlayerName(playerName).slice(0, MAX_PLAYER_NAME_LENGTH)
         if (!cleanName) {
           socket.emit('error', { message: 'Le nom du personnage ne peut pas être vide.', field: 'playerName' })
           return
@@ -678,10 +726,13 @@ function setupSocket(io) {
         // maxHp is optional: if provided, use it as max_hp for new players.
         // This prevents the bug where refreshing with 35/50 HP creates a player with max_hp=35.
         const maxHpVal = maxHp ? Math.max(1, parseInt(maxHp) || hpVal) : hpVal
-        const classVal = dndClass || null
-        const raceVal = race || null
-        const subclassVal = subclass || null
-        const avatarVal = avatarUrl || null
+        const limitField = (v) => (v ? String(v).slice(0, MAX_PLAYER_FIELD_LENGTH) : null)
+        const classVal = limitField(dndClass)
+        const raceVal = limitField(race)
+        const subclassVal = limitField(subclass)
+        // Seules les URLs produites par /api/uploads sont acceptées : la valeur est plus tard
+        // jointe à un chemin disque (suppression de session), jamais une URL arbitraire.
+        const avatarVal = (typeof avatarUrl === 'string' && AVATAR_URL_RE.test(avatarUrl)) ? avatarUrl : null
 
         const normalizedName = normalizePlayerName(cleanName)
         const existingPlayersRes = await pool.query(
@@ -964,6 +1015,7 @@ function setupSocket(io) {
     // ── Admin: set TV theme (always mirrors admin's own theme) ─────────────
     socket.on('set-tv-theme', async ({ sessionId, theme }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       if (theme !== 'light' && theme !== 'dark') return
       try {
         await pool.query('UPDATE sessions SET tv_theme = $1 WHERE id = $2 AND session_editable(id, $3)', [theme, sessionId, socket.admin.id])
@@ -974,6 +1026,8 @@ function setupSocket(io) {
     // ── Admin: set TV mode ──────────────────────────────────────────────────
     socket.on('set-tv-mode', async ({ sessionId, mode }) => {
       if (!socket.admin) return
+      if (!TV_MODES.has(mode)) return
+      if (!await adminCanAccess(socket, sessionId)) return
       try {
         await pool.query('UPDATE sessions SET tv_mode = $1 WHERE id = $2 AND session_editable(id, $3)', [mode, sessionId, socket.admin.id])
         broadcastToSession(sessionId, 'tv-mode-changed', { mode })
@@ -1381,7 +1435,7 @@ function setupSocket(io) {
         const existing = await pool.query('SELECT id FROM vote_responses WHERE vote_id = $1 AND player_id = $2', [voteId, socket.playerId])
         if (existing.rows[0]) { socket.emit('vote-error', { message: 'Vous avez déjà voté.' }); return }
         // Validate vote exists, is active, and optionIndex is in bounds
-        const voteInfo = await pool.query('SELECT options FROM votes WHERE id = $1 AND status = $2', [voteId, 'active'])
+        const voteInfo = await pool.query('SELECT options FROM votes WHERE id = $1 AND status = $2 AND session_id = $3', [voteId, 'active', socket.sessionId])
         const voteRow = voteInfo.rows[0]
         if (!voteRow) { socket.emit('vote-error', { message: 'Vote inexistant ou terminé.' }); return }
         const voteOptions = typeof voteRow.options === 'string' ? JSON.parse(voteRow.options) : voteRow.options
@@ -1432,6 +1486,7 @@ function setupSocket(io) {
     // ── Admin: show image on TV ─────────────────────────────────────────────
     socket.on('show-image', async ({ sessionId, imageUrl }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       try {
         const imgRow = await pool.query(
           'SELECT tv_label FROM session_images WHERE url = $1 AND session_id = $2 LIMIT 1',
@@ -1449,6 +1504,7 @@ function setupSocket(io) {
     // ── Admin: show video on TV ─────────────────────────────────────────────
     socket.on('show-video', async ({ sessionId, videoUrl }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       try {
         if (!videoUrl || typeof videoUrl !== 'string') return
         await pool.query(
@@ -1540,6 +1596,7 @@ function setupSocket(io) {
     // ── Admin: set lobby background image ─────────────────────────────────
     socket.on('set-lobby-bg', async ({ sessionId, imageUrl }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       try {
         const url = (imageUrl && typeof imageUrl === 'string') ? imageUrl : null
         await pool.query('UPDATE sessions SET lobby_bg_url = $1 WHERE id = $2 AND session_editable(id, $3)', [url, sessionId, socket.admin.id])
@@ -1550,6 +1607,7 @@ function setupSocket(io) {
     // ── Admin: show map on TV ───────────────────────────────────────────────
     socket.on('show-map', async ({ sessionId, imageUrl }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       try {
         if (!imageUrl || typeof imageUrl !== 'string') return
         const defaultViewport = JSON.stringify({ xn: 0, yn: 0, scale: 1 })
@@ -1582,6 +1640,7 @@ function setupSocket(io) {
     // ── Admin: toggle map fog ───────────────────────────────────────────────
     socket.on('map-set-fog', async ({ sessionId, enabled }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       try {
         await pool.query(
           'UPDATE sessions SET map_fog_enabled = $1 WHERE id = $2 AND session_editable(id, $3)',
@@ -1594,6 +1653,7 @@ function setupSocket(io) {
     // ── Admin: update map viewport ──────────────────────────────────────────
     socket.on('map-viewport-update', async ({ sessionId, xn, yn, scale }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       try {
         const safeScale = Math.max(MAP_SCALE_MIN, Math.min(MAP_SCALE_MAX, Number(scale) || 1))
         const safeXn = Number(xn) || 0
@@ -1635,6 +1695,7 @@ function setupSocket(io) {
     // ── Admin: reset fog (re-cover entire map) ──────────────────────────────
     socket.on('map-fog-reset', async ({ sessionId }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       try {
         await pool.query(
           "UPDATE sessions SET map_fog_strokes = '[]', map_fog_cells = '[]' WHERE id = $1 AND session_editable(id, $2)",
@@ -1671,8 +1732,9 @@ function setupSocket(io) {
     })
 
     // ── Admin: sync grid config to TV after save ────────────────────────────
-    socket.on('map-sync-grid', ({ sessionId, gridType, gridCols, gridRows, gridHexOrientation, gridOffsetX, gridOffsetY, gridCellW, gridCellH }) => {
+    socket.on('map-sync-grid', async ({ sessionId, gridType, gridCols, gridRows, gridHexOrientation, gridOffsetX, gridOffsetY, gridCellW, gridCellH }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       const payload = {
         gridType: gridType || 'none',
         gridCols: gridCols || 20,
@@ -1689,6 +1751,7 @@ function setupSocket(io) {
     // ── Admin: reset cell-based fog ─────────────────────────────────────────
     socket.on('map-fog-cells-reset', async ({ sessionId }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       try {
         await pool.query(
           "UPDATE sessions SET map_fog_cells = '[]' WHERE id = $1 AND session_editable(id, $2)",
@@ -2001,7 +2064,10 @@ function setupSocket(io) {
     // ── Admin: show merchant on TV ──────────────────────────────────────────
     socket.on('show-merchant', async ({ sessionId, merchantId }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       try {
+        const ownsMerchant = await pool.query('SELECT 1 FROM merchants WHERE id = $1 AND session_id = $2', [merchantId, sessionId])
+        if (!ownsMerchant.rows[0]) return
         await pool.query(
           'UPDATE sessions SET tv_mode = $1, current_merchant_id = $2 WHERE id = $3 AND session_editable(id, $4)',
           ['merchant', merchantId, sessionId, socket.admin.id]
@@ -2016,7 +2082,10 @@ function setupSocket(io) {
     socket.on('request-purchase', async ({ itemId, quantity }) => {
       if (!socket.playerId || !socket.sessionId) return
       try {
-        const itemRes = await pool.query('SELECT * FROM merchant_items WHERE id = $1', [itemId])
+        const itemRes = await pool.query(
+          'SELECT mi.* FROM merchant_items mi JOIN merchants m ON m.id = mi.merchant_id WHERE mi.id = $1 AND m.session_id = $2',
+          [itemId, socket.sessionId]
+        )
         const item = itemRes.rows[0]
         if (!item) { socket.emit('purchase-error', { message: 'Objet introuvable.' }); return }
         const qty = Math.max(1, parseInt(quantity) || 1)
@@ -2053,7 +2122,10 @@ function setupSocket(io) {
         let totalPrice = 0
         let merchantId = null
         for (const { itemId, quantity } of items) {
-          const itemRes = await pool.query('SELECT * FROM merchant_items WHERE id = $1', [itemId])
+          const itemRes = await pool.query(
+          'SELECT mi.* FROM merchant_items mi JOIN merchants m ON m.id = mi.merchant_id WHERE mi.id = $1 AND m.session_id = $2',
+          [itemId, socket.sessionId]
+        )
           const item = itemRes.rows[0]
           if (!item) continue
           const qty = Math.max(1, parseInt(quantity) || 1)
@@ -2107,11 +2179,9 @@ function setupSocket(io) {
         const playerSocketId = playerSocketRes.rows[0]?.socket_id
 
         if (action === 'accept') {
-          if (req.item_stock !== -1) {
-            await pool.query(
-              'UPDATE merchant_items SET stock = GREATEST(0, stock - $1) WHERE id = $2',
-              [req.quantity, req.item_id]
-            )
+          if (!await takeStock(req.item_id, req.quantity)) {
+            socket.emit('tv-control-error', { message: `Stock insuffisant pour « ${req.item_name} ».` })
+            return
           }
           await pool.query('UPDATE purchase_requests SET status = $1, final_price = $2 WHERE id = $3', ['accepted', req.base_price, requestId])
           const items = [{ item_name: req.item_name, quantity: req.quantity, total_price: req.base_price }]
@@ -2169,11 +2239,18 @@ function setupSocket(io) {
           finalPrices[reqs.length - 1] = Math.max(0, targetTotal - distributed)
           const finalTotal = finalPrices.reduce((sum, p) => sum + p, 0)
 
+          const taken = []
+          for (const req of reqs) {
+            if (await takeStock(req.item_id, req.quantity)) { taken.push(req); continue }
+            // Stock insuffisant : on restitue ce qui a déjà été pris, rien n'est accepté.
+            for (const t of taken) {
+              await pool.query('UPDATE merchant_items SET stock = CASE WHEN stock = -1 THEN -1 ELSE stock + $1 END WHERE id = $2', [t.quantity, t.item_id])
+            }
+            socket.emit('tv-control-error', { message: `Stock insuffisant pour « ${req.item_name} ».` })
+            return
+          }
           for (let i = 0; i < reqs.length; i++) {
             const req = reqs[i]
-            if (req.item_stock !== -1) {
-              await pool.query('UPDATE merchant_items SET stock = GREATEST(0, stock - $1) WHERE id = $2', [req.quantity, req.item_id])
-            }
             await pool.query('UPDATE purchase_requests SET status = $1, final_price = $2 WHERE id = $3', ['accepted', finalPrices[i], req.id])
           }
           const items = reqs.map((r, i) => ({ item_name: r.item_name, quantity: r.quantity, total_price: finalPrices[i] }))
@@ -2200,6 +2277,7 @@ function setupSocket(io) {
     // ── Admin: close merchant ────────────────────────────────────────────────
     socket.on('close-merchant', async ({ sessionId }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       try {
         await pool.query(
           "UPDATE sessions SET tv_mode = 'lobby', current_merchant_id = NULL WHERE id = $1 AND session_editable(id, $2)",
@@ -2252,11 +2330,10 @@ function setupSocket(io) {
         if (!req || !['discount', 'increase'].includes(req.status)) return
 
         if (accept) {
-          if (req.item_stock !== -1) {
-            await pool.query(
-              'UPDATE merchant_items SET stock = GREATEST(0, stock - $1) WHERE id = $2',
-              [req.quantity, req.item_id]
-            )
+          if (!await takeStock(req.item_id, req.quantity)) {
+            await pool.query('UPDATE purchase_requests SET status = $1 WHERE id = $2', ['declined', requestId])
+            socket.emit('purchase-error', { message: 'Stock insuffisant.' })
+            return
           }
           await pool.query('UPDATE purchase_requests SET status = $1 WHERE id = $2', ['accepted', requestId])
           socket.emit('counter-offer-result', { requestId, accepted: true, itemName: req.item_name, finalPrice: req.final_price })
@@ -2290,6 +2367,7 @@ function setupSocket(io) {
     // ── Admin: start free timer ──────────────────────────────────────────────
     socket.on('start-timer', async ({ sessionId, label, durationSeconds }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       try {
         const parsedDuration = parseInt(durationSeconds, 10)
         if (Number.isNaN(parsedDuration)) return
@@ -2308,6 +2386,7 @@ function setupSocket(io) {
     // ── Admin: stop free timer ───────────────────────────────────────────────
     socket.on('stop-timer', async ({ sessionId }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       try {
         await pool.query(
           'UPDATE sessions SET timer_label = NULL, timer_end_at = NULL WHERE id = $1 AND session_editable(id, $2)',
@@ -2385,8 +2464,9 @@ function setupSocket(io) {
     })
 
     // ── Admin: audio control from Obsidian ──────────────────────────────────
-    socket.on('obsidian-play-audio', ({ sessionId, trackId }) => {
+    socket.on('obsidian-play-audio', async ({ sessionId, trackId }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       if (!Number.isInteger(trackId) || trackId <= 0) return
       const adminRoom = io.sockets.adapter.rooms.get(`admin:${sessionId}`)
       const otherAdmins = adminRoom ? [...adminRoom].filter(id => id !== socket.id) : []
@@ -2397,8 +2477,9 @@ function setupSocket(io) {
       io.to(`admin:${sessionId}`).emit('audio-play-requested', { trackId })
     })
 
-    socket.on('obsidian-stop-audio', ({ sessionId, trackId }) => {
+    socket.on('obsidian-stop-audio', async ({ sessionId, trackId }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       if (!Number.isInteger(trackId) || trackId <= 0) return
       const adminRoom = io.sockets.adapter.rooms.get(`admin:${sessionId}`)
       const otherAdmins = adminRoom ? [...adminRoom].filter(id => id !== socket.id) : []
@@ -2409,8 +2490,9 @@ function setupSocket(io) {
       io.to(`admin:${sessionId}`).emit('audio-stop-requested', { trackId })
     })
 
-    socket.on('obsidian-loop-audio', ({ sessionId, trackId, loop }) => {
+    socket.on('obsidian-loop-audio', async ({ sessionId, trackId, loop }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       if (!Number.isInteger(trackId) || trackId <= 0) return
       const adminRoom = io.sockets.adapter.rooms.get(`admin:${sessionId}`)
       const otherAdmins = adminRoom ? [...adminRoom].filter(id => id !== socket.id) : []
@@ -2421,8 +2503,9 @@ function setupSocket(io) {
       io.to(`admin:${sessionId}`).emit('audio-loop-requested', { trackId, loop: !!loop })
     })
 
-    socket.on('obsidian-volume-audio', ({ sessionId, trackId, volume }) => {
+    socket.on('obsidian-volume-audio', async ({ sessionId, trackId, volume }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       if (!Number.isInteger(trackId) || trackId <= 0) return
       const adminRoom = io.sockets.adapter.rooms.get(`admin:${sessionId}`)
       const otherAdmins = adminRoom ? [...adminRoom].filter(id => id !== socket.id) : []
@@ -2437,6 +2520,7 @@ function setupSocket(io) {
     // ── Admin: Obsidian → show image on TV by name ───────────────────────────
     socket.on('obsidian-show-image', async ({ sessionId, imageName }) => {
       if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
       if (!imageName || typeof imageName !== 'string' || !Number.isInteger(sessionId)) return
       try {
         const { rows } = await pool.query(
