@@ -142,9 +142,10 @@ test("l'upload avatar utilise le dossier tenant de la session", async ({ adminTo
   expect(tenantId2).toBe(String(admin2Id))
 })
 
-test("l'upload avatar sans sessionCode va dans le dossier public", async ({}) => {
-  const url = await uploadAvatar()
-  expect(url).toMatch(/^\/uploads\/public\/[^/]+$/)
+// Anciennement accepté (dossier public) : un upload anonyme sans session active est désormais
+// refusé, pour qu'un client non authentifié ne puisse pas remplir le disque.
+test("l'upload avatar sans sessionCode est refusé", async ({}) => {
+  await expect(uploadAvatar()).rejects.toThrow('uploadAvatar failed: 400')
 })
 
 test('supprimer une session efface les fichiers du tenant', async ({ adminToken }) => {
