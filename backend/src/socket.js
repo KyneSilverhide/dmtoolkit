@@ -967,6 +967,11 @@ function setupSocket(io) {
           'SELECT * FROM sessions WHERE id = $1 AND session_editable(id, $2)', [sessionId, socket.admin.id])
         const session = sessionResult.rows[0]
         if (!session) return
+        // Quitter la room de la session précédente, sinon ses events (player-joined, messages…)
+        // continuent d'arriver sur cette socket et polluent la session affichée.
+        if (socket.adminSessionId != null && String(socket.adminSessionId) !== String(sessionId)) {
+          socket.leave(`admin:${socket.adminSessionId}`)
+        }
         socket.join(`admin:${sessionId}`)
         const playersResult = await pool.query(
           `SELECT id, session_id, player_name, socket_id, joined_at, ac, max_hp, current_hp, temp_hp, conditions, is_concentrating, initiative, dnd_class, race, subclass, avatar_url
@@ -2102,6 +2107,7 @@ function setupSocket(io) {
         const requestData = {
           id: request.id, item_id: itemId, item_name: item.name, quantity: qty,
           base_price: request.base_price, player_name: playerName, player_id: socket.playerId,
+          created_at: request.created_at,
         }
         io.to(`admin:${socket.sessionId}`).emit('purchase-request', requestData)
         socket.emit('purchase-requested', { requestId: request.id, itemId, itemName: item.name })
@@ -2121,6 +2127,7 @@ function setupSocket(io) {
         const batchItems = []
         let totalPrice = 0
         let merchantId = null
+        let createdAt = null
         for (const { itemId, quantity } of items) {
           const itemRes = await pool.query(
           'SELECT mi.* FROM merchant_items mi JOIN merchants m ON m.id = mi.merchant_id WHERE mi.id = $1 AND m.session_id = $2',
@@ -2137,6 +2144,7 @@ function setupSocket(io) {
             'INSERT INTO purchase_requests (session_id, merchant_id, item_id, player_id, player_name, quantity, base_price, status, batch_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
             [socket.sessionId, item.merchant_id, itemId, socket.playerId, playerName, qty, linePrice, 'pending', batchId]
           )
+          createdAt = createdAt || pr.rows[0].created_at
           batchItems.push({
             request_id: pr.rows[0].id,
             item_id: itemId,
@@ -2156,6 +2164,7 @@ function setupSocket(io) {
           player_id: socket.playerId,
           items: batchItems,
           total_price: totalPrice,
+          created_at: createdAt,
         }
         io.to(`admin:${socket.sessionId}`).emit('purchase-request', requestData)
         socket.emit('purchase-requested', { batchId, items: batchItems })

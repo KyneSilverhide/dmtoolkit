@@ -2,13 +2,22 @@ const express = require('express')
 const router = express.Router()
 const { OpenAI } = require('openai')
 const { authenticateToken } = require('../middleware/auth')
+const { generateLoot } = require('../loot')
 
-const VALID_TYPES = ['npc_name', 'place_name', 'tavern_name', 'quest_hook', 'npc_description']
+const VALID_TYPES = ['npc_name', 'place_name', 'tavern_name', 'quest_hook', 'npc_description', 'loot']
+// Types résolus localement (sans appel IA, ni GITHUB_TOKEN, ni quota)
+const LOCAL_TYPES = ['loot']
+
+// L'ancien endpoint Azure (models.inference.ai.azure.com) est déprécié : GitHub Models est
+// désormais servi par models.github.ai/inference, avec des identifiants de modèle préfixés
+// par l'éditeur (openai/gpt-4o-mini). Surchargeable pour suivre de futurs changements sans redéploiement.
+const GENERATE_BASE_URL = process.env.GENERATE_BASE_URL || 'https://models.github.ai/inference'
+const GENERATE_MODEL = process.env.GENERATE_MODEL || 'openai/gpt-4o-mini'
 
 // Client instantiated once at module load. Will be null if GITHUB_TOKEN is not set —
 // requests will receive 503 in that case (checked at request time).
 const openaiClient = process.env.GITHUB_TOKEN
-  ? new OpenAI({ baseURL: 'https://models.inference.ai.azure.com', apiKey: process.env.GITHUB_TOKEN })
+  ? new OpenAI({ baseURL: GENERATE_BASE_URL, apiKey: process.env.GITHUB_TOKEN })
   : null
 
 function buildPrompt(type, options = {}) {
@@ -56,6 +65,10 @@ router.post('/', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'Type de génération invalide.' })
   }
 
+  if (LOCAL_TYPES.includes(type)) {
+    return res.json({ result: generateLoot(options).join('\n'), quota: null })
+  }
+
   if (!process.env.GITHUB_TOKEN) {
     return res.status(503).json({ error: 'GITHUB_TOKEN non configuré sur le serveur.' })
   }
@@ -65,7 +78,7 @@ router.post('/', authenticateToken, async (req, res) => {
 
   try {
     const { data, response: rawResponse } = await openaiClient.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: GENERATE_MODEL,
       messages: [
         { role: 'system', content: 'Tu es un assistant créatif pour jeux de rôle D&D 5e. Réponds toujours en français. Sois concis et original.' },
         { role: 'user', content: prompt },
@@ -79,12 +92,15 @@ router.post('/', authenticateToken, async (req, res) => {
 
     res.json({ result, quota })
   } catch (err) {
-    console.error(err)
+    console.error('Generate error:', err.status, err.message, err.error || '')
     if (err.status === 429) {
       const quota = extractQuota(err.headers || null)
       return res.status(429).json({ error: 'Quota GitHub Models épuisé.', quota })
     }
-    res.status(500).json({ error: 'Erreur lors de la génération.' })
+    // Le détail amont (401 token invalide, 404 modèle/endpoint retiré…) est renvoyé tel quel :
+    // un « Erreur lors de la génération » générique rendait la panne de production indiagnosticable.
+    const detail = err.status ? ` (${err.status}${err.message ? ` : ${String(err.message).slice(0, 160)}` : ''})` : ''
+    res.status(502).json({ error: `Erreur lors de la génération${detail}.` })
   }
 })
 

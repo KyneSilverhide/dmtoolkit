@@ -81,6 +81,8 @@ export const sessionStore = reactive({
   },
 
   addPlayer(player) {
+    // Garde-fou : ignorer un joueur d'une autre session que celle affichée.
+    if (player?.session_id != null && this.activeSession && String(player.session_id) !== String(this.activeSession.id)) return
     const idx = this.players.findIndex(p => String(p.id) === String(player.id))
     if (idx === -1) this.players.push(player)
     else this.players[idx] = { ...this.players[idx], ...player }

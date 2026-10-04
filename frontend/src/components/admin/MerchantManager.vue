@@ -54,6 +54,7 @@ function normalizeRequest(data) {
       merchant_id: data.merchant_id,
       items: data.items,
       total_price: data.total_price,
+      created_at: data.created_at,
     }
   }
   return {
@@ -71,6 +72,7 @@ function normalizeRequest(data) {
       total_price: data.base_price,
     }],
     total_price: data.base_price,
+    created_at: data.created_at,
   }
 }
 
@@ -88,6 +90,7 @@ function groupLoadedRequests(rows) {
         merchant_id: row.merchant_id,
         items: [],
         total_price: 0,
+        created_at: row.created_at,
       }
     }
     groups[key].items.push({

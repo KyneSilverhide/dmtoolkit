@@ -56,6 +56,32 @@ export const GENERATOR_TYPES = [
       },
     ],
   },
+  {
+    key: 'loot',
+    label: 'Butin',
+    multiResult: true,
+    local: true, // généré côté serveur sans IA : pas de quota
+    options: [
+      {
+        key: 'scenario',
+        label: 'Source',
+        choices: ['animaux', 'humanoïdes', 'monstre unique', 'trésor unique'],
+        default: 'humanoïdes',
+      },
+      {
+        key: 'palier',
+        label: 'Niveau des PJ',
+        choices: ['1-4', '5-10', '11-16', '17-20'],
+        default: '1-4',
+      },
+      {
+        key: 'nombre',
+        label: 'Nombre de créatures',
+        choices: ['1', '2-4', '5-10'],
+        default: '2-4',
+      },
+    ],
+  },
 ]
 
 export function getGeneratorType(key) {

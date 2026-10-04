@@ -118,9 +118,25 @@ function formatInboxTime(dateStr) {
     : `${d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} ${time}`
 }
 
+const CONTENT_TYPE_LABELS = {
+  spell: 'Sort', item: 'Objet', race: 'Race', background: 'Origine',
+  ability: 'Aptitude', service: 'Service', condition: 'État',
+}
+
+// Fiche envoyée : `content` est un JSON { contentType, item } — on affiche type + nom exacts.
+function contentSheetLabel(raw) {
+  try {
+    const { contentType, item } = JSON.parse(raw)
+    const type = contentType === 'item' && item?.source_category === 'magic'
+      ? 'Objet magique'
+      : (CONTENT_TYPE_LABELS[contentType] || 'Fiche')
+    return item?.name ? `${type} : ${item.name}` : type
+  } catch { return 'Fiche' }
+}
+
 function entryPreview(m) {
   if (m.type === 'image') return '🖼 Image'
-  if (m.type === 'content') return '📜 Fiche envoyée'
+  if (m.type === 'content') return `📜 ${contentSheetLabel(m.content)}`
   return m.content
 }
 

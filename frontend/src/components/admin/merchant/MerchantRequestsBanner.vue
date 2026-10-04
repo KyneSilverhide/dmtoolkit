@@ -6,6 +6,12 @@ defineProps({
 })
 
 const emit = defineEmits(['respond'])
+
+function formatRequestTime(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return `${d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })} à ${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+}
 </script>
 
 <template>
@@ -14,6 +20,7 @@ const emit = defineEmits(['respond'])
     <div v-for="req in requests" :key="req._key" class="request-row">
       <div class="request-info">
         <strong class="request-player">{{ req.player_name }}</strong> souhaite acheter :
+        <time v-if="req.created_at" class="request-time" :datetime="new Date(req.created_at).toISOString()">{{ formatRequestTime(req.created_at) }}</time>
         <ul class="request-items-list">
           <li v-for="item in req.items" :key="item.request_id">
             {{ item.item_name }} × {{ item.quantity }}
@@ -62,6 +69,11 @@ const emit = defineEmits(['respond'])
   flex: 1;
 }
 .request-player { color: var(--color-success); }
+.request-time {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--color-text-dim);
+}
 .request-items-list {
   margin: var(--space-1) 0 var(--space-1) var(--space-4);
   padding: 0;
