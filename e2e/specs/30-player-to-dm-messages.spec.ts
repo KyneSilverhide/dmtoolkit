@@ -108,6 +108,8 @@ test('unread badge shows on the thread chip and clears once the thread is read',
 })
 
 test('conversation persists across an admin reload and the DM can reply from the thread', async ({ browser, adminToken }) => {
+  // Plusieurs contextes + rechargement : ~15 s en local, au-delà de 25 s sur le runner CI.
+  test.setTimeout(60_000)
   const code = await createSession(adminToken)
   const adminCtx = await browser.newContext()
   const playerCtx = await browser.newContext()

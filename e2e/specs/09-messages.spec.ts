@@ -66,6 +66,8 @@ test('unread messages badge increments', async ({ browser, adminToken }) => {
 })
 
 test('message targeted to specific player received only by them', async ({ browser, adminToken }) => {
+  // Plusieurs contextes + rechargement : ~15 s en local, au-delà de 25 s sur le runner CI.
+  test.setTimeout(60_000)
   const token = adminToken
   const code = await createSession(token)
 
