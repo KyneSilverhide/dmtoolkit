@@ -32,3 +32,6 @@ __pycache__/
 /e2e/test-results/
 # Added by code-review-graph
 .code-review-graph/
+.env
+!.env.example
+!.env.production
