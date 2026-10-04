@@ -37,55 +37,50 @@ test('player can send a secret message to the DM', async ({ browser, adminToken 
   }
 })
 
-test('DM receives player message in the inbox', async ({ browser, adminToken }) => {
-  const token = adminToken
-  const code = await createSession(token)
-
+test('DM sees a player message in that player\'s conversation thread', async ({ browser, adminToken }) => {
+  const code = await createSession(adminToken)
   const adminCtx = await browser.newContext()
   const playerCtx = await browser.newContext()
 
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
-    await adminPage.login(token)
+    await adminPage.login(adminToken)
     await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Ranger', hp: 42 })
     await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
-    // Admin opens the message tool first so socket listener is registered
-    await adminPage.switchTab('message')
-    const inboxToggle = adminPage.page.locator('.inbox-toggle')
-    await expect(inboxToggle).toBeVisible({ timeout: 6_000 })
-
-    // Player sends secret message
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('messages')
-    await playerPg.locator('.compose-textarea').fill('Besoin d\'aide ici')
+    await playerPg.locator('.compose-textarea').fill("Besoin d'aide ici")
     await playerPg.locator('.compose-send-btn').click()
 
-    // Admin opens inbox — message should arrive via socket
-    await inboxToggle.click()
+    // The player sees their own message in their thread
+    await expect(playerPg.getByTestId('own-message').filter({ hasText: "Besoin d'aide ici" })).toBeVisible({ timeout: 6_000 })
 
-    // Inbox should show the player message
-    await expect(adminPage.page.locator('.inbox-entry .inbox-entry-content').filter({ hasText: "Besoin d'aide ici" })).toBeVisible({ timeout: 8_000 })
-    await expect(adminPage.page.locator('.inbox-entry .inbox-entry-name').filter({ hasText: 'Ranger' })).toBeVisible({ timeout: 5_000 })
+    // The DM never opened the Messages tab: the big persistent notification shows up anyway
+    const toast = adminPage.page.getByTestId('player-message-toast')
+    await expect(toast).toBeVisible({ timeout: 8_000 })
+    await expect(toast).toContainText('Ranger')
+
+    // Clicking it opens that player's thread
+    await adminPage.page.getByTestId('player-message-toast-open').click()
+    await expect(adminPage.page.getByTestId('thread-message').filter({ hasText: "Besoin d'aide ici" })).toBeVisible({ timeout: 6_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
   }
 })
 
-test('unread badge appears on admin inbox when player sends a message', async ({ browser, adminToken }) => {
-  const token = adminToken
-  const code = await createSession(token)
-
+test('unread badge shows on the thread chip and clears once the thread is read', async ({ browser, adminToken }) => {
+  const code = await createSession(adminToken)
   const adminCtx = await browser.newContext()
   const playerCtx = await browser.newContext()
 
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
-    await adminPage.login(token)
+    await adminPage.login(adminToken)
     await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
@@ -93,67 +88,63 @@ test('unread badge appears on admin inbox when player sends a message', async ({
     await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
     await adminPage.switchTab('message')
+    await expect(adminPage.page.getByTestId('thread-unread-badge')).toHaveCount(0)
 
-    // Inbox starts with no badge
-    await expect(adminPage.page.locator('.inbox-badge')).not.toBeVisible()
-
-    // Player sends a message
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('messages')
     await playerPg.locator('.compose-textarea').fill('Message non lu')
     await playerPg.locator('.compose-send-btn').click()
 
-    // Admin should now see the unread badge
-    await expect(adminPage.page.locator('.inbox-badge')).toBeVisible({ timeout: 8_000 })
+    // Another thread is selected ("Tous"): the Druid chip is flagged and the big card appears
+    await expect(adminPage.page.getByTestId('thread-unread-badge')).toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.getByTestId('player-message-toast')).toBeVisible()
+
+    await adminPage.page.locator('[data-testid^="thread-chip-"]', { hasText: 'Druid' }).click()
+    await expect(adminPage.page.getByTestId('thread-unread-badge')).toHaveCount(0, { timeout: 5_000 })
   } finally {
     await adminCtx.close()
     await playerCtx.close()
   }
 })
 
-test('admin can reply to a player message via inbox reply button', async ({ browser, adminToken }) => {
-  const token = adminToken
-  const code = await createSession(token)
-
+test('conversation persists across an admin reload and the DM can reply from the thread', async ({ browser, adminToken }) => {
+  const code = await createSession(adminToken)
   const adminCtx = await browser.newContext()
   const playerCtx = await browser.newContext()
 
   try {
     const adminPage = new AdminPage(await adminCtx.newPage())
-    await adminPage.login(token)
+    await adminPage.login(adminToken)
     await adminPage.selectSession(code)
 
     const playerPg = await playerCtx.newPage()
     await joinAsPlayer(playerPg, code, { name: 'Paladin', hp: 60 })
     await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
 
-    // Admin opens message tool first to register socket listener
-    await adminPage.switchTab('message')
-    await expect(adminPage.page.locator('.inbox-toggle')).toBeVisible({ timeout: 6_000 })
-
-    // Player sends a message
     const playerPage = new PlayerPage(playerPg)
     await playerPage.switchTab('messages')
     await playerPg.locator('.compose-textarea').fill('Ai-je bien agi ?')
     await playerPg.locator('.compose-send-btn').click()
+    await expect(playerPg.getByTestId('own-message')).toBeVisible({ timeout: 6_000 })
 
-    // Admin opens inbox — wait for the entry to arrive via socket
-    await adminPage.page.locator('.inbox-toggle').click()
-    await expect(adminPage.page.locator('.inbox-entry')).toBeVisible({ timeout: 8_000 })
+    // Reload the admin: history comes back from the database
+    await adminPage.page.reload()
+    await adminPage.selectSession(code)
+    await adminPage.switchTab('message')
+    await adminPage.page.locator('[data-testid^="thread-chip-"]', { hasText: 'Paladin' }).click()
+    await expect(adminPage.page.getByTestId('thread-message').filter({ hasText: 'Ai-je bien agi ?' })).toBeVisible({ timeout: 8_000 })
 
-    // Admin clicks "Répondre" button
-    await adminPage.page.locator('.inbox-reply-btn').first().click()
-
-    // The player select dropdown should now target "Paladin"
-    const playerSelect = adminPage.page.locator('.message-tool select.form-select')
-    await expect(playerSelect).not.toHaveValue('all', { timeout: 5_000 })
-
-    // Admin sends the reply
+    // Reply from the selected thread
     await adminPage.page.locator('textarea.form-textarea').fill('Oui, la lumière guide tes pas.')
     await adminPage.page.getByTestId('message-send-btn').click()
-
-    // Player receives the reply
     await expect(playerPg.getByText('Oui, la lumière guide tes pas.')).toBeVisible({ timeout: 8_000 })
+    await expect(adminPage.page.getByTestId('thread-message').filter({ hasText: 'Oui, la lumière guide tes pas.' })).toBeVisible({ timeout: 6_000 })
+
+    // The player reloads: both sides of the exchange are still there
+    await playerPg.reload()
+    await playerPage.switchTab('messages')
+    await expect(playerPg.getByText('Ai-je bien agi ?')).toBeVisible({ timeout: 8_000 })
+    await expect(playerPg.getByText('Oui, la lumière guide tes pas.')).toBeVisible()
   } finally {
     await adminCtx.close()
     await playerCtx.close()

@@ -386,6 +386,11 @@ CREATE TABLE IF NOT EXISTS dashboard_gauges (
 -- TV affichera alors un écran 'tension' sans donnée, cas limite accepté). Les colonnes
 -- tension_* restent en base (jamais supprimées) mais ne sont plus lues ni écrites.
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS fullscreen_gauge_id INTEGER REFERENCES dashboard_gauges(id) ON DELETE SET NULL;
+
+-- Messagerie persistante : non-lu côté MJ pour les messages joueur→MJ (TRUE par défaut = les
+-- lignes existantes ne ressortent pas comme non lues ; le handler d'insertion pose FALSE).
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS read_by_dm BOOLEAN NOT NULL DEFAULT TRUE;
+CREATE INDEX IF NOT EXISTS idx_messages_session_player ON messages (session_id, from_player_id, to_player_id);
 `
 
 async function runMigrations() {

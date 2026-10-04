@@ -353,9 +353,8 @@ async function getActiveVote(sessionId, voteId) {
 /**
  * Derniers messages du MJ adressés à ce joueur (diffusion à tous OU ciblés sur son id),
  * pour rattraper au join/reconnexion un message envoyé pendant la fenêtre où le client n'a
- * pas encore de listener 'new-message' actif (voir CLAUDE.md). Exclut volontairement les
- * messages joueur→MJ (`from_player_id` non nul, table `messages` partagée dans les deux sens) :
- * ce ne sont pas des messages que CE joueur doit recevoir. Les messages "partage d'or"
+ * pas encore de listener 'new-message' actif (voir CLAUDE.md). Inclut aussi les
+ * messages que CE joueur a envoyés au MJ (`fromPlayer: true`), jamais ceux des autres joueurs. Les messages "partage d'or"
  * (`send-gold-split`) ne sont jamais persistés dans `messages` — ils restent live-only, hors
  * périmètre de ce rattrapage.
  * @param {number} sessionId
@@ -363,22 +362,30 @@ async function getActiveVote(sessionId, voteId) {
  * @param {number} [limit=50]
  */
 async function getRecentMessagesForPlayer(sessionId, playerId, limit = 50) {
+  // Fil de ce joueur uniquement : messages MJ→lui (ciblés ou diffusés) + ses propres messages
+  // vers le MJ (`fromPlayer: true`, pour qu'il retrouve sa conversation après un F5). Le filtre
+  // `type <> 'player'` sur la branche diffusion est une ceinture : un message joueur→MJ ne doit
+  // jamais être lu comme une diffusion, même si `from_player_id` venait à être nul.
   const { rows } = await pool.query(
-    `SELECT id, from_name, type, content, voice_style, text_effect, author_color, sent_at
+    `SELECT id, from_name, type, content, voice_style, text_effect, author_color, sent_at, from_player_id
      FROM messages
-     WHERE session_id = $1 AND from_player_id IS NULL AND (to_player_id = $2 OR to_player_id IS NULL)
-     ORDER BY sent_at DESC LIMIT $3`,
+     WHERE session_id = $1 AND (
+       from_player_id = $2
+       OR (type <> 'player' AND from_player_id IS NULL AND (to_player_id = $2 OR to_player_id IS NULL))
+     )
+     ORDER BY sent_at DESC, id DESC LIMIT $3`,
     [sessionId, playerId, limit]
   )
   return rows.reverse().map(r => ({
     id: r.id,
     fromName: r.from_name,
-    type: r.type,
+    type: r.type === 'player' ? 'text' : r.type,
     content: r.content,
     voiceStyle: r.voice_style,
     textEffect: r.text_effect,
     authorColor: r.author_color,
     sentAt: r.sent_at,
+    fromPlayer: r.from_player_id != null,
   }))
 }
 
@@ -625,7 +632,7 @@ function setupSocket(io) {
         await client.query('BEGIN')
         await client.query('DELETE FROM vote_responses WHERE player_id = $1', [socket.playerId])
         await client.query('DELETE FROM purchase_requests WHERE player_id = $1', [socket.playerId])
-        await client.query('UPDATE messages SET to_player_id = NULL WHERE to_player_id = $1', [socket.playerId])
+        await client.query('DELETE FROM messages WHERE to_player_id = $1 OR from_player_id = $1', [socket.playerId])
         await client.query('UPDATE dice_results SET sent_to = NULL WHERE sent_to = $1', [socket.playerId])
         await client.query('DELETE FROM players WHERE id = $1', [socket.playerId])
         await client.query('COMMIT')
@@ -1750,11 +1757,26 @@ function setupSocket(io) {
           [sessionId, fromName, toPlayerId || null, type, content, vStyle, tEffect, aColor])
         const msg = { id: inserted.rows[0].id, fromName, type, content, voiceStyle: vStyle, textEffect: tEffect, authorColor: aColor, sentAt: new Date() }
         if (toPlayerId) {
-          const pr = await pool.query('SELECT socket_id FROM players WHERE id = $1', [toPlayerId])
+          const pr = await pool.query('SELECT socket_id FROM players WHERE id = $1 AND session_id = $2', [toPlayerId, sessionId])
           if (pr.rows[0]?.socket_id) io.to(pr.rows[0].socket_id).emit('new-message', msg)
         } else {
           io.to(`session:${sessionId}`).emit('new-message', msg)
         }
+        // Journalisation côté MJ : le fil de conversation (et les autres onglets/collaborateurs
+        // admin) se base sur ce qui est réellement persisté, pas sur une copie locale optimiste.
+        io.to(`admin:${sessionId}`).emit('dm-message-logged', { ...msg, toPlayerId: toPlayerId || null })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: marquer le fil d'un joueur comme lu ──────────────────────────
+    socket.on('mark-thread-read', async ({ sessionId, playerId }) => {
+      if (!socket.admin) return
+      try {
+        if (!await assertSessionAccess(sessionId, socket.admin.id)) return
+        await pool.query(
+          'UPDATE messages SET read_by_dm = TRUE WHERE session_id = $1 AND from_player_id = $2 AND read_by_dm = FALSE',
+          [sessionId, playerId]
+        )
       } catch (err) { console.error(err) }
     })
 
@@ -1820,6 +1842,7 @@ function setupSocket(io) {
         }
 
         const payload = {
+          playerId: socket.playerId,
           playerName,
           diceType: sides,
           diceCount: count,
@@ -1848,17 +1871,20 @@ function setupSocket(io) {
         const playerName = pr.rows[0]?.player_name || 'Inconnu'
         const trimmed = (content || '').trim().slice(0, 1000)
         if (!trimmed) return
-        await pool.query(
-          'INSERT INTO messages (session_id, from_name, from_player_id, type, content) VALUES ($1, $2, $3, $4, $5)',
+        const inserted = await pool.query(
+          'INSERT INTO messages (session_id, from_name, from_player_id, type, content, read_by_dm) VALUES ($1, $2, $3, $4, $5, FALSE) RETURNING id, sent_at',
           [socket.sessionId, playerName, socket.playerId, 'player', trimmed]
         )
+        const { id, sent_at: sentAt } = inserted.rows[0]
         io.to(`admin:${socket.sessionId}`).emit('player-message', {
+          id,
           playerName,
           playerId: socket.playerId,
           content: trimmed,
-          sentAt: new Date(),
+          sentAt,
         })
-        socket.emit('player-message-sent')
+        // Le joueur reçoit le message tel que persisté pour l'afficher dans son propre fil.
+        socket.emit('player-message-sent', { id, fromName: playerName, type: 'text', content: trimmed, sentAt, fromPlayer: true })
       } catch (err) { console.error(err) }
     })
 
@@ -2464,7 +2490,7 @@ function setupSocket(io) {
           await client.query('BEGIN')
           await client.query('DELETE FROM vote_responses WHERE player_id = $1', [playerId])
           await client.query('DELETE FROM purchase_requests WHERE player_id = $1', [playerId])
-          await client.query('UPDATE messages SET to_player_id = NULL WHERE to_player_id = $1', [playerId])
+          await client.query('DELETE FROM messages WHERE to_player_id = $1 OR from_player_id = $1', [playerId])
           await client.query('UPDATE dice_results SET sent_to = NULL WHERE sent_to = $1', [playerId])
           await client.query('DELETE FROM players WHERE id = $1', [playerId])
           await client.query('COMMIT')

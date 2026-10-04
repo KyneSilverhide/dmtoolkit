@@ -23,14 +23,14 @@ const emit = defineEmits([
     <div v-if="messages.length === 0" class="panel empty-panel">
       <p class="empty-icon"><AppIcon icon="lucide:inbox" size="2.5rem" color="var(--color-text-dim)" /></p>
       <p class="empty-text">En attente de messages…</p>
-      <p class="empty-sub">Restez vigilant, aventurier.</p>
+      <p class="empty-sub">Restez vigilant, aventurier. Vous pouvez aussi écrire en secret au MJ ci-dessous.</p>
     </div>
     <div v-else class="messages-list">
       <MessageCard
         v-for="(msg, idx) in messages"
-        :key="idx"
+        :key="msg.id ?? idx"
         :message="msg"
-        :allow-reply="msg.kind === 'message'"
+        :allow-reply="msg.kind === 'message' && !msg.fromPlayer"
         @reply="emit('set-reply-context', msg)"
       />
     </div>

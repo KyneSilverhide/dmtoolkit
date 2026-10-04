@@ -12,13 +12,18 @@ export const sessionStore = reactive({
   // Backfill du join-session (voir CLAUDE.md) : derniers messages MJ→ce joueur, distinct de
   // `messages` ci-dessus (état admin, non lié à ce mécanisme).
   recentMessages: [],
-  // Boîte de réception joueur→MJ (messages + jets cachés) — vit ici plutôt que dans
-  // MessageTool.vue : ce composant n'est instancié qu'à la première visite de l'onglet
-  // Messages (KeepAlive ne pré-monte rien), donc un event reçu avant ce premier montage était
-  // perdu pour de bon. AdminView.vue (toujours monté) écrit ici, MessageTool.vue ne fait que
-  // lire — voir CLAUDE.md.
-  playerInbox: [],
-  unreadPlayerInbox: 0,
+  // Conversations MJ↔joueurs de la session (source de vérité = table `messages`, hydratée par
+  // GET /api/sessions/:id/messages puis tenue à jour par les events socket). Clé = id du joueur
+  // (string), ou 'all' pour les diffusions. Vit ici plutôt que dans MessageTool.vue : ce composant
+  // n'est instancié qu'à la première visite de l'onglet (KeepAlive ne pré-monte rien) —
+  // AdminView.vue (toujours monté) écrit, MessageTool.vue lit. Voir CLAUDE.md.
+  messageThreads: {},
+  // Jets cachés reçus des joueurs : jamais persistés en base, donc live-only (perdus au reload).
+  hiddenRolls: [],
+  // Fil ouvert dans MessageTool (pour ne pas notifier un message du fil qu'on regarde) et fil
+  // demandé depuis l'extérieur (clic sur la notification) — consommé par MessageTool.
+  openThreadKey: null,
+  requestedThreadKey: null,
 
   setActiveSession(session) {
     this.activeSession = session
@@ -27,17 +32,52 @@ export const sessionStore = reactive({
     this.activeMerchant = null
     this.activeVote = null
     this.recentMessages = []
-    this.playerInbox = []
-    this.unreadPlayerInbox = 0
+    this.messageThreads = {}
+    this.hiddenRolls = []
+    this.openThreadKey = null
+    this.requestedThreadKey = null
   },
 
-  addPlayerInboxEntry(entry) {
-    this.playerInbox.push(entry)
-    this.unreadPlayerInbox++
+  threadKeyOf(msg) {
+    const pid = msg.fromPlayerId ?? msg.toPlayerId
+    return pid != null ? String(pid) : 'all'
   },
 
-  markPlayerInboxRead() {
-    this.unreadPlayerInbox = 0
+  setMessageHistory(rows) {
+    const threads = {}
+    for (const m of rows) {
+      const key = this.threadKeyOf(m)
+      ;(threads[key] ||= []).push(m)
+    }
+    this.messageThreads = threads
+  },
+
+  // Ajoute un message à son fil, dédoublonné par id (l'historique REST et les events live
+  // peuvent se chevaucher). Retourne true si le message était nouveau.
+  addThreadMessage(msg) {
+    const key = this.threadKeyOf(msg)
+    const list = this.messageThreads[key] || (this.messageThreads[key] = [])
+    if (msg.id != null && list.some(m => m.id === msg.id)) return false
+    list.push(msg)
+    return true
+  },
+
+  markThreadRead(playerId) {
+    const list = this.messageThreads[String(playerId)]
+    if (!list) return
+    for (const m of list) if (m.unread) m.unread = false
+  },
+
+  threadUnread(key) {
+    return (this.messageThreads[key] || []).filter(m => m.unread).length
+  },
+
+  get unreadPlayerInbox() {
+    return Object.values(this.messageThreads).reduce((n, l) => n + l.filter(m => m.unread).length, 0)
+  },
+
+  addHiddenRoll(entry) {
+    this.hiddenRolls.push(entry)
   },
 
   addPlayer(player) {

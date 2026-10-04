@@ -375,6 +375,43 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   }
 })
 
+// Historique des messages d'une session (les deux sens, diffusions incluses), du plus ancien au
+// plus récent. Le client regroupe en fils par joueur — voir sessionStore.messageThreads.
+router.get('/:id/messages', authenticateToken, async (req, res) => {
+  try {
+    const sessionCheck = await pool.query(
+      'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
+      [req.params.id, req.admin.id]
+    )
+    if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
+    const { rows } = await pool.query(
+      `SELECT * FROM (
+         SELECT id, from_name, from_player_id, to_player_id, type, content, voice_style, text_effect,
+                author_color, sent_at, read_by_dm
+         FROM messages WHERE session_id = $1 ORDER BY sent_at DESC, id DESC LIMIT 1000
+       ) m ORDER BY sent_at ASC, id ASC`,
+      [req.params.id]
+    )
+    res.json(rows.map(r => ({
+      id: r.id,
+      fromName: r.from_name,
+      fromPlayerId: r.from_player_id,
+      toPlayerId: r.to_player_id,
+      type: r.type === 'player' ? 'text' : r.type,
+      fromPlayer: r.from_player_id != null,
+      content: r.content,
+      voiceStyle: r.voice_style,
+      textEffect: r.text_effect,
+      authorColor: r.author_color,
+      sentAt: r.sent_at,
+      unread: r.from_player_id != null && r.read_by_dm === false,
+    })))
+  } catch (err) {
+    console.error('Get messages error:', err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
 router.get('/:id/journal', authenticateToken, async (req, res) => {
   try {
     const sessionCheck = await pool.query(

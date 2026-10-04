@@ -1,5 +1,5 @@
 ﻿<script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted, onActivated, onDeactivated } from 'vue'
 import { sessionStore } from '@/stores/session.js'
 import { authStore } from '@/stores/auth.js'
 import { getSocket } from '@/socket.js'
@@ -33,11 +33,14 @@ const textEffect = ref('none')
 const sending = ref(false)
 const feedback = ref('')
 
-// Boîte de réception (messages + jets cachés) : vit dans sessionStore, pas ici — ce composant
-// n'est instancié qu'à la première visite de cet onglet (KeepAlive ne pré-monte rien), un event
-// reçu avant serait sinon perdu pour de bon. AdminView.vue (toujours monté) écrit dans le store,
-// on ne fait que lire ici. Voir CLAUDE.md.
-const inboxOpen = ref(false)
+// Conversations : l'historique vit dans sessionStore.messageThreads (persisté en base, hydraté
+// et tenu à jour par AdminView.vue, toujours monté) — ce composant n'est instancié qu'à la
+// première visite de l'onglet (KeepAlive ne pré-monte rien), il ne fait que lire. Le fil affiché
+// est piloté par `selectedPlayerId` ('all' = diffusions, sinon l'id d'un joueur). Voir CLAUDE.md.
+const threadPane = ref(null)
+// KeepAlive laisse les watchers d'un composant désactivé tourner : sans ce garde, un message
+// arrivé pendant que le MJ est sur un autre onglet serait marqué lu par erreur.
+const isActive = ref(false)
 
 const imageSource = ref('gallery')   // 'gallery' | 'pc'
 const galleryImages = ref([])
@@ -60,24 +63,84 @@ function handleSendError(data) {
   feedback.value = data?.message || "Erreur lors de l'envoi."
 }
 
-function replyToPlayer(entry) {
-  if (entry.playerId) {
-    const found = sessionStore.players.find(p => p.id === entry.playerId)
-    if (found) selectedPlayerId.value = found.id
-  }
-  messageType.value = 'text'
+const threadKey = computed(() => String(selectedPlayerId.value || 'all'))
+
+const threadChips = computed(() => [
+  { key: 'all', label: 'Tous', unread: 0 },
+  ...sessionStore.players.map(p => ({
+    key: String(p.id),
+    label: p.player_name,
+    unread: sessionStore.threadUnread(String(p.id)),
+    hasHistory: (sessionStore.messageThreads[String(p.id)] || []).length > 0,
+  })),
+])
+
+// Messages du fil + jets cachés de ce joueur (live-only), triés chronologiquement.
+const threadEntries = computed(() => {
+  const msgs = (sessionStore.messageThreads[threadKey.value] || []).map(m => ({ ...m, entryKind: 'message' }))
+  const rolls = threadKey.value === 'all' ? [] : sessionStore.hiddenRolls
+    .filter(r => String(r.playerId) === threadKey.value)
+    .map(r => ({ ...r, entryKind: 'roll', sentAt: r.receivedAt }))
+  return [...msgs, ...rolls].sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt))
+})
+
+function markCurrentThreadRead() {
+  const key = threadKey.value
+  if (!isActive.value || key === 'all' || sessionStore.threadUnread(key) === 0) return
+  sessionStore.markThreadRead(key)
+  getSocket(authStore.token).emit('mark-thread-read', {
+    sessionId: sessionStore.activeSession.id,
+    playerId: parseInt(key),
+  })
 }
 
-function toggleInbox() {
-  inboxOpen.value = !inboxOpen.value
-  if (inboxOpen.value) sessionStore.markPlayerInboxRead()
+function scrollThreadToEnd() {
+  nextTick(() => { if (threadPane.value) threadPane.value.scrollTop = threadPane.value.scrollHeight })
+}
+
+function selectThread(key) {
+  selectedPlayerId.value = key === 'all' ? 'all' : parseInt(key)
+}
+
+function consumeRequestedThread() {
+  const key = sessionStore.requestedThreadKey
+  if (!key) return
+  sessionStore.requestedThreadKey = null
+  selectThread(key)
 }
 
 function formatInboxTime(dateStr) {
   if (!dateStr) return ''
   const d = new Date(dateStr)
-  return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  return d.toDateString() === new Date().toDateString()
+    ? time
+    : `${d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} ${time}`
 }
+
+function entryPreview(m) {
+  if (m.type === 'image') return '🖼 Image'
+  if (m.type === 'content') return '📜 Fiche envoyée'
+  return m.content
+}
+
+watch(threadKey, (key) => {
+  sessionStore.openThreadKey = key
+  markCurrentThreadRead()
+  scrollThreadToEnd()
+}, { immediate: true })
+watch(() => sessionStore.threadUnread(threadKey.value), markCurrentThreadRead)
+watch(() => threadEntries.value.length, scrollThreadToEnd)
+watch(() => sessionStore.requestedThreadKey, consumeRequestedThread)
+
+onActivated(() => {
+  isActive.value = true
+  sessionStore.openThreadKey = threadKey.value
+  consumeRequestedThread()
+  markCurrentThreadRead()
+  scrollThreadToEnd()
+})
+onDeactivated(() => { isActive.value = false })
 
 async function loadGalleryImages() {
   if (!sessionStore.activeSession) return
@@ -183,42 +246,49 @@ async function sendMessage() {
 
 <template>
   <div class="message-tool">
-    <h2 class="section-title">✦ Envoyer un Message</h2>
+    <h2 class="section-title">✦ Messages</h2>
 
-    <!-- ── Player inbox ──────────────────────────────────────────────────── -->
-    <div class="inbox-section">
-      <button class="inbox-toggle" :aria-expanded="inboxOpen" @click="toggleInbox">
-        <span class="inbox-toggle-label">
-          <AppIcon icon="lucide:inbox" size="0.85em" /> Reçus des joueurs
-        </span>
-        <span v-if="sessionStore.unreadPlayerInbox > 0" class="inbox-badge">{{ sessionStore.unreadPlayerInbox }}</span>
-        <AppIcon :icon="inboxOpen ? 'lucide:chevron-up' : 'lucide:chevron-down'" size="0.85em" />
-      </button>
-      <div v-if="inboxOpen" class="inbox-list">
-        <div v-if="sessionStore.playerInbox.length === 0" class="inbox-empty">Aucun message reçu.</div>
-        <div
-          v-for="(entry, idx) in [...sessionStore.playerInbox].reverse()"
-          :key="idx"
-          class="inbox-entry"
-          :class="entry.kind"
+    <!-- ── Conversations ─────────────────────────────────────────────────── -->
+    <div v-if="hasSession" class="threads" data-testid="message-threads">
+      <div class="thread-chips" role="tablist" aria-label="Conversations">
+        <button
+          v-for="chip in threadChips"
+          :key="chip.key"
+          type="button"
+          role="tab"
+          class="thread-chip"
+          :class="{ active: threadKey === chip.key, 'has-unread': chip.unread > 0 }"
+          :aria-selected="threadKey === chip.key"
+          :data-testid="`thread-chip-${chip.key}`"
+          @click="selectThread(chip.key)"
         >
-          <div class="inbox-entry-header">
-            <span class="inbox-entry-name">{{ entry.playerName }}</span>
-            <span class="inbox-entry-time">{{ formatInboxTime(entry.sentAt) }}</span>
+          {{ chip.label }}
+          <span v-if="chip.unread > 0" class="inbox-badge" data-testid="thread-unread-badge">{{ chip.unread }}</span>
+        </button>
+      </div>
+      <div ref="threadPane" class="thread-pane" data-testid="thread-pane">
+        <div v-if="threadEntries.length === 0" class="inbox-empty">
+          {{ threadKey === 'all' ? 'Aucune diffusion envoyée.' : 'Aucun échange — écrivez le premier message ci-dessous.' }}
+        </div>
+        <div
+          v-for="(m, idx) in threadEntries"
+          :key="m.id ?? `r${idx}`"
+          class="thread-msg"
+          :class="[m.entryKind === 'roll' ? 'from-roll' : (m.fromPlayer ? 'from-player' : 'from-dm')]"
+          data-testid="thread-message"
+        >
+          <div class="thread-msg-header">
+            <span class="thread-msg-name">{{ m.entryKind === 'roll' ? m.playerName : m.fromName }}</span>
+            <span class="thread-msg-time">{{ formatInboxTime(m.sentAt) }}</span>
           </div>
-          <template v-if="entry.kind === 'player-msg'">
-            <p class="inbox-entry-content">{{ entry.content }}</p>
-            <button class="inbox-reply-btn" @click="replyToPlayer(entry)">↩ Répondre</button>
-          </template>
-          <template v-else-if="entry.kind === 'player-roll'">
-            <p class="inbox-entry-content dice-roll">
-              <AppIcon icon="lucide:eye-off" size="0.75em" />
-              {{ entry.diceCount }}d{{ entry.diceType }}<template v-if="entry.modifier !== 0">{{ entry.modifier > 0 ? '+' : '' }}{{ entry.modifier }}</template>
-              <template v-if="entry.rollType !== 'normal'"> ({{ entry.rollType === 'advantage' ? 'avantage' : 'désavantage' }})</template>
-              = <strong>{{ entry.total }}</strong>
-            </p>
-            <button class="inbox-reply-btn" @click="replyToPlayer(entry)">↩ Répondre</button>
-          </template>
+          <p v-if="m.entryKind === 'roll'" class="thread-msg-content dice-roll">
+            <AppIcon icon="lucide:eye-off" size="0.75em" />
+            {{ m.diceCount }}d{{ m.diceType }}<template v-if="m.modifier !== 0">{{ m.modifier > 0 ? '+' : '' }}{{ m.modifier }}</template>
+            <template v-if="m.rollType !== 'normal'"> ({{ m.rollType === 'advantage' ? 'avantage' : 'désavantage' }})</template>
+            = <strong>{{ m.total }}</strong>
+          </p>
+          <img v-else-if="m.type === 'image'" :src="imageFullUrl(m.content)" alt="Image envoyée" class="thread-msg-image" />
+          <p v-else class="thread-msg-content">{{ entryPreview(m) }}</p>
         </div>
       </div>
     </div>
@@ -266,7 +336,7 @@ async function sendMessage() {
           <option v-if="hasConnectedPlayers" value="all">Tous les joueurs</option>
           <option v-else value="" disabled>Aucun joueur connecté</option>
           <option v-for="p in sessionStore.players" :key="p.id" :value="p.id">
-            {{ p.player_name }}
+            {{ p.player_name }}{{ sessionStore.threadUnread(String(p.id)) > 0 ? ` (${sessionStore.threadUnread(String(p.id))} non lu)` : '' }}
           </option>
         </select>
       </div>
@@ -590,33 +660,44 @@ async function sendMessage() {
 
 .send-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* ── Inbox ───────────────────────────────────────────────── */
-.inbox-section {
+/* ── Conversations ───────────────────────────────────────── */
+.threads {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   overflow: hidden;
 }
 
-.inbox-toggle {
-  width: 100%;
+.thread-chips {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-3);
   background: var(--color-surface);
-  border: none;
-  color: var(--color-text-dim);
-  font-family: var(--font-heading), sans-serif;
-  font-size: var(--text-xs);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background 0.2s;
+  border-bottom: 1px solid var(--color-border);
 }
 
-.inbox-toggle:hover { background: var(--color-surface-alt); }
-
-.inbox-toggle-label { flex: 1; text-align: left; display: flex; align-items: center; gap: var(--space-1); }
+.thread-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--text-sm);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.thread-chip:hover { border-color: var(--color-gold-dark); color: var(--color-gold-bright); }
+.thread-chip.active {
+  border-color: var(--color-gold-dark);
+  color: var(--color-gold-bright);
+  background: var(--admin-gold-bg, var(--surface-gold-soft));
+}
+.thread-chip.has-unread { border-color: var(--color-gold-bright); }
 
 .inbox-badge {
   background: var(--color-gold-dark);
@@ -629,13 +710,14 @@ async function sendMessage() {
   text-align: center;
 }
 
-.inbox-list {
-  border-top: 1px solid var(--color-border);
-  max-height: 260px;
+.thread-pane {
+  max-height: 320px;
+  min-height: 120px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: var(--space-2);
+  padding: var(--space-3);
 }
 
 .inbox-empty {
@@ -646,26 +728,28 @@ async function sendMessage() {
   text-align: center;
 }
 
-.inbox-entry {
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-border);
+.thread-msg {
+  max-width: 85%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
+.thread-msg.from-dm { align-self: flex-end; border-color: var(--color-gold-dark); }
+.thread-msg.from-player { align-self: flex-start; border-left: 3px solid var(--msg-swatch-arcane); }
+.thread-msg.from-roll { align-self: flex-start; border-left: 3px solid var(--msg-swatch-arcane); opacity: 0.9; }
 
-.inbox-entry:last-child { border-bottom: none; }
-
-.inbox-entry.player-msg { border-left: 3px solid var(--color-gold-dark); }
-.inbox-entry.player-roll { border-left: 3px solid var(--msg-swatch-arcane); }
-
-.inbox-entry-header {
+.thread-msg-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-3);
 }
 
-.inbox-entry-name {
+.thread-msg-name {
   font-family: var(--font-heading), sans-serif;
   font-size: var(--text-xs);
   letter-spacing: 0.1em;
@@ -673,45 +757,33 @@ async function sendMessage() {
   color: var(--color-gold-dark);
 }
 
-.inbox-entry-time {
+.thread-msg-time {
   font-family: var(--font-heading), sans-serif;
   font-size: var(--text-xs);
   color: var(--color-text-dim);
 }
 
-.inbox-entry-content {
+.thread-msg-content {
   font-family: var(--font-body), sans-serif;
   font-size: var(--text-base);
   color: var(--color-parchment);
   line-height: 1.4;
   white-space: pre-wrap;
+  word-break: break-word;
   margin: 0;
 }
 
-.inbox-entry-content.dice-roll {
+.thread-msg-content.dice-roll {
   display: flex;
   align-items: center;
   gap: var(--space-1);
   color: var(--msg-swatch-arcane);
-  font-size: var(--text-base);
 }
 
-.inbox-reply-btn {
-  align-self: flex-start;
-  background: none;
-  border: 1px solid var(--color-border);
-  border-radius: 5px;
-  color: var(--color-text-dim);
-  font-family: var(--font-heading), sans-serif;
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  padding: 0.2rem var(--space-2);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.inbox-reply-btn:hover {
-  border-color: var(--color-gold-dark);
-  color: var(--color-gold-bright);
+.thread-msg-image {
+  max-width: 100%;
+  max-height: 160px;
+  border-radius: 6px;
+  object-fit: contain;
 }
 </style>

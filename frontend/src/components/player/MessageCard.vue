@@ -125,6 +125,14 @@ const contentPayload = computed(() => {
       <ContentSheetView :content-type="contentPayload.contentType" :item="contentPayload.item" variant="compact" />
     </div>
 
+    <div v-else-if="message.fromPlayer" class="text-card mine-card" data-testid="own-message">
+      <div class="card-header">
+        <span class="from-name">Vous → MJ</span>
+        <span class="card-time">{{ formatTime(message.sentAt) }}</span>
+      </div>
+      <p class="message-text">{{ message.content }}</p>
+    </div>
+
     <div v-else class="text-card" :class="'effect-' + (message.textEffect || 'none')"
       :style="{ '--msg-color': message.authorColor || '#d4af37' }">
       <div class="card-header">
@@ -140,6 +148,11 @@ const contentPayload = computed(() => {
 </template>
 
 <style scoped>
+.mine-card {
+  border-right: 3px solid var(--color-gold-dark);
+  background: var(--player-panel-highlight-bg, var(--gradient-panel-soft));
+}
+
 .message-card {
   border-radius: 10px;
   overflow: hidden;

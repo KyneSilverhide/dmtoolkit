@@ -771,7 +771,11 @@ const handleDiceResult = (data) => {
 getSocket().on(NEW_MESSAGE, handleNewMessage)
 getSocket().on(DICE_RESULT, handleDiceResult)
 
-const handlePlayerMessageSent = () => {
+const handlePlayerMessageSent = (msg) => {
+  // Le message tel que persisté par le serveur : le joueur le retrouve dans son propre fil.
+  if (msg?.id != null && !messages.value.some(m => m.id === msg.id)) {
+    messages.value.push({ ...msg, kind: 'message' })
+  }
   playerMessageSending.value = false
   playerMessageSent.value = true
   playerMessageText.value = ''

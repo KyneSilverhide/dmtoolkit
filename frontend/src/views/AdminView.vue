@@ -215,55 +215,74 @@ function resumeToast(id) {
   scheduleToastDismiss(id, 3000)
 }
 
-// ── Player message toasts ────────────────────────────────────────────────
-// Un message joueur→MJ n'était visible que sur l'onglet Messages (MessageTool.vue garde sa
-// propre boîte de réception locale, inchangée) — invisible depuis tout autre onglet, y compris
-// pendant un combat. Ce toast (+ pastille de nav via tabActivity.message ci-dessus) le rend
-// visible immédiatement quel que soit l'onglet actif, sans toucher à MessageTool.vue — deux
-// listeners indépendants sur le même event 'player-message', pas un seul état partagé (voir
-// CLAUDE.md).
+// ── Messages joueur→MJ : notification persistante ───────────────────────
+// Un message joueur — y compris d'un joueur que le MJ n'a jamais contacté — doit être impossible
+// à rater : carte bien visible, qui reste jusqu'à ce que le MJ l'ouvre ou l'ignore (pas d'auto-
+// dismiss), accompagnée d'un son. Une seule carte par joueur (les messages suivants la mettent à
+// jour et incrémentent `count`). Le conteneur <PlayerMessageToasts> est monté en permanence, hors
+// de la chaîne de bascule d'onglets : visible quel que soit l'onglet actif. L'historique, lui,
+// vit dans sessionStore.messageThreads (voir CLAUDE.md).
 const playerMessageToasts = ref([])
 let playerMessageToastId = 0
-const messageToastTimers = new Map()
 const hasUnseenPlayerMessage = ref(false)
+let alertAudioContext = null
 
-function scheduleMessageToastDismiss(id, delay) {
-  const timerId = setTimeout(() => {
-    dismissPlayerMessageToast(id)
-    messageToastTimers.delete(id)
-  }, delay)
-  messageToastTimers.set(id, timerId)
+function playMessageAlertSound() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext
+    if (!Ctx) return
+    if (!alertAudioContext) alertAudioContext = new Ctx()
+    if (alertAudioContext.state === 'suspended') alertAudioContext.resume().catch(() => {})
+    const now = alertAudioContext.currentTime
+    ;[880, 1175].forEach((freq, i) => {
+      const osc = alertAudioContext.createOscillator()
+      const gain = alertAudioContext.createGain()
+      const t = now + i * 0.16
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(freq, t)
+      gain.gain.setValueAtTime(0.0001, t)
+      gain.gain.exponentialRampToValueAtTime(0.1, t + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.3)
+      osc.connect(gain)
+      gain.connect(alertAudioContext.destination)
+      osc.start(t)
+      osc.stop(t + 0.32)
+    })
+  } catch { /* audio indisponible : la carte visuelle suffit */ }
 }
 
 function pushPlayerMessageToast(payload) {
-  const id = ++playerMessageToastId
-  playerMessageToasts.value = [...playerMessageToasts.value, { id, ...payload }]
-  scheduleMessageToastDismiss(id, 8000)
+  const existing = playerMessageToasts.value.find(t => t.playerId === payload.playerId)
+  if (existing) {
+    playerMessageToasts.value = playerMessageToasts.value.map(t =>
+      t === existing ? { ...t, content: payload.content, count: t.count + 1 } : t)
+  } else {
+    playerMessageToasts.value = [...playerMessageToasts.value, {
+      id: ++playerMessageToastId, playerId: payload.playerId, playerName: payload.playerName,
+      content: payload.content, count: 1,
+    }]
+  }
+  playMessageAlertSound()
 }
 
 function dismissPlayerMessageToast(id) {
-  const timerId = messageToastTimers.get(id)
-  if (timerId) clearTimeout(timerId)
   playerMessageToasts.value = playerMessageToasts.value.filter(t => t.id !== id)
-  messageToastTimers.delete(id)
-}
-
-function pauseMessageToast(id) {
-  const timerId = messageToastTimers.get(id)
-  if (timerId) {
-    clearTimeout(timerId)
-    messageToastTimers.delete(id)
-  }
-}
-
-function resumeMessageToast(id) {
-  if (!playerMessageToasts.value.find(t => t.id === id)) return
-  scheduleMessageToastDismiss(id, 3000)
 }
 
 function openPlayerMessageToast(toast) {
   dismissPlayerMessageToast(toast.id)
+  sessionStore.requestedThreadKey = String(toast.playerId)
   goToTab('message')
+}
+
+// Historique persistant des conversations de la session active.
+async function loadMessageHistory(sessionId) {
+  try {
+    const res = await apiFetch(`/api/sessions/${sessionId}/messages`)
+    if (!res.ok || sessionStore.activeSession?.id !== sessionId) return
+    sessionStore.setMessageHistory(await res.json())
+    if (sessionStore.unreadPlayerInbox > 0 && activeTab.value !== 'message') hasUnseenPlayerMessage.value = true
+  } catch (err) { console.error(err) }
 }
 
 // ── Tab / nav definitions ────────────────────────────────────────────────
@@ -557,6 +576,8 @@ onMounted(() => {
   _socket.on('connect', () => {
     if (sessionStore.activeSession?.id) {
       _socket.emit(ADMIN_JOIN, sessionStore.activeSession.id)
+      // Rattrape les messages arrivés pendant une coupure de connexion.
+      loadMessageHistory(sessionStore.activeSession.id)
     }
   })
 
@@ -627,19 +648,32 @@ onMounted(() => {
       pushPlayerRollToast(payload)
       // Seuls les jets cachés vont dans « Reçus des joueurs » (MessageTool.vue) — un jet public
       // est déjà visible ailleurs (TV/journal), inutile de le dupliquer dans cette boîte.
-      if (payload.hidden) sessionStore.addPlayerInboxEntry({ kind: 'player-roll', ...payload })
+      if (payload.hidden) sessionStore.addHiddenRoll({ ...payload, receivedAt: new Date().toISOString() })
     } catch (err) {
       console.error('player-roll-result handler error:', err)
     }
   })
   _socket.on('player-message', (payload) => {
     if (!payload || typeof payload !== 'object') return
-    sessionStore.addPlayerInboxEntry({ kind: 'player-msg', ...payload })
-    // Pas de toast redondant si le MJ regarde déjà l'onglet Messages — MessageTool.vue affiche
-    // le message en direct dans sa propre boîte de réception à cet endroit.
-    if (activeTab.value === 'message') return
+    const threadKey = String(payload.playerId)
+    // Fil actuellement affiché à l'écran : le message y apparaît en direct, donc lu d'emblée —
+    // ni carte ni pastille. Tout autre cas (autre fil, autre onglet) alerte.
+    const watching = activeTab.value === 'message' && sessionStore.openThreadKey === threadKey
+    const isNew = sessionStore.addThreadMessage({
+      id: payload.id, fromName: payload.playerName, fromPlayerId: payload.playerId, toPlayerId: null,
+      type: 'text', fromPlayer: true, content: payload.content, sentAt: payload.sentAt, unread: !watching,
+    })
+    if (!isNew) return
+    if (watching) {
+      _socket.emit('mark-thread-read', { sessionId: sessionStore.activeSession?.id, playerId: payload.playerId })
+      return
+    }
     hasUnseenPlayerMessage.value = true
     pushPlayerMessageToast(payload)
+  })
+  _socket.on('dm-message-logged', (msg) => {
+    if (!msg || typeof msg !== 'object') return
+    sessionStore.addThreadMessage({ ...msg, fromPlayerId: null, fromPlayer: false, unread: false })
   })
   _socket.on(DEMO_RESET, () => { window.location.reload() })
   _socket.on(FACTIONS_UPDATED, (factions) => {
@@ -661,6 +695,7 @@ watch(
     const socket = getSocket(authStore.token)
     socket.emit(ADMIN_JOIN, sessionId)
     socket.emit('set-tv-theme', { sessionId, theme: theme.value })
+    loadMessageHistory(sessionId)
   },
   { immediate: true }
 )
@@ -713,6 +748,7 @@ onUnmounted(() => {
     _socket.off(MAP_STATE)
     _socket.off(PLAYER_ROLL_RESULT)
     _socket.off('player-message')
+    _socket.off('dm-message-logged')
     _socket.off(DEMO_RESET)
     _socket.off(FACTIONS_UPDATED)
     _socket.off(ROUND_UPDATED)
@@ -805,8 +841,6 @@ onUnmounted(() => {
       :toasts="playerMessageToasts"
       @open="openPlayerMessageToast"
       @dismiss="dismissPlayerMessageToast"
-      @pause="pauseMessageToast"
-      @resume="resumeMessageToast"
     />
 
     <CommandPalette
