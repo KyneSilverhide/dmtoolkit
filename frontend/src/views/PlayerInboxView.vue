@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { getSocket, resetSocket } from '../socket.js'
+import { getSocket, peekSocket, resetSocket } from '../socket.js'
 import { sessionStore } from '../stores/session.js'
 // Onglets de contenu (Sorts/Objets/Objets magiques/Races/Classes/Origines/Aptitudes/
 // Services/États) : réutilisent les MÊMES composants que le MJ (prop `player-mode`), pour
@@ -870,6 +870,8 @@ const handlePuzzleResync = (data) => {
 function handlePuzzleIframeMessage(event) {
   if (!event.data || event.data.type !== 'puzzle-click') return
   if (!activePuzzle.value) return
+  // Seul l'iframe du puzzle peut émettre un clic : ignore tout autre émetteur de postMessage.
+  if (!puzzleIframeRef.value?.contentWindow || event.source !== puzzleIframeRef.value.contentWindow) return
   const socket = getSocket()
   socket.emit(PUZZLE_CLICK, { path: event.data.path })
 }
@@ -1034,7 +1036,8 @@ onMounted(async () => {
 
 onUnmounted(() => {
   hasJoinedSession = false
-  const socket = getSocket()
+  // peekSocket : getSocket() recréerait une connexion si handleKicked vient de la réinitialiser.
+  const socket = peekSocket()
   if (socket) {
     if (!isRefreshing && sessionStore.activeSession) socket.emit(LEAVE_SESSION)
     socket.off('connect', handleSocketReconnect)

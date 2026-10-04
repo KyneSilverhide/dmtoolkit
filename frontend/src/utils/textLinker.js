@@ -3,6 +3,7 @@
 // components/RefLink.vue et LinkedText.vue). Matching insensible à la casse, sur mots
 // entiers (bornes = caractère non-lettre), plus longue correspondance en premier pour ne
 // pas couper un nom de sort à cheval sur un autre.
+import DOMPurify from 'dompurify'
 import { RULE_TERMS, CONCEPT_TERMS, CONDITION_TERMS } from './glossary.js'
 
 const LETTER_RE = /[a-zA-ZÀ-ÿ]/
@@ -288,7 +289,17 @@ export function internalizeSpellLinks(html, spellsBySlug = {}) {
 // `internalizeSpells: true` réservé aux objets (jamais aux sorts, qui ne référencent aucun
 // autre sort dans leur description — vérifié sur les 479 entrées de aidedd_spells.json).
 // `spellsBySlug` : voir internalizeSpellLinks() — extrait de description pour la bulle riche.
+//
+// Le HTML final est TOUJOURS passé par DOMPurify : `entry` peut venir d'un message ou d'un
+// `show-content` relayé par le serveur (objet arbitraire envoyé par un admin), pas seulement
+// des JSON statiques — sans nettoyage, un `description_html` forgé exécuterait du script chez
+// les joueurs, sur la TV et chez les co-admins. Les attributs data-* (tooltips, navigation)
+// et class sont conservés par défaut.
 export function renderContentHtml(entry, { internalizeSpells = false, spellsBySlug } = {}) {
+  return DOMPurify.sanitize(buildContentHtml(entry, { internalizeSpells, spellsBySlug }))
+}
+
+function buildContentHtml(entry, { internalizeSpells, spellsBySlug }) {
   let html
   if (entry?.description_html) {
     html = highlightGlossaryHtml(normalizeDescriptionHtml(entry.description_html))

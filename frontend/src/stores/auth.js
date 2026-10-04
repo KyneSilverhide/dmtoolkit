@@ -1,11 +1,18 @@
 import { reactive } from 'vue'
 
-const stored = localStorage.getItem('auth')
 let initial = { token: null, admin: null }
 try {
-  if (stored) initial = JSON.parse(stored)
+  const stored = localStorage.getItem('auth')
+  const parsed = stored ? JSON.parse(stored) : null
+  if (parsed && typeof parsed === 'object') initial = parsed
+  else if (stored) localStorage.removeItem('auth')
 } catch {
-  localStorage.removeItem('auth')
+  // Stockage indisponible (données de site bloquées) ou JSON corrompu : session vide.
+  try { localStorage.removeItem('auth') } catch { /* indisponible */ }
+}
+
+function persist(value) {
+  try { localStorage.setItem('auth', JSON.stringify(value)) } catch { /* indisponible */ }
 }
 
 export const authStore = reactive({
@@ -15,19 +22,19 @@ export const authStore = reactive({
   login(token, admin) {
     this.token = token
     this.admin = admin
-    localStorage.setItem('auth', JSON.stringify({ token, admin }))
+    persist({ token, admin })
   },
 
   // Met à jour l'objet admin en place (ex: must_change_password passé à false après un
   // changement de mot de passe) sans toucher au token.
   updateAdmin(admin) {
     this.admin = { ...this.admin, ...admin }
-    localStorage.setItem('auth', JSON.stringify({ token: this.token, admin: this.admin }))
+    persist({ token: this.token, admin: this.admin })
   },
 
   logout() {
     this.token = null
     this.admin = null
-    localStorage.removeItem('auth')
+    try { localStorage.removeItem('auth') } catch { /* indisponible */ }
   }
 })

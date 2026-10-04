@@ -221,7 +221,7 @@ function onAvatarChange(event) {
 async function uploadAvatar() {
   if (!avatarFile.value) return null
   const formData = new FormData()
-  if (sessionCode.value) formData.append('sessionCode', sessionCode.value)
+  if (sessionCode.value.trim()) formData.append('sessionCode', sessionCode.value.trim())
   formData.append('file', avatarFile.value)
   try {
     const res = await fetch(`${BACKEND_URL}/api/uploads/avatar`, {
@@ -242,7 +242,7 @@ async function joinSession() {
   loading.value = true
 
   try {
-    const res = await fetch(`${BACKEND_URL}/api/sessions/${sessionCode.value.trim()}`)
+    const res = await fetch(`${BACKEND_URL}/api/sessions/${encodeURIComponent(sessionCode.value.trim())}`)
     if (!res.ok) {
       fieldErrors.sessionCode = 'Session introuvable ou fermée.'
       loading.value = false
@@ -325,7 +325,7 @@ async function joinSession() {
     socket.once(ERROR, _pendingErrorHandler)
 
     socket.emit(JOIN_SESSION, {
-      code: sessionCode.value,
+      code: sessionCode.value.trim(),
       playerName: playerName.value,
       ac: ac.value,
       hp: hp.value,
