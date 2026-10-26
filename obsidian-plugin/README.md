@@ -61,6 +61,19 @@ Dans les paramètres du plugin :
 | `DM Toolkit: Connecter` | Établit la connexion Socket.IO |
 | `DM Toolkit: Déconnecter` | Ferme la connexion |
 | `DM Toolkit: Synchroniser les joueurs CF → IT` | Import REST des joueurs courants |
+| `DM Toolkit: Insérer un groupe d'images DM Toolkit (tirage TV au hasard)` | Choisit un groupe d'images de la session et insère un bloc `dmt-image-group` |
+
+## Groupes d'images
+
+Les groupes se créent dans le gestionnaire d'images de DM Toolkit. Dans une note :
+
+````markdown
+```dmt-image-group
+Hex - Plaine
+```
+````
+
+Le bloc s'affiche comme un bouton **🎲 Hex - Plaine** (en Live Preview comme en mode Lecture) : un clic projette sur la TV une image du groupe tirée au hasard, jamais la même deux fois de suite. Le groupe est retrouvé **par son nom** (insensible à la casse) dans la session configurée : le bloc fonctionne donc dans toute session qui a un groupe de ce nom, mais renommer le groupe dans DM Toolkit casse les blocs existants.
 
 ## Architecture technique
 
@@ -82,6 +95,7 @@ DM Toolkit Backend (Node.js + Socket.IO)
 **Envoyés vers DM Toolkit :**
 - `obsidian-sync-initiatives` — `{ sessionId, updates: [{playerName, initiative}] }`
 - `admin-update-hp` — `{ sessionId, playerName, currentHp }`
+- `obsidian-show-image-group` — `{ sessionId, groupName }` (réponse : `obsidian-image-shown` ou `obsidian-image-error`)
 
 ## Limitations connues
 

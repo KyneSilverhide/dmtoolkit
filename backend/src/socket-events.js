@@ -88,6 +88,10 @@ const CLOSE_VOTE = 'close-vote'
 /** Admin displays an image on the TV: { sessionId, imageUrl } */
 const SHOW_IMAGE = 'show-image'
 
+/** Admin displays a random image of an image group on the TV: { sessionId, groupId }.
+ * Never the same image twice in a row; broadcast as a regular 'tv-mode-changed' (mode 'image'). */
+const SHOW_IMAGE_GROUP = 'show-image-group'
+
 /** Admin displays a video on the TV: { sessionId, videoUrl } */
 const SHOW_VIDEO = 'show-video'
 
@@ -349,6 +353,10 @@ const OBSIDIAN_AUDIO_ERROR = 'obsidian-audio-error'
 /** Obsidian requests displaying an image on the TV by name: { sessionId, imageName } */
 const OBSIDIAN_SHOW_IMAGE = 'obsidian-show-image'
 
+/** Obsidian requests a random image of an image group on the TV, by group name (case-insensitive):
+ * { sessionId, groupName }. Answers with 'obsidian-image-shown' or 'obsidian-image-error'. */
+const OBSIDIAN_SHOW_IMAGE_GROUP = 'obsidian-show-image-group'
+
 /** Sent to Obsidian when the requested image is not found in the session: { message } */
 const OBSIDIAN_IMAGE_ERROR = 'obsidian-image-error'
 
@@ -390,6 +398,7 @@ module.exports = {
   CREATE_VOTE,
   CLOSE_VOTE,
   SHOW_IMAGE,
+  SHOW_IMAGE_GROUP,
   SHOW_VIDEO,
   VIDEO_CONTROL,
   SHOW_MAP,
@@ -477,6 +486,7 @@ module.exports = {
   AUDIO_VOLUME_REQUESTED,
   OBSIDIAN_AUDIO_ERROR,
   OBSIDIAN_SHOW_IMAGE,
+  OBSIDIAN_SHOW_IMAGE_GROUP,
   OBSIDIAN_IMAGE_ERROR,
   ERROR,
   TV_CONTROL_ERROR,

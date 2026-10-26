@@ -91,6 +91,9 @@ export const CLOSE_VOTE = 'close-vote'
 /** Admin displays an image on the TV: { sessionId, imageUrl } */
 export const SHOW_IMAGE = 'show-image'
 
+/** Admin displays a random image of an image group on the TV: { sessionId, groupId } */
+export const SHOW_IMAGE_GROUP = 'show-image-group'
+
 /** Admin displays a video on the TV: { sessionId, videoUrl } */
 export const SHOW_VIDEO = 'show-video'
 
@@ -458,6 +461,7 @@ export default {
   CREATE_VOTE,
   CLOSE_VOTE,
   SHOW_IMAGE,
+  SHOW_IMAGE_GROUP,
   SHOW_VIDEO,
   VIDEO_CONTROL,
   SHOW_MAP,

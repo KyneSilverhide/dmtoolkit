@@ -59,6 +59,36 @@ class AudioTrackModal extends FuzzySuggestModal<AudioTrack> {
 	onChooseItem(track: AudioTrack): void { this.onChoose(track); }
 }
 
+interface ImageGroup {
+	id: number;
+	name: string;
+	image_count: number;
+}
+
+class ImageGroupModal extends FuzzySuggestModal<ImageGroup> {
+	private groups: ImageGroup[];
+	private onChoose: (group: ImageGroup) => void;
+
+	constructor(app: import('obsidian').App, groups: ImageGroup[], onChoose: (group: ImageGroup) => void) {
+		super(app);
+		this.groups = groups;
+		this.onChoose = onChoose;
+		this.setPlaceholder('Rechercher un groupe d\'images…');
+	}
+
+	getItems(): ImageGroup[] { return this.groups; }
+
+	getItemText(group: ImageGroup): string {
+		return `${group.name} (${group.image_count} image${group.image_count > 1 ? 's' : ''})`;
+	}
+
+	onChooseItem(group: ImageGroup): void { this.onChoose(group); }
+}
+
+/** Code block language of the image-group macro: its body is the group name (matched
+ * case-insensitively by the backend, so it works in any session that has a group of that name). */
+const IMAGE_GROUP_BLOCK = 'dmt-image-group';
+
 // Shape of a player as returned by DM Toolkit
 interface CFPlayer {
 	id: number;
@@ -151,6 +181,58 @@ export default class DmToolkitSync extends Plugin {
 					new Notice(`DM Toolkit Sync: impossible de charger les pistes — ${err}`);
 				}
 			},
+		});
+
+		this.addCommand({
+			id: 'insert-image-group',
+			name: 'Insérer un groupe d\'images DM Toolkit (tirage TV au hasard)',
+			editorCallback: async (editor) => {
+				const { backendUrl, sessionId } = this.settings;
+				if (!this.jwtToken) {
+					new Notice('DM Toolkit Sync: non connecté. Lance la connexion d\'abord.');
+					return;
+				}
+				if (!sessionId) {
+					new Notice('DM Toolkit Sync: configure l\'ID de session d\'abord.');
+					return;
+				}
+				try {
+					const res = await fetch(
+						`${backendUrl}/api/sessions/${sessionId}/image-groups`,
+						{ headers: { Authorization: `Bearer ${this.jwtToken}` } }
+					);
+					if (!res.ok) throw new Error(`HTTP ${res.status}`);
+					const groups = await res.json() as ImageGroup[];
+					if (!groups.length) {
+						new Notice('DM Toolkit Sync: aucun groupe d\'images dans cette session. Crées-en un dans le gestionnaire d\'images.');
+						return;
+					}
+					new ImageGroupModal(this.app, groups, (group) => {
+						// Un bloc de code doit commencer en début de ligne.
+						const atLineStart = editor.getCursor().ch === 0;
+						editor.replaceSelection(`${atLineStart ? '' : '\n'}\`\`\`${IMAGE_GROUP_BLOCK}\n${group.name}\n\`\`\`\n`);
+					}).open();
+				} catch (err) {
+					new Notice(`DM Toolkit Sync: impossible de charger les groupes d'images — ${err}`);
+				}
+			},
+		});
+
+		// ```dmt-image-group``` → bouton qui projette une image du groupe au hasard sur la TV.
+		// Bloc de code plutôt que lien : rendu aussi en Live Preview, pas seulement en mode Lecture.
+		this.registerMarkdownCodeBlockProcessor(IMAGE_GROUP_BLOCK, (source, el) => {
+			const groupName = source.split('\n').map(l => l.trim()).find(l => l.length > 0) ?? '';
+			const btn = el.createEl('button', {
+				cls: 'dmt-image-group-btn',
+				text: groupName ? `🎲 ${groupName}` : '🎲 Groupe d\'images (nom manquant)',
+				attr: { title: 'Afficher une image de ce groupe au hasard sur la TV' },
+			});
+			btn.style.cssText = 'display:inline-flex;align-items:center;gap:4px;cursor:pointer;';
+			if (!groupName) {
+				btn.disabled = true;
+				return;
+			}
+			btn.addEventListener('click', () => this.showImageGroupOnTV(groupName));
 		});
 
 		this.registerMarkdownPostProcessor((el) => {
@@ -418,6 +500,17 @@ export default class DmToolkitSync extends Plugin {
 		this.socket.emit('obsidian-show-image', {
 			sessionId: this.settings.sessionId,
 			imageName: filename,
+		});
+	}
+
+	private showImageGroupOnTV(groupName: string) {
+		if (!this.socket?.connected || !this.settings.sessionId) {
+			new Notice('DM Toolkit Sync: non connecté. Lance la connexion d\'abord.');
+			return;
+		}
+		this.socket.emit('obsidian-show-image-group', {
+			sessionId: this.settings.sessionId,
+			groupName,
 		});
 	}
 

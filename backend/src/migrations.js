@@ -391,6 +391,20 @@ ALTER TABLE sessions ADD COLUMN IF NOT EXISTS fullscreen_gauge_id INTEGER REFERE
 -- lignes existantes ne ressortent pas comme non lues ; le handler d'insertion pose FALSE).
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS read_by_dm BOOLEAN NOT NULL DEFAULT TRUE;
 CREATE INDEX IF NOT EXISTS idx_messages_session_player ON messages (session_id, from_player_id, to_player_id);
+
+-- Groupes d'images : une image appartient à au plus un groupe (session_images.group_id). Le bouton
+-- « tirage » d'un groupe (app, ou bloc dmt-image-group du plugin Obsidian, qui le désigne par son nom
+-- — d'où l'unicité insensible à la casse par session) projette une de ses images au hasard, jamais
+-- la même deux fois de suite (last_image_id).
+CREATE TABLE IF NOT EXISTS image_groups (
+  id SERIAL PRIMARY KEY,
+  session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+  name VARCHAR(100) NOT NULL,
+  last_image_id INTEGER REFERENCES session_images(id) ON DELETE SET NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_image_groups_session_name ON image_groups (session_id, LOWER(name));
+ALTER TABLE session_images ADD COLUMN IF NOT EXISTS group_id INTEGER REFERENCES image_groups(id) ON DELETE SET NULL;
 `
 
 async function runMigrations() {

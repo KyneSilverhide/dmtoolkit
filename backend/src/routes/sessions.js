@@ -343,8 +343,9 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     // 4) merchants (merchant_items par CASCADE ON DELETE)
     await client.query('DELETE FROM merchants WHERE session_id = $1', [sessionId])
 
-    // 5) session_images
+    // 5) session_images, puis leurs groupes
     await client.query('DELETE FROM session_images WHERE session_id = $1', [sessionId])
+    await client.query('DELETE FROM image_groups WHERE session_id = $1', [sessionId])
 
     // 6) session_events
     await client.query('DELETE FROM session_events WHERE session_id = $1', [sessionId])
@@ -498,8 +499,8 @@ router.get('/:id/images', authenticateToken, async (req, res) => {
 
     const { type } = req.query  // ?type=image ou ?type=map
     const query = type
-        ? 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at FROM session_images WHERE session_id = $1 AND type = $2 ORDER BY uploaded_at DESC'
-        : 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at FROM session_images WHERE session_id = $1 ORDER BY uploaded_at DESC'
+        ? 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, group_id, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at FROM session_images WHERE session_id = $1 AND type = $2 ORDER BY uploaded_at DESC'
+        : 'SELECT id, url, original_name, type, audio_category, thumbnail_url, tv_label, group_id, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at FROM session_images WHERE session_id = $1 ORDER BY uploaded_at DESC'
     const params = type ? [req.params.id, type] : [req.params.id]
     const result = await pool.query(query, params)
     res.json(result.rows)
@@ -523,13 +524,26 @@ router.patch('/:id/images/:imageId', authenticateToken, async (req, res) => {
     )
     if (!record.rows[0]) return res.status(404).json({ error: 'File not found.' })
 
-    const { original_name, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h } = req.body
+    const { original_name, audio_category, tv_label, group_id, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h } = req.body
     const updates = []
     const values = []
     let idx = 1
     if (original_name !== undefined) { updates.push(`original_name = $${idx++}`); values.push(String(original_name).slice(0, 500)) }
     if (audio_category !== undefined) { updates.push(`audio_category = $${idx++}`); values.push(String(audio_category).slice(0, 50)) }
     if (tv_label !== undefined) { updates.push(`tv_label = $${idx++}`); values.push(tv_label ? String(tv_label).slice(0, 200) : null) }
+    if (group_id !== undefined) {
+      // Le groupe doit appartenir à la même session — jamais faire confiance à l'id client.
+      let groupId = null
+      if (group_id !== null) {
+        const groupRes = await pool.query(
+          'SELECT id FROM image_groups WHERE id = $1 AND session_id = $2',
+          [parseInt(group_id, 10) || 0, req.params.id]
+        )
+        if (!groupRes.rows[0]) return res.status(404).json({ error: 'Group not found.' })
+        groupId = groupRes.rows[0].id
+      }
+      updates.push(`group_id = $${idx++}`); values.push(groupId)
+    }
     if (grid_type !== undefined) { updates.push(`grid_type = $${idx++}`); values.push(['none', 'square', 'hex'].includes(grid_type) ? grid_type : 'none') }
     if (grid_cols !== undefined) { updates.push(`grid_cols = $${idx++}`); values.push(grid_cols !== null ? Math.max(1, Math.min(200, parseInt(grid_cols) || 1)) : null) }
     if (grid_rows !== undefined) { updates.push(`grid_rows = $${idx++}`); values.push(grid_rows !== null ? Math.max(1, Math.min(200, parseInt(grid_rows) || 1)) : null) }
@@ -547,7 +561,7 @@ router.patch('/:id/images/:imageId', authenticateToken, async (req, res) => {
 
     values.push(req.params.imageId)
     const row = await pool.query(
-      `UPDATE session_images SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, url, original_name, type, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at`,
+      `UPDATE session_images SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, url, original_name, type, audio_category, tv_label, group_id, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at`,
       values
     )
     res.json(row.rows[0])
@@ -593,7 +607,7 @@ router.post('/:id/images/:imageId/detect-grid', authenticateToken, async (req, r
          SET grid_type = $1, grid_cols = $2, grid_rows = $3, grid_hex_orientation = $4,
              grid_offset_x = $5, grid_offset_y = $6, grid_cell_w = $7, grid_cell_h = $8
        WHERE id = $9
-       RETURNING id, url, original_name, type, audio_category, tv_label, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at`,
+       RETURNING id, url, original_name, type, audio_category, tv_label, group_id, grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, uploaded_at`,
       [grid.gridType, grid.gridCols, grid.gridRows, grid.gridHexOrientation,
        grid.gridOffsetX, grid.gridOffsetY, grid.gridCellW, grid.gridCellH, req.params.imageId]
     )
@@ -630,6 +644,97 @@ router.delete('/:id/images/:imageId', authenticateToken, async (req, res) => {
     const thumbPath = thumbnail_url ? uploadUrlToPath(thumbnail_url) : null
     if (thumbPath) await fs.unlink(thumbPath).catch(() => {})
 
+    res.json({ success: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
+// ── Groupes d'images ──────────────────────────────────────────────────────────
+// Une image appartient à au plus un groupe (session_images.group_id, modifié via
+// PATCH /:id/images/:imageId). Le tirage au hasard sur la TV passe par les sockets
+// show-image-group / obsidian-show-image-group (socket.js), pas par ces routes.
+
+const IMAGE_GROUP_NAME_MAX = 100
+
+function normalizeGroupName(name) {
+  return typeof name === 'string' ? name.trim().slice(0, IMAGE_GROUP_NAME_MAX) : ''
+}
+
+async function sessionEditable(sessionId, adminId) {
+  const check = await pool.query(
+    'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
+    [sessionId, adminId]
+  )
+  return !!check.rows[0]
+}
+
+const DUPLICATE_GROUP_ERROR = 'Un groupe porte déjà ce nom dans cette session.'
+
+router.get('/:id/image-groups', authenticateToken, async (req, res) => {
+  try {
+    if (!await sessionEditable(req.params.id, req.admin.id)) return res.status(404).json({ error: 'Session not found.' })
+    const result = await pool.query(
+      `SELECT g.id, g.name, COUNT(i.id)::int AS image_count
+       FROM image_groups g
+       LEFT JOIN session_images i ON i.group_id = g.id AND i.type = 'image'
+       WHERE g.session_id = $1
+       GROUP BY g.id
+       ORDER BY LOWER(g.name)`,
+      [req.params.id]
+    )
+    res.json(result.rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
+router.post('/:id/image-groups', authenticateToken, async (req, res) => {
+  try {
+    if (!await sessionEditable(req.params.id, req.admin.id)) return res.status(404).json({ error: 'Session not found.' })
+    const name = normalizeGroupName(req.body?.name)
+    if (!name) return res.status(400).json({ error: 'Nom de groupe requis.' })
+    const result = await pool.query(
+      'INSERT INTO image_groups (session_id, name) VALUES ($1, $2) RETURNING id, name',
+      [req.params.id, name]
+    )
+    res.status(201).json({ ...result.rows[0], image_count: 0 })
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: DUPLICATE_GROUP_ERROR })
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
+router.patch('/:id/image-groups/:groupId', authenticateToken, async (req, res) => {
+  try {
+    if (!await sessionEditable(req.params.id, req.admin.id)) return res.status(404).json({ error: 'Session not found.' })
+    const name = normalizeGroupName(req.body?.name)
+    if (!name) return res.status(400).json({ error: 'Nom de groupe requis.' })
+    const result = await pool.query(
+      'UPDATE image_groups SET name = $1 WHERE id = $2 AND session_id = $3 RETURNING id, name',
+      [name, req.params.groupId, req.params.id]
+    )
+    if (!result.rows[0]) return res.status(404).json({ error: 'Group not found.' })
+    res.json(result.rows[0])
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: DUPLICATE_GROUP_ERROR })
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
+// Supprimer un groupe ne supprime pas ses images : leur group_id repasse à NULL (ON DELETE SET NULL).
+router.delete('/:id/image-groups/:groupId', authenticateToken, async (req, res) => {
+  try {
+    if (!await sessionEditable(req.params.id, req.admin.id)) return res.status(404).json({ error: 'Session not found.' })
+    const result = await pool.query(
+      'DELETE FROM image_groups WHERE id = $1 AND session_id = $2',
+      [req.params.groupId, req.params.id]
+    )
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Group not found.' })
     res.json({ success: true })
   } catch (err) {
     console.error(err)

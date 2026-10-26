@@ -1,6 +1,14 @@
 {
   "notes": [
     {
+      "version": "2.0.18",
+      "date": "2026-10-26",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Groupes d'images : rangez vos images par groupe (ex. « Hex - Plaine ») depuis le gestionnaire d'images, puis affichez-en une au hasard sur la TV d'un clic sur « Tirage TV », jamais la même deux fois de suite." },
+        { "type": "feature", "role": "admin", "text": "Plugin Obsidian : nouvelle commande « Insérer un groupe d'images » qui ajoute un bloc « dmt-image-group » dans la note ; son bouton 🎲 affiche une image du groupe au hasard sur la TV." }
+      ]
+    },
+    {
       "version": "2.0.17",
       "date": "2026-09-13",
       "changes": [

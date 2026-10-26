@@ -566,6 +566,31 @@ function setupSocket(io) {
     }
   }
 
+  // ── Groupes d'images : tirage au hasard d'une image du groupe, projetée exactement comme
+  // show-image (même UPDATE sessions + tv-mode-changed, aucun mode TV dédié). La dernière image
+  // tirée (image_groups.last_image_id) est exclue tant que le groupe en compte au moins deux, pour
+  // ne jamais montrer la même deux fois de suite. Renvoie l'image projetée, ou null si le groupe
+  // ne contient aucune image. L'appelant a déjà vérifié adminCanAccess et que le groupe appartient
+  // à sessionId.
+  async function showRandomGroupImage(sessionId, group, adminId) {
+    const { rows } = await pool.query(
+      `SELECT id, url, original_name, tv_label FROM session_images
+       WHERE group_id = $1 AND session_id = $2 AND type = 'image'`,
+      [group.id, sessionId]
+    )
+    if (!rows.length) return null
+    const candidates = rows.length > 1 ? rows.filter(r => r.id !== group.last_image_id) : rows
+    const pick = candidates[crypto.randomInt(candidates.length)]
+    const imageLabel = pick.tv_label || null
+    await pool.query(
+      'UPDATE sessions SET tv_mode = $1, current_image_url = $2, current_image_label = $3 WHERE id = $4 AND session_editable(id, $5)',
+      ['image', pick.url, imageLabel, sessionId, adminId]
+    )
+    await pool.query('UPDATE image_groups SET last_image_id = $1 WHERE id = $2', [pick.id, group.id])
+    broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'image', imageUrl: pick.url, imageLabel })
+    return pick
+  }
+
   // ── Puzzle resync: re-broadcast the canonical click history instead of an atomic lock on
   // 'puzzle-click'. Two players clicking near-simultaneously can apply the resulting replay in
   // different local order on each client (each applies its own click immediately, then receives
@@ -1503,6 +1528,20 @@ function setupSocket(io) {
           ['image', imageUrl, imageLabel, sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: show a random image of a group on TV ─────────────────────────
+    socket.on('show-image-group', async ({ sessionId, groupId } = {}) => {
+      if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
+      if (!Number.isInteger(groupId) || groupId <= 0) return
+      try {
+        const { rows } = await pool.query(
+          'SELECT id, name, last_image_id FROM image_groups WHERE id = $1 AND session_id = $2',
+          [groupId, sessionId]
+        )
+        if (rows[0]) await showRandomGroupImage(sessionId, rows[0], socket.admin.id)
       } catch (err) { console.error(err) }
     })
 
@@ -2550,6 +2589,30 @@ function setupSocket(io) {
         )
         broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'image', imageUrl, imageLabel })
         socket.emit('obsidian-image-shown', { imageName: imageName.trim() })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: Obsidian → show a random image of a group on TV, by group name ──
+    socket.on('obsidian-show-image-group', async ({ sessionId, groupName } = {}) => {
+      if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
+      if (!groupName || typeof groupName !== 'string' || !Number.isInteger(sessionId)) return
+      try {
+        const name = groupName.trim()
+        const { rows } = await pool.query(
+          'SELECT id, name, last_image_id FROM image_groups WHERE session_id = $1 AND LOWER(name) = LOWER($2)',
+          [sessionId, name]
+        )
+        if (!rows[0]) {
+          socket.emit('obsidian-image-error', { message: `Groupe d'images "${name}" introuvable dans la session.` })
+          return
+        }
+        const shown = await showRandomGroupImage(sessionId, rows[0], socket.admin.id)
+        if (!shown) {
+          socket.emit('obsidian-image-error', { message: `Le groupe "${rows[0].name}" ne contient aucune image.` })
+          return
+        }
+        socket.emit('obsidian-image-shown', { imageName: `${rows[0].name} → ${shown.original_name || shown.url.split('/').pop()}` })
       } catch (err) { console.error(err) }
     })
 

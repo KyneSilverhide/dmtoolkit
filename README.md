@@ -24,7 +24,7 @@ Déploie automatiquement le backend, le frontend et une base de données Postgre
 - **Messagerie** : envoi de messages et résultats de jets de dés aux joueurs ; envoi d'images depuis la galerie de la session ou depuis le PC
 - **Système de vote** : votes anonymes ou publics avec fermeture automatique
 - **Marchand** : boutique interactive avec panier, stock, négociation de prix, édition d'un marchand existant, et objets magiques (ajout manuel ou tirage aléatoire filtré par rareté) mis en évidence à la vente
-- **Gestionnaire d'images** : upload, galerie en grille, filtrage par nom, projection sur TV avec label optionnel
+- **Gestionnaire d'images** : upload, galerie en grille, filtrage par nom, projection sur TV avec label optionnel ; groupes d'images (une image par groupe au plus) avec tirage TV au hasard, sans répéter deux fois de suite la même image
 - **Gestionnaire audio** : upload MP3/WAV/OGG, catégories IA, lecture multi-piste, filtrage par nom
 - **Sorts** : recherche parmi 477 sorts D&D 5e en français
 - **Équipement** : recherche d'objets standard (169) et magiques D&D 5e
@@ -33,7 +33,7 @@ Déploie automatiquement le backend, le frontend et une base de données Postgre
 - **Générateur IA** : génération de noms de PNJ, lieux, auberges, accroches de quêtes et descriptions via GitHub Models (gpt-4o-mini)
 - **Multi-tenant** : isolation complète des sessions et des fichiers uploadés par administrateur
 - **Compte démo** : compte `demo` (mot de passe `demo`) disponible par défaut ; son contenu est effacé et réinitialisé automatiquement chaque nuit à minuit — un bandeau d'avertissement est affiché dans toutes les interfaces
-- **Plugin Obsidian** : synchronisation bidirectionnelle avec l'Initiative Tracker d'Obsidian
+- **Plugin Obsidian** : synchronisation bidirectionnelle avec l'Initiative Tracker d'Obsidian ; liens audio, clic sur une image pour la projeter, bloc ```dmt-image-group``` pour tirer au hasard une image d'un groupe sur la TV
 
 ## Architecture
 

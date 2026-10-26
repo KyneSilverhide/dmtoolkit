@@ -19,10 +19,27 @@ const uploadProgress = ref(0)   // 0–100
 const searchQuery = ref('')
 const dragOver = ref(false)
 
+// Groupes d'images : une image appartient à au plus un groupe (img.group_id). Le bouton
+// « Tirage TV » d'un groupe projette une de ses images au hasard (show-image-group).
+const groups = ref([])
+const newGroupName = ref('')
+const groupError = ref('')
+const groupFilterId = ref(null)   // id de groupe : la galerie n'affiche que ses images
+
+const groupImageCounts = computed(() => {
+  const counts = {}
+  for (const img of images.value) {
+    if (img.group_id) counts[img.group_id] = (counts[img.group_id] || 0) + 1
+  }
+  return counts
+})
+
 const filteredImages = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return images.value
-  return images.value.filter(img => (img.original_name || img.url).toLowerCase().includes(q))
+  let list = images.value
+  if (groupFilterId.value) list = list.filter(img => img.group_id === groupFilterId.value)
+  if (!q) return list
+  return list.filter(img => (img.original_name || img.url).toLowerCase().includes(q))
 })
 
 async function loadImages() {
@@ -33,6 +50,94 @@ async function loadImages() {
     })
     if (res.ok) images.value = await res.json()
   } catch (err) {
+    console.error(err)
+  }
+}
+
+async function loadGroups() {
+  if (!sessionStore.activeSession) return
+  try {
+    const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/image-groups`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    if (res.ok) {
+      groups.value = (await res.json()).map(g => ({ ...g, draftName: g.name }))
+      if (groupFilterId.value && !groups.value.some(g => g.id === groupFilterId.value)) groupFilterId.value = null
+    }
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+async function groupRequest(path, method, body) {
+  groupError.value = ''
+  const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/image-groups${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    groupError.value = data.error || 'Erreur lors de la mise à jour du groupe.'
+  }
+  return res.ok
+}
+
+async function createGroup() {
+  const name = newGroupName.value.trim()
+  if (!name || !sessionStore.activeSession) return
+  // Vidé avant la requête (et restauré en cas d'échec) : vider après coup effacerait ce que le
+  // MJ a commencé à taper pendant l'aller-retour.
+  newGroupName.value = ''
+  try {
+    if (await groupRequest('', 'POST', { name })) await loadGroups()
+    else newGroupName.value = name
+  } catch (err) {
+    newGroupName.value = name
+    console.error(err)
+  }
+}
+
+async function renameGroup(group) {
+  const name = group.draftName.trim()
+  if (!name || name === group.name) { group.draftName = group.name; return }
+  try {
+    if (await groupRequest(`/${group.id}`, 'PATCH', { name })) group.name = name
+    else group.draftName = group.name
+  } catch (err) { console.error(err) }
+}
+
+async function deleteGroup(group) {
+  if (!confirm(`Supprimer le groupe « ${group.name} » ? Ses images ne sont pas supprimées.`)) return
+  try {
+    if (await groupRequest(`/${group.id}`, 'DELETE')) {
+      for (const img of images.value) if (img.group_id === group.id) img.group_id = null
+      await loadGroups()
+    }
+  } catch (err) { console.error(err) }
+}
+
+function toggleGroupFilter(group) {
+  groupFilterId.value = groupFilterId.value === group.id ? null : group.id
+}
+
+function showRandomGroupImageOnTv(group) {
+  const socket = getSocket()
+  socket.emit('show-image-group', { sessionId: sessionStore.activeSession.id, groupId: group.id })
+}
+
+async function setImageGroup(img, groupId) {
+  const previous = img.group_id
+  img.group_id = groupId
+  try {
+    const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/images/${img.id}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ group_id: groupId }),
+    })
+    if (!res.ok) img.group_id = previous
+  } catch (err) {
+    img.group_id = previous
     console.error(err)
   }
 }
@@ -159,6 +264,7 @@ async function deleteImage(img, event) {
 
 onMounted(() => {
   loadImages()
+  loadGroups()
   const socket = getSocket()
   socket.on('admin-state', handleAdminState)
   socket.on('lobby-bg-updated', handleLobbyBgUpdated)
@@ -213,6 +319,64 @@ onUnmounted(() => {
       </button>
     </div>
 
+    <section v-if="sessionStore.activeSession" class="groups-card" aria-label="Groupes d'images">
+      <div class="groups-header">
+        <span class="groups-title"><AppIcon icon="lucide:dices" size="0.85em" /> Groupes</span>
+        <form class="group-create" @submit.prevent="createGroup">
+          <input
+            v-model="newGroupName"
+            class="group-name-input"
+            placeholder="Nouveau groupe…"
+            maxlength="100"
+            aria-label="Nom du nouveau groupe"
+          />
+          <button type="submit" class="group-btn" :disabled="!newGroupName.trim()">
+            <AppIcon icon="lucide:plus" size="0.8em" /> Créer
+          </button>
+        </form>
+      </div>
+      <p v-if="groupError" class="upload-error">{{ groupError }}</p>
+      <p v-if="groups.length === 0" class="groups-empty">
+        Créez un groupe (ex. « Hex - Plaine »), rangez-y des images via le menu « Groupe » de chaque image, puis tirez-en une au hasard sur la TV.
+      </p>
+      <ul v-else class="group-list">
+        <li
+          v-for="group in groups"
+          :key="group.id"
+          class="group-row"
+          :class="{ filtered: groupFilterId === group.id }"
+        >
+          <input
+            v-model="group.draftName"
+            class="group-name-input group-rename"
+            maxlength="100"
+            :aria-label="`Renommer le groupe ${group.name}`"
+            @blur="renameGroup(group)"
+            @keydown.enter.prevent="$event.target.blur()"
+          />
+          <button
+            class="group-count"
+            :class="{ active: groupFilterId === group.id }"
+            :title="groupFilterId === group.id ? 'Afficher toutes les images' : 'N\'afficher que les images de ce groupe'"
+            @click="toggleGroupFilter(group)"
+          >
+            {{ groupImageCounts[group.id] || 0 }} image{{ (groupImageCounts[group.id] || 0) > 1 ? 's' : '' }}
+          </button>
+          <button
+            class="group-btn group-draw-btn"
+            :disabled="!groupImageCounts[group.id]"
+            title="Afficher une image du groupe au hasard sur la TV"
+            @click="showRandomGroupImageOnTv(group)"
+          >
+            <AppIcon icon="lucide:dices" size="0.85em" /> Tirage TV
+          </button>
+          <button class="group-delete-btn" :title="`Supprimer le groupe ${group.name}`" @click="deleteGroup(group)">
+            <AppIcon icon="lucide:trash-2" size="0.8em" />
+          </button>
+        </li>
+      </ul>
+    </section>
+
     <div v-if="images.length === 0" class="empty-state">
       <AppIcon icon="lucide:image" size="1.4em" />
       <p>Aucune image téléversée pour cette session.</p>
@@ -228,12 +392,13 @@ onUnmounted(() => {
           placeholder="Filtrer les images…"
           type="search"
         />
-        <span v-if="searchQuery" class="search-count">{{ filteredImages.length }} / {{ images.length }}</span>
+        <span v-if="searchQuery || groupFilterId" class="search-count">{{ filteredImages.length }} / {{ images.length }}</span>
       </div>
 
       <div v-if="filteredImages.length === 0" class="empty-state">
         <AppIcon icon="lucide:search-x" size="1.2em" />
-        <p>Aucune image ne correspond à « {{ searchQuery }} ».</p>
+        <p v-if="searchQuery">Aucune image ne correspond à « {{ searchQuery }} ».</p>
+        <p v-else>Aucune image dans ce groupe.</p>
       </div>
 
       <div v-else class="gallery">
@@ -262,6 +427,16 @@ onUnmounted(() => {
             @keydown.enter.prevent="saveTvLabel(img)"
           />
         </div>
+        <select
+          v-if="groups.length"
+          class="group-select"
+          :value="img.group_id ?? ''"
+          :aria-label="`Groupe de ${img.original_name || 'l\'image'}`"
+          @change="setImageGroup(img, $event.target.value ? Number($event.target.value) : null)"
+        >
+          <option value="">— Aucun groupe —</option>
+          <option v-for="group in groups" :key="group.id" :value="group.id">{{ group.name }}</option>
+        </select>
         <button class="show-btn" @click.stop="selectedImageUrl = img.url; showImageOnTv(img.url)" title="Afficher sur la TV">
           <AppIcon icon="lucide:monitor" size="0.85em" /> Afficher TV
         </button>
@@ -598,6 +773,131 @@ onUnmounted(() => {
   cursor: pointer;
   transition: all 0.15s;
 }
+.groups-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+.groups-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.groups-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+.group-create {
+  display: flex;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 14rem;
+}
+.group-name-input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+}
+.group-name-input:focus { border-color: var(--color-gold-dark); }
+.group-name-input::placeholder { color: var(--color-border); font-style: italic; }
+.group-rename { border-style: dashed; color: var(--color-gold-bright); }
+.group-rename:focus { border-style: solid; }
+.groups-empty {
+  font-family: var(--font-body), sans-serif;
+  font-size: var(--text-sm);
+  color: var(--color-text-dim);
+}
+.group-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.group-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.2rem;
+  border-radius: 6px;
+}
+.group-row.filtered { background: var(--surface-gold-soft); }
+.group-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: var(--space-1) var(--space-2);
+  background: var(--surface-gold-soft);
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 6px;
+  color: var(--color-gold);
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--text-2xs);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.group-btn:hover:not(:disabled) {
+  background: var(--surface-gold-soft-strong);
+  border-color: var(--color-gold-bright);
+  color: var(--color-gold-bright);
+}
+.group-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.group-count {
+  padding: 0.15rem var(--space-2);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--text-2xs);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.group-count.active { border-color: var(--color-gold-dark); color: var(--color-gold-bright); }
+.group-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--color-text-dim);
+  cursor: pointer;
+}
+.group-delete-btn:hover { border-color: var(--color-danger, #e74c3c); color: var(--color-danger, #e74c3c); }
+.group-select {
+  width: 100%;
+  margin-bottom: 0.2rem;
+  padding: 0.15rem var(--space-1);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--text-2xs);
+}
+
 .lobby-bg-clear-btn:hover {
   background: var(--tv-danger-bg, rgba(231,76,60,0.15));
 }
