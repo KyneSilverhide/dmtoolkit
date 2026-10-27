@@ -15,6 +15,7 @@ import TvVideo from '../components/tv/TvVideo.vue'
 import TvMap from '../components/tv/TvMap.vue'
 import TvMerchant from '../components/tv/TvMerchant.vue'
 import TvPuzzle from '../components/tv/TvPuzzle.vue'
+import TvInteractive from '../components/tv/TvInteractive.vue'
 import TvReputation from '../components/tv/TvReputation.vue'
 import TvContent from '../components/tv/TvContent.vue'
 import TvDashboard from '../components/tv/TvDashboard.vue'
@@ -106,6 +107,11 @@ watch(puzzleImageId, (imageId) => {
   if (imageId) window.addEventListener('beforeunload', preventReloadDuringPuzzle)
   else window.removeEventListener('beforeunload', preventReloadDuringPuzzle)
 }, { immediate: true })
+
+// ── Interactive page state (MJ only, mirrored here) ──────────────────────────
+// `{ imageId, seed, state, clicks }` ; affichée seulement en mode 'interactive'.
+const activeInteractive = ref(null)
+const interactiveRef = ref(null)
 
 // ── Map state ─────────────────────────────────────────────────────────────────
 const currentMapUrl = ref(null)
@@ -247,10 +253,13 @@ onMounted(() => {
       puzzleSeed.value = null
       pendingPuzzleClicks.value = []
     }
+    activeInteractive.value = data.tvMode === 'interactive' ? data.activeInteractive || null : null
   })
 
-  socket.on('tv-mode-changed', ({ mode, imageUrl, imageLabel, videoUrl, merchantData, contentType, contentData, puzzleImageId: pid, puzzleSeed: ps }) => {
+  socket.on('tv-mode-changed', ({ mode, imageUrl, imageLabel, videoUrl, merchantData, contentType, contentData, puzzleImageId: pid, puzzleSeed: ps, activeInteractive: ai }) => {
     tvMode.value = mode
+    if (mode === 'interactive' && ai) activeInteractive.value = ai
+    else if (mode !== 'interactive') activeInteractive.value = null
     if (imageUrl) currentImageUrl.value = imageUrl
     if (mode === 'image') currentImageLabel.value = imageLabel || null
     if (videoUrl) currentVideoUrl.value = videoUrl
@@ -268,6 +277,16 @@ onMounted(() => {
       pendingPuzzleClicks.value = []
       lastPuzzleClickCount.value = 0
     }
+  })
+
+  socket.on('interactive-state-updated', ({ state }) => {
+    if (activeInteractive.value) activeInteractive.value = { ...activeInteractive.value, state }
+  })
+
+  socket.on('interactive-remote-click', ({ path }) => {
+    if (!activeInteractive.value) return
+    activeInteractive.value = { ...activeInteractive.value, clicks: [...activeInteractive.value.clicks, path] }
+    interactiveRef.value?.replayClick(path)
   })
 
   socket.on('puzzle-cell-clicked', ({ path }) => {
@@ -565,6 +584,13 @@ onUnmounted(() => {
             :puzzle-serve-url="puzzleServeUrl"
             :pending-clicks="pendingPuzzleClicks"
             @iframe-ready="onIframeReady"
+          />
+
+          <TvInteractive
+            v-else-if="tvMode === 'interactive' && activeInteractive"
+            ref="interactiveRef"
+            :active-interactive="activeInteractive"
+            :players="players"
           />
 
           <TvReputation

@@ -56,6 +56,8 @@ export const helpContent = {
   // ── Admin — PuzzleManager ─────────────────────────────────────────────────
   'puzzle.html':
     'Puzzle interactif au format HTML. Importez un fichier .html qui sera servi aux joueurs sur leur écran. Un seed aléatoire unique est généré à chaque affichage pour varier les configurations.',
+  'interactive.html':
+    'Page interactive au format HTML, pilotée par le MJ seul : vous cliquez dans l\'aperçu, la TV recopie la page, les joueurs ne voient rien. Une page compatible dmt-bridge reçoit la liste des joueurs au chargement et reprend son état après un rechargement.',
 
   // ── Admin — ReputationManager ─────────────────────────────────────────────
   'reputation.range':

@@ -405,6 +405,13 @@ CREATE TABLE IF NOT EXISTS image_groups (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_image_groups_session_name ON image_groups (session_id, LOWER(name));
 ALTER TABLE session_images ADD COLUMN IF NOT EXISTS group_id INTEGER REFERENCES image_groups(id) ON DELETE SET NULL;
+
+-- Pages interactives : page HTML pilotée par le MJ seul et recopiée sur la TV
+-- (session_images.type = 'interactive'). L'état est celui que la page du MJ envoie
+-- (JSON en TEXT, comme current_content_data) ; il survit à un redémarrage du serveur.
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_interactive_image_id INTEGER;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_interactive_seed VARCHAR(100);
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_interactive_state TEXT;
 `
 
 async function runMigrations() {

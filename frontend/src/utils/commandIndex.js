@@ -15,7 +15,7 @@ export const COMMAND_INDEX = [
   { tabKey: 'audio', label: 'Audio', icon: 'lucide:music-2', keywords: 'audio musique son ambiance effets sonores playlist piste volume boucle' },
   { tabKey: 'map', label: 'Carte', icon: 'lucide:map', keywords: 'carte battlemap brouillard de guerre fog tokens grille combat tactique' },
   { tabKey: 'merchants', label: 'Marchands', icon: 'game-icons:shop', keywords: 'marchand boutique achat vente negociation panier prix commerce contre-offre stock' },
-  { tabKey: 'puzzle', label: 'Puzzles', icon: 'lucide:puzzle', keywords: 'puzzle enigme casse-tete html interactif joueurs' },
+  { tabKey: 'puzzle', label: 'Pages interactives', icon: 'lucide:puzzle', keywords: 'puzzle enigme casse-tete html interactif joueurs page mini-jeu mj' },
   { tabKey: 'reputation', label: 'Réputations', icon: 'lucide:shield', keywords: 'reputation faction reputations valeur jauge' },
   { tabKey: 'tresor', label: 'Trésor', icon: 'game-icons:coins', keywords: 'tresor or gold repartition division piece banquier' },
   { tabKey: 'spells', label: 'Sorts', icon: 'lucide:sparkles', keywords: 'recherche sorts sort magie ecole niveau rituel aidedd' },

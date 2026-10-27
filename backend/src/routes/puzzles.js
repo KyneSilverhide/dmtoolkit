@@ -50,39 +50,46 @@ function buildRelayScript(seed) {
 <\/script>`
 }
 
-// GET /api/puzzles/serve/:imageId?seed=SEED — public (no auth, players need access)
-router.get('/serve/:imageId', async (req, res) => {
-  try {
-    const imageId = parseInt(req.params.imageId, 10)
-    const seed = parseInt(req.query.seed, 10)
-    if (!Number.isInteger(imageId) || imageId <= 0) return res.status(400).send('Invalid ID.')
-    if (!Number.isInteger(seed) || seed < 1 || seed > 2147483647) return res.status(400).send('Invalid seed.')
+// Sert un HTML uploadé (puzzle ou page interactive) avec le script de relais injecté.
+// Public (sans auth) : la TV et les joueurs n'ont pas de jeton admin.
+function serveHtmlPage(type) {
+  return async (req, res) => {
+    try {
+      const imageId = parseInt(req.params.imageId, 10)
+      const seed = parseInt(req.query.seed, 10)
+      if (!Number.isInteger(imageId) || imageId <= 0) return res.status(400).send('Invalid ID.')
+      if (!Number.isInteger(seed) || seed < 1 || seed > 2147483647) return res.status(400).send('Invalid seed.')
 
-    const { rows } = await pool.query(
-      "SELECT url FROM session_images WHERE id = $1 AND type = 'puzzle'",
-      [imageId]
-    )
-    if (!rows[0]) return res.status(404).send('Puzzle not found.')
+      const { rows } = await pool.query(
+        'SELECT url FROM session_images WHERE id = $1 AND type = $2',
+        [imageId, type]
+      )
+      if (!rows[0]) return res.status(404).send('Page not found.')
 
-    const relPath = rows[0].url.replace(/^\/uploads\//, '')
-    const filePath = path.resolve(UPLOADS_DIR, relPath)
-    if (!filePath.startsWith(UPLOADS_DIR + path.sep)) return res.status(403).send('Forbidden.')
+      const relPath = rows[0].url.replace(/^\/uploads\//, '')
+      const filePath = path.resolve(UPLOADS_DIR, relPath)
+      if (!filePath.startsWith(UPLOADS_DIR + path.sep)) return res.status(403).send('Forbidden.')
 
-    const html = fs.readFileSync(filePath, 'utf8')
-    const script = buildRelayScript(seed)
+      const html = fs.readFileSync(filePath, 'utf8')
+      const script = buildRelayScript(seed)
 
-    let injected = html.replace(/(<head\b[^>]*>)/i, `$1\n${script}`)
-    if (injected === html) injected = script + '\n' + html
+      let injected = html.replace(/(<head\b[^>]*>)/i, `$1\n${script}`)
+      if (injected === html) injected = script + '\n' + html
 
-    res.setHeader('Content-Type', 'text/html; charset=utf-8')
-    // Origine opaque : le script du puzzle tourne sans accès à l'origine de l'API.
-    res.setHeader('Content-Security-Policy', 'sandbox allow-scripts')
-    res.setHeader('X-Content-Type-Options', 'nosniff')
-    res.send(injected)
-  } catch (err) {
-    console.error('[puzzles] serve error:', err)
-    res.status(500).send('Server error.')
+      res.setHeader('Content-Type', 'text/html; charset=utf-8')
+      // Origine opaque : le script de la page tourne sans accès à l'origine de l'API.
+      res.setHeader('Content-Security-Policy', 'sandbox allow-scripts')
+      res.setHeader('X-Content-Type-Options', 'nosniff')
+      res.send(injected)
+    } catch (err) {
+      console.error(`[${type}] serve error:`, err)
+      res.status(500).send('Server error.')
+    }
   }
-})
+}
+
+// GET /api/puzzles/serve/:imageId?seed=SEED
+router.get('/serve/:imageId', serveHtmlPage('puzzle'))
 
 module.exports = router
+module.exports.serveHtmlPage = serveHtmlPage

@@ -5,17 +5,32 @@ import HelpTip from '../HelpTip.vue'
 import { authStore } from '@/stores/auth.js'
 import { sessionStore } from '@/stores/session.js'
 import { getSocket } from '@/socket.js'
-import { SHOW_PUZZLE, CLOSE_PUZZLE, PUZZLE_CELL_CLICKED, PUZZLE_RESYNC } from '@/socket-events.js'
+import InteractiveStage from '../InteractiveStage.vue'
+import {
+  SHOW_PUZZLE, CLOSE_PUZZLE, PUZZLE_CELL_CLICKED, PUZZLE_RESYNC,
+  SHOW_INTERACTIVE, CLOSE_INTERACTIVE, INTERACTIVE_STATE, INTERACTIVE_CLICK,
+} from '@/socket-events.js'
 import { BACKEND_URL } from '@/config.js'
 import { apiFetch } from '@/utils/apiFetch.js'
+import { bridgePlayers } from '@/utils/interactiveBridge.js'
 
+// Onglet « Pages interactives » : deux types de page HTML autonome.
+//  - puzzle : les joueurs cliquent, chacun sur son écran (relais de clics, voir socket.js) ;
+//  - interactive : le MJ seul clique ici, la TV recopie, les joueurs ne voient rien.
 const props = defineProps({
   activePuzzle: { type: Object, default: null },
+  activeInteractive: { type: Object, default: null },
 })
 
-const emit = defineEmits(['puzzle-started', 'puzzle-closed'])
+const emit = defineEmits(['puzzle-started', 'puzzle-closed', 'interactive-state', 'interactive-click'])
+
+const KINDS = {
+  interactive: { label: 'Page MJ', hint: 'Vous seul cliquez, la TV recopie' },
+  puzzle: { label: 'Puzzle', hint: 'Les joueurs cliquent sur leur écran' },
+}
 
 const puzzles = ref([])
+const uploadKind = ref('interactive')
 const uploading = ref(false)
 const uploadError = ref('')
 const previewIframeRef = ref(null)
@@ -37,12 +52,15 @@ async function loadPuzzles() {
   if (!sessionId.value) return
   try {
     const token = authStore.token
-    const res = await apiFetch(`/api/sessions/${sessionId.value}/images?type=puzzle`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (!res.ok) return
-    const data = await res.json()
-    puzzles.value = Array.isArray(data) ? data : []
+    const lists = await Promise.all(['interactive', 'puzzle'].map(async type => {
+      const res = await apiFetch(`/api/sessions/${sessionId.value}/images?type=${type}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return []
+      const data = await res.json()
+      return Array.isArray(data) ? data : []
+    }))
+    puzzles.value = lists.flat()
   } catch (err) {
     console.error('[PuzzleManager] loadPuzzles:', err)
   }
@@ -56,7 +74,7 @@ async function uploadFile(file) {
     const formData = new FormData()
     formData.append('session_id', String(sessionId.value))
     formData.append('file', file)
-    const res = await apiFetch(`/api/uploads/puzzle`, {
+    const res = await apiFetch(`/api/uploads/${uploadKind.value}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${authStore.token}` },
       body: formData,
@@ -97,7 +115,39 @@ function onDrop(e) {
 
 function showPuzzle(puzzle) {
   const socket = getSocket()
-  socket.emit(SHOW_PUZZLE, { sessionId: sessionId.value, imageId: puzzle.id })
+  const event = puzzle.type === 'interactive' ? SHOW_INTERACTIVE : SHOW_PUZZLE
+  socket.emit(event, { sessionId: sessionId.value, imageId: puzzle.id })
+}
+
+function closeInteractive() {
+  getSocket().emit(CLOSE_INTERACTIVE, { sessionId: sessionId.value })
+}
+
+const anythingActive = computed(() => !!props.activePuzzle || !!props.activeInteractive)
+
+function isActive(puzzle) {
+  return puzzle.type === 'interactive'
+    ? props.activeInteractive?.imageId === puzzle.id
+    : props.activePuzzle?.puzzleImageId === puzzle.id
+}
+
+const interactiveSrc = computed(() => {
+  const ai = props.activeInteractive
+  if (!ai?.imageId || !ai?.seed) return ''
+  return `${BACKEND_URL}/api/interactive/serve/${ai.imageId}?seed=${ai.seed}`
+})
+
+// Lue au chargement de la page seulement (dmt:init) : pas de resynchronisation ensuite.
+const interactivePlayers = computed(() => bridgePlayers(sessionStore.players, BACKEND_URL))
+
+function onInteractiveState(state) {
+  getSocket().emit(INTERACTIVE_STATE, { sessionId: sessionId.value, state })
+  emit('interactive-state', state)
+}
+
+function onInteractiveClick(path) {
+  getSocket().emit(INTERACTIVE_CLICK, { sessionId: sessionId.value, path })
+  emit('interactive-click', path)
 }
 
 function closePuzzle() {
@@ -106,7 +156,7 @@ function closePuzzle() {
 }
 
 async function deletePuzzle(puzzle) {
-  if (!confirm(`Supprimer "${puzzle.original_name || `Puzzle #${puzzle.id}`}" ?`)) return
+  if (!confirm(`Supprimer "${puzzle.original_name || `Page #${puzzle.id}`}" ?`)) return
   try {
     const res = await apiFetch(`/api/sessions/${sessionId.value}/images/${puzzle.id}`, {
       method: 'DELETE',
@@ -175,13 +225,29 @@ onUnmounted(() => {
   >
     <div v-if="dragOver" class="drop-overlay">
       <AppIcon icon="lucide:file-code" size="2rem" color="var(--color-gold-bright)" />
-      <span>Déposer le puzzle HTML ici</span>
+      <span>Déposer la page HTML ici ({{ KINDS[uploadKind].label }})</span>
     </div>
 
     <div class="puzzle-upload-section">
+      <div class="kind-picker" role="radiogroup" aria-label="Type de page à importer">
+        <button
+          v-for="(kind, key) in KINDS"
+          :key="key"
+          type="button"
+          role="radio"
+          class="kind-option"
+          :class="{ selected: uploadKind === key }"
+          :aria-checked="uploadKind === key"
+          :title="kind.hint"
+          :data-testid="`upload-kind-${key}`"
+          @click="uploadKind = key"
+        >
+          {{ kind.label }}
+        </button>
+      </div>
       <label class="upload-label">
         <AppIcon icon="lucide:upload" size="1em" />
-        Importer un puzzle HTML
+        Importer une page HTML
         <input
           type="file"
           accept=".html,.htm"
@@ -190,7 +256,7 @@ onUnmounted(() => {
           @change="uploadPuzzle"
         />
       </label>
-      <HelpTip id="puzzle.html" />
+      <HelpTip :id="uploadKind === 'interactive' ? 'interactive.html' : 'puzzle.html'" />
       <span v-if="uploading" class="upload-status">Envoi…</span>
       <span v-if="uploadError" class="upload-error">{{ uploadError }}</span>
     </div>
@@ -214,22 +280,43 @@ onUnmounted(() => {
       />
     </div>
 
+    <!-- Active interactive page (MJ only: clickable here, mirrored on the TV) -->
+    <div v-if="activeInteractive && interactiveSrc" class="active-puzzle-section active-interactive-section">
+      <div class="active-puzzle-header">
+        <span class="active-label"><AppIcon icon="lucide:monitor-play" size="1em" /> Page interactive — vous seul cliquez</span>
+        <button class="close-btn" data-testid="interactive-close" @click="closeInteractive">
+          <AppIcon icon="lucide:x" size="1em" /> Fermer
+        </button>
+      </div>
+      <InteractiveStage
+        :src="interactiveSrc"
+        role="gm"
+        :players="interactivePlayers"
+        :state="activeInteractive.state"
+        :clicks="activeInteractive.clicks"
+        @state="onInteractiveState"
+        @click="onInteractiveClick"
+      />
+    </div>
+
     <!-- Puzzle list -->
     <div v-if="puzzles.length" class="puzzle-list">
       <div
         v-for="puzzle in puzzles"
         :key="puzzle.id"
         class="puzzle-item"
-        :class="{ active: activePuzzle?.puzzleImageId === puzzle.id }"
+        :class="{ active: isActive(puzzle) }"
+        :data-kind="puzzle.type"
       >
         <span class="puzzle-name">
-          <AppIcon icon="lucide:file-code" size="1em" />
-          {{ puzzle.original_name || `Puzzle #${puzzle.id}` }}
+          <AppIcon :icon="puzzle.type === 'interactive' ? 'lucide:monitor-play' : 'lucide:puzzle'" size="1em" />
+          {{ puzzle.original_name || `Page #${puzzle.id}` }}
+          <span class="kind-badge" :class="puzzle.type">{{ KINDS[puzzle.type]?.label }}</span>
         </span>
         <div class="puzzle-actions">
           <button
             class="show-btn"
-            :disabled="!!activePuzzle"
+            :disabled="anythingActive"
             @click="showPuzzle(puzzle)"
           >
             <AppIcon icon="lucide:monitor-play" size="1em" />
@@ -238,7 +325,7 @@ onUnmounted(() => {
           <button
             class="delete-btn"
             title="Supprimer"
-            :disabled="activePuzzle?.puzzleImageId === puzzle.id"
+            :disabled="isActive(puzzle)"
             @click="deletePuzzle(puzzle)"
           >
             <AppIcon icon="lucide:trash-2" size="1em" />
@@ -247,7 +334,7 @@ onUnmounted(() => {
       </div>
     </div>
     <p v-else-if="!uploading" class="empty-hint">
-      Aucun puzzle importé. Chargez un fichier HTML autonome.
+      Aucune page importée. Chargez un fichier HTML autonome : une page MJ (vous seul cliquez, la TV recopie) ou un puzzle (les joueurs cliquent).
     </p>
   </div>
 </template>
@@ -304,6 +391,33 @@ onUnmounted(() => {
   transition: opacity 0.15s;
 }
 .upload-label:hover { opacity: 0.85; }
+
+.kind-picker {
+  display: inline-flex;
+  border: 1px solid var(--color-gold-dark);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.kind-option {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.kind-option + .kind-option { border-left: 1px solid var(--color-gold-dark); }
+.kind-option.selected { background: var(--surface-highlight); color: var(--color-gold-bright); font-weight: 600; }
+
+.kind-badge {
+  flex-shrink: 0;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  border: 1px solid var(--color-border, #444);
+  color: var(--color-text-muted);
+}
+.kind-badge.interactive { border-color: var(--color-gold-dark); color: var(--color-gold-bright); }
 
 .upload-status { font-size: var(--text-sm); color: var(--color-text-muted); }
 .upload-error { font-size: var(--text-sm); color: var(--color-danger, #e55); }

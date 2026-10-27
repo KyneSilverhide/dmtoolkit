@@ -411,6 +411,29 @@ export const PUZZLE_CELL_CLICKED = 'puzzle-cell-clicked'
  * scratch and replay `puzzleClicks` in order, only if it's grown since the last resync. */
 export const PUZZLE_RESYNC = 'puzzle-resync'
 
+// ── Interactive page events (MJ only, mirrored on the TV) ───────────────────
+
+/** Admin shows an interactive page: { sessionId, imageId } */
+export const SHOW_INTERACTIVE = 'show-interactive'
+
+/** Admin closes the interactive page: { sessionId } */
+export const CLOSE_INTERACTIVE = 'close-interactive'
+
+/** Sent to admins when the interactive page is closed */
+export const INTERACTIVE_CLOSED = 'interactive-closed'
+
+/** Admin's page (dmt-bridge) sends its state: { sessionId, state } — persisted by the server */
+export const INTERACTIVE_STATE = 'interactive-state'
+
+/** Relayed to TV + other admins: { state } */
+export const INTERACTIVE_STATE_UPDATED = 'interactive-state-updated'
+
+/** Admin relays a click, for pages without dmt-bridge: { sessionId, path } */
+export const INTERACTIVE_CLICK = 'interactive-click'
+
+/** Relayed to the TV, which replays it in its iframe: { path } */
+export const INTERACTIVE_REMOTE_CLICK = 'interactive-remote-click'
+
 // ── Faction reputation events ────────────────────────────────────────────────
 
 /** Sent to admin when a faction is created: { faction } */
