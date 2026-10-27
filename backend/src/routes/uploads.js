@@ -197,7 +197,7 @@ const HTML_SIZE_LIMIT = 5 * 1024 * 1024
 const htmlFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase()
   if (ext !== '.html' && ext !== '.htm') {
-    return cb(new Error('Seul le format HTML est accepté pour les puzzles.'))
+    return cb(new Error('Seul le format HTML est accepté.'))
   }
   cb(null, true)
 }
@@ -498,43 +498,49 @@ router.post('/avatar', process.env.NODE_ENV === 'test' ? (req, res, next) => nex
   res.json({ url: fileToUrl(req.file) })
 })
 
-// HTML puzzle upload — admin only
-router.post('/puzzle',
-  authenticateToken,
-  (req, res, next) => {
-    const instance = req.admin?.is_demo ? demoPuzzleUpload : puzzleUploadAdmin
-    instance.single('file')(req, res, err => {
-      if (!err) return next()
-      if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'Le fichier dépasse 5 Mo.' })
-      if (err.message) return res.status(400).json({ error: err.message })
-      next(err)
-    })
-  },
-  async (req, res) => {
-    if (!req.file) return res.status(400).json({ error: 'Aucun fichier envoyé.' })
-    const sessionId = req.body.session_id
-    const url = fileToUrl(req.file)
-    if (sessionId) {
-      try {
-        const sessionCheck = await pool.query(
-          'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
-          [sessionId, req.admin.id]
-        )
-        if (sessionCheck.rows[0]) {
-          const { rows } = await pool.query(
-            "INSERT INTO session_images (session_id, url, original_name, type, file_size) VALUES ($1, $2, $3, 'puzzle', $4) RETURNING id",
-            [sessionId, url, req.file.originalname, req.file.size]
+// Upload HTML (puzzle ou page interactive) — admin only. Même fichier, même limite :
+// seul le type enregistré dans session_images change.
+function htmlUploadRoute(type) {
+  return [
+    authenticateToken,
+    (req, res, next) => {
+      const instance = req.admin?.is_demo ? demoPuzzleUpload : puzzleUploadAdmin
+      instance.single('file')(req, res, err => {
+        if (!err) return next()
+        if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'Le fichier dépasse 5 Mo.' })
+        if (err.message) return res.status(400).json({ error: err.message })
+        next(err)
+      })
+    },
+    async (req, res) => {
+      if (!req.file) return res.status(400).json({ error: 'Aucun fichier envoyé.' })
+      const sessionId = req.body.session_id
+      const url = fileToUrl(req.file)
+      if (sessionId) {
+        try {
+          const sessionCheck = await pool.query(
+            'SELECT id FROM sessions WHERE id = $1 AND session_editable(id, $2)',
+            [sessionId, req.admin.id]
           )
-          return res.json({ url, id: rows[0].id })
-        } else {
-          // Session inexistante ou non accessible : ne pas laisser de fichier orphelin ni répondre 200.
-          removeFiles([req.file])
-          return res.status(403).json({ error: 'Session introuvable.' })
-        }
-      } catch (err) { console.error(err) }
-    }
-    res.json({ url })
-  }
-)
+          if (sessionCheck.rows[0]) {
+            const { rows } = await pool.query(
+              'INSERT INTO session_images (session_id, url, original_name, type, file_size) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+              [sessionId, url, req.file.originalname, type, req.file.size]
+            )
+            return res.json({ url, id: rows[0].id })
+          } else {
+            // Session inexistante ou non accessible : ne pas laisser de fichier orphelin ni répondre 200.
+            removeFiles([req.file])
+            return res.status(403).json({ error: 'Session introuvable.' })
+          }
+        } catch (err) { console.error(err) }
+      }
+      res.json({ url })
+    },
+  ]
+}
+
+router.post('/puzzle', ...htmlUploadRoute('puzzle'))
+router.post('/interactive', ...htmlUploadRoute('interactive'))
 
 module.exports = router

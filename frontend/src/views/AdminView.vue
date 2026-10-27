@@ -52,7 +52,7 @@ import {
   TENSION_SCALE_UPDATED, TENSION_SCALE_ENDED, TIME_SCALE_UPDATED, TIME_SCALE_ENDED,
   DASHBOARD_UPDATED, DASHBOARD_ENDED,
   PLAYER_ROLL_RESULT, DEMO_RESET, ROUND_UPDATED,
-  ADMIN_JOIN, SET_TV_MODE, FACTIONS_UPDATED, PUZZLE_CLOSED,
+  ADMIN_JOIN, SET_TV_MODE, FACTIONS_UPDATED, PUZZLE_CLOSED, INTERACTIVE_CLOSED, INTERACTIVE_STATE_UPDATED,
 } from '../socket-events.js'
 import { DASHBOARD_LAYOUTS } from '../utils/tvWidgets.js'
 
@@ -118,6 +118,9 @@ const hasActiveTension = ref(false)
 const hasActiveTimeScale = ref(false)
 const hasActiveMap = ref(false)
 const activePuzzle = ref(null)
+// Page interactive chargée (MJ seul) : `{ imageId, seed, state, clicks }`. Reste chargée quand
+// la TV passe à un autre mode, pour pouvoir y revenir sans perdre l'état.
+const activeInteractive = ref(null)
 const hasActiveReputation = ref(false)
 // Objet complet `{ contentType, contentData }` (et non un simple booléen) : la barre de
 // scène affiche le nom de la fiche projetée et son type, « Contenu » seul étant trop vague
@@ -167,7 +170,7 @@ const tabActivity = computed(() => ({
   merchants: hasActiveMerchant.value,
   tension: hasActiveDoom.value || hasActiveTension.value || hasActiveTimeScale.value,
   map: tvMode.value === 'map',
-  puzzle: !!activePuzzle.value,
+  puzzle: !!activePuzzle.value || tvMode.value === 'interactive',
   reputation: tvMode.value === 'reputation',
   message: hasUnseenPlayerMessage.value,
 }))
@@ -298,7 +301,7 @@ const tabs = [
   { key: 'audio',     label: 'Audio',         icon: 'lucide:music-2' },
   { key: 'map',       label: 'Carte',         icon: 'lucide:map' },
   { key: 'merchants', label: 'Marchands',     icon: 'game-icons:shop' },
-  { key: 'puzzle',    label: 'Puzzles',       icon: 'lucide:puzzle' },
+  { key: 'puzzle',    label: 'Pages interactives', icon: 'lucide:puzzle' },
   { key: 'reputation',label: 'Réputations',   icon: 'lucide:shield' },
   { key: 'tresor',    label: 'Trésor',        icon: 'game-icons:coins' },
   { key: 'spells',    label: 'Sorts',         icon: 'lucide:sparkles' },
@@ -357,7 +360,8 @@ const tvModes = computed(() => ([
   { key: 'video',      label: 'Vidéo',            hint: 'Affiche la vidéo active',       ready: hasActiveVideo.value },
   { key: 'map',        label: 'Carte',            hint: 'Depuis l onglet Carte',         ready: hasActiveMap.value },
   { key: 'merchant',   label: 'Marchand',         hint: 'Affiche le marchand actif',     ready: hasActiveMerchant.value },
-  { key: 'puzzle',     label: 'Puzzle',           hint: 'Depuis l onglet Puzzles',       ready: !!activePuzzle.value },
+  { key: 'puzzle',     label: 'Puzzle',           hint: 'Depuis l onglet Pages interactives', ready: !!activePuzzle.value },
+  { key: 'interactive', label: 'Page interactive', hint: 'Depuis l onglet Pages interactives', ready: !!activeInteractive.value },
   { key: 'doom',       label: 'Doom Clock',       hint: 'Depuis l onglet Rythme',        ready: hasActiveDoom.value },
   { key: 'tension',    label: 'Echelle tension',  hint: 'Depuis l onglet Rythme',        ready: hasActiveTension.value },
   { key: 'timescale',  label: 'Echelle de temps', hint: 'Depuis l onglet Rythme',        ready: hasActiveTimeScale.value },
@@ -484,6 +488,7 @@ function handleAdminState(data) {
   hasActiveTimeScale.value = !!data.timeScale
   hasActiveMap.value = !!(data.mapState?.mapUrl)
   activePuzzle.value = data.activePuzzle || null
+  activeInteractive.value = data.activeInteractive || null
   hasActiveReputation.value = Array.isArray(data.factions) && data.factions.length > 0
   activeContent.value = data.activeContent || null
   hasActiveDashboard.value = !!data.dashboard
@@ -511,6 +516,19 @@ function handleTvModeChanged(payload) {
   if (payload?.mode === 'puzzle' && payload?.puzzleImageId) {
     activePuzzle.value = { puzzleImageId: payload.puzzleImageId, puzzleSeed: payload.puzzleSeed, puzzleClicks: activePuzzle.value?.puzzleClicks || [] }
   }
+  if (payload?.mode === 'interactive' && payload?.activeInteractive) {
+    activeInteractive.value = payload.activeInteractive
+  }
+}
+
+// État envoyé par notre propre page interactive : gardé ici pour qu'un rechargement de
+// l'aperçu (KeepAlive, changement d'onglet) reprenne au même point.
+function onInteractiveState(state) {
+  if (activeInteractive.value) activeInteractive.value = { ...activeInteractive.value, state }
+}
+
+function onInteractiveClick(path) {
+  if (activeInteractive.value) activeInteractive.value = { ...activeInteractive.value, clicks: [...activeInteractive.value.clicks, path] }
 }
 
 // ── Data loading ─────────────────────────────────────────────────────────
@@ -618,6 +636,12 @@ onMounted(() => {
     activePuzzle.value = null
     if (tvMode.value === 'puzzle') tvMode.value = 'lobby'
   })
+  _socket.on(INTERACTIVE_CLOSED, () => {
+    activeInteractive.value = null
+    if (tvMode.value === 'interactive') tvMode.value = 'lobby'
+  })
+  // État joué par un autre admin de la session.
+  _socket.on(INTERACTIVE_STATE_UPDATED, ({ state }) => onInteractiveState(state))
   _socket.on(DOOM_CLOCK_STARTED, () => { hasActiveDoom.value = true })
   _socket.on(DOOM_CLOCK_STOPPED, () => {
     hasActiveDoom.value = false
@@ -737,6 +761,8 @@ onUnmounted(() => {
     _socket.off(VOTE_CLOSED)
     _socket.off(MERCHANT_ITEMS_UPDATED)
     _socket.off(PUZZLE_CLOSED)
+    _socket.off(INTERACTIVE_CLOSED)
+    _socket.off(INTERACTIVE_STATE_UPDATED)
     _socket.off(DOOM_CLOCK_STARTED)
     _socket.off(DOOM_CLOCK_STOPPED)
     _socket.off(TENSION_SCALE_UPDATED)
@@ -816,7 +842,7 @@ onUnmounted(() => {
                   <component
                     :is="currentTabComponent"
                     :key="activeTab"
-                    v-bind="activeTab === 'puzzle' ? { activePuzzle }
+                    v-bind="activeTab === 'puzzle' ? { activePuzzle, activeInteractive, onInteractiveState, onInteractiveClick }
                       : activeTab === 'equipment' ? { category: 'equipment' }
                       : activeTab === 'magic' ? { category: 'magic' }
                       : {}"

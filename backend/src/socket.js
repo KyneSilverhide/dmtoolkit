@@ -12,6 +12,11 @@ const TEMP_HP_MAX = 9999
 // Cleared when a new puzzle is shown or puzzle is closed.
 const puzzleClicks = new Map() // sessionId (number) → Array<number[]>
 
+// Page interactive : historique en mémoire des clics du MJ, uniquement pour les pages qui ne
+// parlent pas le pont dmt-bridge (repli : la TV rejoue ces clics). Les pages qui le parlent
+// envoient leur état, persisté dans sessions.current_interactive_state.
+const interactiveClicks = new Map() // sessionId (number) → Array<number[]>
+
 // Valid D&D 5e condition ids — mirrors frontend/src/utils/conditions.js
 const VALID_CONDITIONS = new Set([
   'blinded', 'charmed', 'deafened', 'exhaustion', 'frightened', 'grappled',
@@ -45,6 +50,8 @@ const MIN_FACTION_VALUE = -1000
 // valider superficiellement, le stocker et le relayer — voir 'show-content' plus bas.
 const CONTENT_TYPES = new Set(['spell', 'item', 'race', 'background', 'ability', 'service', 'condition'])
 const MAX_CONTENT_JSON_LENGTH = 50_000
+// État d'une page interactive envoyé par la page du MJ (JSON sérialisé).
+const MAX_INTERACTIVE_STATE_LENGTH = 64 * 1024
 
 /**
  * Parses the JSON-serialized content sheet currently shown on TV, if any.
@@ -57,6 +64,26 @@ function serializeCurrentContent(session) {
     return { contentType: session.current_content_type, contentData: JSON.parse(session.current_content_data) }
   } catch {
     return null
+  }
+}
+
+/**
+ * Page interactive chargée pour une session, quel que soit le mode TV courant : le MJ peut
+ * diffuser autre chose puis revenir à la page sans perdre son état. La TV ne l'affiche que
+ * si tv_mode === 'interactive'.
+ * @param {object} session - A row from the sessions table
+ */
+function serializeInteractive(session) {
+  if (!session.current_interactive_image_id) return null
+  let state = null
+  if (session.current_interactive_state) {
+    try { state = JSON.parse(session.current_interactive_state) } catch { state = null }
+  }
+  return {
+    imageId: session.current_interactive_image_id,
+    seed: parseInt(session.current_interactive_seed, 10),
+    state,
+    clicks: interactiveClicks.get(session.id) || [],
   }
 }
 
@@ -462,7 +489,7 @@ async function adminCanAccess(socket, sessionId) {
 // Modes TV valides — mirrors les v-if de TvView.vue.
 const TV_MODES = new Set([
   'lobby', 'combat', 'vote', 'doom', 'tension', 'timescale', 'image', 'video', 'map',
-  'merchant', 'puzzle', 'reputation', 'content', 'dashboard',
+  'merchant', 'puzzle', 'interactive', 'reputation', 'content', 'dashboard',
 ])
 
 // Longueurs maximales des champs texte libres fournis par un joueur à la connexion.
@@ -519,6 +546,8 @@ async function buildSessionSnapshot(session, isDemo) {
     lobbyBgUrl: session.lobby_bg_url || null,
     currentVideoUrl: session.current_video_url || null,
     activePuzzle,
+    // Jamais dans le payload joueur (join-session) : les joueurs n'ont aucun accès à la page.
+    activeInteractive: serializeInteractive(session),
     isDemo: !!isDemo,
     factions: await getFactionsBySession(session.id),
     tvTheme: session.tv_theme || 'dark',
@@ -1059,8 +1088,17 @@ function setupSocket(io) {
       if (!TV_MODES.has(mode)) return
       if (!await adminCanAccess(socket, sessionId)) return
       try {
+        // Revenir à la page interactive : la TV a besoin de la page et de son dernier état,
+        // qu'elle a oubliés en passant à un autre mode.
+        let extra = {}
+        if (mode === 'interactive') {
+          const { rows } = await pool.query('SELECT * FROM sessions WHERE id = $1 AND session_editable(id, $2)', [sessionId, socket.admin.id])
+          const activeInteractive = rows[0] ? serializeInteractive(rows[0]) : null
+          if (!activeInteractive) return
+          extra = { activeInteractive }
+        }
         await pool.query('UPDATE sessions SET tv_mode = $1 WHERE id = $2 AND session_editable(id, $3)', [mode, sessionId, socket.admin.id])
-        broadcastToSession(sessionId, 'tv-mode-changed', { mode })
+        broadcastToSession(sessionId, 'tv-mode-changed', { mode, ...extra })
       } catch (err) { console.error(err) }
     })
 
@@ -1622,6 +1660,85 @@ function setupSocket(io) {
         broadcastToSession(sid, 'tv-mode-changed', { mode: 'lobby' })
         broadcastToSession(sid, 'puzzle-closed', undefined, ['session', 'admin'])
       } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: show an interactive page (MJ only, mirrored on the TV) ─────────
+    // Contrairement au puzzle, rien n'est envoyé aux joueurs : broadcastToSession vise
+    // tv + admin par défaut, jamais la room session.
+    socket.on('show-interactive', async ({ sessionId, imageId }) => {
+      if (!socket.admin) return
+      try {
+        const sid = parseInt(sessionId, 10)
+        const iid = parseInt(imageId, 10)
+        if (!Number.isInteger(sid) || !Number.isInteger(iid)) return
+        if (!await assertSessionAccess(sid, socket.admin.id)) return
+        const imageCheck = await pool.query(
+          "SELECT id FROM session_images WHERE id = $1 AND session_id = $2 AND type = 'interactive'",
+          [iid, sid]
+        )
+        if (!imageCheck.rows[0]) return
+        const seed = Math.floor(Math.random() * 2147483646) + 1
+        await pool.query(
+          'UPDATE sessions SET tv_mode = $1, current_interactive_image_id = $2, current_interactive_seed = $3, current_interactive_state = NULL WHERE id = $4',
+          ['interactive', iid, String(seed), sid]
+        )
+        interactiveClicks.set(sid, [])
+        broadcastToSession(sid, 'tv-mode-changed', {
+          mode: 'interactive',
+          activeInteractive: { imageId: iid, seed, state: null, clicks: [] },
+        })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: close the interactive page ──────────────────────────────────
+    socket.on('close-interactive', async ({ sessionId }) => {
+      if (!socket.admin) return
+      try {
+        const sid = parseInt(sessionId, 10)
+        if (!Number.isInteger(sid)) return
+        if (!await assertSessionAccess(sid, socket.admin.id)) return
+        const { rows } = await pool.query(
+          `UPDATE sessions SET tv_mode = CASE WHEN tv_mode = 'interactive' THEN 'lobby' ELSE tv_mode END,
+             current_interactive_image_id = NULL, current_interactive_seed = NULL, current_interactive_state = NULL
+           WHERE id = $1 RETURNING tv_mode`,
+          [sid]
+        )
+        interactiveClicks.delete(sid)
+        if (rows[0]?.tv_mode === 'lobby') broadcastToSession(sid, 'tv-mode-changed', { mode: 'lobby' })
+        broadcastToSession(sid, 'interactive-closed', undefined, ['admin'])
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: state sent by the MJ's interactive page (dmt-bridge) ─────────
+    // Persisté pour qu'un rechargement (MJ, TV ou serveur) reprenne où on en était, puis
+    // relayé à la TV et aux autres admins de la session.
+    socket.on('interactive-state', async ({ sessionId, state }) => {
+      if (!socket.admin) return
+      try {
+        const sid = parseInt(sessionId, 10)
+        if (!Number.isInteger(sid)) return
+        const json = JSON.stringify(state ?? null)
+        if (json.length > MAX_INTERACTIVE_STATE_LENGTH) return
+        const result = await pool.query(
+          'UPDATE sessions SET current_interactive_state = $1 WHERE id = $2 AND current_interactive_image_id IS NOT NULL AND session_editable(id, $3)',
+          [json, sid, socket.admin.id]
+        )
+        if (result.rowCount === 0) return
+        io.to(`tv:${sid}`).emit('interactive-state-updated', { state })
+        socket.to(`admin:${sid}`).emit('interactive-state-updated', { state })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: click relay for pages without dmt-bridge (fallback) ──────────
+    socket.on('interactive-click', async ({ sessionId, path }) => {
+      if (!socket.admin) return
+      const sid = parseInt(sessionId, 10)
+      if (!Number.isInteger(sid) || !interactiveClicks.has(sid)) return
+      if (!Array.isArray(path) || path.length > 20) return
+      if (!path.every(i => Number.isInteger(i) && i >= 0 && i < 1000)) return
+      if (!await adminCanAccess(socket, sid)) return
+      interactiveClicks.get(sid).push(path)
+      io.to(`tv:${sid}`).emit('interactive-remote-click', { path })
     })
 
     // ── Player: relay puzzle click to other clients ────────────────────────
