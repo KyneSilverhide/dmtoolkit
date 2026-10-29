@@ -36,6 +36,8 @@ export const helpContent = {
     'Voile noir couvrant toute la carte côté TV. Peignez avec la souris sur le canvas pour révéler des zones. Les joueurs voient la révélation en temps réel.',
   'map.fog-brush':
     'Taille du pinceau de révélation en pixels. Un rayon plus grand révèle des zones plus larges d\'un seul passage.',
+  'map.grid':
+    'Superpose une grille carrée ou hexagonale à la carte. Avec une grille, le brouillard se révèle case par case : cliquez ou glissez pour révéler, ou démarrez le glisser sur une case déjà révélée pour la re-masquer. Maintenez Maj pour révéler aussi les cases voisines. Réglez colonnes, lignes et décalage pour caler la grille sur celle de l\'image.',
   'map.token-place':
     'Sélectionnez un joueur dans le plateau ci-dessus, puis cliquez sur la carte pour y placer son pion. Cliquez à nouveau sur le pion pour le retirer.',
   'map.viewport':

@@ -194,3 +194,31 @@ export function getCellPolygon(idx, gridType, cols, rows, hexOrientation = 'flat
   if (gridType === 'hex') return getHexCellPolygon(idx, cols, rows, hexOrientation, offsetX, offsetY, cellW, cellH)
   return []
 }
+
+/**
+ * Returns the indices of the cells adjacent to `idx` (8 for a square grid, 6 for a hex grid).
+ * Works geometrically — samples points just past the cell's bounding box in 8 directions —
+ * so it stays correct for both hex orientations and offset/odd-row layouts without
+ * duplicating their neighbour tables.
+ */
+export function getCellNeighbors(idx, gridType, cols, rows, hexOrientation = 'flat', offsetX = 0, offsetY = 0, cellW = null, cellH = null) {
+  const poly = getCellPolygon(idx, gridType, cols, rows, hexOrientation, offsetX, offsetY, cellW, cellH)
+  if (poly.length === 0) return []
+  const xs = poly.map(p => p.nx)
+  const ys = poly.map(p => p.ny)
+  const minX = Math.min(...xs), maxX = Math.max(...xs)
+  const minY = Math.min(...ys), maxY = Math.max(...ys)
+  const cx = (minX + maxX) / 2
+  const cy = (minY + maxY) / 2
+  const stepX = (maxX - minX) * 0.8
+  const stepY = (maxY - minY) * 0.8
+  const out = new Set()
+  for (const dx of [-1, 0, 1]) {
+    for (const dy of [-1, 0, 1]) {
+      if (dx === 0 && dy === 0) continue
+      const n = getCellAt(cx + dx * stepX, cy + dy * stepY, gridType, cols, rows, hexOrientation, offsetX, offsetY, cellW, cellH)
+      if (n >= 0 && n !== idx) out.add(n)
+    }
+  }
+  return [...out]
+}

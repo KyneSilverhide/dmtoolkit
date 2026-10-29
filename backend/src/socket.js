@@ -1892,6 +1892,33 @@ function setupSocket(io) {
       } catch (err) { console.error(err) }
     })
 
+    // ── Admin: re-hide grid cells (undo a reveal) ───────────────────────────
+    socket.on('map-fog-cell-hide', async ({ sessionId, cells }) => {
+      if (!socket.admin) return
+      try {
+        if (!Array.isArray(cells) || cells.length === 0) return
+        const sessionRes = await pool.query(
+          'SELECT map_fog_cells FROM sessions WHERE id = $1 AND session_editable(id, $2)',
+          [sessionId, socket.admin.id]
+        )
+        if (!sessionRes.rows[0]) return
+        let existing = []
+        try {
+          const raw = sessionRes.rows[0].map_fog_cells
+          existing = raw ? JSON.parse(raw) : []
+          if (!Array.isArray(existing)) existing = []
+        } catch { existing = [] }
+        const validCells = cells.filter(c => Number.isInteger(c) && c >= 0)
+        const toRemove = new Set(validCells)
+        const remaining = existing.filter(c => !toRemove.has(c))
+        await pool.query(
+          'UPDATE sessions SET map_fog_cells = $1 WHERE id = $2 AND session_editable(id, $3)',
+          [JSON.stringify(remaining), sessionId, socket.admin.id]
+        )
+        broadcastToSession(sessionId, 'map-fog-cells-unpatch', { cells: validCells })
+      } catch (err) { console.error(err) }
+    })
+
     // ── Admin: sync grid config to TV after save ────────────────────────────
     socket.on('map-sync-grid', async ({ sessionId, gridType, gridCols, gridRows, gridHexOrientation, gridOffsetX, gridOffsetY, gridCellW, gridCellH }) => {
       if (!socket.admin) return

@@ -10,7 +10,7 @@ import MapTokenPanel from './map/MapTokenPanel.vue'
 import MapViewportControls from './map/MapViewportControls.vue'
 import { useMapUpload } from '@/composables/useMapUpload.js'
 import { useMapSocket } from '@/composables/useMapSocket.js'
-import { getCellAt, getCellPolygon } from '@/utils/mapGrid.js'
+import { getCellAt, getCellPolygon, getCellNeighbors } from '@/utils/mapGrid.js'
 import { BACKEND_URL } from '@/config.js'
 import { apiFetch } from '@/utils/apiFetch.js'
 
@@ -71,6 +71,8 @@ const fogCellsSet = new Set()
 
 let isPainting = false
 let isRevealingCells = false
+// Un glisser démarré sur une case déjà révélée la re-masque (annulation) au lieu de révéler.
+let isHidingCells = false
 const isDragging = ref(false)
 let dragStart = null
 let dragViewportStart = null
@@ -564,15 +566,35 @@ function applyBrush(pos) {
   mapSocket.emitFogStroke(stroke)
 }
 
-function applyCellReveal(pos) {
+// `wide` (Maj maintenu) : révèle aussi les cases voisines — sans jamais re-masquer.
+function applyCellReveal(pos, wide = false) {
   const norm = canvasToNorm(pos.x, pos.y)
   if (!norm) return
   const idx = getCellAt(norm.nx, norm.ny, gridType.value, gridCols.value, gridRows.value, gridHexOrientation.value, gridOffsetX.value, gridOffsetY.value, gridCellW.value, gridCellH.value)
-  if (idx < 0 || fogCellsSet.has(idx)) return
-  fogCellsSet.add(idx)
+  if (idx < 0) return
+  if (isHidingCells) {
+    if (!fogCellsSet.has(idx)) return
+    fogCellsSet.delete(idx)
+    fogCells.value = [...fogCellsSet]
+    render()
+    mapSocket.emitCellHide(idx)
+    return
+  }
+  const targets = wide
+    ? [idx, ...getCellNeighbors(idx, gridType.value, gridCols.value, gridRows.value, gridHexOrientation.value, gridOffsetX.value, gridOffsetY.value, gridCellW.value, gridCellH.value)]
+    : [idx]
+  const added = targets.filter(c => !fogCellsSet.has(c))
+  if (added.length === 0) return
+  added.forEach(c => fogCellsSet.add(c))
   fogCells.value = [...fogCellsSet]
   render()
-  mapSocket.emitCellReveal(idx)
+  mapSocket.emitCellReveal(added)
+}
+
+function cellIdxAt(pos) {
+  const norm = canvasToNorm(pos.x, pos.y)
+  if (!norm) return -1
+  return getCellAt(norm.nx, norm.ny, gridType.value, gridCols.value, gridRows.value, gridHexOrientation.value, gridOffsetX.value, gridOffsetY.value, gridCellW.value, gridCellH.value)
 }
 
 function onPointerDown(event) {
@@ -603,7 +625,7 @@ function onPointerDown(event) {
   const tokenUnderCursor = getTokenAtPos(pos)
   if (tokenUnderCursor) { draggingTokenId = tokenUnderCursor; return }
   if (fogEnabled.value) {
-    if (gridType.value !== 'none') { isRevealingCells = true; applyCellReveal(pos) }
+    if (gridType.value !== 'none') { isRevealingCells = true; isHidingCells = !event.shiftKey && fogCellsSet.has(cellIdxAt(pos)); applyCellReveal(pos, event.shiftKey) }
     else { isPainting = true; applyBrush(pos) }
   }
 }
@@ -622,7 +644,7 @@ function onPointerMove(event) {
     return
   }
   if (isPainting && fogEnabled.value && gridType.value === 'none') { applyBrush(pos); return }
-  if (isRevealingCells && fogEnabled.value && gridType.value !== 'none') { applyCellReveal(pos); return }
+  if (isRevealingCells && fogEnabled.value && gridType.value !== 'none') { applyCellReveal(pos, event.shiftKey); return }
   if (isDragging.value) {
     const { cx, cy } = getEventXY(event)
     viewport.value = { ...dragViewportStart, x: dragViewportStart.x + (cx - dragStart.x), y: dragViewportStart.y + (cy - dragStart.y) }
@@ -640,6 +662,7 @@ function onPointerUp(_event) {
   }
   isPainting = false
   isRevealingCells = false
+  isHidingCells = false
   isDragging.value = false
 }
 

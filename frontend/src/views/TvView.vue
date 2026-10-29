@@ -435,6 +435,13 @@ onMounted(() => {
     }
   })
 
+  socket.on('map-fog-cells-unpatch', ({ cells }) => {
+    if (Array.isArray(cells)) {
+      cells.forEach(c => mapFogCellsSet.delete(c))
+      mapFogCells.value = [...mapFogCellsSet]
+    }
+  })
+
   socket.on('map-fog-cells-reset', () => {
     mapFogCellsSet.clear()
     mapFogCells.value = []

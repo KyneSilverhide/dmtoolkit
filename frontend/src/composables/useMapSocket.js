@@ -77,6 +77,13 @@ export function useMapSocket({
     render()
   }
 
+  function handleFogCellsUnpatch({ cells }) {
+    if (!Array.isArray(cells)) return
+    cells.forEach(c => fogCellsSet.delete(c))
+    fogCells.value = [...fogCellsSet]
+    render()
+  }
+
   function handleFogCellsReset() {
     fogCellsSet.clear()
     fogCells.value = []
@@ -116,6 +123,7 @@ export function useMapSocket({
     socket.on('map-fog-patch', handleFogPatch)
     socket.on('map-fog-reset', handleFogReset)
     socket.on('map-fog-cells-patch', handleFogCellsPatch)
+    socket.on('map-fog-cells-unpatch', handleFogCellsUnpatch)
     socket.on('map-fog-cells-reset', handleFogCellsReset)
     socket.on('map-token-moved', handleMapTokenMoved)
     socket.on('map-token-removed', handleMapTokenRemoved)
@@ -130,6 +138,7 @@ export function useMapSocket({
     socket.off('map-fog-patch', handleFogPatch)
     socket.off('map-fog-reset', handleFogReset)
     socket.off('map-fog-cells-patch', handleFogCellsPatch)
+    socket.off('map-fog-cells-unpatch', handleFogCellsUnpatch)
     socket.off('map-fog-cells-reset', handleFogCellsReset)
     socket.off('map-token-moved', handleMapTokenMoved)
     socket.off('map-token-removed', handleMapTokenRemoved)
@@ -163,9 +172,14 @@ function emitResetFog(isGrid) {
     socket.emit('map-fog-clear', { sessionId: sessionStore.activeSession.id, strokes: [stroke] })
   }
 
-  function emitCellReveal(idx) {
+  function emitCellReveal(cells) {
     const socket = getSocket()
-    socket.emit('map-fog-cell-reveal', { sessionId: sessionStore.activeSession.id, cells: [idx] })
+    socket.emit('map-fog-cell-reveal', { sessionId: sessionStore.activeSession.id, cells: Array.isArray(cells) ? cells : [cells] })
+  }
+
+  function emitCellHide(idx) {
+    const socket = getSocket()
+    socket.emit('map-fog-cell-hide', { sessionId: sessionStore.activeSession.id, cells: [idx] })
   }
 
   function emitViewport(xn, yn, scale) {
@@ -191,7 +205,7 @@ function emitResetFog(isGrid) {
   return {
     register, unregister,
     emitShowMap, emitToggleFog, emitResetFog,
-    emitFogStroke, emitCellReveal,
+    emitFogStroke, emitCellReveal, emitCellHide,
     emitViewport, emitTokenMove, emitTokenRemove, emitSyncGrid,
   }
 }
