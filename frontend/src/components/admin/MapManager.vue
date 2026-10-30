@@ -8,6 +8,7 @@ import MapGridConfig from './map/MapGridConfig.vue'
 import MapFogControls from './map/MapFogControls.vue'
 import MapTokenPanel from './map/MapTokenPanel.vue'
 import MapViewportControls from './map/MapViewportControls.vue'
+import MapImageGroups from './map/MapImageGroups.vue'
 import { useMapUpload } from '@/composables/useMapUpload.js'
 import { useMapSocket } from '@/composables/useMapSocket.js'
 import { getCellAt, getCellPolygon, getCellNeighbors } from '@/utils/mapGrid.js'
@@ -760,8 +761,6 @@ const mapSocket = useMapSocket({
 // ── Lifecycle ──────────────────────────────────────────────────────────────
 onMounted(() => {
   loadImages()
-  resizeObserver = new ResizeObserver(() => { fitCanvas(); render() })
-  if (canvasContainer.value) resizeObserver.observe(canvasContainer.value)
   mapSocket.register()
 })
 
@@ -770,6 +769,16 @@ onUnmounted(() => {
   if (resizeObserver) resizeObserver.disconnect()
   mapSocket.unregister()
 })
+
+// Le conteneur du canvas est sous un v-if (carte active uniquement) : il n'existe pas encore à
+// onMounted lors d'un premier affichage. Observer la ref elle-même garantit un fitCanvas() dès son
+// apparition (ResizeObserver notifie à l'observation initiale), sinon le canvas garde sa taille par
+// défaut 300×150 et la carte a un mauvais ratio jusqu'au prochain redimensionnement.
+resizeObserver = new ResizeObserver(() => { fitCanvas(); render() })
+watch(canvasContainer, (el, prev) => {
+  if (prev) resizeObserver?.unobserve(prev)
+  if (el) resizeObserver?.observe(el)
+}, { flush: 'post' })
 
 watch(() => selectedImageUrl.value, (url) => { if (url && !mapImage) loadMapImage(url) })
 watch(fogEnabled, () => render())
@@ -877,6 +886,8 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
             @reset="resetFog"
             @update:brush-radius="brushRadius = $event"
           />
+
+          <MapImageGroups />
 
           <MapTokenPanel
             :players="sessionStore.players"

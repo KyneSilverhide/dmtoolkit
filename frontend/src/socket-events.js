@@ -94,6 +94,9 @@ export const SHOW_IMAGE = 'show-image'
 /** Admin displays a random image of an image group on the TV: { sessionId, groupId } */
 export const SHOW_IMAGE_GROUP = 'show-image-group'
 
+/** Admin shows a random image of a group for a few seconds, then the map returns: { sessionId, groupId, durationSeconds } */
+export const SHOW_IMAGE_GROUP_TEMP = 'show-image-group-temp'
+
 /** Admin displays a video on the TV: { sessionId, videoUrl } */
 export const SHOW_VIDEO = 'show-video'
 
@@ -485,6 +488,7 @@ export default {
   CLOSE_VOTE,
   SHOW_IMAGE,
   SHOW_IMAGE_GROUP,
+  SHOW_IMAGE_GROUP_TEMP,
   SHOW_VIDEO,
   VIDEO_CONTROL,
   SHOW_MAP,

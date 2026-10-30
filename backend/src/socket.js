@@ -620,6 +620,36 @@ function setupSocket(io) {
     return pick
   }
 
+  // ── Aperçu temporaire d'un groupe d'images depuis la carte : même tirage que show-image-group,
+  // puis retour automatique à la carte. Le minuteur vit côté serveur (pas dans le navigateur du MJ)
+  // pour que la TV ne reste pas bloquée sur l'image si l'onglet admin est fermé ou rechargé. Un
+  // nouveau tirage remplace le précédent minuteur. Au terme, on ne restaure la carte que si la TV
+  // affiche encore EXACTEMENT l'image tirée : si le MJ a entre-temps changé de mode ou d'image, on
+  // ne l'écrase pas.
+  const GROUP_PREVIEW_DEFAULT_SECONDS = 10
+  const GROUP_PREVIEW_MIN_SECONDS = 2
+  const GROUP_PREVIEW_MAX_SECONDS = 120
+  const groupPreviewTimers = new Map() // sessionId → Timeout
+  async function showGroupImageThenRestoreMap(sessionId, group, adminId, seconds) {
+    const pick = await showRandomGroupImage(sessionId, group, adminId)
+    if (!pick) return null
+    clearTimeout(groupPreviewTimers.get(sessionId))
+    const timer = setTimeout(async () => {
+      groupPreviewTimers.delete(sessionId)
+      try {
+        const { rows } = await pool.query(
+          `UPDATE sessions SET tv_mode = 'map'
+           WHERE id = $1 AND tv_mode = 'image' AND current_image_url = $2 AND current_map_url IS NOT NULL
+           RETURNING id`,
+          [sessionId, pick.url]
+        )
+        if (rows[0]) broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'map' })
+      } catch (err) { console.error(err) }
+    }, seconds * 1000)
+    groupPreviewTimers.set(sessionId, timer)
+    return pick
+  }
+
   // ── Puzzle resync: re-broadcast the canonical click history instead of an atomic lock on
   // 'puzzle-click'. Two players clicking near-simultaneously can apply the resulting replay in
   // different local order on each client (each applies its own click immediately, then receives
@@ -1580,6 +1610,24 @@ function setupSocket(io) {
           [groupId, sessionId]
         )
         if (rows[0]) await showRandomGroupImage(sessionId, rows[0], socket.admin.id)
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: aperçu temporaire d'un groupe d'images (retour automatique à la carte) ──
+    socket.on('show-image-group-temp', async ({ sessionId, groupId, durationSeconds } = {}) => {
+      if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
+      if (!Number.isInteger(groupId) || groupId <= 0) return
+      try {
+        const parsed = parseInt(durationSeconds, 10)
+        const seconds = Number.isNaN(parsed)
+          ? GROUP_PREVIEW_DEFAULT_SECONDS
+          : Math.max(GROUP_PREVIEW_MIN_SECONDS, Math.min(GROUP_PREVIEW_MAX_SECONDS, parsed))
+        const { rows } = await pool.query(
+          'SELECT id, name, last_image_id FROM image_groups WHERE id = $1 AND session_id = $2',
+          [groupId, sessionId]
+        )
+        if (rows[0]) await showGroupImageThenRestoreMap(sessionId, rows[0], socket.admin.id, seconds)
       } catch (err) { console.error(err) }
     })
 

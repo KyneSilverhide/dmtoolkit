@@ -38,6 +38,8 @@ export const helpContent = {
     'Taille du pinceau de révélation en pixels. Un rayon plus grand révèle des zones plus larges d\'un seul passage.',
   'map.grid':
     'Superpose une grille carrée ou hexagonale à la carte. Avec une grille, le brouillard se révèle case par case : cliquez ou glissez pour révéler, ou démarrez le glisser sur une case déjà révélée pour la re-masquer. Maintenez Maj pour révéler aussi les cases voisines. Réglez colonnes, lignes et décalage pour caler la grille sur celle de l\'image.',
+  'map.groups':
+    'Projette une image tirée au hasard dans le groupe, puis ramène automatiquement la carte sur la TV après la durée indiquée. Pratique pour illustrer la case où se trouve le groupe de joueurs. Si vous changez de mode TV entre-temps, la carte n\'est pas restaurée.',
   'map.token-place':
     'Sélectionnez un joueur dans le plateau ci-dessus, puis cliquez sur la carte pour y placer son pion. Cliquez à nouveau sur le pion pour le retirer.',
   'map.viewport':
