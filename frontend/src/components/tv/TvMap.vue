@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { getCellPolygon } from '@/utils/mapGrid.js'
+import TvHexcrawlOverlay from './TvHexcrawlOverlay.vue'
 import { BACKEND_URL } from '@/config.js'
 
 const props = defineProps({
@@ -19,6 +20,7 @@ const props = defineProps({
   gridCellW: { type: Number, default: null },
   gridCellH: { type: Number, default: null },
   players: { type: Array, default: () => [] },
+  hexcrawl: { type: Object, default: null },
 })
 
 const mapContainerRef = ref(null)
@@ -94,6 +96,33 @@ const mapTokenStyles = computed(() => {
   return result
 })
 
+// Position de l'image à l'écran et taille d'un hex, pour la couche hexcrawl.
+const imageLayout = computed(() => {
+  const container = mapContainerRef.value
+  const natW = mapImageSize.value.w
+  const natH = mapImageSize.value.h
+  if (!container || !natW) return null
+  const W = container.offsetWidth || 1920
+  const H = container.offsetHeight || 1080
+  const vp = props.mapViewport
+  const baseScale = Math.min(W / natW, H / natH)
+  const totalScale = baseScale * vp.scale
+  const w = natW * totalScale
+  const h = natH * totalScale
+  return { x: W / 2 - w / 2 + (vp.xn * natW * baseScale), y: H / 2 - h / 2 + (vp.yn * natH * baseScale), w, h, viewW: W }
+})
+
+const hexPx = computed(() => {
+  const layout = imageLayout.value
+  if (!layout) return 0
+  const poly = getCellPolygon(0, props.gridType, props.gridCols, props.gridRows, props.gridHexOrientation, props.gridOffsetX, props.gridOffsetY, props.gridCellW, props.gridCellH)
+  if (!poly.length) return 0
+  const span = values => Math.max(...values) - Math.min(...values)
+  return props.gridHexOrientation === 'pointy'
+    ? span(poly.map(p => p.nx)) * layout.w
+    : span(poly.map(p => p.ny)) * layout.h
+})
+
 function renderMapFog() {
   const canvas = mapFogCanvas.value
   if (!canvas) return
@@ -129,8 +158,16 @@ function renderMapFog() {
     ctx.beginPath()
     ctx.rect(offsetX, offsetY, imgW, imgH)
     ctx.clip()
-    for (let idx = 0; idx < totalCells; idx++) {
-      if (fogCellsSet.has(idx)) continue
+    // Tout masquer puis découper les cases révélées : peindre case par case laisserait voir
+    // les marges de l'image et un liseré entre deux cases voisines.
+    ctx.fillStyle = cssVar('--color-media-letterbox')
+    ctx.fillRect(offsetX, offsetY, imgW, imgH)
+    ctx.globalCompositeOperation = 'destination-out'
+    ctx.fillStyle = '#000'
+    ctx.strokeStyle = '#000'
+    ctx.lineWidth = 1.5
+    for (const idx of fogCellsSet) {
+      if (idx < 0 || idx >= totalCells) continue
       const points = getCellPolygon(idx, type, cols, rows, orientation, gox, goy, props.gridCellW, props.gridCellH)
       if (!points.length) continue
       ctx.beginPath()
@@ -139,8 +176,8 @@ function renderMapFog() {
         ctx.lineTo(offsetX + points[i].nx * imgW, offsetY + points[i].ny * imgH)
       }
       ctx.closePath()
-      ctx.fillStyle = cssVar('--color-media-letterbox')
       ctx.fill()
+      ctx.stroke()
     }
     ctx.restore()
     return
@@ -189,6 +226,7 @@ onUnmounted(() => window.removeEventListener('resize', renderMapFog))
       @load="onMapImageLoad"
     />
     <canvas ref="mapFogCanvas" class="map-fog-canvas" />
+    <TvHexcrawlOverlay v-if="hexcrawl && imageLayout" :hexcrawl="hexcrawl" :layout="imageLayout" :hex-px="hexPx" />
     <div class="map-tokens-layer">
       <div
         v-for="pid in Object.keys(mapTokens)"

@@ -222,3 +222,33 @@ export function getCellNeighbors(idx, gridType, cols, rows, hexOrientation = 'fl
   }
   return [...out]
 }
+
+/**
+ * Returns the cells reachable from `idx` in at most `steps` moves (BFS), without `idx` itself.
+ * `gridArgs` = [gridType, cols, rows, hexOrientation, offsetX, offsetY, cellW, cellH].
+ */
+export function getCellsWithin(idx, steps, gridArgs) {
+  const seen = new Set([idx])
+  let frontier = [idx]
+  for (let i = 0; i < steps && frontier.length; i++) {
+    const next = []
+    for (const cell of frontier) {
+      for (const n of getCellNeighbors(cell, ...gridArgs)) {
+        if (!seen.has(n)) { seen.add(n); next.push(n) }
+      }
+    }
+    frontier = next
+  }
+  seen.delete(idx)
+  return [...seen]
+}
+
+/** Centre normalisé d'une case (moyenne des sommets), ou null hors grille. */
+export function getCellCenter(idx, gridType, cols, rows, hexOrientation = 'flat', offsetX = 0, offsetY = 0, cellW = null, cellH = null) {
+  const poly = getCellPolygon(idx, gridType, cols, rows, hexOrientation, offsetX, offsetY, cellW, cellH)
+  if (!poly.length) return null
+  return {
+    nx: poly.reduce((sum, p) => sum + p.nx, 0) / poly.length,
+    ny: poly.reduce((sum, p) => sum + p.ny, 0) / poly.length,
+  }
+}

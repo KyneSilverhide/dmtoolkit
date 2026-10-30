@@ -31,8 +31,8 @@ function hexPaths(cfg, W, H) {
   for (let idx = 0; idx < cols * rows; idx++) {
     const col = idx % cols
     const row = Math.floor(idx / cols)
-    const v = _internal.hexVerticesPx(col, row, hexW, hexH, orient, ox, oy)
-    d += 'M ' + v.map(p => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' L ') + ' Z '
+    const v = _internal.cellVertices({ type: 'hex', orientation: orient, cellW: hexW, cellH: hexH, ox, oy }, col, row)
+    d += 'M ' + v.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(' L ') + ' Z '
   }
   return d
 }

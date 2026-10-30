@@ -2,10 +2,12 @@
 import AppIcon from '../../AppIcon.vue'
 import HelpTip from '../../HelpTip.vue'
 import { BACKEND_URL } from '@/config.js'
+import { GROUP_TOKEN_ID, GROUP_TOKEN_NAME } from '@/utils/mapTokens.js'
 
 const props = defineProps({
   players: { type: Array, default: () => [] },
   mapTokens: { type: Object, default: () => ({}) },
+  groupToken: { type: Boolean, default: false },
   pendingTokenPlayerId: { type: String, default: null },
   pendingCustomToken: { type: Boolean, default: false },
   customTokenName: { type: String, default: '' },
@@ -13,6 +15,7 @@ const props = defineProps({
 
 const emit = defineEmits([
   'toggle-player-token',
+  'toggle-group-token',
   'add-custom-token',
   'remove-custom-token',
   'update:customTokenName',
@@ -29,7 +32,34 @@ function imageFullUrl(url) {
   <div class="control-section">
     <h4 class="subsection-title"><AppIcon icon="game-icons:wizard-staff" size="0.85em" /> Jetons <HelpTip id="map.token-place" /></h4>
 
-    <p v-if="players.length === 0" class="hint-text">Aucun joueur connecté.</p>
+    <label class="group-toggle">
+      <input
+        type="checkbox"
+        :checked="groupToken"
+        data-testid="map-group-token-toggle"
+        @change="emit('toggle-group-token')"
+      />
+      Jeton unique pour le groupe
+    </label>
+
+    <div v-if="groupToken" class="token-tray">
+      <div
+        class="token-chip"
+        :class="{
+          placed: !!mapTokens[GROUP_TOKEN_ID],
+          pending: pendingTokenPlayerId === GROUP_TOKEN_ID,
+        }"
+        :title="mapTokens[GROUP_TOKEN_ID] ? 'Cliquer pour retirer de la carte' : 'Cliquer pour placer sur la carte'"
+        data-testid="map-group-token-chip"
+        @click="emit('toggle-player-token', GROUP_TOKEN_ID)"
+      >
+        <div class="chip-avatar"><AppIcon icon="lucide:users" size="0.9em" /></div>
+        <span class="chip-name">{{ GROUP_TOKEN_NAME }}</span>
+        <span v-if="mapTokens[GROUP_TOKEN_ID]" class="chip-badge">✓</span>
+        <span v-else-if="pendingTokenPlayerId === GROUP_TOKEN_ID" class="chip-badge pending-badge"><AppIcon icon="lucide:map-pin" size="0.75rem" /></span>
+      </div>
+    </div>
+    <p v-else-if="players.length === 0" class="hint-text">Aucun joueur connecté.</p>
     <div v-else class="token-tray">
       <div
         v-for="player in players"
@@ -107,6 +137,8 @@ function imageFullUrl(url) {
   padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2);
 }
 .hint-text { font-family: var(--font-body), sans-serif; font-size: var(--text-sm); color: var(--color-text-dim); margin: 0; }
+.group-toggle { display: flex; align-items: center; gap: var(--space-2); color: var(--color-text-dim); font-family: var(--font-heading), sans-serif; font-size: var(--text-xs); cursor: pointer; }
+.group-toggle input { accent-color: var(--color-gold); }
 .token-tray { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .token-chip {
   display: flex; align-items: center; gap: var(--space-1);

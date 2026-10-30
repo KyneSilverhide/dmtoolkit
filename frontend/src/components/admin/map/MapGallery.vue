@@ -9,9 +9,10 @@ const props = defineProps({
   uploadProgress: { type: Number, default: 0 },
   uploadError: { type: String, default: '' },
   hasActiveSession: { type: Boolean, default: false },
+  hexcrawlImageIds: { type: Array, default: () => [] },
 })
 
-const emit = defineEmits(['select', 'delete', 'upload', 'show-on-tv'])
+const emit = defineEmits(['select', 'delete', 'upload', 'show-on-tv', 'create-hexcrawl'])
 
 function imageFullUrl(url) {
   if (!url) return ''
@@ -35,6 +36,9 @@ function handleFileUpload(event) {
         {{ uploading ? `Envoi… ${uploadProgress}%` : 'Téléverser des cartes' }}
         <input type="file" accept="image/*" multiple class="file-input" :disabled="uploading || !hasActiveSession" @change="handleFileUpload" />
       </label>
+      <button class="upload-btn hexcrawl-btn" data-testid="hexcrawl-create" :disabled="!hasActiveSession" @click="emit('create-hexcrawl')">
+        <AppIcon icon="lucide:hexagon" size="0.8em" /> Créer un hexcrawl
+      </button>
       <div v-if="uploading" class="progress-track">
         <div class="progress-fill" :style="{ width: uploadProgress + '%' }" />
       </div>
@@ -60,6 +64,7 @@ function handleFileUpload(event) {
         <div class="thumb-wrapper">
           <img :src="imageFullUrl(img.thumbnail_url || img.url)" :alt="img.original_name || img.url" class="gallery-thumb" />
           <button class="delete-btn" @click.stop="emit('delete', img)" title="Supprimer">✕</button>
+          <span v-if="hexcrawlImageIds.includes(img.id)" class="hexcrawl-badge">Hexcrawl</span>
           <span v-if="img.grid_type && img.grid_type !== 'none'" class="grid-badge" :title="`Grille ${img.grid_type}`">
             <AppIcon :icon="img.grid_type === 'hex' ? 'lucide:hexagon' : 'lucide:grid-3x3'" size="0.7em" />
           </span>
@@ -73,6 +78,9 @@ function handleFileUpload(event) {
 </template>
 
 <style scoped>
+.hexcrawl-btn { font: inherit; cursor: pointer; }
+.hexcrawl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.hexcrawl-badge { position: absolute; left: 4px; bottom: 4px; padding: 1px var(--space-2); border-radius: 999px; background: var(--color-gold-dark); color: var(--color-text-on-accent); font-size: var(--text-2xs); }
 .upload-card {
   display: flex;
   align-items: center;

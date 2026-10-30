@@ -629,13 +629,24 @@ router.delete('/:id/images/:imageId', authenticateToken, async (req, res) => {
 
     // Récupérer l'URL pour supprimer le fichier
     const imgRes = await pool.query(
-        'SELECT url, thumbnail_url FROM session_images WHERE id = $1 AND session_id = $2',
+        `SELECT i.url, i.thumbnail_url, h.id AS hexcrawl_id, i.url = s.current_map_url AS is_current
+         FROM session_images i
+         JOIN sessions s ON s.id = i.session_id
+         LEFT JOIN hexcrawls h ON h.image_id = i.id
+         WHERE i.id = $1 AND i.session_id = $2`,
         [req.params.imageId, req.params.id]
     )
     if (!imgRes.rows[0]) return res.status(404).json({ error: 'Image not found.' })
 
     // Supprimer en base
     await pool.query('DELETE FROM session_images WHERE id = $1', [req.params.imageId])
+
+    // Le hexcrawl part en cascade avec sa carte : la TV et les admins ne doivent pas le garder affiché.
+    if (imgRes.rows[0].hexcrawl_id && imgRes.rows[0].is_current) {
+      const io = req.app.get('io')
+      io?.to(`admin:${req.params.id}`).emit('hexcrawl-updated', null)
+      io?.to(`tv:${req.params.id}`).emit('hexcrawl-public', null)
+    }
 
     // Supprimer le fichier et sa thumbnail sur le disque
     const { url, thumbnail_url } = imgRes.rows[0]
@@ -736,6 +747,41 @@ router.delete('/:id/image-groups/:groupId', authenticateToken, async (req, res) 
     )
     if (result.rowCount === 0) return res.status(404).json({ error: 'Group not found.' })
     res.json({ success: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
+// Hexcrawls : la liste sert au badge de la galerie et à l'assistant, `current` à reprendre le voyage
+// de la carte affichée. Les écritures passent par les sockets hexcrawl-* (diffusion TV + admin).
+router.get('/:id/hexcrawls', authenticateToken, async (req, res) => {
+  try {
+    if (!await sessionEditable(req.params.id, req.admin.id)) return res.status(404).json({ error: 'Session not found.' })
+    const { rows } = await pool.query(
+      'SELECT id, image_id, config, log FROM hexcrawls WHERE session_id = $1',
+      [req.params.id]
+    )
+    res.json(rows.map(row => ({ ...row, config: JSON.parse(row.config), log: JSON.parse(row.log) })))
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Server error.' })
+  }
+})
+
+router.get('/:id/hexcrawls/current', authenticateToken, async (req, res) => {
+  try {
+    if (!await sessionEditable(req.params.id, req.admin.id)) return res.status(404).json({ error: 'Session not found.' })
+    const { rows } = await pool.query(
+      `SELECT h.id, h.image_id, h.config, h.log
+       FROM hexcrawls h
+       JOIN session_images i ON i.id = h.image_id
+       JOIN sessions s ON s.id = h.session_id
+       WHERE h.session_id = $1 AND i.url = s.current_map_url`,
+      [req.params.id]
+    )
+    if (!rows[0]) return res.json(null)
+    res.json({ ...rows[0], config: JSON.parse(rows[0].config), log: JSON.parse(rows[0].log) })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Server error.' })

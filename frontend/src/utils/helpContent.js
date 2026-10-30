@@ -41,9 +41,25 @@ export const helpContent = {
   'map.groups':
     'Projette une image tirée au hasard dans le groupe, puis ramène automatiquement la carte sur la TV après la durée indiquée. Pratique pour illustrer la case où se trouve le groupe de joueurs. Si vous changez de mode TV entre-temps, la carte n\'est pas restaurée.',
   'map.token-place':
-    'Sélectionnez un joueur dans le plateau ci-dessus, puis cliquez sur la carte pour y placer son pion. Cliquez à nouveau sur le pion pour le retirer.',
+    'Sélectionnez un joueur dans le plateau ci-dessus, puis cliquez sur la carte pour y placer son pion. Cliquez à nouveau sur le pion pour le retirer. L\'option Jeton unique remplace les pions des joueurs par un seul jeton Groupe, pratique pour un voyage ; les pions reviennent à leur place quand vous la décochez. Les jetons personnalisés restent toujours affichés.',
   'map.viewport':
     'Contrôle le zoom et le cadrage visible sur la TV. Utile pour focaliser l\'attention des joueurs sur une zone précise de la carte.',
+
+  // ── Admin — Hexcrawl ──────────────────────────────────────────────────────
+  'hexcrawl.calibrate':
+    'Saisissez le code de deux cases éloignées, puis cliquez leur centre sur la carte. La taille des cases, leur position et l\'étendue de la grille en sont déduites. Vérifiez ensuite que les codes affichés correspondent à ceux de votre carte.',
+  'hexcrawl.groups':
+    'Déposez des images sur un groupe pour les envoyer et les y ranger directement. Les groupes sont les mêmes que dans l\'onglet Images et que dans vos blocs Obsidian : les renommer casse les blocs existants.',
+  'hexcrawl.scale':
+    'La taille d\'un hex sert à l\'échelle affichée sur la TV. Une journée se découpe en tranches de quelques heures, avec une activité par tranche : marcher ou faire halte. Les heures de repos sont réservées au sommeil.',
+  'hexcrawl.movement':
+    'Vitesse en hex par tranche de temps. Le carburant se compte en déplacements : un hex parcouru en véhicule coûte 1, quel que soit le terrain.',
+  'hexcrawl.pursuit':
+    'L\'armée suit la piste du groupe hex par hex ; à une case du groupe, elle quitte la piste et fonce sur lui. Chaque vague liste ses mouvements tranche après tranche, et la séquence se répète. Elle ne se repose jamais et reste visible du MJ seul, sauf si vous cochez l\'affichage TV.',
+  'hexcrawl.travel':
+    'Cliquez une case voisine pour avancer : le jeton du groupe, la piste, le brouillard, le temps et le carburant suivent. Une halte (fouille, fabrication, soins, garde) ajoute la durée d\'une tranche. Un repos ou un changement de mode termine d\'abord la tranche en cours. Quand les heures d\'action sont écoulées, l\'app propose le repos ; quand l\'armée rejoint le groupe, le temps s\'arrête jusqu\'à ce que la vague soit réglée. Annuler retire la dernière action, sans remettre le brouillard sur une case déjà révélée. Le hexcrawl fixe la carte : brouillard toujours actif et grille figée dès le premier pas (« Recommencer » la rend modifiable depuis Réglages). La molette règle toujours le cadrage de la TV.',
+  'hexcrawl.hard':
+    'Le prochain hex coûte le double en temps, pas en carburant : 8 h à pied à 1 hex par 4 h, 4 h en véhicule à 2 hex par 4 h. Se décoche après le déplacement. Vous gardez la main sur ce qui est infranchissable : l\'app ne connaît pas le terrain.',
 
   // ── Admin — AudioManager ──────────────────────────────────────────────────
   'audio.screen':
