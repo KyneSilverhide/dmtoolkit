@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { sessionStore } from '@/stores/session.js'
 import { authStore } from '@/stores/auth.js'
 import AppIcon from '../AppIcon.vue'
@@ -9,9 +9,15 @@ import MapFogControls from './map/MapFogControls.vue'
 import MapTokenPanel from './map/MapTokenPanel.vue'
 import MapViewportControls from './map/MapViewportControls.vue'
 import MapImageGroups from './map/MapImageGroups.vue'
+import HexcrawlAlert from './hexcrawl/HexcrawlAlert.vue'
+import HexcrawlPanel from './hexcrawl/HexcrawlPanel.vue'
+import HexcrawlWizard from './hexcrawl/HexcrawlWizard.vue'
 import { useMapUpload } from '@/composables/useMapUpload.js'
 import { useMapSocket } from '@/composables/useMapSocket.js'
-import { getCellAt, getCellPolygon, getCellNeighbors } from '@/utils/mapGrid.js'
+import { useHexcrawl } from '@/composables/useHexcrawl.js'
+import { formatHours, hexLabel } from '@/utils/hexcrawl.js'
+import { getCellAt, getCellPolygon, getCellNeighbors, getCellCenter, getCellsWithin } from '@/utils/mapGrid.js'
+import { GROUP_TOKEN_ID, GROUP_TOKEN_NAME, visibleTokens, centerOfPlayerTokens } from '@/utils/mapTokens.js'
 import { BACKEND_URL } from '@/config.js'
 import { apiFetch } from '@/utils/apiFetch.js'
 
@@ -36,6 +42,7 @@ const viewport = ref({ x: 0, y: 0, scale: 1 })
 const fogStrokes = ref([])
 const fogCells = ref([])
 const mapTokens = ref({})
+const groupToken = ref(false)
 const customTokenName = ref('')
 const pendingCustomToken = ref(false)
 const pendingTokenPlayerId = ref(null)
@@ -79,6 +86,216 @@ let dragStart = null
 let dragViewportStart = null
 let draggingTokenId = null
 let tokenDragThrottleFrame = null
+
+// ── Hexcrawl ───────────────────────────────────────────────────────────────
+const {
+  hexcrawl, config: hexConfig, status: hexStatus, load: loadHexcrawl,
+  act: hexAct, undo: hexUndo, reset: hexReset, remove: hexRemove, register: registerHexcrawl, unregister: unregisterHexcrawl,
+} = useHexcrawl({
+  onChange: () => render(),
+  neighbors: cell => (hexcrawlActive.value ? getCellNeighbors(cell, ...hexGridArgs()) : []),
+})
+const travelMode = ref(true)
+const hardNext = ref(false)
+const travelNotice = ref('')
+const hoverCell = ref(-1)
+const wizard = ref(null)   // null | { image, startStep }
+const hexcrawlImageIds = ref([])
+let noticeTimer = null
+
+// Le panneau de voyage ne concerne que la carte réellement affichée, pas un simple aperçu de galerie.
+const hexcrawlActive = computed(() => !!hexcrawl.value && hexcrawl.value.image_id === selectedImageId.value && gridType.value !== 'none')
+const travelActive = computed(() => hexcrawlActive.value && travelMode.value)
+
+// Une fois le hexcrawl en place, le voyage se joue sous brouillard : pas de bascule.
+// La garde tourne aussi sur fogEnabled, reçu de façon asynchrone au chargement de la carte.
+watch([hexcrawlActive, fogEnabled], ([active, fog]) => {
+  if (active && !fog) mapSocket.emitToggleFog(true)
+})
+
+const combatStarted = computed(() => hexcrawlActive.value && hexStatus.value?.army?.alert === 'contact')
+const restAlert = computed(() => hexcrawlActive.value && !!hexStatus.value?.restDue && !combatStarted.value)
+// La pop-up de combat se ferme le temps du combat, et revient avec le contact suivant.
+const combatDismissed = ref(false)
+watch(combatStarted, () => { combatDismissed.value = false })
+
+function hexGridArgs() {
+  return [gridType.value, gridCols.value, gridRows.value, gridHexOrientation.value, gridOffsetX.value, gridOffsetY.value, gridCellW.value, gridCellH.value]
+}
+
+function cellCode(cell) {
+  return hexLabel(cell, gridCols.value, hexConfig.value)
+}
+
+function showTravelNotice(text) {
+  travelNotice.value = text
+  clearTimeout(noticeTimer)
+  noticeTimer = setTimeout(() => { travelNotice.value = '' }, 4000)
+}
+
+function revealCells(cells) {
+  const added = cells.filter(c => c >= 0 && !fogCellsSet.has(c))
+  if (!added.length) return
+  added.forEach(c => fogCellsSet.add(c))
+  fogCells.value = [...fogCellsSet]
+  mapSocket.emitCellReveal(added)
+}
+
+function handleTravelClick(pos) {
+  const cell = cellIdxAt(pos)
+  if (cell < 0) return
+  const status = hexStatus.value
+  const center = getCellCenter(cell, ...hexGridArgs())
+  if (!center) return
+  const neighbors = getCellNeighbors(cell, ...hexGridArgs())
+  if (!status.started) {
+    // Comme le registre du Greffier : le groupe connaît sa case de départ et ses voisines.
+    hexAct({ t: 'start', cell, nx: center.nx, ny: center.ny })
+    revealCells([cell, ...neighbors])
+    return
+  }
+  if (cell === status.position.cell) return
+  if (status.army?.alert === 'contact') {
+    showTravelNotice('Combat en cours : réglez la vague avant de repartir.')
+    return
+  }
+  if (!neighbors.includes(status.position.cell)) {
+    showTravelNotice(`${cellCode(cell)} n'est pas voisine de ${cellCode(status.position.cell)} : avancez case par case.`)
+    return
+  }
+  if (status.outOfFuel) {
+    showTravelNotice('Plus de carburant : ajoutez-en ou passez à pied.')
+    return
+  }
+  hexAct({ t: 'step', cell, nx: center.nx, ny: center.ny, ...(hardNext.value ? { hard: true } : {}) })
+  hardNext.value = false
+  revealCells(hexConfig.value.revealNeighbors ? [cell, ...neighbors] : [cell])
+}
+
+function resetHexcrawl() {
+  if (!confirm('Recommencer ce voyage ? Le journal, la piste et le brouillard de cette carte seront effacés.')) return
+  fogCellsSet.clear()
+  fogCells.value = []
+  hexReset()
+}
+
+function removeHexcrawl() {
+  if (!confirm('Retirer le hexcrawl de cette carte ? Le voyage et ses réglages seront perdus, la carte reste.')) return
+  hexcrawlImageIds.value = hexcrawlImageIds.value.filter(id => id !== hexcrawl.value?.image_id)
+  hexRemove()
+}
+
+function renderHexcrawlOverlay(ctx, layout) {
+  const status = hexStatus.value
+  if (!status) return
+  const { offsetX, offsetY, imgW, imgH } = layout
+  const toX = nx => offsetX + nx * imgW
+  const toY = ny => offsetY + ny * imgH
+  const args = hexGridArgs()
+  const fillCell = (cell, color, alpha) => {
+    const points = getCellPolygon(cell, ...args)
+    if (!points.length) return
+    ctx.beginPath()
+    points.forEach((p, i) => (i === 0 ? ctx.moveTo(toX(p.nx), toY(p.ny)) : ctx.lineTo(toX(p.nx), toY(p.ny))))
+    ctx.closePath()
+    ctx.globalAlpha = alpha
+    ctx.fillStyle = color
+    ctx.fill()
+    ctx.globalAlpha = 1
+  }
+  const gold = cssVar('--color-gold-bright')
+  const danger = cssVar('--color-danger')
+  ctx.save()
+  if (travelActive.value && status.started && status.army?.alert !== 'contact') {
+    const adjacent = getCellNeighbors(status.position.cell, ...args)
+    if (!status.outOfFuel && status.movesLeftToday > 1) {
+      const within = getCellsWithin(status.position.cell, status.movesLeftToday, args)
+      for (const cell of within) if (!adjacent.includes(cell)) fillCell(cell, gold, 0.08)
+    }
+    if (!status.outOfFuel) for (const cell of adjacent) fillCell(cell, gold, 0.26)
+  }
+  if (status.trail.length > 1) {
+    ctx.beginPath()
+    status.trail.forEach((p, i) => (i === 0 ? ctx.moveTo(toX(p.nx), toY(p.ny)) : ctx.lineTo(toX(p.nx), toY(p.ny))))
+    ctx.lineJoin = 'round'
+    ctx.lineCap = 'round'
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)'
+    ctx.lineWidth = 6
+    ctx.stroke()
+    ctx.strokeStyle = gold
+    ctx.lineWidth = 2.5
+    ctx.stroke()
+  }
+  if (status.army?.status === 'active' && status.army.nx != null) {
+    const x = toX(status.army.nx)
+    const y = toY(status.army.ny)
+    ctx.beginPath()
+    ctx.arc(x, y, 14, 0, Math.PI * 2)
+    ctx.fillStyle = danger
+    ctx.fill()
+    ctx.lineWidth = 2.5
+    ctx.strokeStyle = '#fff'
+    ctx.stroke()
+    ctx.font = 'bold 13px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillStyle = '#fff'
+    ctx.fillText('⚔', x, y)
+  }
+  if (travelActive.value && hoverCell.value >= 0) {
+    fillCell(hoverCell.value, gold, 0.3)
+    const center = getCellCenter(hoverCell.value, ...args)
+    if (center) {
+      ctx.font = 'bold 14px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.lineWidth = 3
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)'
+      ctx.strokeText(cellCode(hoverCell.value), toX(center.nx), toY(center.ny))
+      ctx.fillStyle = '#fff'
+      ctx.fillText(cellCode(hoverCell.value), toX(center.nx), toY(center.ny))
+    }
+  }
+  ctx.restore()
+}
+
+async function loadHexcrawlList() {
+  if (!sessionStore.activeSession) { hexcrawlImageIds.value = []; return }
+  try {
+    const res = await apiFetch(`/api/sessions/${sessionStore.activeSession.id}/hexcrawls`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    if (res.ok) hexcrawlImageIds.value = (await res.json()).map(h => h.image_id)
+  } catch (err) { console.error(err) }
+}
+
+function openWizard(image = null, startStep = 0) {
+  wizard.value = { image, startStep }
+}
+
+function editHexcrawl() {
+  const image = images.value.find(i => i.id === hexcrawl.value?.image_id)
+  if (image) openWizard(image, 3)
+}
+
+async function onWizardFinished({ image, launch }) {
+  wizard.value = null
+  await Promise.all([loadImages(), loadHexcrawlList()])
+  const fresh = images.value.find(i => i.id === image.id) || image
+  if (launch) {
+    showMapOnTv(fresh)
+    return
+  }
+  // Simple enregistrement : la TV ne change pas d'écran, elle reçoit seulement la grille recalée.
+  if (selectedImageId.value === fresh.id) selectImage(fresh)
+  if (hexcrawl.value?.image_id === fresh.id) {
+    mapSocket.emitSyncGrid({
+      gridType: fresh.grid_type, gridCols: fresh.grid_cols, gridRows: fresh.grid_rows,
+      gridHexOrientation: fresh.grid_hex_orientation, gridOffsetX: parseFloat(fresh.grid_offset_x) || 0, gridOffsetY: parseFloat(fresh.grid_offset_y) || 0,
+      gridCellW: parseFloat(fresh.grid_cell_w) || null, gridCellH: parseFloat(fresh.grid_cell_h) || null,
+    })
+  }
+}
 
 // ── Canvas helpers ─────────────────────────────────────────────────────────
 // Couleurs du brouillard/grille/jetons : theme-invariant (voir style.css),
@@ -277,7 +494,7 @@ function preloadAvatar(player) {
 function getTokenAtPos(pos) {
   const layout = getLayout()
   if (!layout || !mapImage) return null
-  for (const [pid, tokenPos] of Object.entries(mapTokens.value)) {
+  for (const [pid, tokenPos] of Object.entries(visibleTokens(mapTokens.value, groupToken.value))) {
     const tx = layout.offsetX + tokenPos.nx * mapImage.naturalWidth * layout.totalScale
     const ty = layout.offsetY + tokenPos.ny * mapImage.naturalHeight * layout.totalScale
     const dx = pos.x - tx
@@ -293,9 +510,10 @@ function drawToken(ctx, pid, tokenPos, layout) {
   const tx = offsetX + tokenPos.nx * mapImage.naturalWidth * totalScale
   const ty = offsetY + tokenPos.ny * mapImage.naturalHeight * totalScale
   const isCustom = pid.startsWith('custom_')
-  const player = isCustom ? null : sessionStore.players.find(p => String(p.id) === pid)
-  const name = isCustom ? (tokenPos.name || '?') : (player?.player_name || '?')
-  if (!isCustom) preloadAvatar(player || {})
+  const isGroup = pid === GROUP_TOKEN_ID
+  const player = isCustom || isGroup ? null : sessionStore.players.find(p => String(p.id) === pid)
+  const name = isCustom ? (tokenPos.name || '?') : isGroup ? GROUP_TOKEN_NAME : (player?.player_name || '?')
+  if (!isCustom && !isGroup) preloadAvatar(player || {})
   ctx.save()
   ctx.beginPath()
   ctx.arc(tx, ty, TOKEN_RADIUS, 0, Math.PI * 2)
@@ -355,7 +573,8 @@ function render() {
       if (fc) ctx.drawImage(fc, offsetX, offsetY, imgW, imgH)
     }
   }
-  for (const [pid, tokenPos] of Object.entries(mapTokens.value)) drawToken(ctx, pid, tokenPos, layout)
+  if (hexcrawlActive.value) renderHexcrawlOverlay(ctx, layout)
+  for (const [pid, tokenPos] of Object.entries(visibleTokens(mapTokens.value, groupToken.value))) drawToken(ctx, pid, tokenPos, layout)
 }
 
 // ── Map image loading ──────────────────────────────────────────────────────
@@ -624,6 +843,12 @@ function onPointerDown(event) {
     return
   }
   const tokenUnderCursor = getTokenAtPos(pos)
+  if (travelActive.value) {
+    // En voyage, le jeton du groupe bouge par le journal : seuls les jetons en plus se glissent.
+    if (tokenUnderCursor && tokenUnderCursor !== GROUP_TOKEN_ID) draggingTokenId = tokenUnderCursor
+    else handleTravelClick(pos)
+    return
+  }
   if (tokenUnderCursor) { draggingTokenId = tokenUnderCursor; return }
   if (fogEnabled.value) {
     if (gridType.value !== 'none') { isRevealingCells = true; isHidingCells = !event.shiftKey && fogCellsSet.has(cellIdxAt(pos)); applyCellReveal(pos, event.shiftKey) }
@@ -634,6 +859,13 @@ function onPointerDown(event) {
 function onPointerMove(event) {
   const pos = eventToCanvas(event)
   if (!pos) return
+  if (travelActive.value) {
+    const cell = cellIdxAt(pos)
+    if (cell !== hoverCell.value) {
+      hoverCell.value = cell
+      render()
+    }
+  }
   if (draggingTokenId) {
     const norm = canvasToNorm(pos.x, pos.y)
     if (norm) {
@@ -667,6 +899,14 @@ function onPointerUp(_event) {
   isDragging.value = false
 }
 
+function onPointerLeave(event) {
+  onPointerUp(event)
+  if (hoverCell.value >= 0) {
+    hoverCell.value = -1
+    render()
+  }
+}
+
 function onWheel(event) {
   event.preventDefault()
   const factor = event.deltaY > 0 ? 1 / 1.12 : 1.12
@@ -676,8 +916,9 @@ function onWheel(event) {
 
 // ── Token actions ──────────────────────────────────────────────────────────
 function placeToken(playerId, nx, ny) {
-  mapTokens.value = { ...mapTokens.value, [String(playerId)]: { nx, ny } }
-  mapSocket.emitTokenMove(playerId, nx, ny)
+  const name = playerId === GROUP_TOKEN_ID ? GROUP_TOKEN_NAME : undefined
+  mapTokens.value = { ...mapTokens.value, [String(playerId)]: { nx, ny, ...(name ? { name } : {}) } }
+  mapSocket.emitTokenMove(playerId, nx, ny, name)
   render()
 }
 
@@ -692,6 +933,21 @@ function removeToken(playerId) {
 function toggleTokenPlacement(playerId) {
   if (mapTokens.value[String(playerId)]) removeToken(playerId)
   else pendingTokenPlayerId.value = String(playerId) === pendingTokenPlayerId.value ? null : String(playerId)
+}
+
+// Active/désactive le jeton « groupe ». Les pions joueurs restent en mémoire, simplement masqués.
+// Au premier usage, le groupe se pose au centre des pions déjà placés, sinon le MJ clique sur la carte.
+function toggleGroupToken() {
+  const enabling = !groupToken.value
+  groupToken.value = enabling
+  pendingTokenPlayerId.value = null
+  mapSocket.emitSetGroupToken(enabling)
+  if (enabling && !mapTokens.value[GROUP_TOKEN_ID]) {
+    const center = centerOfPlayerTokens(mapTokens.value)
+    if (center) placeToken(GROUP_TOKEN_ID, center.nx, center.ny)
+    else pendingTokenPlayerId.value = GROUP_TOKEN_ID
+  }
+  render()
 }
 
 function addCustomToken() {
@@ -737,6 +993,7 @@ function selectImage(img) {
 async function handleDeleteImage(img) {
   const deleted = await deleteImage(img)
   if (deleted && selectedImageUrl.value === img.url) selectedImageUrl.value = null
+  if (deleted) hexcrawlImageIds.value = hexcrawlImageIds.value.filter(id => id !== img.id)
 }
 
 function showMapOnTv(img) {
@@ -750,8 +1007,16 @@ function toggleFog() { mapSocket.emitToggleFog(!fogEnabled.value) }
 function resetFog() { mapSocket.emitResetFog(gridType.value !== 'none') }
 
 // ── Socket composable (init after all functions defined) ───────────────────
+// Une carte reçue avant la fin du chargement de la galerie n'a pas encore d'id.
+watch(images, (list) => {
+  if (selectedImageUrl.value && !selectedImageId.value) {
+    selectedImageId.value = list.find(i => i.url === selectedImageUrl.value)?.id || null
+    render()
+  }
+})
+
 const mapSocket = useMapSocket({
-  isMapActive, fogEnabled, fogStrokes, fogCells, fogCellsSet,
+  isMapActive, fogEnabled, groupToken, fogStrokes, fogCells, fogCellsSet,
   mapTokens, selectedImageUrl, selectedImageId, images, viewport, gridType,
   applyGridConfig, applyNormViewport,
   rebuildFogCanvas: () => { fogCanvas = null; fogMask = null; rebuildFogCanvas() },
@@ -762,12 +1027,17 @@ const mapSocket = useMapSocket({
 onMounted(() => {
   loadImages()
   mapSocket.register()
+  registerHexcrawl()
+  loadHexcrawl()
+  loadHexcrawlList()
 })
 
 onUnmounted(() => {
   if (viewportDebounceTimer) clearTimeout(viewportDebounceTimer)
   if (resizeObserver) resizeObserver.disconnect()
   mapSocket.unregister()
+  unregisterHexcrawl()
+  clearTimeout(noticeTimer)
 })
 
 // Le conteneur du canvas est sous un v-if (carte active uniquement) : il n'existe pas encore à
@@ -782,6 +1052,8 @@ watch(canvasContainer, (el, prev) => {
 
 watch(() => selectedImageUrl.value, (url) => { if (url && !mapImage) loadMapImage(url) })
 watch(fogEnabled, () => render())
+watch(travelMode, () => { hoverCell.value = -1; render() })
+watch(() => sessionStore.activeSession?.id, () => { loadHexcrawl(); loadHexcrawlList() })
 watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffsetY, gridCellW, gridCellH], () => { if (showGridConfig.value) render() })
 </script>
 
@@ -808,6 +1080,8 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
         :upload-progress="uploadProgress"
         :upload-error="uploadError"
         :has-active-session="!!sessionStore.activeSession"
+        :hexcrawl-image-ids="hexcrawlImageIds"
+        @create-hexcrawl="openWizard()"
         @select="selectImage"
         @delete="handleDeleteImage"
         @upload="uploadFiles"
@@ -827,6 +1101,8 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
         <div class="map-canvas-col">
           <p class="hint-text canvas-hint">
             <template v-if="pendingTokenPlayerId">Cliquez sur la carte pour placer le jeton</template>
+            <template v-else-if="travelActive && hexStatus && !hexStatus.started">Cliquez la case de départ du groupe · Molette pour zoomer · Molette centrale pour naviguer</template>
+            <template v-else-if="travelActive">Cliquez une case voisine pour avancer · Molette pour zoomer · Molette centrale pour naviguer</template>
             <template v-else-if="showGridConfig && gridType !== 'none'">Aperçu grille — ajustez cols/lignes puis enregistrez</template>
             <template v-else-if="fogEnabled && gridType !== 'none'">Clic gauche (maintenu) pour révéler les cases · Molette pour zoomer · Molette centrale pour naviguer</template>
             <template v-else-if="fogEnabled">Clic gauche pour révéler · Molette pour zoomer · Molette centrale pour naviguer</template>
@@ -843,7 +1119,7 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
               @pointerdown="onPointerDown"
               @pointermove="onPointerMove"
               @pointerup="onPointerUp"
-              @pointerleave="onPointerUp"
+              @pointerleave="onPointerLeave"
               @pointercancel="onPointerUp"
               @wheel.prevent="onWheel"
               @contextmenu.prevent
@@ -853,7 +1129,27 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
 
         <!-- Controls col -->
         <div class="map-controls-col">
+          <HexcrawlPanel
+            v-if="hexcrawlActive"
+            :status="hexStatus"
+            :config="hexConfig"
+            :position-label="hexStatus.position ? cellCode(hexStatus.position.cell) : ''"
+            :army-label="hexStatus.army?.cell != null ? cellCode(hexStatus.army.cell) : ''"
+            :travel-mode="travelMode"
+            :hard-next="hardNext"
+            :notice="travelNotice"
+            :can-undo="hexcrawl.log.length > 0"
+            @update:travel-mode="travelMode = $event"
+            @update:hard-next="hardNext = $event"
+            @action="hexAct"
+            @undo="hexUndo"
+            @reset="resetHexcrawl"
+            @edit="editHexcrawl"
+            @remove="removeHexcrawl"
+          />
+
           <MapGridConfig
+            v-if="!hexcrawlActive"
             :show="showGridConfig"
             :grid-type="gridType"
             :grid-cols="gridCols"
@@ -877,6 +1173,7 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
           />
 
           <MapFogControls
+            v-if="!hexcrawlActive"
             :fog-enabled="fogEnabled"
             :grid-type="gridType"
             :brush-radius="brushRadius"
@@ -892,16 +1189,19 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
           <MapTokenPanel
             :players="sessionStore.players"
             :map-tokens="mapTokens"
+            :group-token="groupToken"
             :pending-token-player-id="pendingTokenPlayerId"
             :pending-custom-token="pendingCustomToken"
             :custom-token-name="customTokenName"
             @toggle-player-token="toggleTokenPlacement"
+            @toggle-group-token="toggleGroupToken"
             @add-custom-token="addCustomToken"
             @remove-custom-token="removeCustomToken"
             @update:custom-token-name="customTokenName = $event"
           />
 
           <MapViewportControls
+            v-if="!hexcrawlActive"
             :viewport="viewport"
             @zoom-in="zoomIn"
             @zoom-out="zoomOut"
@@ -910,6 +1210,32 @@ watch([gridCols, gridRows, gridType, gridHexOrientation, gridOffsetX, gridOffset
         </div>
       </div>
     </template>
+
+    <HexcrawlAlert v-if="combatStarted && !combatDismissed" danger icon="lucide:swords" :title="`${hexStatus.army.waveName} rejoint le groupe`">
+      <p>L'armée arrive sur le groupe en <strong>{{ cellCode(hexStatus.army.cell) }}</strong>. Le combat ne peut pas être évité.</p>
+      <template #actions>
+        <button class="primary" data-testid="hexcrawl-combat-start" @click="combatDismissed = true">Compris, au combat</button>
+        <button @click="hexUndo">Annuler la dernière action</button>
+      </template>
+    </HexcrawlAlert>
+
+    <HexcrawlAlert v-else-if="restAlert" icon="lucide:moon" title="Repos long à prendre">
+      <p>Le groupe a agi pendant <strong>{{ formatHours(hexStatus.hoursSinceRest) }}</strong> sans dormir. Le repos prend {{ formatHours(hexConfig.restQuarters * hexConfig.quarterHours) }} et exige un abri.</p>
+      <p>Sans repos, chaque PJ gagne 1 niveau d'épuisement.</p>
+      <template #actions>
+        <button class="primary" data-testid="hexcrawl-take-rest" @click="hexAct({ t: 'rest' })">Prendre le repos</button>
+        <button data-testid="hexcrawl-skip-rest" @click="hexAct({ t: 'no-rest' })">Continuer sans repos</button>
+        <button @click="hexUndo">Annuler la dernière action</button>
+      </template>
+    </HexcrawlAlert>
+
+    <HexcrawlWizard
+      v-if="wizard"
+      :image="wizard.image"
+      :start-step="wizard.startStep"
+      @close="wizard = null"
+      @finished="onWizardFinished"
+    />
   </div>
 </template>
 

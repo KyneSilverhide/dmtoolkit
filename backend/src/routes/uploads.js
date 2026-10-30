@@ -296,6 +296,16 @@ router.post('/',
           }
 
           const type = req.body.type || 'image'
+          // Rangement direct dans un groupe (assistant hexcrawl) : le groupe est revalidé contre la
+          // session, un id étranger est ignoré plutôt que de rejeter les fichiers déjà reçus.
+          let groupId = null
+          if (req.body.group_id && type === 'image') {
+            const group = await pool.query(
+              'SELECT id FROM image_groups WHERE id = $1 AND session_id = $2',
+              [parseInt(req.body.group_id, 10) || 0, sessionId]
+            )
+            groupId = group.rows[0]?.id ?? null
+          }
           for (let i = 0; i < uploadedFiles.length; i++) {
             const thumbUrl = await generateThumbnail(uploadedFiles[i].path, UPLOADS_DIR)
             // Détection automatique de la grille pour les battlemaps
@@ -310,10 +320,10 @@ router.post('/',
             await pool.query(
               `INSERT INTO session_images
                  (session_id, url, original_name, type, file_size, thumbnail_url,
-                  grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+                  grid_type, grid_cols, grid_rows, grid_hex_orientation, grid_offset_x, grid_offset_y, grid_cell_w, grid_cell_h, group_id)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
               [sessionId, urls[i], uploadedFiles[i].originalname, type, uploadedFiles[i].size, thumbUrl,
-               grid.gridType, grid.gridCols, grid.gridRows, grid.gridHexOrientation, grid.gridOffsetX, grid.gridOffsetY, grid.gridCellW, grid.gridCellH]
+               grid.gridType, grid.gridCols, grid.gridRows, grid.gridHexOrientation, grid.gridOffsetX, grid.gridOffsetY, grid.gridCellW, grid.gridCellH, groupId]
             )
           }
         } else {

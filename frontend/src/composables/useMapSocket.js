@@ -4,6 +4,7 @@ import { sessionStore } from '@/stores/session.js'
 export function useMapSocket({
   isMapActive,
   fogEnabled,
+  groupToken,
   fogStrokes,
   fogCells,
   fogCellsSet,
@@ -28,6 +29,7 @@ export function useMapSocket({
     isMapActive.value = true
     showMapList.value = false
     fogEnabled.value = data.fogEnabled
+    groupToken.value = !!data.groupToken
     const xn = data.viewport?.xn ?? (data.viewport?.x ?? 0)
     const yn = data.viewport?.yn ?? (data.viewport?.y ?? 0)
     const scale = data.viewport?.scale ?? 1
@@ -49,6 +51,11 @@ export function useMapSocket({
 
   function handleFogUpdated({ enabled }) {
     fogEnabled.value = enabled
+    render()
+  }
+
+  function handleGroupTokenUpdated({ enabled }) {
+    groupToken.value = !!enabled
     render()
   }
 
@@ -120,6 +127,7 @@ export function useMapSocket({
     const socket = getSocket()
     socket.on('map-state', handleMapState)
     socket.on('map-fog-updated', handleFogUpdated)
+    socket.on('map-group-token-updated', handleGroupTokenUpdated)
     socket.on('map-fog-patch', handleFogPatch)
     socket.on('map-fog-reset', handleFogReset)
     socket.on('map-fog-cells-patch', handleFogCellsPatch)
@@ -135,6 +143,7 @@ export function useMapSocket({
     const socket = getSocket()
     socket.off('map-state', handleMapState)
     socket.off('map-fog-updated', handleFogUpdated)
+    socket.off('map-group-token-updated', handleGroupTokenUpdated)
     socket.off('map-fog-patch', handleFogPatch)
     socket.off('map-fog-reset', handleFogReset)
     socket.off('map-fog-cells-patch', handleFogCellsPatch)
@@ -158,6 +167,12 @@ function emitToggleFog(enabled) {
   if (!sessionStore.activeSession) return
   const socket = getSocket()
   socket.emit('map-set-fog', { sessionId: sessionStore.activeSession.id, enabled })
+}
+
+function emitSetGroupToken(enabled) {
+  if (!sessionStore.activeSession) return
+  const socket = getSocket()
+  socket.emit('map-set-group-token', { sessionId: sessionStore.activeSession.id, enabled })
 }
 
 function emitResetFog(isGrid) {
@@ -204,7 +219,7 @@ function emitResetFog(isGrid) {
 
   return {
     register, unregister,
-    emitShowMap, emitToggleFog, emitResetFog,
+    emitShowMap, emitToggleFog, emitResetFog, emitSetGroupToken,
     emitFogStroke, emitCellReveal, emitCellHide,
     emitViewport, emitTokenMove, emitTokenRemove, emitSyncGrid,
   }

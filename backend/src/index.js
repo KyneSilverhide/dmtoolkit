@@ -120,6 +120,7 @@ app.get('/api/config', (req, res) => {
 })
 
 setupSocket(io)
+app.set('io', io)
 
 async function seedAdmin() {
   try {

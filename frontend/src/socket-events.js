@@ -121,6 +121,18 @@ export const SHOW_CONTENT = 'show-content'
 /** Admin toggles the battlemap fog of war: { sessionId, enabled } */
 export const MAP_SET_FOG = 'map-set-fog'
 
+/** Admin replaces the player tokens with a single group token: { sessionId, enabled } */
+export const MAP_SET_GROUP_TOKEN = 'map-set-group-token'
+
+/** Admin saves a map's hexcrawl settings: { sessionId, imageId, config, publicState }, ack { hexcrawl } | { error } */
+export const HEXCRAWL_SAVE = 'hexcrawl-save'
+
+/** Admin removes a map's hexcrawl: { sessionId, hexcrawlId } */
+export const HEXCRAWL_DELETE = 'hexcrawl-delete'
+
+/** Admin acts on the displayed map's journey: { sessionId, hexcrawlId, op: 'append'|'undo'|'reset', entry?, publicState, token } */
+export const HEXCRAWL_ACTION = 'hexcrawl-action'
+
 /** Admin updates the battlemap viewport: { sessionId, xn, yn, scale } */
 export const MAP_VIEWPORT_UPDATE = 'map-viewport-update'
 
@@ -275,6 +287,15 @@ export const VOTE_ERROR = 'vote-error'
 
 /** Sent to TV + admin with full battlemap state: { mapUrl, fogEnabled, viewport, fogStrokes, mapTokens } */
 export const MAP_STATE = 'map-state'
+
+/** Sent to TV + admin when the group token option is toggled: { enabled } */
+export const MAP_GROUP_TOKEN_UPDATED = 'map-group-token-updated'
+
+/** Sent to admins only: full hexcrawl of the displayed map, or null: { id, image_id, config, log } */
+export const HEXCRAWL_UPDATED = 'hexcrawl-updated'
+
+/** Sent to the TV only: public projection of the journey, or null (never the log or a hidden army) */
+export const HEXCRAWL_PUBLIC = 'hexcrawl-public'
 
 /** Sent to TV + admin when fog is toggled: { enabled } */
 export const MAP_FOG_UPDATED = 'map-fog-updated'
@@ -494,6 +515,10 @@ export default {
   SHOW_MAP,
   SHOW_CONTENT,
   MAP_SET_FOG,
+  MAP_SET_GROUP_TOKEN,
+  HEXCRAWL_SAVE,
+  HEXCRAWL_DELETE,
+  HEXCRAWL_ACTION,
   MAP_VIEWPORT_UPDATE,
   MAP_FOG_CLEAR,
   MAP_FOG_RESET,
@@ -541,6 +566,9 @@ export default {
   VOTE_ERROR,
   MAP_STATE,
   MAP_FOG_UPDATED,
+  MAP_GROUP_TOKEN_UPDATED,
+  HEXCRAWL_UPDATED,
+  HEXCRAWL_PUBLIC,
   MAP_VIEWPORT_CHANGED,
   MAP_FOG_PATCH,
   MAP_FOG_RESET_EVENT,

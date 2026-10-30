@@ -412,6 +412,22 @@ ALTER TABLE session_images ADD COLUMN IF NOT EXISTS group_id INTEGER REFERENCES 
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_interactive_image_id INTEGER;
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_interactive_seed VARCHAR(100);
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS current_interactive_state TEXT;
+
+-- Jeton « groupe » de la carte : remplace l'affichage des pions joueurs (voir map-set-group-token).
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS map_group_token BOOLEAN DEFAULT FALSE;
+
+-- Module hexcrawl : au plus un par carte. L'état du voyage se recalcule en rejouant log (voir
+-- frontend/src/utils/hexcrawl.js). saved_map garde brouillard et jetons quand la TV change de carte.
+CREATE TABLE IF NOT EXISTS hexcrawls (
+  id SERIAL PRIMARY KEY,
+  session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+  image_id INTEGER NOT NULL UNIQUE REFERENCES session_images(id) ON DELETE CASCADE,
+  config TEXT NOT NULL,
+  log TEXT NOT NULL DEFAULT '[]',
+  public_state TEXT,
+  saved_map TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
 `
 
 async function runMigrations() {

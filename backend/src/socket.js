@@ -40,6 +40,10 @@ const TENSION_DIRECTIONS = new Set(['ascending', 'descending'])
 const MAP_SCALE_MIN = 0.1
 const MAP_SCALE_MAX = 10
 const MAP_FOG_STROKES_MAX = 500
+const MAX_HEXCRAWL_CONFIG_LENGTH = 16 * 1024
+const MAX_HEXCRAWL_PUBLIC_LENGTH = 128 * 1024
+const MAX_HEXCRAWL_LOG = 5000
+const HEXCRAWL_SIMPLE_ENTRIES = new Set(['end-quarter', 'halt', 'rest', 'no-rest', 'wave-defeated', 'pursuit-end'])
 const MAX_FACTION_VALUE = 1000
 const MIN_FACTION_VALUE = -1000
 
@@ -318,6 +322,7 @@ function serializeMapState(session, gridConfig = null) {
   return {
     mapUrl: session.current_map_url,
     fogEnabled: !!session.map_fog_enabled,
+    groupToken: !!session.map_group_token,
     viewport,
     fogStrokes,
     mapTokens,
@@ -531,6 +536,58 @@ async function getActiveMerchantAndPuzzle(session) {
  * @param {boolean} isDemo - Précalculé par l'appelant : la source diffère selon le
  *   contexte (JWT admin pour admin-join, colonne jointe `admin_is_demo` pour tv-join).
  */
+async function getCurrentHexcrawlPublic(session) {
+  if (!session.current_map_url) return null
+  const { rows } = await pool.query(
+    `SELECT h.public_state FROM hexcrawls h
+     JOIN session_images i ON i.id = h.image_id
+     WHERE i.session_id = $1 AND i.url = $2`,
+    [session.id, session.current_map_url]
+  )
+  return rows[0]?.public_state ? parseJsonObject(rows[0].public_state) : null
+}
+
+function parseJsonObject(raw) {
+  try {
+    const parsed = raw ? JSON.parse(raw) : null
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
+  } catch { return {} }
+}
+
+// Une entrée du journal de voyage vient du client : on ne garde que les champs attendus.
+function sanitizeHexcrawlEntry(entry) {
+  if (!entry || typeof entry !== 'object') return null
+  if (HEXCRAWL_SIMPLE_ENTRIES.has(entry.t)) return { t: entry.t }
+  if (entry.t === 'start' || entry.t === 'step') {
+    const nx = Number(entry.nx)
+    const ny = Number(entry.ny)
+    if (!Number.isInteger(entry.cell) || entry.cell < 0 || !Number.isFinite(nx) || !Number.isFinite(ny)) return null
+    return { t: entry.t, cell: entry.cell, nx, ny, ...(entry.t === 'step' && entry.hard ? { hard: true } : {}) }
+  }
+  if (entry.t === 'mode') return { t: 'mode', mode: entry.mode === 'vehicle' ? 'vehicle' : 'foot' }
+  if (entry.t === 'refuel') {
+    const amount = parseInt(entry.amount, 10)
+    return Number.isNaN(amount) ? null : { t: 'refuel', amount: Math.max(-1000, Math.min(1000, amount)) }
+  }
+  if (entry.t === 'army') {
+    const delta = parseInt(entry.delta, 10)
+    return Number.isNaN(delta) ? null : { t: 'army', delta: Math.max(-100, Math.min(100, delta)) }
+  }
+  return null
+}
+
+function serializeHexcrawl(row) {
+  let log = []
+  try { log = JSON.parse(row.log) } catch { log = [] }
+  return { id: row.id, image_id: row.image_id, config: parseJsonObject(row.config), log }
+}
+
+function serializeHexcrawlPublic(publicState) {
+  if (!publicState || typeof publicState !== 'object') return null
+  const str = JSON.stringify(publicState)
+  return str.length <= MAX_HEXCRAWL_PUBLIC_LENGTH ? str : null
+}
+
 async function buildSessionSnapshot(session, isDemo) {
   const { activeMerchant, activePuzzle } = await getActiveMerchantAndPuzzle(session)
   return {
@@ -588,6 +645,13 @@ function setupSocket(io) {
    * @param {*} [payload]
    * @param {string[]} [rooms]
    */
+  // Le journal et les réglages (armée comprise) ne vont qu'à la room admin ; la TV ne reçoit que la
+  // projection publique calculée par le client MJ.
+  function emitHexcrawl(sessionId, row) {
+    io.to(`admin:${sessionId}`).emit('hexcrawl-updated', row ? serializeHexcrawl(row) : null)
+    io.to(`tv:${sessionId}`).emit('hexcrawl-public', row?.public_state ? parseJsonObject(row.public_state) : null)
+  }
+
   function broadcastToSession(sessionId, event, payload, rooms = ['tv', 'admin']) {
     for (const room of rooms) {
       if (payload === undefined) io.to(`${room}:${sessionId}`).emit(event)
@@ -1096,6 +1160,7 @@ function setupSocket(io) {
           qrCodeDataUrl,
           currentImageUrl: session.current_image_url,
           currentImageLabel: session.current_image_label || null,
+          hexcrawlPublic: await getCurrentHexcrawlPublic(session),
           ...(await buildSessionSnapshot(session, session.admin_is_demo)),
         })
       } catch (err) { console.error(err) }
@@ -1817,33 +1882,212 @@ function setupSocket(io) {
     socket.on('show-map', async ({ sessionId, imageUrl }) => {
       if (!socket.admin) return
       if (!await adminCanAccess(socket, sessionId)) return
+      if (!imageUrl || typeof imageUrl !== 'string') return
+      let client
+      let restored
+      let hexcrawl = null
       try {
-        if (!imageUrl || typeof imageUrl !== 'string') return
-        const defaultViewport = JSON.stringify({ xn: 0, yn: 0, scale: 1 })
-        await pool.query(
-          `UPDATE sessions
-           SET tv_mode = 'map', current_map_url = $1, map_fog_enabled = FALSE,
-               map_viewport = $2, map_fog_strokes = '[]', map_tokens = '{}', map_fog_cells = '[]'
-           WHERE id = $3 AND session_editable(id, $4)`,
-          [imageUrl, defaultViewport, sessionId, socket.admin.id]
+        client = await pool.connect()
+        await client.query('BEGIN')
+        const current = await client.query(
+          `SELECT current_map_url, map_fog_enabled, map_group_token, map_viewport, map_fog_cells, map_fog_strokes, map_tokens
+           FROM sessions WHERE id = $1 AND session_editable(id, $2) FOR UPDATE`,
+          [sessionId, socket.admin.id]
         )
-        const gridConfig = await getMapGridConfig(sessionId, imageUrl)
-        const mapState = {
-          mapUrl: imageUrl, fogEnabled: false,
-          viewport: { xn: 0, yn: 0, scale: 1 }, fogStrokes: [], mapTokens: [],
-          gridType: gridConfig?.gridType || 'none',
-          gridCols: gridConfig?.gridCols || null,
-          gridRows: gridConfig?.gridRows || null,
-          gridHexOrientation: gridConfig?.gridHexOrientation || 'flat',
-          gridOffsetX: gridConfig?.gridOffsetX ?? 0,
-          gridOffsetY: gridConfig?.gridOffsetY ?? 0,
-          gridCellW: gridConfig?.gridCellW ?? null,
-          gridCellH: gridConfig?.gridCellH ?? null,
-          fogCells: [],
+        if (!current.rows[0]) { await client.query('ROLLBACK'); return }
+        // Une battlemap ne doit pas effacer le voyage : l'état de la carte sortante est mis de côté
+        // si c'est un hexcrawl, et celui de la carte entrante restauré plutôt que remis à zéro.
+        const outgoing = current.rows[0]
+        if (outgoing.current_map_url) {
+          await client.query(
+            `UPDATE hexcrawls h SET saved_map = $1
+             FROM session_images i
+             WHERE h.image_id = i.id AND i.session_id = $2 AND i.url = $3`,
+            [JSON.stringify({
+              fogEnabled: !!outgoing.map_fog_enabled,
+              groupToken: !!outgoing.map_group_token,
+              viewport: outgoing.map_viewport,
+              fogCells: outgoing.map_fog_cells,
+              fogStrokes: outgoing.map_fog_strokes,
+              tokens: outgoing.map_tokens,
+            }), sessionId, outgoing.current_map_url]
+          )
         }
+        const incoming = await client.query(
+          `SELECT h.* FROM hexcrawls h
+           JOIN session_images i ON i.id = h.image_id
+           WHERE i.session_id = $1 AND i.url = $2`,
+          [sessionId, imageUrl]
+        )
+        hexcrawl = incoming.rows[0] || null
+        const saved = hexcrawl ? parseJsonObject(hexcrawl.saved_map) : {}
+        restored = {
+          fogEnabled: saved.fogEnabled ?? !!hexcrawl,
+          groupToken: saved.groupToken ?? !!hexcrawl,
+          viewport: saved.viewport || JSON.stringify({ xn: 0, yn: 0, scale: 1 }),
+          fogCells: saved.fogCells || '[]',
+          fogStrokes: saved.fogStrokes || '[]',
+          tokens: saved.tokens || '{}',
+        }
+        await client.query(
+          `UPDATE sessions
+           SET tv_mode = 'map', current_map_url = $1, map_fog_enabled = $2, map_group_token = $3,
+               map_viewport = $4, map_fog_strokes = $5, map_tokens = $6, map_fog_cells = $7
+           WHERE id = $8`,
+          [imageUrl, restored.fogEnabled, restored.groupToken, restored.viewport, restored.fogStrokes, restored.tokens, restored.fogCells, sessionId]
+        )
+        await client.query('COMMIT')
+      } catch (err) {
+        await client?.query('ROLLBACK').catch(() => {})
+        console.error(err)
+        return
+      } finally {
+        client?.release()
+      }
+      try {
+        const gridConfig = await getMapGridConfig(sessionId, imageUrl)
+        const mapState = serializeMapState({
+          current_map_url: imageUrl,
+          map_fog_enabled: restored.fogEnabled,
+          map_group_token: restored.groupToken,
+          map_viewport: restored.viewport,
+          map_fog_strokes: restored.fogStrokes,
+          map_tokens: restored.tokens,
+          map_fog_cells: restored.fogCells,
+        }, gridConfig)
         broadcastToSession(sessionId, 'tv-mode-changed', { mode: 'map' })
         broadcastToSession(sessionId, 'map-state', mapState)
+        emitHexcrawl(sessionId, hexcrawl)
       } catch (err) { console.error(err) }
+    })
+
+    // ── Hexcrawl : réglages (un par carte) ─────────────────────────────────
+    socket.on('hexcrawl-save', async ({ sessionId, imageId, config, publicState } = {}, ack) => {
+      const done = typeof ack === 'function' ? ack : () => {}
+      if (!socket.admin) return done({ error: 'Non autorisé.' })
+      if (!await adminCanAccess(socket, sessionId)) return done({ error: 'Session introuvable.' })
+      try {
+        const configStr = JSON.stringify(config ?? null)
+        if (!Number.isInteger(imageId) || !config || typeof config !== 'object' || configStr.length > MAX_HEXCRAWL_CONFIG_LENGTH) {
+          return done({ error: 'Réglages invalides.' })
+        }
+        const image = await pool.query(
+          "SELECT url FROM session_images WHERE id = $1 AND session_id = $2 AND type = 'map'",
+          [imageId, sessionId]
+        )
+        if (!image.rows[0]) return done({ error: 'Carte introuvable.' })
+        const { rows } = await pool.query(
+          `INSERT INTO hexcrawls (session_id, image_id, config, public_state)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (image_id) DO UPDATE SET config = EXCLUDED.config, public_state = EXCLUDED.public_state
+           RETURNING *`,
+          [sessionId, imageId, configStr, serializeHexcrawlPublic(publicState)]
+        )
+        const session = await pool.query('SELECT current_map_url FROM sessions WHERE id = $1', [sessionId])
+        if (session.rows[0]?.current_map_url === image.rows[0].url) emitHexcrawl(sessionId, rows[0])
+        done({ hexcrawl: serializeHexcrawl(rows[0]) })
+      } catch (err) { console.error(err); done({ error: 'Erreur lors de l\'enregistrement.' }) }
+    })
+
+    socket.on('hexcrawl-delete', async ({ sessionId, hexcrawlId } = {}) => {
+      if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
+      try {
+        const { rows } = await pool.query(
+          `DELETE FROM hexcrawls h USING session_images i, sessions s
+           WHERE h.id = $1 AND h.session_id = $2 AND i.id = h.image_id AND s.id = h.session_id
+           RETURNING i.url = s.current_map_url AS is_current`,
+          [hexcrawlId, sessionId]
+        )
+        if (rows[0]?.is_current) emitHexcrawl(sessionId, null)
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Hexcrawl : action de voyage sur la carte affichée ───────────────────
+    // Le journal est modifié sous verrou (FOR UPDATE) : deux clics rapprochés ne doivent pas se
+    // perdre. Le client calcule publicState et la position du jeton (le serveur ne rejoue pas le
+    // journal, cette logique vit dans frontend/src/utils/hexcrawl.js) ; l'armée ne quitte donc
+    // jamais la room admin tant que le MJ ne l'a pas mise dans publicState.
+    // L'accusé de réception permet au client d'ignorer les échos tant que ses actions sont en route.
+    socket.on('hexcrawl-action', async ({ sessionId, hexcrawlId, op, entry, publicState, token } = {}, ack) => {
+      const done = typeof ack === 'function' ? ack : () => {}
+      const reject = () => done({ error: 'Action refusée.' })
+      if (!socket.admin) return reject()
+      if (!await adminCanAccess(socket, sessionId)) return reject()
+      if (!Number.isInteger(hexcrawlId)) return reject()
+      let client
+      let hexcrawl = null
+      let tokenEvent = null
+      let groupEnabled = false
+      let fogCleared = false
+      try {
+        client = await pool.connect()
+        await client.query('BEGIN')
+        const { rows } = await client.query(
+          `SELECT h.*, s.map_tokens
+           FROM hexcrawls h
+           JOIN session_images i ON i.id = h.image_id
+           JOIN sessions s ON s.id = h.session_id
+           WHERE h.id = $1 AND h.session_id = $2 AND i.url = s.current_map_url
+           FOR UPDATE OF h, s`,
+          [hexcrawlId, sessionId]
+        )
+        if (!rows[0]) { await client.query('ROLLBACK'); return reject() }
+        let log = []
+        try { log = JSON.parse(rows[0].log) } catch { log = [] }
+        if (op === 'append') {
+          const clean = sanitizeHexcrawlEntry(entry)
+          if (!clean || log.length >= MAX_HEXCRAWL_LOG) { await client.query('ROLLBACK'); return reject() }
+          log.push(clean)
+          groupEnabled = clean.t === 'start'
+        } else if (op === 'undo') {
+          log.pop()
+        } else if (op === 'reset') {
+          log = []
+          fogCleared = true
+        } else { await client.query('ROLLBACK'); return reject() }
+
+        const tokens = parseJsonObject(rows[0].map_tokens)
+        const nx = Number(token?.nx)
+        const ny = Number(token?.ny)
+        if (token && Number.isFinite(nx) && Number.isFinite(ny)) {
+          tokens.group = { nx, ny, name: 'Groupe' }
+          tokenEvent = ['map-token-moved', { playerId: 'group', nx, ny, name: 'Groupe' }]
+        } else if (tokens.group) {
+          delete tokens.group
+          tokenEvent = ['map-token-removed', { playerId: 'group' }]
+        }
+        const updated = await client.query(
+          `UPDATE hexcrawls SET log = $1, public_state = $2, saved_map = CASE WHEN $3 THEN NULL ELSE saved_map END
+           WHERE id = $4 RETURNING *`,
+          [JSON.stringify(log), serializeHexcrawlPublic(publicState), fogCleared, hexcrawlId]
+        )
+        hexcrawl = updated.rows[0]
+        await client.query(
+          `UPDATE sessions
+           SET map_tokens = $1,
+               map_group_token = map_group_token OR $2,
+               map_fog_enabled = map_fog_enabled OR $2,
+               map_fog_cells = CASE WHEN $3 THEN '[]' ELSE map_fog_cells END
+           WHERE id = $4`,
+          [JSON.stringify(tokens), groupEnabled, fogCleared, sessionId]
+        )
+        await client.query('COMMIT')
+      } catch (err) {
+        await client?.query('ROLLBACK').catch(() => {})
+        console.error(err)
+        return reject()
+      } finally {
+        client?.release()
+      }
+      if (tokenEvent) broadcastToSession(sessionId, tokenEvent[0], tokenEvent[1])
+      if (groupEnabled) {
+        broadcastToSession(sessionId, 'map-group-token-updated', { enabled: true })
+        broadcastToSession(sessionId, 'map-fog-updated', { enabled: true })
+      }
+      if (fogCleared) broadcastToSession(sessionId, 'map-fog-cells-reset')
+      emitHexcrawl(sessionId, hexcrawl)
+      done({ hexcrawl: serializeHexcrawl(hexcrawl) })
     })
 
     // ── Admin: toggle map fog ───────────────────────────────────────────────
@@ -1856,6 +2100,21 @@ function setupSocket(io) {
           [!!enabled, sessionId, socket.admin.id]
         )
         broadcastToSession(sessionId, 'map-fog-updated', { enabled: !!enabled })
+      } catch (err) { console.error(err) }
+    })
+
+    // ── Admin: jeton « groupe » à la place des pions joueurs ────────────────
+    // Simple drapeau d'affichage : les pions joueurs restent dans map_tokens (masqués, pas
+    // supprimés) pour réapparaître à leur place quand l'option est désactivée.
+    socket.on('map-set-group-token', async ({ sessionId, enabled }) => {
+      if (!socket.admin) return
+      if (!await adminCanAccess(socket, sessionId)) return
+      try {
+        await pool.query(
+          'UPDATE sessions SET map_group_token = $1 WHERE id = $2 AND session_editable(id, $3)',
+          [!!enabled, sessionId, socket.admin.id]
+        )
+        broadcastToSession(sessionId, 'map-group-token-updated', { enabled: !!enabled })
       } catch (err) { console.error(err) }
     })
 

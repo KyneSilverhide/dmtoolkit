@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { visibleTokens } from '@/utils/mapTokens.js'
 import { useRoute } from 'vue-router'
 import { getSocket, resetSocket } from '@/socket.js'
 import { applyTheme } from '../utils/themePreferences.js'
@@ -119,6 +120,9 @@ const mapFogEnabled = ref(false)
 const mapViewport = ref({ xn: 0, yn: 0, scale: 1 })
 const mapFogStrokes = ref([])
 const mapTokens = ref({})
+const mapGroupToken = ref(false)
+const hexcrawlPublic = ref(null)
+const displayedMapTokens = computed(() => visibleTokens(mapTokens.value, mapGroupToken.value))
 const mapGridType = ref('none')
 const mapGridCols = ref(20)
 const mapGridRows = ref(15)
@@ -134,6 +138,7 @@ function applyMapState(data) {
   if (!data) return
   currentMapUrl.value = data.mapUrl || null
   mapFogEnabled.value = !!data.fogEnabled
+  mapGroupToken.value = !!data.groupToken
   mapViewport.value = {
     xn: data.viewport?.xn ?? data.viewport?.x ?? 0,
     yn: data.viewport?.yn ?? data.viewport?.y ?? 0,
@@ -223,6 +228,7 @@ onMounted(() => {
     session.value = data.session
     players.value = data.players
     tvMode.value = data.tvMode || 'lobby'
+    hexcrawlPublic.value = data.hexcrawlPublic || null
     qrCodeDataUrl.value = data.qrCodeDataUrl || null
     sessionCode.value = data.sessionCode || ''
     currentImageUrl.value = data.currentImageUrl || null
@@ -458,6 +464,14 @@ onMounted(() => {
     mapGridCellH.value = gridCellH ?? null
   })
 
+  socket.on('hexcrawl-public', (data) => {
+    hexcrawlPublic.value = data
+  })
+
+  socket.on('map-group-token-updated', ({ enabled }) => {
+    mapGroupToken.value = !!enabled
+  })
+
   socket.on('map-token-moved', ({ playerId, nx, ny, name }) => {
     const existing = mapTokens.value[String(playerId)] || {}
     mapTokens.value = { ...mapTokens.value, [String(playerId)]: { ...existing, nx, ny, ...(name !== undefined ? { name } : {}) } }
@@ -569,7 +583,8 @@ onUnmounted(() => {
             :map-viewport="mapViewport"
             :fog-strokes="mapFogStrokes"
             :fog-cells="mapFogCells"
-            :map-tokens="mapTokens"
+            :map-tokens="displayedMapTokens"
+            :hexcrawl="hexcrawlPublic"
             :grid-type="mapGridType"
             :grid-cols="mapGridCols"
             :grid-rows="mapGridRows"

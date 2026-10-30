@@ -1,32 +1,17 @@
 /**
- * Détection automatique de la configuration de grille (carrée / hexagonale)
- * sur les images de battlemap uploadées.
+ * Détection automatique de la grille (carrée / hexagonale) d'une battlemap.
  *
- * Principe :
- *  1. L'image est convertie en niveaux de gris et on calcule deux projections 1D :
- *     Px[x] = somme des gradients horizontaux (arêtes verticales) par colonne,
- *     Py[y] = somme des gradients verticaux (arêtes horizontales) par ligne.
- *     Les gradients sont écrêtés pour que les contours du décor (bâtiments,
- *     rochers…) n'écrasent pas les fines lignes de grille.
- *  2. Chaque projection est passée au filtre passe-haut (soustraction d'une
- *     moyenne glissante) puis autocorrélée. Une grille produit des pics
- *     d'autocorrélation à tous les multiples de son pas.
- *  3. La période fondamentale est extraite par somme harmonique sur
- *     l'autocorrélation (robuste contre le verrouillage sur un harmonique).
- *  4. Le rapport entre les périodes X et Y classifie la grille :
- *       ≈ 1   → carrée
- *       ≈ √3  → hexagonale flat-top  (px = 0.75·hexW, py = hexH/2)
- *       ≈ 1/√3 → hexagonale pointy-top (px = hexW/2,  py = 0.75·hexH)
- *  5. La taille de cellule détectée est conservée telle quelle (grid_cell_w/h
- *     normalisés) au lieu d'être forcée à diviser exactement l'image — c'est ce
- *     qui permet l'alignement sur les cartes à marges ou à grille partielle.
- *     cols/rows ne servent qu'à définir l'espace d'indices des cellules et
- *     sont choisis pour couvrir toute l'image.
- *  6. L'origine de la grille (grid_offset_x/y) est ajustée :
- *     - carrée : phase du peigne sur les projections,
- *     - hexagonale : recalage 2D — on échantillonne le gradient le long des
- *       arêtes du maillage candidat et on maximise ce score sur l'espace des
- *       offsets (recherche grossière puis raffinements).
+ * Chaque étape répond à une seule question :
+ *  1. Quels pas possibles ? Les projections du gradient sur X et Y donnent des
+ *     périodes candidates (autocorrélation).
+ *  2. Quelle grille ? Une grille carrée se reconnaît directement à ces pics : ses
+ *     lignes sont droites. Un hexagone étale ses arêtes obliques sur les
+ *     projections, dont les pics se trompent volontiers de multiple : chaque
+ *     hypothèse est donc vérifiée en 2D. Le gradient de toute l'image est replié
+ *     sur une tuile du réseau, où une vraie grille fait ressortir une position
+ *     du gabarit de toutes les autres, et les multiples perdent cette netteté.
+ *  3. Où s'arrête-t-elle ? Les cases sont gardées d'après la couleur de la marge
+ *     si l'image en a une, sinon d'après leurs arêtes.
  *
  * Modèle de grille identique à frontend/src/utils/mapGrid.js (avec cellW/cellH) :
  *   carrée  : cellule de cellW × cellH, origine à (offsetX, offsetY)
@@ -36,428 +21,523 @@
 
 const sharp = require('sharp')
 
+// Laisse passer les sockets et les requêtes des autres sessions entre deux calculs longs.
+const yieldToEventLoop = () => new Promise(resolve => setImmediate(resolve))
+
 const MAX_ANALYSIS_DIM = 2000
-const GRADIENT_CLIP = 24          // écrêtage du gradient par pixel (sur 0-255)
-// Pas de grille minimal, proportionnel à la dimension de l'image : le bruit de
-// texture domine sous ~0.9 % de la dimension (18px à l'échelle d'analyse max de
-// 2000px), mais une petite image peut légitimement avoir des cellules plus fines.
-function minPeriodFor(dim) {
-  return Math.max(8, Math.round(dim * 0.009))
-}
-const MIN_DIVISIONS = 4           // nombre minimal de périodes visibles par axe
+const MIN_SIZE = 64
+const GRADIENT_CLIP = 24          // écrêtage par pixel : les contours du décor n'écrasent pas les fines lignes
+const MIN_DIVISIONS = 4           // nombre minimal de cases visibles par axe
+const MIN_PERIOD_RATIO = 0.009    // sous ~0.9 % de la dimension, le bruit de texture domine
 const BINARIZE_QUANTILE = 0.8     // seuil de binarisation (quantile des valeurs positives)
-const SCORE_THRESHOLD = 0.6       // score harmonique minimal pour valider un axe
-                                  // (calibré sur signal binarisé : cartes avec grille ≥ 0.82, sans grille ≤ 0.48)
-const RATIO_TOLERANCE = 0.13      // tolérance sur le rapport des périodes
+const PERIOD_PEAKS = 8            // pics d'autocorrélation retenus par axe
+const MAX_PERIOD_MULTIPLE = 6     // un pic peut être un sous-multiple du vrai pas
+const RATIO_TOLERANCE = 0.13      // écart toléré au rapport des pas de chaque type de grille
+const MAX_HYPOTHESES = 40         // couples de pas vérifiés pour les hexagones
+const COARSE_TILE_SIZE = 48       // côté de la tuile de la recherche exhaustive
+const REFINED_HYPOTHESES = 3
+const MIN_HEX_SALIENCE = 5.5      // calibré sur des cartes réelles : hexagones ≥ 6.5, sans grille ≤ 4
+const FULL_HEX_SALIENCE = 8.5     // saillance correspondant à une confiance de 1
+const MIN_SQUARE_SCORE = 0.6      // score harmonique : cartes à grille carrée ≥ 0.82, sans grille ≤ 0.48
+const FULL_SQUARE_SCORE = 1.8     // score correspondant à une confiance de 1
+const COMB_RANGE = 0.03           // ajustement relatif du pas d'une grille carrée
+const COMB_PERIOD_STEP = 0.05
+const REFINE_STEPS = [0.02, 0.01, 0.005, 0.0025, 0.001]  // ajustement relatif de la taille des cases
+const EDGE_ENERGY_RATIO = 0.4     // une case sans marge est gardée au-dessus de cette part de la médiane
+const MIN_ROW_FILL = 0.15         // part de la rangée la plus remplie sous laquelle une rangée est du décor
+const MARGIN_CORNER_RATIO = 0.025 // côté des zones d'échantillonnage des coins (part de la petite dimension)
+const MARGIN_CORNERS_MAX_DISTANCE = 25  // écart maximal entre coins pour y voir une même marge
+const MARGIN_COLOR_DISTANCE = 30  // écart à la marge à partir duquel un pixel est « peint »
+const MARGIN_MIN_SPAN = 0.6       // sinon la couleur des coins est le fond de la grille, pas une marge
 const SQRT3 = Math.sqrt(3)
 
-async function loadGrayscale(filePath) {
+// ── Image ────────────────────────────────────────────────────────────────────
+
+async function loadImage(filePath) {
   const meta = await sharp(filePath).metadata()
   const scale = Math.min(1, MAX_ANALYSIS_DIM / Math.max(meta.width, meta.height))
   const w = Math.max(1, Math.round(meta.width * scale))
   const h = Math.max(1, Math.round(meta.height * scale))
-  const { data } = await sharp(filePath)
+  const { data: rgb } = await sharp(filePath)
     .resize(w, h, { fit: 'fill' })
-    .grayscale()
+    .removeAlpha()
+    .toColourspace('srgb')
     .raw()
     .toBuffer({ resolveWithObject: true })
-  return { data, w, h, origW: meta.width, origH: meta.height }
+  const gray = new Float32Array(w * h)
+  for (let i = 0; i < gray.length; i++) gray[i] = 0.299 * rgb[i * 3] + 0.587 * rgb[i * 3 + 1] + 0.114 * rgb[i * 3 + 2]
+  return { rgb, gray, w, h }
 }
 
-// Calcule en une passe les projections 1D et la carte 2D de gradient écrêté.
-function computeGradients(data, w, h) {
+// Projections 1D du gradient et carte 2D, floutée car le gradient s'annule au centre d'une ligne.
+function computeEdges(gray, w, h) {
   const px = new Float64Array(w)
   const py = new Float64Array(h)
-  const G = new Float32Array(w * h)
+  const raw = new Float32Array(w * h)
   for (let y = 1; y < h - 1; y++) {
-    const row = y * w
     for (let x = 1; x < w - 1; x++) {
-      const i = row + x
-      const gx = Math.min(Math.abs(data[i + 1] - data[i - 1]), GRADIENT_CLIP)
-      const gy = Math.min(Math.abs(data[i + w] - data[i - w]), GRADIENT_CLIP)
+      const i = y * w + x
+      const gx = Math.min(Math.abs(gray[i + 1] - gray[i - 1]), GRADIENT_CLIP)
+      const gy = Math.min(Math.abs(gray[i + w] - gray[i - w]), GRADIENT_CLIP)
       px[x] += gx
       py[y] += gy
-      G[i] = gx + gy
+      raw[i] = gx + gy
     }
   }
-  return { px, py, G }
+  const edges = new Float32Array(w * h)
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      let sum = 0
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) sum += raw[(y + dy) * w + x + dx]
+      }
+      edges[y * w + x] = sum / 9
+    }
+  }
+  return { px, py, edges }
 }
 
-// Passe-haut robuste : soustrait une médiane glissante pour retirer les
-// tendances lentes dues au contenu de la carte. La médiane (contrairement à la
-// moyenne) n'est pas polluée par les pics isolés (ex. : frontière carte/marge),
-// qui créeraient sinon de larges creux artificiels anti-corrélés.
-function highPass(proj, window) {
-  const n = proj.length
+function halve(edges, w, h) {
+  const hw = w >> 1
+  const hh = h >> 1
+  const out = new Float32Array(hw * hh)
+  for (let y = 0; y < hh; y++) {
+    for (let x = 0; x < hw; x++) {
+      const i = 2 * y * w + 2 * x
+      out[y * hw + x] = (edges[i] + edges[i + 1] + edges[i + w] + edges[i + w + 1]) / 4
+    }
+  }
+  return { edges: out, w: hw, h: hh }
+}
+
+// ── Périodes candidates ──────────────────────────────────────────────────────
+
+// Passe-haut par médiane glissante : contrairement à une moyenne, elle n'est pas
+// polluée par les pics isolés (frontière carte/marge).
+function highPass(signal, window) {
   const half = Math.max(1, Math.floor(window / 2))
-  const out = new Float64Array(n)
-  for (let i = 0; i < n; i++) {
-    const a = Math.max(0, i - half)
-    const b = Math.min(n, i + half + 1)
-    const win = Array.from(proj.slice(a, b)).sort((x, y) => x - y)
-    out[i] = proj[i] - win[Math.floor(win.length / 2)]
-  }
-  return out
+  return signal.map((value, i) => {
+    const win = Array.from(signal.subarray(Math.max(0, i - half), i + half + 1)).sort((a, b) => a - b)
+    return value - win[win.length >> 1]
+  })
 }
 
-// Écrêtage robuste : limite les valeurs extrêmes (ex. : frontière carte/marge
-// qui crée un pic isolé géant écrasant l'autocorrélation normalisée).
-// L'échelle est le quantile 90 % des valeurs absolues — insensible aux pics isolés.
-function winsorize(signal) {
-  const sorted = Array.from(signal, Math.abs).sort((a, b) => a - b)
-  const scale = sorted[Math.floor(sorted.length * 0.9)]
-  if (scale === 0) return signal
-  const limit = scale * 4
-  const out = new Float64Array(signal.length)
-  for (let i = 0; i < signal.length; i++) {
-    out[i] = Math.max(-limit, Math.min(limit, signal[i]))
-  }
-  return out
-}
-
-// Prépare une projection pour l'analyse de périodicité : passe-haut + écrêtage robuste.
-function prepareSignal(proj, maxPeriod) {
-  return winsorize(highPass(proj, Math.round(maxPeriod)))
-}
-
-// Binarise le signal préparé : 1 si la valeur dépasse le quantile des valeurs
-// positives, 0 sinon. Rend l'autocorrélation indépendante des amplitudes —
-// une ligne de grille faible compte autant qu'une frontière très contrastée.
+// Rend l'autocorrélation indépendante des amplitudes : une ligne faible compte autant qu'une frontière contrastée.
 function binarize(signal) {
-  const pos = Array.from(signal).filter(v => v > 0).sort((a, b) => a - b)
-  if (pos.length < 10) return null
-  const threshold = pos[Math.floor(pos.length * BINARIZE_QUANTILE)]
-  return Float64Array.from(signal, v => (v > threshold ? 1 : 0))
+  const positive = Array.from(signal).filter(v => v > 0).sort((a, b) => a - b)
+  if (positive.length < 10) return null
+  const threshold = positive[Math.floor(positive.length * BINARIZE_QUANTILE)]
+  return signal.map(v => (v > threshold ? 1 : 0))
 }
 
-// Autocorrélation normalisée (AC(0) = 1) jusqu'à maxLag.
 function autocorrelation(signal, maxLag) {
-  const n = signal.length
-  let zero = 0
-  for (let i = 0; i < n; i++) zero += signal[i] * signal[i]
-  const ac = new Float64Array(maxLag + 1)
-  if (zero === 0) return ac
-  for (let lag = 0; lag <= maxLag; lag++) {
-    let sum = 0
-    for (let i = 0; i < n - lag; i++) sum += signal[i] * signal[i + lag]
-    ac[lag] = sum / zero
+  const ac = new Float64Array(maxLag + 2)
+  for (let lag = 0; lag <= maxLag + 1; lag++) {
+    for (let i = 0; i < signal.length - lag; i++) ac[lag] += signal[i] * signal[i + lag]
   }
-  return ac
+  return ac[0] > 0 ? ac.map(v => v / ac[0]) : ac
 }
 
-function interpolate(arr, x) {
-  const i = Math.floor(x)
-  if (i < 0 || i + 1 >= arr.length) return 0
-  const frac = x - i
-  return arr[i] * (1 - frac) + arr[i + 1] * frac
-}
-
-/**
- * Extrait la période fondamentale d'un signal via somme harmonique sur
- * l'autocorrélation : score(p) = somme des AC aux multiples de p, pondérée
- * pour privilégier la fondamentale plutôt que ses harmoniques.
- * Retourne { period, score } ou null si aucune périodicité fiable.
- */
-function findFundamental(signal, minPeriod, maxPeriod) {
-  const maxLag = Math.min(signal.length - 2, Math.round(maxPeriod * 4))
-  const ac = autocorrelation(signal, maxLag)
-
-  const score = (p) => {
-    let sum = 0
-    let count = 0
-    for (let m = p; m <= maxLag; m += p) { sum += interpolate(ac, m); count++ }
-    // Somme normalisée par √count : une vraie fondamentale a des AC positifs à
-    // TOUS ses multiples, alors qu'un sous-multiple (p/2…) alterne
-    // positif/négatif et qu'un harmonique (2p…) accumule moins de termes.
-    return count >= 2 ? sum / Math.sqrt(count) : -Infinity
-  }
-
-  let best = null
+// Pics de la somme de l'autocorrélation aux multiples du pas, du plus au moins marqué.
+function periodPeaks(projection) {
+  const n = projection.length
+  const minPeriod = Math.max(8, Math.round(n * MIN_PERIOD_RATIO))
+  const maxPeriod = Math.floor(n / MIN_DIVISIONS)
+  const binary = binarize(highPass(projection, maxPeriod))
+  if (!binary) return []
+  const maxLag = Math.min(n - 2, maxPeriod * 4)
+  const ac = autocorrelation(binary, maxLag)
+  const scores = []
   for (let p = minPeriod; p <= maxPeriod; p += 0.25) {
-    const s = score(p)
-    if (s === -Infinity) break
-    if (!best || s > best.score) best = { period: p, score: s }
-  }
-  if (!best || best.score <= 0) return null
-
-  // Raffinement sub-pixel par interpolation parabolique sur le score
-  const d = 0.125
-  const s0 = score(best.period - d)
-  const s1 = best.score
-  const s2 = score(best.period + d)
-  const denom = s0 - 2 * s1 + s2
-  if (denom < 0) {
-    const shift = (0.5 * (s0 - s2)) / denom
-    if (Math.abs(shift) <= 1) best.period += shift * d
-  }
-  return best
-}
-
-/**
- * Raffine une période approximative (issue du signal binarisé) sur le signal
- * continu, qui porte l'information sub-pixel. Recherche locale ±3 %.
- */
-function refinePeriod(signal, approxPeriod, maxPeriod) {
-  const maxLag = Math.min(signal.length - 2, Math.round(maxPeriod * 4))
-  const ac = autocorrelation(signal, maxLag)
-  const score = (p) => {
     let sum = 0
     let count = 0
-    for (let m = p; m <= maxLag; m += p) { sum += interpolate(ac, m); count++ }
-    return count >= 2 ? sum / Math.sqrt(count) : -Infinity
-  }
-  let best = { period: approxPeriod, score: score(approxPeriod) }
-  for (let p = approxPeriod * 0.97; p <= approxPeriod * 1.03; p += 0.05) {
-    const s = score(p)
-    if (s > best.score) best = { period: p, score: s }
-  }
-  return best.period
-}
-
-// Phase (en pixels) du peigne de période `period` qui s'aligne le mieux sur la projection.
-function findPhase(proj, period) {
-  const n = proj.length
-  let best = -Infinity
-  let bestPhase = 0
-  const steps = Math.max(8, Math.round(period * 2))
-  for (let s = 0; s < steps; s++) {
-    const phase = (s / steps) * period
-    let sum = 0
-    let count = 0
-    for (let k = phase; k < n - 1; k += period) {
-      sum += interpolate(proj, k)
+    for (let lag = p; lag <= maxLag; lag += p) {
+      const i = Math.floor(lag)
+      sum += ac[i] + (ac[i + 1] - ac[i]) * (lag - i)
       count++
     }
-    const mean = sum / count
-    if (mean > best) { best = mean; bestPhase = phase }
+    scores.push({ period: p, score: count >= 2 ? sum / Math.sqrt(count) : 0 })
   }
-  return bestPhase
+  return scores
+    .filter((s, i) => s.score > 0 && s.score >= (scores[i - 1]?.score ?? 0) && s.score >= (scores[i + 1]?.score ?? 0))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, PERIOD_PEAKS)
 }
 
-// ── Étendue de la grille ─────────────────────────────────────────────────────
-// La grille ne couvre pas forcément toute l'image (bordures, marges). On
-// détermine la première et la dernière ligne réellement présentes, puis on
-// teste si les bandes de bord contiennent encore du signal de grille (cellule
-// partielle coupée par le cadrage) ou non (marge vide à exclure).
+const nearRatio = (ratio, target) => Math.abs(ratio - target) <= target * RATIO_TOLERANCE
 
-// Première et dernière dent du peigne (période/phase) présentes dans le signal binarisé.
-function combExtent(bin, period, phase) {
-  let first = null
-  let last = null
-  for (let t = phase; t < bin.length; t += period) {
-    const c = Math.round(t)
-    let support = false
-    for (let d = -2; d <= 2; d++) {
-      const i = c + d
-      if (i >= 0 && i < bin.length && bin[i] > 0) { support = true; break }
-    }
-    if (support) {
-      if (first === null) first = t
-      last = t
-    }
+// Un pic peut être un sous-multiple du vrai pas : ses multiples sont aussi des candidats.
+function withMultiples(peaks, limit) {
+  const periods = []
+  for (const { period } of peaks) {
+    for (let k = 1; k <= MAX_PERIOD_MULTIPLE && period * k <= limit; k++) periods.push(period * k)
   }
-  return first !== null && last > first ? { first, last } : null
+  return periods
 }
 
-// Positions des dents du peigne entre first et last inclus.
-function teethBetween(first, last, period) {
-  const teeth = []
-  for (let t = first; t <= last + period / 4; t += period) teeth.push(t)
-  return teeth
-}
-
-// Énergie moyenne du gradient le long des lignes horizontales `yLines`,
-// restreinte à la bande x ∈ [x0, x1).
-function bandEnergyAlongY(G, w, h, x0, x1, yLines) {
-  let sum = 0
-  let count = 0
-  const a = Math.max(1, Math.round(x0))
-  const b = Math.min(w - 1, Math.round(x1))
-  for (const ty of yLines) {
-    const y = Math.round(ty)
-    if (y < 1 || y >= h - 1) continue
-    for (let x = a; x < b; x++) { sum += G[y * w + x]; count++ }
+// Hexagones compatibles avec les pas candidats, les couples les mieux classés d'abord.
+function hexHypotheses(peaksX, peaksY, w, h) {
+  const pairs = []
+  withMultiples(peaksX, w / MIN_DIVISIONS).forEach((x, i) => {
+    withMultiples(peaksY, h / MIN_DIVISIONS).forEach((y, j) => pairs.push({ x, y, rank: i + j }))
+  })
+  pairs.sort((a, b) => a.rank - b.rank)
+  const seen = new Set()
+  const out = []
+  for (const { x, y } of pairs) {
+    const ratio = x / y
+    const hyp = nearRatio(ratio, SQRT3) ? { type: 'hex', orientation: 'flat', cellW: x / 0.75, cellH: y * 2 }
+      : nearRatio(ratio, 1 / SQRT3) ? { type: 'hex', orientation: 'pointy', cellW: x * 2, cellH: y / 0.75 }
+      : null
+    if (!hyp) continue
+    const key = `${hyp.orientation}:${Math.round(hyp.cellW / 2)}:${Math.round(hyp.cellH / 2)}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(hyp)
+    if (out.length >= MAX_HYPOTHESES) break
   }
-  return count > 0 ? sum / count : 0
+  return out
 }
 
-// Énergie moyenne du gradient le long des lignes verticales `xLines`,
-// restreinte à la bande y ∈ [y0, y1).
-function bandEnergyAlongX(G, w, h, y0, y1, xLines) {
-  let sum = 0
-  let count = 0
-  const a = Math.max(1, Math.round(y0))
-  const b = Math.min(h - 1, Math.round(y1))
-  for (const tx of xLines) {
-    const x = Math.round(tx)
-    if (x < 1 || x >= w - 1) continue
-    for (let y = a; y < b; y++) { sum += G[y * w + x]; count++ }
+// ── Réseau ───────────────────────────────────────────────────────────────────
+
+const isOdd = (n) => ((n % 2) + 2) % 2 === 1
+
+function cellPitch({ type, orientation, cellW, cellH }) {
+  if (type === 'square') return { col: cellW, row: cellH }
+  return orientation === 'flat' ? { col: 0.75 * cellW, row: cellH } : { col: cellW, row: 0.75 * cellH }
+}
+
+// Translation qui superpose un réseau d'hexagones à lui-même : une tuile ne contient qu'un motif.
+function latticePeriod({ orientation, cellW, cellH }) {
+  return orientation === 'flat' ? { x: 1.5 * cellW, y: cellH } : { x: cellW, y: 1.5 * cellH }
+}
+
+function cellCenter(lattice, col, row) {
+  const { type, orientation, cellW, cellH, ox, oy } = lattice
+  if (type === 'square') return { x: ox + (col + 0.5) * cellW, y: oy + (row + 0.5) * cellH }
+  if (orientation === 'flat') {
+    return { x: ox + (col * 0.75 + 0.5) * cellW, y: oy + (row + 0.5) * cellH + (isOdd(col) ? cellH / 2 : 0) }
   }
-  return count > 0 ? sum / count : 0
+  return { x: ox + (col + 0.5) * cellW + (isOdd(row) ? cellW / 2 : 0), y: oy + (row * 0.75 + 0.5) * cellH }
 }
 
-// Une bande de bord appartient à la grille si son énergie atteint cette
-// fraction de l'énergie mesurée à l'intérieur de la grille.
-const EDGE_BAND_RATIO = 0.45
-
-// ── Recalage 2D des hexagones ────────────────────────────────────────────────
-
-// Sommets (en pixels) de l'hexagone (col, row) pour le maillage donné.
-function hexVerticesPx(col, row, hexW, hexH, orientation, ox, oy) {
-  if (orientation === 'pointy') {
-    const cx = ox + (col + 0.5) * hexW + ((row % 2 + 2) % 2 === 1 ? hexW / 2 : 0)
-    const cy = oy + (row * 0.75 + 0.5) * hexH
-    const rx = hexW / 2
-    const ry = hexH / 2
-    const hry = ry / 2
-    return [
-      { x: cx + rx, y: cy + hry }, { x: cx, y: cy + ry }, { x: cx - rx, y: cy + hry },
-      { x: cx - rx, y: cy - hry }, { x: cx, y: cy - ry }, { x: cx + rx, y: cy - hry },
-    ]
+function cellVertices(lattice, col, row) {
+  const { type, orientation, cellW, cellH } = lattice
+  const { x, y } = cellCenter(lattice, col, row)
+  const rx = cellW / 2
+  const ry = cellH / 2
+  if (type === 'square') return [[x - rx, y - ry], [x + rx, y - ry], [x + rx, y + ry], [x - rx, y + ry]]
+  if (orientation === 'flat') {
+    return [[x + rx, y], [x + rx / 2, y + ry], [x - rx / 2, y + ry], [x - rx, y], [x - rx / 2, y - ry], [x + rx / 2, y - ry]]
   }
-  const cx = ox + (col * 0.75 + 0.5) * hexW
-  const cy = oy + (row + 0.5) * hexH + ((col % 2 + 2) % 2 === 1 ? hexH / 2 : 0)
-  const rx = hexW / 2
-  const ry = hexH / 2
-  const hrx = rx / 2
-  return [
-    { x: cx + rx, y: cy }, { x: cx + hrx, y: cy + ry }, { x: cx - hrx, y: cy + ry },
-    { x: cx - rx, y: cy }, { x: cx - hrx, y: cy - ry }, { x: cx + hrx, y: cy - ry },
-  ]
+  return [[x + rx, y + ry / 2], [x, y + ry], [x - rx, y + ry / 2], [x - rx, y - ry / 2], [x, y - ry], [x + rx, y - ry / 2]]
 }
 
-// Gradient moyen échantillonné le long des arêtes des hexagones d'une plage
-// de cellules [c0..c1] × [r0..r1]. Les échantillons hors image sont ignorés
-// (une cellule entièrement hors champ donne count = 0).
-function hexRangeEnergy(G, w, h, hexW, hexH, orientation, ox, oy, c0, c1, r0, r1, cellStep = 1) {
-  let sum = 0
-  let count = 0
-  for (let col = c0; col <= c1; col += cellStep) {
-    for (let row = r0; row <= r1; row += cellStep) {
-      const v = hexVerticesPx(col, row, hexW, hexH, orientation, ox, oy)
-      for (let e = 0; e < 6; e++) {
-        const a = v[e]
-        const b = v[(e + 1) % 6]
-        const len = Math.hypot(b.x - a.x, b.y - a.y)
-        const steps = Math.max(2, Math.round(len / 2))
-        for (let s = 0; s <= steps; s++) {
-          const x = Math.round(a.x + ((b.x - a.x) * s) / steps)
-          const y = Math.round(a.y + ((b.y - a.y) * s) / steps)
-          if (x < 1 || y < 1 || x >= w - 1 || y >= h - 1) continue
-          sum += G[y * w + x]
-          count++
-        }
-      }
+// Appelle visit(x, y) le long des arêtes d'une case, à environ un point par pixel.
+function walkCellEdges(lattice, col, row, visit) {
+  const vertices = cellVertices(lattice, col, row)
+  vertices.forEach(([ax, ay], e) => {
+    const [bx, by] = vertices[(e + 1) % vertices.length]
+    const steps = Math.max(2, Math.round(Math.hypot(bx - ax, by - ay)))
+    for (let s = 0; s < steps; s++) visit(ax + ((bx - ax) * s) / steps, ay + ((by - ay) * s) / steps)
+  })
+}
+
+// ── Vérification d'une hypothèse ─────────────────────────────────────────────
+
+// Replie les arêtes de l'image sur une tuile du réseau de tw × th cases.
+function foldEdges({ edges, w, h }, period, tw, th) {
+  const binX = Int32Array.from({ length: w }, (_, x) => Math.min(tw - 1, Math.floor(((x % period.x) / period.x) * tw)))
+  const sums = new Float64Array(tw * th)
+  const counts = new Float64Array(tw * th)
+  for (let y = 1; y < h - 1; y++) {
+    const rowBin = Math.min(th - 1, Math.floor(((y % period.y) / period.y) * th)) * tw
+    for (let x = 1; x < w - 1; x++) {
+      const bin = rowBin + binX[x]
+      sums[bin] += edges[y * w + x]
+      counts[bin]++
     }
   }
-  return count > 0 ? sum / count : 0
+  let total = 0
+  let filled = 0
+  for (let i = 0; i < sums.length; i++) {
+    if (counts[i] > 0) {
+      sums[i] /= counts[i]
+      total += sums[i]
+      filled++
+    }
+  }
+  return { tile: sums, tw, th, mean: filled ? total / filled : 0 }
 }
 
-// Score d'alignement global : gradient moyen le long des arêtes du maillage.
-function hexEdgeScore(G, w, h, hexW, hexH, orientation, ox, oy, cellStep) {
-  const colPitch = orientation === 'flat' ? 0.75 * hexW : hexW
-  const rowPitch = orientation === 'flat' ? hexH : 0.75 * hexH
-  const nCols = Math.ceil(w / colPitch) + 2
-  const nRows = Math.ceil(h / rowPitch) + 2
-  return hexRangeEnergy(G, w, h, hexW, hexH, orientation, ox, oy, 0, nCols - 1, 0, nRows - 1, cellStep)
+// Pixels de la tuile que doivent couvrir les arêtes d'un réseau d'origine (0, 0).
+function latticeTemplate(hypothesis, period, tw, th) {
+  const lattice = { ...hypothesis, ox: 0, oy: 0 }
+  const points = new Set()
+  for (const [col, row] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
+    walkCellEdges(lattice, col, row, (x, y) => {
+      const tx = Math.floor((((x % period.x) + period.x) % period.x) / period.x * tw) % tw
+      const ty = Math.floor((((y % period.y) + period.y) % period.y) / period.y * th) % th
+      points.add(ty * tw + tx)
+    })
+  }
+  return Array.from(points, p => [p % tw, Math.floor(p / tw)])
+}
+
+// Meilleur décalage du gabarit parmi `offsets`, et sa saillance : son écart à la moyenne de tous les
+// décalages, en écarts-types. Une ligne fine sur une texture chargée change peu la moyenne de la tuile,
+// mais seule une vraie grille fait ressortir un décalage de tous les autres.
+function matchTemplate({ tile, tw, th }, template, offsets) {
+  let best = { sum: -1, dx: 0, dy: 0 }
+  let total = 0
+  let square = 0
+  let count = 0
+  for (const [dx, dy] of offsets) {
+    let sum = 0
+    for (const [x, y] of template) sum += tile[((y + dy) % th) * tw + (x + dx) % tw]
+    if (sum > best.sum) best = { sum, dx, dy }
+    total += sum
+    square += sum * sum
+    count++
+  }
+  const mean = total / count
+  const deviation = Math.sqrt(Math.max(0, square / count - mean * mean))
+  return { ...best, salience: deviation > 0 ? (best.sum - mean) / deviation : 0 }
+}
+
+function* allOffsets(tw, th) {
+  for (let dy = 0; dy < th; dy++) {
+    for (let dx = 0; dx < tw; dx++) yield [dx, dy]
+  }
+}
+
+function* offsetsAround(cx, cy, radius, tw, th) {
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) yield [(cx + dx + tw) % tw, (cy + dy + th) % th]
+  }
 }
 
 /**
- * Trouve l'origine (ox, oy) du maillage hexagonal qui maximise le gradient le
- * long des arêtes. Recherche grossière sur une période du réseau, puis deux
- * raffinements locaux. Retourne des offsets ≤ 0 (l'origine est sur ou avant
- * le bord de l'image, garantissant la couverture des indices ≥ 0).
+ * Meilleure position du réseau sur l'image : recherche exhaustive sur une tuile
+ * grossière, puis locale au pixel. Le coût ne dépend pas du nombre de cases.
  */
-function fitHexOffset(G, w, h, hexW, hexH, orientation) {
-  // Périodes d'invariance du réseau (translation qui le superpose à lui-même)
-  const periodX = orientation === 'flat' ? 1.5 * hexW : hexW
-  const periodY = orientation === 'flat' ? hexH : 1.5 * hexH
-  const cellStep = (w / hexW) * (h / hexH) > 700 ? 2 : 1
+function fitLattice(hypothesis, image) {
+  const period = latticePeriod(hypothesis)
+  const tw = Math.max(1, Math.round(period.x))
+  const th = Math.max(1, Math.round(period.y))
+  const shrink = Math.max(tw, th) / COARSE_TILE_SIZE
+  const coarseW = shrink > 1 ? Math.max(1, Math.round(tw / shrink)) : tw
+  const coarseH = shrink > 1 ? Math.max(1, Math.round(th / shrink)) : th
+  const coarse = foldEdges(image, period, coarseW, coarseH)
+  if (coarse.mean === 0) return { ...hypothesis, ox: 0, oy: 0, contrast: 0, salience: 0 }
+  const rough = matchTemplate(coarse, latticeTemplate(hypothesis, period, coarseW, coarseH), allOffsets(coarseW, coarseH))
+  const fine = foldEdges(image, period, tw, th)
+  const template = latticeTemplate(hypothesis, period, tw, th)
+  const radius = Math.ceil(Math.max(tw / coarseW, th / coarseH))
+  const best = matchTemplate(fine, template, offsetsAround(
+    Math.round((rough.dx / coarseW) * tw), Math.round((rough.dy / coarseH) * th), radius, tw, th))
+  return {
+    ...hypothesis,
+    ox: (best.dx / tw) * period.x,
+    oy: (best.dy / th) * period.y,
+    contrast: best.sum / template.length / fine.mean,
+    salience: rough.salience,
+  }
+}
 
-  let best = { score: -1, ox: 0, oy: 0 }
-  const NX = 12
-  const NY = 12
-  for (let i = 0; i < NX; i++) {
-    for (let j = 0; j < NY; j++) {
-      const ox = -periodX * (i / NX)
-      const oy = -periodY * (j / NY)
-      const s = hexEdgeScore(G, w, h, hexW, hexH, orientation, ox, oy, cellStep)
-      if (s > best.score) best = { score: s, ox, oy }
+const scaled = (hypothesis, factor) => ({ ...hypothesis, cellW: hypothesis.cellW * factor, cellH: hypothesis.cellH * factor })
+
+// Ajuste la taille des cases : un pas inexact étale le motif replié et fait chuter le contraste.
+async function refineLattice(hypothesis, image) {
+  let best = fitLattice(hypothesis, image)
+  for (const step of REFINE_STEPS) {
+    for (const [fw, fh] of [[1 + step, 1], [1 - step, 1], [1, 1 + step], [1, 1 - step]]) {
+      await yieldToEventLoop()
+      const fit = fitLattice({ ...best, cellW: best.cellW * fw, cellH: best.cellH * fh }, image)
+      if (fit.contrast > best.contrast) best = fit
     }
   }
-  let spanX = periodX / NX
-  let spanY = periodY / NY
-  for (let pass = 0; pass < 3; pass++) {
-    const center = { ...best }
-    for (let i = -2; i <= 2; i++) {
-      for (let j = -2; j <= 2; j++) {
-        const ox = center.ox + (spanX * i) / 2
-        const oy = center.oy + (spanY * j) / 2
-        const s = hexEdgeScore(G, w, h, hexW, hexH, orientation, ox, oy, cellStep)
-        if (s > best.score) best = { score: s, ox, oy }
-      }
-    }
-    spanX /= 2
-    spanY /= 2
-  }
-  // Ramène l'origine dans (-periodX, 0] × (-periodY, 0]
-  best.ox = best.ox - Math.ceil(best.ox / periodX) * periodX
-  best.oy = best.oy - Math.ceil(best.oy / periodY) * periodY
-  if (best.ox > 0) best.ox -= periodX
-  if (best.oy > 0) best.oy -= periodY
   return best
 }
 
-/**
- * Rogne l'espace d'indices hexagonal aux colonnes/lignes qui portent réellement
- * du signal de grille (exclut les marges sans grille). L'origine est décalée
- * vers la première colonne/ligne conservée. Pour préserver la parité du
- * maillage (colonnes décalées d'une demi-cellule), le rognage de tête se fait
- * par pas de 2 sur l'axe décalé (colonnes en flat, lignes en pointy).
- */
-function trimHexExtent(G, w, h, hexW, hexH, orientation, ox, oy, nCols, nRows) {
-  const colPitch = orientation === 'flat' ? 0.75 * hexW : hexW
-  const rowPitch = orientation === 'flat' ? hexH : 0.75 * hexH
-  const colE = []
-  for (let c = 0; c < nCols; c++) {
-    colE.push(hexRangeEnergy(G, w, h, hexW, hexH, orientation, ox, oy, c, c, 0, nRows - 1))
+async function findHexLattice(peaksX, peaksY, image) {
+  const coarse = halve(image.edges, image.w, image.h)
+  const scored = []
+  for (const hyp of hexHypotheses(peaksX, peaksY, image.w, image.h)) {
+    await yieldToEventLoop()
+    scored.push({ hyp, salience: fitLattice(scaled(hyp, 0.5), coarse).salience })
   }
-  const rowE = []
-  for (let r = 0; r < nRows; r++) {
-    rowE.push(hexRangeEnergy(G, w, h, hexW, hexH, orientation, ox, oy, 0, nCols - 1, r, r))
+  const ranked = scored.sort((a, b) => b.salience - a.salience).slice(0, REFINED_HYPOTHESES)
+  let best = null
+  for (const { hyp } of ranked) {
+    const fit = await refineLattice(hyp, image)
+    if (!best || fit.salience > best.salience) best = fit
   }
-  const median = (arr) => {
-    const s = [...arr].sort((a, b) => a - b)
-    return s[Math.floor(s.length / 2)]
+  if (!best || best.salience < MIN_HEX_SALIENCE) return null
+  const confidence = (best.salience - MIN_HEX_SALIENCE) / (FULL_HEX_SALIENCE - MIN_HEX_SALIENCE)
+  return { ...best, confidence }
+}
+
+// Pas et position du peigne qui s'aligne le mieux sur une projection, autour du pas estimé.
+function fitComb(projection, approxPeriod) {
+  const signal = highPass(projection, Math.floor(projection.length / MIN_DIVISIONS))
+  let best = { mean: -Infinity, period: approxPeriod, phase: 0 }
+  for (let period = approxPeriod * (1 - COMB_RANGE); period <= approxPeriod * (1 + COMB_RANGE); period += COMB_PERIOD_STEP) {
+    for (let phase = 0; phase < period; phase += 0.5) {
+      let sum = 0
+      let count = 0
+      for (let t = phase; t < signal.length - 1; t += period) {
+        const i = Math.floor(t)
+        sum += signal[i] + (signal[i + 1] - signal[i]) * (t - i)
+        count++
+      }
+      if (count && sum / count > best.mean) best = { mean: sum / count, period, phase }
+    }
   }
-  const TRIM_RATIO = 0.4
-  const thC = median(colE) * TRIM_RATIO
-  const thR = median(rowE) * TRIM_RATIO
-  let c0 = 0
-  while (c0 < nCols - 2 && colE[c0] < thC) c0++
-  let c1 = nCols - 1
-  while (c1 > c0 + 1 && colE[c1] < thC) c1--
-  let r0 = 0
-  while (r0 < nRows - 2 && rowE[r0] < thR) r0++
-  let r1 = nRows - 1
-  while (r1 > r0 + 1 && rowE[r1] < thR) r1--
-  if (orientation === 'flat' && c0 % 2 === 1) c0--
-  if (orientation === 'pointy' && r0 % 2 === 1) r0--
+  return best
+}
+
+function findSquareLattice(peaksX, peaksY, { px, py }) {
+  const [x] = peaksX
+  const [y] = peaksY
+  if (!x || !y || Math.min(x.score, y.score) < MIN_SQUARE_SCORE || !nearRatio(x.period / y.period, 1)) return null
+  const combX = fitComb(px, x.period)
+  const combY = fitComb(py, y.period)
   return {
-    ox: ox + c0 * colPitch,
-    oy: oy + r0 * rowPitch,
-    cols: c1 - c0 + 1,
-    rows: r1 - r0 + 1,
+    type: 'square',
+    orientation: 'flat',
+    cellW: combX.period,
+    cellH: combY.period,
+    ox: combX.phase,
+    oy: combY.phase,
+    confidence: (Math.min(x.score, y.score) - MIN_SQUARE_SCORE) / (FULL_SQUARE_SCORE - MIN_SQUARE_SCORE),
   }
 }
 
-function clampInt(v, min, max) {
-  return Math.max(min, Math.min(max, Math.round(v)))
+// ── Étendue ──────────────────────────────────────────────────────────────────
+
+const colorDistance = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2])
+
+// Couleur médiane des quatre coins, ou null s'ils ne se ressemblent pas.
+function cornerColor(rgb, w, h) {
+  const size = Math.max(4, Math.round(Math.min(w, h) * MARGIN_CORNER_RATIO))
+  const corners = [[0, 0], [w - size, 0], [0, h - size], [w - size, h - size]].map(([x0, y0]) => {
+    const channels = [[], [], []]
+    for (let y = y0; y < y0 + size; y++) {
+      for (let x = x0; x < x0 + size; x++) {
+        const i = (y * w + x) * 3
+        for (let c = 0; c < 3; c++) channels[c].push(rgb[i + c])
+      }
+    }
+    return channels.map(values => values.sort((a, b) => a - b)[values.length >> 1])
+  })
+  return corners.every(a => corners.every(b => colorDistance(a, b) <= MARGIN_CORNERS_MAX_DISTANCE)) ? corners[0] : null
 }
 
-function round6(v) {
-  return Math.round(v * 1e6) / 1e6
+// Vrai si l'intérieur de la case diffère de la marge.
+function cellIsPainted({ rgb, w, h }, center, radius, margin) {
+  let painted = 0
+  let total = 0
+  const step = Math.max(1, Math.round(radius / 4))
+  for (let y = Math.round(center.y - radius); y <= center.y + radius; y += step) {
+    for (let x = Math.round(center.x - radius); x <= center.x + radius; x += step) {
+      if (x < 0 || y < 0 || x >= w || y >= h) continue
+      const i = (y * w + x) * 3
+      if (colorDistance([rgb[i], rgb[i + 1], rgb[i + 2]], margin) > MARGIN_COLOR_DISTANCE) painted++
+      total++
+    }
+  }
+  return painted * 2 >= total && total > 0
 }
+
+function cellEdgeEnergy({ edges, w, h }, lattice, col, row) {
+  let sum = 0
+  let count = 0
+  walkCellEdges(lattice, col, row, (fx, fy) => {
+    const x = Math.round(fx)
+    const y = Math.round(fy)
+    if (x < 1 || y < 1 || x >= w - 1 || y >= h - 1) return
+    sum += edges[y * w + x]
+    count++
+  })
+  return count ? sum / count : 0
+}
+
+// Toutes les cases dont le centre tombe dans l'image.
+function visibleCells(lattice, w, h) {
+  const pitch = cellPitch(lattice)
+  const cells = []
+  const firstCol = Math.floor(-lattice.ox / pitch.col) - 2
+  const lastCol = Math.ceil((w - lattice.ox) / pitch.col) + 1
+  const firstRow = Math.floor(-lattice.oy / pitch.row) - 2
+  const lastRow = Math.ceil((h - lattice.oy) / pitch.row) + 1
+  for (let col = firstCol; col <= lastCol; col++) {
+    for (let row = firstRow; row <= lastRow; row++) {
+      const center = cellCenter(lattice, col, row)
+      if (center.x >= 0 && center.y >= 0 && center.x < w && center.y < h) cells.push({ col, row, center })
+    }
+  }
+  return cells
+}
+
+function paintedCells(image, lattice, cells) {
+  const margin = cornerColor(image.rgb, image.w, image.h)
+  if (!margin) return null
+  const radius = Math.min(lattice.cellW, lattice.cellH) * 0.3
+  const kept = cells.filter(cell => cellIsPainted(image, cell.center, radius, margin))
+  if (!kept.length) return null
+  const spanOf = (values) => Math.max(...values) - Math.min(...values)
+  const coversImage = spanOf(kept.map(c => c.center.x)) >= image.w * MARGIN_MIN_SPAN
+    && spanOf(kept.map(c => c.center.y)) >= image.h * MARGIN_MIN_SPAN
+  return coversImage ? kept : null
+}
+
+function cellsWithEdges(image, lattice, cells) {
+  const energies = cells.map(cell => cellEdgeEnergy(image, lattice, cell.col, cell.row))
+  const threshold = [...energies].sort((a, b) => a - b)[energies.length >> 1] * EDGE_ENERGY_RATIO
+  return cells.filter((_, i) => energies[i] >= threshold)
+}
+
+// Première et dernière rangée assez remplies pour ne pas être un élément de décor isolé.
+function filledSpan(indices) {
+  const counts = new Map()
+  for (const i of indices) counts.set(i, (counts.get(i) || 0) + 1)
+  const min = Math.max(2, Math.max(...counts.values()) * MIN_ROW_FILL)
+  const filled = [...counts].filter(([, count]) => count >= min).map(([i]) => i)
+  return filled.length ? { first: Math.min(...filled), last: Math.max(...filled) } : null
+}
+
+// Recadre l'origine sur les cases gardées. Le modèle décale toujours les indices impairs de l'axe
+// quinconcé : un premier indice impair se compense sur l'autre axe, ce qui renumérote ses rangées.
+function cropLattice(lattice, kept) {
+  const pointy = lattice.type === 'hex' && lattice.orientation === 'pointy'
+  const staggered = lattice.type === 'hex'
+  const pitch = cellPitch(lattice)
+  const major = filledSpan(kept.map(c => (pointy ? c.row : c.col)))
+  if (!major) return null
+  const flip = staggered && isOdd(major.first)
+  const minorStep = pointy ? lattice.cellW : lattice.cellH
+  const renumbered = kept.map(c => {
+    const majorIndex = pointy ? c.row : c.col
+    const minorIndex = pointy ? c.col : c.row
+    return minorIndex + (flip && !isOdd(majorIndex) ? -1 : 0)
+  })
+  const minor = filledSpan(renumbered)
+  if (!minor) return null
+  const majorPitch = pointy ? pitch.row : pitch.col
+  const majorOrigin = (pointy ? lattice.oy : lattice.ox) + major.first * majorPitch
+  const minorOrigin = (pointy ? lattice.ox : lattice.oy) + (minor.first + (flip ? 0.5 : 0)) * minorStep
+  const nMajor = major.last - major.first + 1
+  const nMinor = minor.last - minor.first + 1
+  return pointy
+    ? { ox: minorOrigin, oy: majorOrigin, cols: nMinor, rows: nMajor }
+    : { ox: majorOrigin, oy: minorOrigin, cols: nMajor, rows: nMinor }
+}
+
+// ── Point d'entrée ───────────────────────────────────────────────────────────
+
+const round6 = (v) => Math.round(v * 1e6) / 1e6
 
 const NONE_RESULT = {
   gridType: 'none', gridCols: null, gridRows: null, gridHexOrientation: 'flat',
@@ -467,118 +547,43 @@ const NONE_RESULT = {
 /**
  * Analyse une image de carte et retourne la configuration de grille détectée.
  * gridCellW/gridCellH sont les dimensions d'une cellule normalisées par la
- * taille de l'image (indépendantes de cols/rows, qui ne définissent que
- * l'espace d'indices couvrant l'image).
+ * taille de l'image, gridCols/gridRows l'étendue réellement couverte.
  * @param {string} filePath chemin absolu de l'image
  */
 async function detectGridConfig(filePath) {
-  const { data, w, h } = await loadGrayscale(filePath)
-  if (w < 64 || h < 64) return { ...NONE_RESULT }
+  const { rgb, gray, w, h } = await loadImage(filePath)
+  if (w < MIN_SIZE || h < MIN_SIZE) return { ...NONE_RESULT }
 
-  const { px, py, G } = computeGradients(data, w, h)
+  const { px, py, edges } = computeEdges(gray, w, h)
+  const image = { rgb, edges, w, h }
+  await yieldToEventLoop()
+  const peaksX = periodPeaks(px)
+  await yieldToEventLoop()
+  const peaksY = periodPeaks(py)
+  await yieldToEventLoop()
+  const lattice = await findHexLattice(peaksX, peaksY, image) || findSquareLattice(peaksX, peaksY, { px, py })
+  if (!lattice) return { ...NONE_RESULT }
 
-  const maxPeriodX = Math.floor(w / MIN_DIVISIONS)
-  const maxPeriodY = Math.floor(h / MIN_DIVISIONS)
-  const sx = prepareSignal(px, maxPeriodX)
-  const sy = prepareSignal(py, maxPeriodY)
-  // Détection de la période sur le signal binarisé (robuste aux amplitudes),
-  // puis raffinement sub-pixel sur le signal continu.
-  const bx = binarize(sx)
-  const by = binarize(sy)
-  if (!bx || !by) return { ...NONE_RESULT }
-  const fx = findFundamental(bx, minPeriodFor(w), maxPeriodX)
-  const fy = findFundamental(by, minPeriodFor(h), maxPeriodY)
-  if (!fx || !fy || fx.score < SCORE_THRESHOLD || fy.score < SCORE_THRESHOLD) return { ...NONE_RESULT }
-  fx.period = refinePeriod(sx, fx.period, maxPeriodX)
-  fy.period = refinePeriod(sy, fy.period, maxPeriodY)
+  const cells = visibleCells(lattice, w, h)
+  const kept = paintedCells(image, lattice, cells) || cellsWithEdges(image, lattice, cells)
+  const extent = cropLattice(lattice, kept)
+  if (!extent || extent.cols < MIN_DIVISIONS || extent.rows < MIN_DIVISIONS) return { ...NONE_RESULT }
 
-  const ratio = fx.period / fy.period
-  const confidence = Math.min(1, (Math.min(fx.score, fy.score) - SCORE_THRESHOLD) / 1.2)
-
-  // ── Grille carrée ─────────────────────────────────────────────────────────
-  if (Math.abs(ratio - 1) <= RATIO_TOLERANCE) {
-    const phaseX = findPhase(sx, fx.period)
-    const phaseY = findPhase(sy, fy.period)
-    const extX = combExtent(bx, fx.period, phaseX)
-    const extY = combExtent(by, fy.period, phaseY)
-
-    let ox
-    let oy
-    let cols
-    let rows
-    if (extX && extY) {
-      // Étendue réelle de la grille : entre la première et la dernière ligne
-      // observées, étendue d'une cellule de chaque côté si la bande de bord
-      // contient encore du signal de grille (cellule partielle coupée).
-      const xLines = teethBetween(extX.first, extX.last, fx.period)
-      const yLines = teethBetween(extY.first, extY.last, fy.period)
-      const interiorX = bandEnergyAlongY(G, w, h, extX.first + 2, extX.last - 2, yLines)
-      const interiorY = bandEnergyAlongX(G, w, h, extY.first + 2, extY.last - 2, xLines)
-      const leftCell = extX.first > 3 &&
-        bandEnergyAlongY(G, w, h, 1, extX.first - 2, yLines) > EDGE_BAND_RATIO * interiorX
-      const rightCell = (w - extX.last) > 3 &&
-        bandEnergyAlongY(G, w, h, extX.last + 2, w - 1, yLines) > EDGE_BAND_RATIO * interiorX
-      const topCell = extY.first > 3 &&
-        bandEnergyAlongX(G, w, h, 1, extY.first - 2, xLines) > EDGE_BAND_RATIO * interiorY
-      const bottomCell = (h - extY.last) > 3 &&
-        bandEnergyAlongX(G, w, h, extY.last + 2, h - 1, xLines) > EDGE_BAND_RATIO * interiorY
-      ox = leftCell ? extX.first - fx.period : extX.first
-      oy = topCell ? extY.first - fy.period : extY.first
-      cols = Math.round((extX.last - extX.first) / fx.period) + (leftCell ? 1 : 0) + (rightCell ? 1 : 0)
-      rows = Math.round((extY.last - extY.first) / fy.period) + (topCell ? 1 : 0) + (bottomCell ? 1 : 0)
-    } else {
-      // Repli : couverture de toute l'image depuis l'origine (-période, 0]
-      ox = phaseX > 0 ? phaseX - fx.period : 0
-      oy = phaseY > 0 ? phaseY - fy.period : 0
-      cols = Math.ceil((w - ox) / fx.period)
-      rows = Math.ceil((h - oy) / fy.period)
-    }
-    return {
-      gridType: 'square', gridCols: clampInt(cols, 2, 200), gridRows: clampInt(rows, 2, 200),
-      gridHexOrientation: 'flat',
-      gridOffsetX: round6(ox / w), gridOffsetY: round6(oy / h),
-      gridCellW: round6(fx.period / w), gridCellH: round6(fy.period / h),
-      confidence,
-    }
-  }
-
-  // ── Hexagones ─────────────────────────────────────────────────────────────
-  let orientation = null
-  let hexW
-  let hexH
-  if (Math.abs(ratio - SQRT3) <= SQRT3 * RATIO_TOLERANCE) {
-    // flat-top : px = 0.75·hexW, py = hexH/2
-    orientation = 'flat'
-    hexW = fx.period / 0.75
-    hexH = fy.period * 2
-  } else if (Math.abs(ratio - 1 / SQRT3) <= (1 / SQRT3) * RATIO_TOLERANCE) {
-    // pointy-top : px = hexW/2, py = 0.75·hexH
-    orientation = 'pointy'
-    hexW = fx.period * 2
-    hexH = fy.period / 0.75
-  } else {
-    return { ...NONE_RESULT }
-  }
-
-  const fit = fitHexOffset(G, w, h, hexW, hexH, orientation)
-  // Espace d'indices couvrant toute l'image depuis l'origine, puis rogné aux
-  // colonnes/lignes qui portent réellement la grille (exclut les marges)
-  const colPitch = orientation === 'flat' ? 0.75 * hexW : hexW
-  const rowPitch = orientation === 'flat' ? hexH : 0.75 * hexH
-  const coverCols = Math.ceil((w - fit.ox) / colPitch) + 1
-  const coverRows = Math.ceil((h - fit.oy) / rowPitch) + 1
-  const ext = trimHexExtent(G, w, h, hexW, hexH, orientation, fit.ox, fit.oy, coverCols, coverRows)
   return {
-    gridType: 'hex', gridCols: clampInt(ext.cols, 2, 200), gridRows: clampInt(ext.rows, 2, 200),
-    gridHexOrientation: orientation,
-    gridOffsetX: round6(ext.ox / w), gridOffsetY: round6(ext.oy / h),
-    gridCellW: round6(hexW / w), gridCellH: round6(hexH / h),
-    confidence,
+    gridType: lattice.type,
+    gridCols: Math.min(extent.cols, 200),
+    gridRows: Math.min(extent.rows, 200),
+    gridHexOrientation: lattice.orientation,
+    gridOffsetX: round6(extent.ox / w),
+    gridOffsetY: round6(extent.oy / h),
+    gridCellW: round6(lattice.cellW / w),
+    gridCellH: round6(lattice.cellH / h),
+    confidence: Math.min(1, lattice.confidence),
   }
 }
 
 module.exports = {
   detectGridConfig,
-  // Exposé pour les scripts de diagnostic (scripts/detect-grid.js, scripts/grid-overlay.js)
-  _internal: { loadGrayscale, computeGradients, prepareSignal, binarize, findFundamental, refinePeriod, findPhase, fitHexOffset, hexVerticesPx, minPeriodFor, MIN_DIVISIONS },
+  // Exposé pour les scripts de diagnostic (scripts/grid-overlay.js)
+  _internal: { cellVertices },
 }
