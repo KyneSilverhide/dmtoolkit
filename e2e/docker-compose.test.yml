@@ -1,3 +1,8 @@
+# Projet Compose à part : conteneurs, réseau et volumes de test s'appellent dmtoolkit-e2e_*.
+# Sans ce nom, la stack de test partageait le projet « dmtoolkit » du dev local, et le
+# `down -v` du teardown effaçait les volumes pgdata et uploads du dev.
+name: dmtoolkit-e2e
+
 services:
   postgres:
     environment:

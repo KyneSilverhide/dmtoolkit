@@ -53,7 +53,8 @@ cd backend && node --check src/index.js src/socket.js src/routes/spells.js src/r
 # Détection de grille (non-régression sur backend/test/grid-fixtures)
 cd backend && node scripts/check-grid-fixtures.js
 
-# E2E (stack Docker requise)
+# E2E (stack Docker requise) — projet Compose « dmtoolkit-e2e », isolé du dev :
+# son `down -v` n'efface jamais les volumes du dev local. Garder ce `name:` dans e2e/docker-compose.test.yml.
 cd e2e && npx playwright test
 
 # Dev local

@@ -88,6 +88,8 @@ npm test
 docker compose -f docker-compose.yml -f e2e/docker-compose.test.yml down -v
 ```
 
+La stack de test est un projet Compose à part (`name: dmtoolkit-e2e` dans `docker-compose.test.yml`) : ce `down -v` ne supprime que les volumes `dmtoolkit-e2e_*`, jamais ceux du dev local (`dmtoolkit_pgdata`, `dmtoolkit_uploads`). Les deux stacks publient les mêmes ports (5432, 3000) : arrêtez le dev avant de lancer les tests.
+
 ---
 
 ## Variables d'environnement
