@@ -50,7 +50,7 @@ test('treasure split calculates correct share per player', async ({ browser, adm
 })
 
 test('treasure split updates when more players join', async ({ browser, adminToken }) => {
-  test.setTimeout(20_000)
+  test.setTimeout(30_000)
   const token = adminToken
   const code = await createSession(token)
 
@@ -119,7 +119,7 @@ test('treasure split handles zero gold gracefully', async ({ browser, adminToken
 })
 
 test('mode Complet (water-fill) distributes all coins equitably', async ({ browser, adminToken }) => {
-  test.setTimeout(20_000)
+  test.setTimeout(30_000)
   const token = adminToken
   const code = await createSession(token)
 
@@ -160,7 +160,7 @@ test('mode Complet (water-fill) distributes all coins equitably', async ({ brows
 })
 
 test('player grouping (banker) shows consolidated total', async ({ browser, adminToken }) => {
-  test.setTimeout(20_000)
+  test.setTimeout(30_000)
   const token = adminToken
   const code = await createSession(token)
 

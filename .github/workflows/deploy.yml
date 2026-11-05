@@ -11,7 +11,9 @@ env:
 
 jobs:
   e2e:
-    runs-on: ubuntu-latest
+    # Figé : ubuntu-latest est passé en 26.04, que Playwright 1.61 ne sait pas équiper
+    # (« Playwright does not support chromium on ubuntu26.04-x64 »).
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     env:

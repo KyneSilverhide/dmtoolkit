@@ -5,7 +5,7 @@ import { AdminPage } from '../page-objects/AdminPage'
 import { PlayerPage } from '../page-objects/PlayerPage'
 import { TvPage } from '../page-objects/TvPage'
 
-async function createMerchant(adminPage: AdminPage, merchantName: string, items: Array<{ name: string; price: number; stock?: number }>) {
+async function createMerchant(adminPage: AdminPage, merchantName: string, items: Array<{ name: string; price: number; stock?: number; troc?: string }>) {
   await adminPage.switchTab('merchants')
   const pg = adminPage.page
 
@@ -18,7 +18,12 @@ async function createMerchant(adminPage: AdminPage, merchantName: string, items:
     await pg.locator('button.small-btn').filter({ hasText: /\+ Ajouter/ }).click()
     const itemRows = pg.locator('.item-row')
     await itemRows.nth(i).locator('input.item-name-input').fill(items[i].name)
-    await itemRows.nth(i).locator('input.item-price-input').fill(String(items[i].price))
+    if (items[i].troc !== undefined) {
+      await itemRows.nth(i).locator('select.item-price-mode').selectOption('troc')
+      await itemRows.nth(i).locator('input.item-price-text-input').fill(items[i].troc)
+    } else {
+      await itemRows.nth(i).locator('input.item-price-input').fill(String(items[i].price))
+    }
     if (items[i].stock !== undefined) {
       await itemRows.nth(i).locator('input.item-stock-input').fill(String(items[i].stock))
     }
@@ -431,6 +436,51 @@ test('admin can close merchant', async ({ browser, adminToken }) => {
 
     // Player boutique tab should be hidden again (v-if removes both sidebar and tab-bar buttons)
     await expect(playerPg.getByTestId('player-tab-boutique')).not.toBeVisible({ timeout: 8_000 })
+  } finally {
+    await adminCtx.close()
+    await playerCtx.close()
+  }
+})
+
+test('troc price is shown as text and cannot be negotiated', async ({ browser, adminToken }) => {
+  test.setTimeout(30_000)
+  const token = adminToken
+  const code = await createSession(token)
+
+  const adminCtx = await browser.newContext()
+  const playerCtx = await browser.newContext()
+
+  try {
+    const adminPage = new AdminPage(await adminCtx.newPage())
+    await adminPage.login(token)
+    await adminPage.selectSession(code)
+
+    const playerPg = await playerCtx.newPage()
+    await joinAsPlayer(playerPg, code, { name: 'Troqueur', hp: 30 })
+    await expect(adminPage.page.locator('[data-testid^="player-row-"]').first()).toBeVisible({ timeout: 8_000 })
+
+    await createMerchant(adminPage, 'Quillon', [{ name: 'Sceau', price: 0, troc: '1 pièce d\'âme' }])
+    await expect(adminPage.page.locator('.preview-price').first()).toHaveText('1 pièce d\'âme', { timeout: 8_000 })
+    await showMerchant(adminPage)
+
+    await expect(playerPg.getByTestId('player-tab-boutique').filter({ visible: true })).not.toBeDisabled({ timeout: 8_000 })
+    const playerPage = new PlayerPage(playerPg)
+    await playerPage.switchTab('boutique')
+    await expect(playerPg.locator('.shop-item-price').first()).toHaveText('1 pièce d\'âme')
+    await playerPg.locator('button.qty-btn').last().click()
+    await expect(playerPg.locator('.cart-total')).toHaveText('Troc')
+    await playerPg.locator('button.cart-submit-btn').click()
+
+    await adminPage.switchTab('merchants')
+    await adminPage.page.locator('button.respond-btn').first().click()
+    const dialog = adminPage.page.locator('.respond-dialog')
+    await expect(dialog.locator('.dialog-item-price')).toHaveText('1 pièce d\'âme')
+    await expect(dialog.locator('button.respond-action-btn.discount')).toHaveCount(0)
+    await expect(dialog.locator('button.respond-action-btn.increase')).toHaveCount(0)
+    await dialog.locator('button.action-btn').click()
+
+    await expect(playerPg.getByText('Achat accepté', { exact: true })).toBeVisible({ timeout: 8_000 })
+    await expect(playerPg.locator('.pmi-price').first()).toHaveText('1 pièce d\'âme')
   } finally {
     await adminCtx.close()
     await playerCtx.close()
