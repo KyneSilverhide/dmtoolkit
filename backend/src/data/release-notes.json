@@ -1,6 +1,45 @@
 {
   "notes": [
     {
+      "version": "2.0.30",
+      "date": "2026-11-05",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Marchands — chaque article peut désormais être vendu en po ou en Troc : en Troc, le prix s'écrit en toutes lettres (« 4 jetons », « une faveur ») et s'affiche tel quel dans la boutique, sur la TV et dans les demandes d'achat." },
+        { "type": "improvement", "role": "all", "text": "Un troc ne se négocie pas : sur une demande qui en contient un, le MJ accepte ou refuse, sans ristourne ni augmentation. Le panier d'un joueur affiche « 15 po + troc » quand il mélange les deux." }
+      ]
+    },
+    {
+      "version": "2.0.29",
+      "date": "2026-10-30",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Hexcrawl sur la carte : cliquez une case voisine pour faire avancer le groupe, et l'app tient le temps (en heures), le carburant, la piste, les haltes et les repos. Une armée peut poursuivre le groupe hex par hex ; la TV ne montre que ce que les joueurs doivent voir." },
+        { "type": "feature", "role": "admin", "text": "Carte — option « Jeton unique » : un seul jeton Groupe remplace les pions des joueurs pendant un voyage, et les pions reviennent à leur place quand on la décoche." },
+        { "type": "improvement", "role": "admin", "text": "Carte — la détection automatique de grille hexagonale est plus fiable, et un calage en 2 clics permet de la corriger. Le brouillard, les jetons et le cadrage d'une carte en voyage sont conservés quand on affiche une autre carte." }
+      ]
+    },
+    {
+      "version": "2.0.28",
+      "date": "2026-10-30",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Carte — depuis la vue carte, affichez sur la TV une image tirée au hasard dans un groupe (ex. « Hex - Plaine ») : la carte revient toute seule après la durée choisie (2 à 120 s)." },
+        { "type": "fix", "role": "admin", "text": "Carte — l'image pouvait s'afficher avec un mauvais ratio à la première ouverture de la vue carte." }
+      ]
+    },
+    {
+      "version": "2.0.27",
+      "date": "2026-10-29",
+      "changes": [
+        { "type": "improvement", "role": "admin", "text": "Brouillard de carte en mode grille : démarrer un glisser sur une case déjà révélée la re-masque. Maintenir Maj révèle aussi les cases voisines." }
+      ]
+    },
+    {
+      "version": "2.0.26",
+      "date": "2026-10-27",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "L'onglet Puzzles devient « Pages interactives » : à l'import, choisissez Puzzle (les joueurs cliquent) ou Page MJ (vous seul cliquez, la TV recopie la page et les joueurs ne voient rien). Une page compatible reprend son état après un rechargement." }
+      ]
+    },
+    {
       "version": "2.0.18",
       "date": "2026-10-26",
       "changes": [
