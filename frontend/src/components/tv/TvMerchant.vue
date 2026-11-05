@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { rarityColor } from '@/utils/rarity.js'
+import { formatItemPrice, isTroc } from '@/utils/merchantPrice.js'
 
 const props = defineProps({
   activeMerchant: { type: Object, default: null },
@@ -62,7 +63,7 @@ function nameStyle(item) {
       >
         <div class="item-name" :style="nameStyle(item)">{{ item.is_magic ? '✨ ' : '' }}{{ item.name }}</div>
         <div class="item-footer">
-          <span class="item-price">{{ item.price }} po</span>
+          <span class="item-price" :class="{ 'is-troc': isTroc(item) }">{{ formatItemPrice(item) }}</span>
           <span v-if="item.stock === -1" class="item-stock unlimited">∞</span>
           <span v-else-if="item.stock === 0" class="item-stock empty">Épuisé</span>
           <span v-else class="item-stock">× {{ item.stock }}</span>
@@ -147,12 +148,23 @@ function nameStyle(item) {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
+  gap: 1rem;
 }
 .item-price {
   font-family: var(--font-heading), sans-serif;
   font-size: clamp(1.5rem, 1.7vw, 2.6rem);
   color: var(--color-gold-bright);
   font-weight: bold;
+}
+/* Un prix en troc est une phrase : plus petit, sur 2 lignes au plus, pour tenir dans la carte. */
+.item-price.is-troc {
+  font-size: clamp(1.1rem, 1.25vw, 1.9rem);
+  line-height: 1.2;
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 .item-stock {
   font-family: var(--font-heading), sans-serif;

@@ -68,6 +68,8 @@ export const helpContent = {
   // ── Admin — MerchantManager ───────────────────────────────────────────────
   'merchant.counter-offer':
     'Proposez un prix différent de la demande du joueur : une ristourne (réduction) ou une augmentation. Le joueur recevra la contre-offre et pourra l\'accepter ou la refuser.',
+  'merchant.price':
+    'En po, le prix se négocie : à la demande d\'achat, vous pouvez accepter, refuser, faire une ristourne ou augmenter. En Troc, écrivez le prix en toutes lettres (ex : « 4 jetons », « une faveur »). Il s\'affiche tel quel chez les joueurs et sur la TV, et ne se négocie pas : un panier qui contient un troc s\'accepte ou se refuse.',
   'merchant.preset':
     'Modèles de marchands pré-remplis (armurier, herboriste, forgeron…). Choisissez-en un pour pré-remplir le formulaire, puis personnalisez selon vos besoins.',
   'merchant.stock':

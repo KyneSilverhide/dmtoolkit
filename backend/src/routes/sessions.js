@@ -843,7 +843,7 @@ router.get('/:id/purchase-requests', authenticateToken, async (req, res) => {
     if (!sessionCheck.rows[0]) return res.status(404).json({ error: 'Session not found.' })
 
     const requests = await pool.query(
-      `SELECT pr.*, mi.name AS item_name, mi.price AS item_price
+      `SELECT pr.*, mi.name AS item_name, mi.price AS item_price, mi.price_mode, mi.price_text
        FROM purchase_requests pr
        JOIN merchant_items mi ON pr.item_id = mi.id
        WHERE pr.session_id = $1

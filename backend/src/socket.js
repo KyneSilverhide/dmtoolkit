@@ -32,6 +32,7 @@ const MAX_COMBAT_ROUND = 9999
 const MIN_TENSION_STEPS = 2
 const MAX_TENSION_STEPS = 20
 const MAX_TITLE_LENGTH = 200
+const MAX_PRICE_TEXT_LENGTH = 200
 const MIN_TIMESCALE_HOURS = 1
 const MAX_TIMESCALE_HOURS = 168
 const MIN_TIMESCALE_SLOTS = 2
@@ -468,6 +469,32 @@ async function takeStock(itemId, quantity) {
     [quantity, itemId]
   )
   return r.rowCount > 0
+}
+
+/**
+ * Prix d'un article reçu du formulaire marchand : en po, ou en troc (texte libre, `price` à 0).
+ * @param {{ price?: number, priceMode?: string, priceText?: string }} item
+ * @returns {{ price: number, priceMode: 'po'|'troc', priceText: string|null }}
+ */
+function normalizeItemPrice(item) {
+  if (item.priceMode === 'troc') {
+    const text = String(item.priceText || '').trim().slice(0, MAX_PRICE_TEXT_LENGTH)
+    return { price: 0, priceMode: 'troc', priceText: text || null }
+  }
+  return { price: Math.max(0, parseInt(item.price) || 0), priceMode: 'po', priceText: null }
+}
+
+/**
+ * Libellé du prix d'un achat pour le journal de session : « 12 po », « troc : 4 jetons » ou les deux.
+ * @param {number} goldTotal
+ * @param {Array<{ price_mode?: string, price_text?: string }>} lines
+ * @returns {string}
+ */
+function purchasePriceLabel(goldTotal, lines) {
+  const troc = lines.filter(l => l.price_mode === 'troc').map(l => l.price_text || 'troc')
+  if (troc.length === 0) return `${goldTotal} po`
+  const label = `troc : ${troc.join(', ')}`
+  return goldTotal > 0 ? `${goldTotal} po + ${label}` : label
 }
 
 /**
@@ -2491,9 +2518,10 @@ function setupSocket(io) {
         )
         const merchant = mr.rows[0]
         for (const item of (items || [])) {
+          const { price, priceMode, priceText } = normalizeItemPrice(item)
           await pool.query(
-            'INSERT INTO merchant_items (merchant_id, name, description, price, stock, category, is_magic, rarity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-            [merchant.id, item.name, item.description || '', item.price, item.stock ?? -1, item.category || 'Divers', !!item.isMagic, item.rarity || null]
+            'INSERT INTO merchant_items (merchant_id, name, description, price, stock, category, is_magic, rarity, price_mode, price_text) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
+            [merchant.id, item.name, item.description || '', price, item.stock ?? -1, item.category || 'Divers', !!item.isMagic, item.rarity || null, priceMode, priceText]
           )
         }
         const merchantData = await getMerchantData(merchant.id)
@@ -2520,16 +2548,17 @@ function setupSocket(io) {
         const keptIds = new Set()
 
         for (const item of (items || [])) {
+          const { price, priceMode, priceText } = normalizeItemPrice(item)
           if (item.id && existingIds.has(item.id)) {
             keptIds.add(item.id)
             await pool.query(
-              'UPDATE merchant_items SET name = $1, description = $2, price = $3, stock = $4, category = $5, is_magic = $6, rarity = $7 WHERE id = $8',
-              [item.name, item.description || '', item.price, item.stock ?? -1, item.category || 'Divers', !!item.isMagic, item.rarity || null, item.id]
+              'UPDATE merchant_items SET name = $1, description = $2, price = $3, stock = $4, category = $5, is_magic = $6, rarity = $7, price_mode = $8, price_text = $9 WHERE id = $10',
+              [item.name, item.description || '', price, item.stock ?? -1, item.category || 'Divers', !!item.isMagic, item.rarity || null, priceMode, priceText, item.id]
             )
           } else {
             await pool.query(
-              'INSERT INTO merchant_items (merchant_id, name, description, price, stock, category, is_magic, rarity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-              [merchantId, item.name, item.description || '', item.price, item.stock ?? -1, item.category || 'Divers', !!item.isMagic, item.rarity || null]
+              'INSERT INTO merchant_items (merchant_id, name, description, price, stock, category, is_magic, rarity, price_mode, price_text) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
+              [merchantId, item.name, item.description || '', price, item.stock ?? -1, item.category || 'Divers', !!item.isMagic, item.rarity || null, priceMode, priceText]
             )
           }
         }
@@ -2597,6 +2626,7 @@ function setupSocket(io) {
         const requestData = {
           id: request.id, item_id: itemId, item_name: item.name, quantity: qty,
           base_price: request.base_price, player_name: playerName, player_id: socket.playerId,
+          price_mode: item.price_mode, price_text: item.price_text,
           created_at: request.created_at,
         }
         io.to(`admin:${socket.sessionId}`).emit('purchase-request', requestData)
@@ -2642,6 +2672,8 @@ function setupSocket(io) {
             quantity: qty,
             unit_price: item.price,
             total_price: linePrice,
+            price_mode: item.price_mode,
+            price_text: item.price_text,
           })
         }
         if (batchItems.length === 0) {
@@ -2666,7 +2698,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         const reqRes = await pool.query(
-          `SELECT pr.*, mi.stock AS item_stock, mi.name AS item_name
+          `SELECT pr.*, mi.stock AS item_stock, mi.name AS item_name, mi.price_mode, mi.price_text
            FROM purchase_requests pr JOIN merchant_items mi ON pr.item_id = mi.id
            JOIN sessions s ON s.id = pr.session_id
            WHERE pr.id = $1 AND session_editable(s.id, $2)`,
@@ -2674,6 +2706,10 @@ function setupSocket(io) {
         )
         const req = reqRes.rows[0]
         if (!req || req.status !== 'pending') return
+        if ((action === 'discount' || action === 'increase') && req.price_mode === 'troc') {
+          socket.emit('tv-control-error', { message: 'Un troc ne se négocie pas.' })
+          return
+        }
         const playerSocketRes = await pool.query('SELECT socket_id FROM players WHERE id = $1', [req.player_id])
         const playerSocketId = playerSocketRes.rows[0]?.socket_id
 
@@ -2683,12 +2719,12 @@ function setupSocket(io) {
             return
           }
           await pool.query('UPDATE purchase_requests SET status = $1, final_price = $2 WHERE id = $3', ['accepted', req.base_price, requestId])
-          const items = [{ item_name: req.item_name, quantity: req.quantity, total_price: req.base_price }]
+          const items = [{ item_name: req.item_name, quantity: req.quantity, total_price: req.base_price, price_mode: req.price_mode, price_text: req.price_text }]
           if (playerSocketId) io.to(playerSocketId).emit('batch-accepted', { items, totalPrice: req.base_price })
           const merchantData = await getMerchantData(req.merchant_id)
           socket.emit('merchant-updated', merchantData)
           broadcastToSession(req.session_id, 'merchant-items-updated', merchantData, ['tv', 'session'])
-          const purchaseDesc = `Achat accepté : ${req.quantity}× ${req.item_name} (${req.base_price} po) — ${req.player_name}`.slice(0, 200)
+          const purchaseDesc = `Achat accepté : ${req.quantity}× ${req.item_name} (${purchasePriceLabel(req.base_price, [req])}) — ${req.player_name}`.slice(0, 200)
           await logSessionEvent(req.session_id, 'purchase_accepted', purchaseDesc, { playerName: req.player_name, value: req.base_price })
         } else if (action === 'discount' || action === 'increase') {
           const fp = Math.max(0, parseInt(finalPrice) || req.base_price)
@@ -2710,7 +2746,7 @@ function setupSocket(io) {
       if (!socket.admin) return
       try {
         const reqsRes = await pool.query(
-          `SELECT pr.*, mi.stock AS item_stock, mi.name AS item_name
+          `SELECT pr.*, mi.stock AS item_stock, mi.name AS item_name, mi.price_mode, mi.price_text
            FROM purchase_requests pr JOIN merchant_items mi ON pr.item_id = mi.id
            JOIN sessions s ON s.id = pr.session_id
            WHERE pr.batch_id = $1 AND pr.status = 'pending' AND session_editable(s.id, $2)`,
@@ -2718,6 +2754,11 @@ function setupSocket(io) {
         )
         const reqs = reqsRes.rows
         if (reqs.length === 0) return
+        // Un panier qui contient un troc ne se négocie pas, même pour ses lignes en po.
+        if ((action === 'discount' || action === 'increase') && reqs.some(r => r.price_mode === 'troc')) {
+          socket.emit('tv-control-error', { message: 'Un troc ne se négocie pas.' })
+          return
+        }
         const playerSocketRes = await pool.query('SELECT socket_id FROM players WHERE id = $1', [reqs[0].player_id])
         const playerSocketId = playerSocketRes.rows[0]?.socket_id
 
@@ -2752,13 +2793,13 @@ function setupSocket(io) {
             const req = reqs[i]
             await pool.query('UPDATE purchase_requests SET status = $1, final_price = $2 WHERE id = $3', ['accepted', finalPrices[i], req.id])
           }
-          const items = reqs.map((r, i) => ({ item_name: r.item_name, quantity: r.quantity, total_price: finalPrices[i] }))
+          const items = reqs.map((r, i) => ({ item_name: r.item_name, quantity: r.quantity, total_price: finalPrices[i], price_mode: r.price_mode, price_text: r.price_text }))
           if (playerSocketId) io.to(playerSocketId).emit('batch-accepted', { batchId, items, totalPrice: finalTotal })
           const merchantData = await getMerchantData(reqs[0].merchant_id)
           socket.emit('merchant-updated', merchantData)
           broadcastToSession(reqs[0].session_id, 'merchant-items-updated', merchantData, ['tv', 'session'])
           socket.emit('purchase-responded', { batchId, action, totalPrice: finalTotal })
-          const batchDesc = `Achat accepté : ${items.map(i => `${i.quantity}× ${i.item_name}`).join(', ')} (${finalTotal} po) — ${reqs[0].player_name}`.slice(0, 200)
+          const batchDesc = `Achat accepté : ${items.map(i => `${i.quantity}× ${i.item_name}`).join(', ')} (${purchasePriceLabel(finalTotal, reqs)}) — ${reqs[0].player_name}`.slice(0, 200)
           await logSessionEvent(reqs[0].session_id, 'purchase_accepted', batchDesc, { playerName: reqs[0].player_name, value: finalTotal })
         } else if (action === 'reject') {
           for (const req of reqs) {

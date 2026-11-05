@@ -70,6 +70,8 @@ function normalizeRequest(data) {
       quantity: data.quantity,
       unit_price: data.item_price,
       total_price: data.base_price,
+      price_mode: data.price_mode,
+      price_text: data.price_text,
     }],
     total_price: data.base_price,
     created_at: data.created_at,
@@ -99,6 +101,8 @@ function groupLoadedRequests(rows) {
       quantity: row.quantity,
       unit_price: row.item_price,
       total_price: row.base_price,
+      price_mode: row.price_mode,
+      price_text: row.price_text,
     })
     groups[key].total_price += row.base_price
   }

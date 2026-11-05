@@ -1,5 +1,6 @@
 <script setup>
 import AppIcon from '../../AppIcon.vue'
+import { formatItemPrice } from '@/utils/merchantPrice.js'
 
 defineProps({
   merchants: { type: Array, default: () => [] },
@@ -38,7 +39,7 @@ const emit = defineEmits(['show-tv', 'close-merchant', 'delete-merchant', 'edit-
         <div v-for="item in merchant.items" :key="item.id" class="preview-item" :class="{ 'is-magic': item.is_magic }">
           <span class="preview-cat">{{ item.category }}</span>
           <span class="preview-name">{{ item.is_magic ? '✨ ' : '' }}{{ item.name }}</span>
-          <span class="preview-price">{{ item.price }} po</span>
+          <span class="preview-price">{{ formatItemPrice(item) }}</span>
           <span class="preview-stock" :class="{ empty: item.stock === 0 }">
             {{ item.stock === -1 ? '∞' : item.stock === 0 ? 'Épuisé' : `×${item.stock}` }}
           </span>
@@ -176,7 +177,7 @@ const emit = defineEmits(['show-tv', 'close-merchant', 'delete-merchant', 'edit-
   white-space: nowrap;
 }
 .preview-name { flex: 1; color: var(--color-parchment); }
-.preview-price { color: var(--color-gold-bright); width: 50px; text-align: right; flex-shrink: 0; }
+.preview-price { color: var(--color-gold-bright); min-width: 50px; max-width: 40%; text-align: right; flex-shrink: 0; overflow-wrap: anywhere; }
 .preview-stock {
   width: 50px;
   text-align: right;

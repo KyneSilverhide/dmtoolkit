@@ -428,6 +428,11 @@ CREATE TABLE IF NOT EXISTS hexcrawls (
   saved_map TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Prix d'un article : en po (price) ou en troc (price_text, texte libre, price forcé à 0).
+-- Un troc ne se négocie pas : socket.js refuse ristourne et augmentation sur ces lignes.
+ALTER TABLE merchant_items ADD COLUMN IF NOT EXISTS price_mode VARCHAR(10) DEFAULT 'po';
+ALTER TABLE merchant_items ADD COLUMN IF NOT EXISTS price_text VARCHAR(200);
 `
 
 async function runMigrations() {

@@ -2,12 +2,14 @@
 import AppIcon from '@/components/AppIcon.vue'
 import HelpTip from '@/components/HelpTip.vue'
 import { rarityColor } from '@/utils/rarity.js'
+import { formatItemPrice, formatTotalPrice, isTroc } from '@/utils/merchantPrice.js'
 
 const props = defineProps({
   activeMerchant: { default: null },
   cart:           { type: Object, default: () => ({}) },
   cartItemCount:  { type: Number, default: 0 },
   cartTotal:      { type: Number, default: 0 },
+  cartHasTroc:    { type: Boolean, default: false },
   cartSending:    { type: Boolean, default: false },
 })
 
@@ -43,7 +45,7 @@ const emit = defineEmits(['set-cart-qty', 'submit-cart', 'clear-cart'])
             <p v-if="item.description && !item.is_magic" class="shop-item-desc">{{ item.description }}</p>
           </div>
           <div class="shop-item-right">
-            <span class="shop-item-price">{{ item.price }} po</span>
+            <span class="shop-item-price" :class="{ 'is-troc': isTroc(item) }">{{ formatItemPrice(item) }}</span>
             <span v-if="item.stock === -1" class="shop-item-stock">∞</span>
             <span v-else-if="item.stock === 0" class="shop-item-stock empty">Épuisé</span>
             <span v-else class="shop-item-stock">×{{ item.stock }}</span>
@@ -61,7 +63,7 @@ const emit = defineEmits(['set-cart-qty', 'submit-cart', 'clear-cart'])
       <div class="panel cart-panel" :class="{ 'cart-active': cartItemCount > 0 }">
         <div class="cart-summary">
           <span class="cart-label"><AppIcon icon="lucide:shopping-cart" size="0.9em" /> Panier : {{ cartItemCount }} article(s) <HelpTip id="player.shop-cart" /></span>
-          <span class="cart-total">{{ cartTotal }} po</span>
+          <span class="cart-total">{{ formatTotalPrice(cartTotal, cartHasTroc) }}</span>
         </div>
         <div class="cart-actions">
           <button
@@ -146,6 +148,8 @@ const emit = defineEmits(['set-cart-qty', 'submit-cart', 'clear-cart'])
 .shop-item-desc { font-family: var(--font-body), sans-serif; font-size: var(--text-xs); color: var(--color-text-dim); margin: 0.1rem 0 0; }
 .shop-item-right { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
 .shop-item-price { font-family: var(--font-title), sans-serif; font-size: var(--text-md); color: var(--color-gold-bright); }
+/* Un prix en troc est une phrase : plus petit, et il passe à la ligne au lieu d'élargir la colonne. */
+.shop-item-price.is-troc { font-size: var(--text-sm); max-width: 14rem; text-align: right; overflow-wrap: anywhere; }
 .shop-item-stock { font-family: var(--font-heading), sans-serif; font-size: var(--text-2xs); color: var(--color-text-dim); }
 .shop-item-stock.empty { color: var(--player-danger-text); }
 

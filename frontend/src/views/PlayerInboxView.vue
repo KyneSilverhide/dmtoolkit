@@ -20,6 +20,7 @@ import PlayerNotesTool from '../components/player/PlayerNotesTool.vue'
 import PlayerDiceTool from '../components/player/PlayerDiceTool.vue'
 import PlayerCombatTab from '../components/player/PlayerCombatTab.vue'
 import PlayerMerchantTab from '../components/player/PlayerMerchantTab.vue'
+import { isTroc, formatLinePrice, formatTotalPrice } from '../utils/merchantPrice.js'
 import PlayerVoteTab from '../components/player/PlayerVoteTab.vue'
 import PlayerMessagesTab from '../components/player/PlayerMessagesTab.vue'
 import PlayerPuzzleOverlay from '../components/player/PlayerPuzzleOverlay.vue'
@@ -664,6 +665,9 @@ const cartTotal = computed(() => {
   }
   return total
 })
+const cartHasTroc = computed(() =>
+  !!activeMerchant.value?.items.some(item => (cart.value[item.id] || 0) > 0 && isTroc(item))
+)
 
 function setCartQty(itemId, qty) {
   cart.value = { ...cart.value, [itemId]: Math.max(0, qty) }
@@ -1119,11 +1123,11 @@ onUnmounted(() => {
             <div v-for="(item, i) in purchaseResultModal.items" :key="i" class="purchase-modal-item">
               <span class="pmi-name">{{ item.item_name }}</span>
               <span class="pmi-qty">× {{ item.quantity }}</span>
-              <span v-if="purchaseResultModal.type === 'accepted'" class="pmi-price">{{ item.total_price }} po</span>
+              <span v-if="purchaseResultModal.type === 'accepted'" class="pmi-price">{{ formatLinePrice(item) }}</span>
             </div>
           </div>
-          <p v-if="purchaseResultModal.type === 'accepted' && purchaseResultModal.totalPrice" class="purchase-modal-total">
-            Total : <strong>{{ purchaseResultModal.totalPrice }} po</strong>
+          <p v-if="purchaseResultModal.type === 'accepted' && (purchaseResultModal.totalPrice || purchaseResultModal.items?.some(isTroc))" class="purchase-modal-total">
+            Total : <strong>{{ formatTotalPrice(purchaseResultModal.totalPrice || 0, purchaseResultModal.items?.some(isTroc)) }}</strong>
           </p>
           <p v-if="purchaseResultModal.message" class="modal-body">{{ purchaseResultModal.message }}</p>
           <button class="modal-close-btn" @click="dismissPurchaseModal">Fermer</button>
@@ -1386,6 +1390,7 @@ onUnmounted(() => {
                 :cart="cart"
                 :cart-item-count="cartItemCount"
                 :cart-total="cartTotal"
+                :cart-has-troc="cartHasTroc"
                 :cart-sending="cartSending"
                 @set-cart-qty="setCartQty"
                 @submit-cart="submitCart"

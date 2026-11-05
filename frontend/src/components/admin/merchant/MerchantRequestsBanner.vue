@@ -1,5 +1,6 @@
 <script setup>
 import AppIcon from '../../AppIcon.vue'
+import { formatLinePrice, formatTotalPrice, isTroc } from '@/utils/merchantPrice.js'
 
 defineProps({
   requests: { type: Array, default: () => [] },
@@ -24,10 +25,10 @@ function formatRequestTime(dateStr) {
         <ul class="request-items-list">
           <li v-for="item in req.items" :key="item.request_id">
             {{ item.item_name }} × {{ item.quantity }}
-            <span class="item-line-price">— {{ item.total_price }} po</span>
+            <span class="item-line-price">— {{ formatLinePrice(item) }}</span>
           </li>
         </ul>
-        <span class="request-total">Total : {{ req.total_price }} po</span>
+        <span class="request-total">Total : {{ formatTotalPrice(req.total_price, req.items.some(isTroc)) }}</span>
       </div>
       <button class="respond-btn" @click="emit('respond', req)">Répondre</button>
     </div>

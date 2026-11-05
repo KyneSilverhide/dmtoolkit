@@ -22,6 +22,8 @@ const newItems = ref((props.merchant?.items || []).map(i => ({
   name: i.name,
   description: i.description || '',
   price: i.price,
+  priceMode: i.price_mode === 'troc' ? 'troc' : 'po',
+  priceText: i.price_text || '',
   stock: i.stock,
   category: i.category || 'Divers',
   isMagic: !!i.is_magic,
@@ -114,6 +116,8 @@ function addEquipItem(eq) {
     name: eq.name,
     description: eq.description || '',
     price: explicitPrice || (isMagic ? (MAGIC_RARITY_DEFAULT_PRICE[eq.rarity] || 100) : 0),
+    priceMode: 'po',
+    priceText: '',
     stock: -1,
     category: isMagic ? 'Objet magique' : equipCategory(eq.item_type),
     isMagic,
@@ -151,12 +155,12 @@ async function addRandomMagicItems() {
 }
 
 function applyPreset(preset) {
-  newItems.value = preset.items.map(i => ({ ...i }))
+  newItems.value = preset.items.map(i => ({ priceMode: 'po', priceText: '', ...i }))
   presetPanelOpen.value = false
 }
 
 function addItem() {
-  newItems.value.push({ name: '', description: '', price: 10, stock: -1, category: 'Divers', isMagic: false, rarity: '' })
+  newItems.value.push({ name: '', description: '', price: 10, priceMode: 'po', priceText: '', stock: -1, category: 'Divers', isMagic: false, rarity: '' })
 }
 
 function removeItem(idx) {
@@ -291,7 +295,7 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
       <div class="item-header-fields">
         <span class="item-col-header col-name">Nom</span>
         <span class="item-col-header col-desc">Description</span>
-        <span class="item-col-header col-price">🪙 Prix (po)</span>
+        <span class="item-col-header col-price">🪙 Prix <HelpTip id="merchant.price" /></span>
         <span class="item-col-header col-stock">📦 Stock <HelpTip id="merchant.stock" /></span>
         <span class="item-col-header col-cat">Catégorie</span>
         <span class="item-col-header col-magic">✨ Magique</span>
@@ -304,7 +308,20 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
         <div class="item-row-fields">
           <input v-model="item.name" class="form-input item-name-input" placeholder="Nom" />
           <input v-model="item.description" class="form-input item-desc-input" placeholder="Description" />
-          <input v-model.number="item.price" type="number" class="form-input item-price-input" placeholder="Prix (po)" min="0" />
+          <div class="item-price-cell">
+            <select v-model="item.priceMode" class="form-select item-price-mode" aria-label="Mode de prix">
+              <option value="po">po</option>
+              <option value="troc">Troc</option>
+            </select>
+            <input
+              v-if="item.priceMode === 'troc'"
+              v-model="item.priceText"
+              class="form-input item-price-text-input"
+              placeholder="Ex : 4 jetons"
+              maxlength="200"
+            />
+            <input v-else v-model.number="item.price" type="number" class="form-input item-price-input" placeholder="Prix (po)" min="0" />
+          </div>
           <input
             v-model.number="item.stock"
             type="number"
@@ -405,7 +422,7 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 }
 .col-name  { flex: 2; min-width: 100px; }
 .col-desc  { flex: 3; min-width: 120px; }
-.col-price { flex: 1; min-width: 60px; }
+.col-price { flex: 2; min-width: 150px; }
 .col-stock { flex: 1; min-width: 60px; }
 .col-cat   { flex: 1; min-width: 80px; }
 .col-magic { flex: 0 0 60px; min-width: 60px; text-align: center; }
@@ -417,7 +434,10 @@ const canSubmit = () => newName.value.trim() && newItems.value.filter(i => i.nam
 .item-row-fields { display: flex; gap: var(--space-1); flex: 1; flex-wrap: wrap; }
 .item-name-input { flex: 2; min-width: 100px; }
 .item-desc-input { flex: 3; min-width: 120px; }
-.item-price-input { flex: 1; min-width: 60px; }
+.item-price-cell { flex: 2; min-width: 150px; display: flex; gap: var(--space-1); }
+.item-price-mode { flex: 0 0 auto; width: 70px; }
+.item-price-input,
+.item-price-text-input { flex: 1; min-width: 60px; }
 .item-stock-input { flex: 1; min-width: 60px; }
 .item-cat-input { flex: 1; min-width: 80px; }
 .item-magic-toggle { flex: 0 0 60px; min-width: 60px; display: flex; align-items: center; justify-content: center; }

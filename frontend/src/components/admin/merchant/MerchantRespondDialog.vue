@@ -1,7 +1,8 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import AppIcon from '../../AppIcon.vue'
 import HelpTip from '../../HelpTip.vue'
+import { formatLinePrice, formatTotalPrice, isTroc } from '@/utils/merchantPrice.js'
 
 const props = defineProps({
   request: { type: Object, default: null },
@@ -11,6 +12,8 @@ const emit = defineEmits(['close', 'submit'])
 
 const respondAction = ref('accept')
 const respondCustomPrice = ref(0)
+// Un troc ne se négocie pas : ristourne et augmentation disparaissent (le serveur les refuse aussi).
+const hasTroc = computed(() => !!props.request?.items?.some(isTroc))
 
 watch(() => props.request, (req) => {
   if (req) {
@@ -39,23 +42,24 @@ function submit() {
         <li v-for="item in request.items" :key="item.request_id" class="dialog-item-row">
           <span class="dialog-item-name">{{ item.item_name }}</span>
           <span class="dialog-item-qty">× {{ item.quantity }}</span>
-          <span class="dialog-item-price">{{ item.total_price }} po</span>
+          <span class="dialog-item-price">{{ formatLinePrice(item) }}</span>
         </li>
       </ul>
-      <div class="dialog-total">Total : <strong>{{ request.total_price }} po</strong></div>
+      <div class="dialog-total">Total : <strong>{{ formatTotalPrice(request.total_price, hasTroc) }}</strong></div>
+      <p v-if="hasTroc" class="dialog-troc-note">Un troc ne se négocie pas : acceptez ou refusez.</p>
 
       <div class="respond-actions">
-        <HelpTip id="merchant.counter-offer" />
+        <HelpTip v-if="!hasTroc" id="merchant.counter-offer" />
         <button class="respond-action-btn" :class="{ active: respondAction === 'accept' }" @click="respondAction = 'accept'">
           <AppIcon icon="lucide:check-circle" size="0.85em" color="var(--color-success)" /> Accepter
         </button>
         <button class="respond-action-btn reject" :class="{ active: respondAction === 'reject' }" @click="respondAction = 'reject'">
           <AppIcon icon="lucide:x-circle" size="0.85em" color="var(--color-danger)" /> Refuser
         </button>
-        <button class="respond-action-btn discount" :class="{ active: respondAction === 'discount' }" @click="respondAction = 'discount'">
+        <button v-if="!hasTroc" class="respond-action-btn discount" :class="{ active: respondAction === 'discount' }" @click="respondAction = 'discount'">
           <AppIcon icon="lucide:tag" size="0.85em" color="var(--color-success)" /> Ristourne
         </button>
-        <button class="respond-action-btn increase" :class="{ active: respondAction === 'increase' }" @click="respondAction = 'increase'">
+        <button v-if="!hasTroc" class="respond-action-btn increase" :class="{ active: respondAction === 'increase' }" @click="respondAction = 'increase'">
           <AppIcon icon="lucide:trending-up" size="0.85em" color="var(--color-danger)" /> Augmenter
         </button>
       </div>
@@ -133,7 +137,8 @@ function submit() {
 }
 .dialog-item-name { flex: 1; color: var(--color-parchment); }
 .dialog-item-qty { color: var(--color-text-dim); min-width: 40px; }
-.dialog-item-price { color: var(--color-gold-bright); min-width: 60px; text-align: right; }
+.dialog-item-price { color: var(--color-gold-bright); min-width: 60px; max-width: 50%; text-align: right; overflow-wrap: anywhere; }
+.dialog-troc-note { margin: 0; font-size: var(--text-sm); color: var(--color-text-dim); }
 .dialog-total {
   font-family: var(--font-heading), sans-serif;
   font-size: var(--text-base);
