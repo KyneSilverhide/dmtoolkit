@@ -1,5 +1,5 @@
 ﻿<script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { sessionStore } from '@/stores/session.js'
 import { authStore } from '@/stores/auth.js'
 import { getSocket } from '@/socket.js'
@@ -7,8 +7,10 @@ import AppIcon from '../AppIcon.vue'
 import HelpTip from '../HelpTip.vue'
 
 import { apiFetch } from '@/utils/apiFetch.js'
+import { JOURNAL_VIEWS, filterByView, countByView } from '@/utils/journalViews.js'
 
 const events = ref([])
+const activeView = ref('all')
 const summary = ref('')
 const loadingSummary = ref(false)
 const clearConfirm = ref(false)
@@ -41,8 +43,18 @@ const sessionDuration = computed(() => {
   return `${m}m ${String(s).padStart(2, '0')}s`
 })
 
-const MERGE_WINDOW_MS = 1000
-const MERGEABLE_TYPES = new Set(['damage', 'heal'])
+// Fenêtre de fusion par type : des dégâts quasi simultanés ne forment qu'une ligne, et une
+// série de déplacements consécutifs aussi (un clic par hex, sinon le journal serait noyé).
+const MERGE_WINDOWS_MS = { damage: 1000, heal: 1000, hexcrawl_step: 120000 }
+const MERGEABLE_TYPES = new Set(Object.keys(MERGE_WINDOWS_MS))
+
+function mergedDescription(eventType, playerName, totalValue, count, lastDescription) {
+  if (eventType === 'damage') return `${playerName} subit ${Math.abs(totalValue)} dégâts (×${count})`
+  if (eventType === 'heal') return `${playerName} récupère ${totalValue} PV (×${count})`
+  // Le code de la dernière case atteinte est repris de la description d'origine (« vers H8 »).
+  const label = lastDescription?.match(/vers ([A-Za-z?]{1,3}\d{1,3})/)?.[1]
+  return `Le groupe avance de ${totalValue} hex${label ? ` jusqu'en ${label}` : ''}`
+}
 
 const groupedEvents = computed(() => {
   if (events.value.length === 0) return []
@@ -58,17 +70,13 @@ const groupedEvents = computed(() => {
       const lastPlayer = last.playerName || last.player_name
       const lastTime = last._lastEventTime || new Date(last.createdAt || last.created_at).getTime()
 
-      if (lastType === eventType && lastPlayer === playerName && createdAt - lastTime <= MERGE_WINDOW_MS) {
+      if (lastType === eventType && lastPlayer === playerName && createdAt - lastTime <= MERGE_WINDOWS_MS[eventType]) {
         const totalValue = (last.value || 0) + (evt.value || 0)
         const count = (last._mergeCount || 1) + 1
         last.value = totalValue
         last._mergeCount = count
         last._lastEventTime = createdAt
-        if (eventType === 'damage') {
-          last.description = `${playerName} subit ${Math.abs(totalValue)} dégâts (×${count})`
-        } else {
-          last.description = `${playerName} récupère ${totalValue} PV (×${count})`
-        }
+        last.description = mergedDescription(eventType, playerName, totalValue, count, evt.description)
         continue
       }
     }
@@ -77,6 +85,10 @@ const groupedEvents = computed(() => {
   }
   return result.slice().reverse()
 })
+
+// Filtré après fusion : une vue ne recolle jamais deux événements séparés par un autre.
+const visibleEvents = computed(() => filterByView(groupedEvents.value, activeView.value))
+const viewCounts = computed(() => countByView(groupedEvents.value))
 
 function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
@@ -93,7 +105,7 @@ function formatDayLabel(date) {
 
 const journalDays = computed(() => {
   const days = []
-  for (const evt of groupedEvents.value) {
+  for (const evt of visibleEvents.value) {
     const d = new Date(evt.createdAt || evt.created_at)
     const last = days[days.length - 1]
     if (last && isSameDay(last.date, d)) {
@@ -123,6 +135,12 @@ const EVENT_ICONS = {
   tension_updated:   { icon: 'lucide:trending-up',            color: 'var(--color-warning)' },
   tension_ended:     { icon: 'lucide:flag',                   color: 'var(--color-text-dim)' },
   combat_round:      { icon: 'game-icons:crossed-swords',     color: 'var(--color-text-dim)' },
+  hexcrawl_started:  { icon: 'lucide:map-pin',                color: 'var(--color-gold-dark)' },
+  hexcrawl_step:     { icon: 'lucide:footprints',             color: 'var(--color-info)' },
+  timescale_started: { icon: 'game-icons:hourglass',          color: 'var(--color-info)' },
+  timescale_advanced:{ icon: 'lucide:clock',                  color: 'var(--color-info)' },
+  timescale_rest:    { icon: 'lucide:moon',                   color: 'var(--color-info)' },
+  timescale_ended:   { icon: 'lucide:flag',                   color: 'var(--color-text-dim)' },
 }
 const DEFAULT_EVENT_ICON = { icon: 'lucide:bookmark', color: 'var(--color-text-dim)' }
 
@@ -144,6 +162,12 @@ const DOT_COLORS = {
   tension_updated:   'var(--color-warning)',
   tension_ended:     'var(--color-text-dim)',
   combat_round:      'var(--color-text-dim)',
+  hexcrawl_started:  'var(--color-gold-dark)',
+  hexcrawl_step:     'var(--color-info)',
+  timescale_started: 'var(--color-info)',
+  timescale_advanced:'var(--color-info)',
+  timescale_rest:    'var(--color-info)',
+  timescale_ended:   'var(--color-text-dim)',
 }
 
 function getIcon(evt) {
@@ -202,6 +226,23 @@ async function resetSession() {
   }
 }
 
+// Recharge l'historique persisté : sans cela le journal restait vide à l'ouverture de l'onglet
+// et ne montrait que les événements arrivés depuis, ce qui rendait les vues peu utiles.
+async function loadHistory() {
+  if (!hasSession.value) { events.value = []; return }
+  const sessionId = sessionStore.activeSession.id
+  try {
+    const res = await apiFetch(`/api/sessions/${sessionId}/journal`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    const data = await res.json()
+    if (sessionStore.activeSession?.id !== sessionId || !Array.isArray(data.events)) return
+    events.value = data.events.map(e => ({ ...e, eventType: e.event_type, createdAt: e.created_at }))
+  } catch {
+    // le journal reste alimenté par les événements en direct
+  }
+}
+
 async function generateSummary() {
   if (!hasSession.value) return
   loadingSummary.value = true
@@ -225,8 +266,11 @@ async function generateSummary() {
 onMounted(() => {
   const socket = getSocket(authStore.token)
   socket.on('session-event', handleSessionEvent)
+  loadHistory()
   ticker = setInterval(() => { currentTime.value = new Date() }, 1000)
 })
+
+watch(() => sessionStore.activeSession?.id, loadHistory)
 
 onUnmounted(() => {
   const socket = getSocket()
@@ -303,9 +347,24 @@ onUnmounted(() => {
         <pre class="summary-text">{{ summary }}</pre>
       </div>
 
-      <div v-if="events.length === 0" class="empty-journal">
+      <div class="journal-views" role="group" aria-label="Vues du journal" data-testid="journal-views">
+        <button
+          v-for="view in JOURNAL_VIEWS"
+          :key="view.key"
+          class="view-chip"
+          :class="{ active: activeView === view.key }"
+          :aria-pressed="activeView === view.key"
+          :data-testid="`journal-view-${view.key}`"
+          @click="activeView = view.key"
+        >
+          {{ view.label }}
+          <span class="view-count">{{ viewCounts[view.key] }}</span>
+        </button>
+      </div>
+
+      <div v-if="visibleEvents.length === 0" class="empty-journal">
         <p class="empty-icon"><AppIcon icon="game-icons:scroll-unfurled" size="2.5rem" color="var(--color-text-dim)" /></p>
-        <p class="empty-text">Aucun événement enregistré.</p>
+        <p class="empty-text">{{ events.length === 0 ? 'Aucun événement enregistré.' : 'Aucun événement dans cette vue.' }}</p>
       </div>
 
       <div v-else class="timeline">
@@ -530,6 +589,41 @@ onUnmounted(() => {
   font-size: var(--text-base);
   letter-spacing: 0.1em;
   color: var(--color-text-dim);
+}
+
+/* ── Vues ── */
+.journal-views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.view-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-min);
+  padding: var(--space-1) var(--space-3);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-dim);
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--text-sm);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.view-chip:hover { border-color: var(--color-gold-dark); color: var(--color-parchment); }
+.view-chip.active {
+  border-color: var(--color-gold-dark);
+  background: var(--gradient-accent-action);
+  color: var(--color-text-on-accent);
+}
+
+.view-count {
+  font-size: var(--text-xs);
+  opacity: 0.75;
 }
 
 /* ── Timeline ── */

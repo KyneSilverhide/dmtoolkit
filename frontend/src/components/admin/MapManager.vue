@@ -150,7 +150,7 @@ function handleTravelClick(pos) {
   const neighbors = getCellNeighbors(cell, ...hexGridArgs())
   if (!status.started) {
     // Comme le registre du Greffier : le groupe connaît sa case de départ et ses voisines.
-    hexAct({ t: 'start', cell, nx: center.nx, ny: center.ny })
+    hexAct({ t: 'start', cell, nx: center.nx, ny: center.ny, label: cellCode(cell) })
     revealCells([cell, ...neighbors])
     return
   }
@@ -167,7 +167,7 @@ function handleTravelClick(pos) {
     showTravelNotice('Plus de carburant : ajoutez-en ou passez à pied.')
     return
   }
-  hexAct({ t: 'step', cell, nx: center.nx, ny: center.ny, ...(hardNext.value ? { hard: true } : {}) })
+  hexAct({ t: 'step', cell, nx: center.nx, ny: center.ny, label: cellCode(cell), ...(hardNext.value ? { hard: true } : {}) })
   hardNext.value = false
   revealCells(hexConfig.value.revealNeighbors ? [cell, ...neighbors] : [cell])
 }

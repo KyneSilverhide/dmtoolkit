@@ -2107,6 +2107,19 @@ function setupSocket(io) {
       } finally {
         client?.release()
       }
+      // Journal de session : début du voyage et déplacements (les autres entrées du suivi restent
+      // dans le journal de voyage). Un échec de journalisation ne doit jamais faire échouer l'action.
+      if (op === 'append' && (entry?.t === 'start' || entry?.t === 'step')) {
+        const isStart = entry.t === 'start'
+        // Code imprimé de la case (« H8 »), calculé côté client avec les décalages de la carte :
+        // le serveur ne connaît pas ces réglages. Absent de l'entrée conservée (sanitizeHexcrawlEntry).
+        const label = typeof entry.label === 'string' && /^[A-Za-z?]{1,3}\d{1,3}$/.test(entry.label) ? entry.label : ''
+        const description = isStart
+          ? `Le voyage commence${label ? ` en ${label}` : ''} : le groupe prend la route`
+          : `Le groupe avance vers ${label || 'l\'hex voisin'}${entry.hard ? ' (terrain difficile)' : ''}`
+        logSessionEvent(sessionId, isStart ? 'hexcrawl_started' : 'hexcrawl_step', description, isStart ? {} : { value: 1 })
+          .catch(err => console.error(err))
+      }
       if (tokenEvent) broadcastToSession(sessionId, tokenEvent[0], tokenEvent[1])
       if (groupEnabled) {
         broadcastToSession(sessionId, 'map-group-token-updated', { enabled: true })

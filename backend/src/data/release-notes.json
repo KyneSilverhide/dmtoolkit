@@ -1,6 +1,15 @@
 {
   "notes": [
     {
+      "version": "2.0.32",
+      "date": "2026-11-13",
+      "changes": [
+        { "type": "feature", "role": "admin", "text": "Journal de session — le début du voyage hexcrawl et chaque déplacement du groupe y sont maintenant notés, avec le code de la case tel qu'imprimé sur la carte (« Le groupe avance vers H9 »). Une série de déplacements rapprochés se regroupe en une ligne." },
+        { "type": "feature", "role": "admin", "text": "Journal de session — des vues filtrent les événements : Tout (exhaustif), Combat, Exploration, Marchands, Table et Rythme, chacune avec son compteur." },
+        { "type": "improvement", "role": "admin", "text": "Journal de session — l'historique se recharge à l'ouverture de l'onglet et au changement de session, au lieu de n'afficher que les événements arrivés depuis." }
+      ]
+    },
+    {
       "version": "2.0.30",
       "date": "2026-11-05",
       "changes": [
